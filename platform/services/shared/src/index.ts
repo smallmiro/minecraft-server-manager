@@ -133,6 +133,7 @@ export {
   assertServerSpecDocument,
   validateHostname,
   routerHosts,
+  MC_VERSION_INPUT_PATTERN,
   buildCreateSpec,
   DEFAULT_SERVER_IMAGE,
   type CreateSpecInput,

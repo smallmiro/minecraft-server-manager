@@ -135,6 +135,11 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
     expect(started).toEqual(['mc-beta']);
   });
 
+  it.each(['24w14a', '1.20.5-rc1'])('writes a snapshot or pre-release version (%s) as given', async (version) => {
+    await useCase().executeWithConfig({ name: 'beta', version, autoStart: false });
+    expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.get('VERSION')).toBe(version);
+  });
+
   it('creates a server whose name contains "error" (#658)', async () => {
     await useCase().executeWithConfig({ name: 'error-test', version: '1.21.1' }, run);
     expect(existsSync(file('error-test', 'server.yaml'))).toBe(true);

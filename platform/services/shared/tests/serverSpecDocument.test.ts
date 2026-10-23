@@ -68,7 +68,7 @@ describe('validateServerSpecDocument', () => {
     const legacy = doc({
       name: 'Old_Server',
       type: 'CUSTOM_TYPE',
-      version: '24w14a',
+      version: 'bad/version',
       memory: '300M',
       world: { level: 'My World', storage: 'universe' },
     });

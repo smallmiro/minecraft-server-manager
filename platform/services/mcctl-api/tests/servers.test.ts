@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import { fakeProvision, type ProvisionCall } from './fake-provision.js';
 
 // Mock node:child_process for spawn
 vi.mock('node:child_process', async (importOriginal) => {
@@ -352,8 +353,21 @@ describe('Server Routes - Response Format', () => {
   });
 });
 
+/** The `data` of each SSE event in a streamed response body. */
+function sseEvents(body: string): Array<{ type: string; data: Record<string, any> }> {
+  return body
+    .split('\n\n')
+    .filter(Boolean)
+    .map((event: string) => {
+      const dataMatch = event.match(/^data: (.+)$/m);
+      return dataMatch ? JSON.parse(dataMatch[1]!) : null;
+    })
+    .filter(Boolean);
+}
+
 describe('POST /api/servers - Server Creation', () => {
   let app: FastifyInstance;
+  let provisions: ProvisionCall[];
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
@@ -365,6 +379,7 @@ describe('POST /api/servers - Server Creation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    provisions = fakeProvision();
   });
 
   describe('Standard JSON mode (follow=false)', () => {
@@ -383,6 +398,7 @@ describe('POST /api/servers - Server Creation', () => {
       expect(response.statusCode).toBe(409);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('Conflict');
+      expect(provisions).toEqual([]);
     });
 
     it('should validate server name pattern', async () => {
@@ -398,9 +414,65 @@ describe('POST /api/servers - Server Creation', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    // Note: a successful standard-mode create runs a fake script in
-    // server-process-args.test.ts. sudoPassword env tests are covered by the
-    // SSE mode tests below (both paths build the same env).
+    it('creates through the provisioning use case and answers 201 (#675)', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers',
+        payload: { name: 'json-create', type: 'PAPER', version: '1.21.1', memory: '2G', autoStart: false },
+      });
+      expect(response.statusCode).toBe(201);
+      expect(response.json()).toEqual({
+        success: true,
+        server: { name: 'json-create', container: 'mc-json-create', status: 'created' },
+      });
+      expect(provisions[0]!.config).toMatchObject({ name: 'json-create', type: 'PAPER', version: '1.21.1', memory: '2G', autoStart: false });
+    });
+
+    it('answers 201 with status created and a warning when the start fails (#675, decision 1)', async () => {
+      mockedServerExists.mockReturnValue(false);
+      fakeProvision(async (config) => {
+        const { Server, ServerName, ServerType, McVersion, Memory, WorldOptions, ServerStartError } = await import('@minecraft-docker/shared');
+        const server = Server.create({
+          name: ServerName.create(config.name),
+          type: ServerType.create('PAPER'),
+          version: McVersion.create('1.21.1'),
+          memory: Memory.default(),
+          worldOptions: WorldOptions.default(),
+        });
+        throw new ServerStartError(server, 'port is already allocated');
+      });
+      const response = await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'nostart', type: 'PAPER' } });
+      expect(response.statusCode).toBe(201);
+      const body = response.json();
+      expect(body.server.status).toBe('created');
+      expect(body.warning).toMatch(/port is already allocated/);
+    });
+
+    it.each([
+      ['invalid_spec', 400],
+      ['already_exists', 409],
+      ['locked', 409],
+    ] as const)('maps ServerSpecError %s to %i', async (code, status) => {
+      mockedServerExists.mockReturnValue(false);
+      const { ServerSpecError } = await import('@minecraft-docker/shared');
+      fakeProvision(async () => {
+        throw new ServerSpecError(code, `spec ${code}`, 'bad');
+      });
+      const response = await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'bad', type: 'PAPER' } });
+      expect(response.statusCode).toBe(status);
+      expect(response.json().message).toContain(`spec ${code}`);
+    });
+
+    it('maps a world conflict found while provisioning to 409', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const { WorldAssignmentError } = await import('@minecraft-docker/shared');
+      fakeProvision(async () => {
+        throw new WorldAssignmentError('conflict', "World 'w' is assigned to 'other'", ['other']);
+      });
+      const response = await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'clash', type: 'PAPER' } });
+      expect(response.statusCode).toBe(409);
+    });
   });
 
   describe('SSE streaming mode (follow=true)', () => {
@@ -419,7 +491,7 @@ describe('POST /api/servers - Server Creation', () => {
       expect(response.headers['content-type']).toBe('text/event-stream');
     });
 
-    it('should stream creation progress events', async () => {
+    it('streams initializing, creating, configuring, starting, completed (#658)', async () => {
       mockedServerExists.mockReturnValue(false);
 
       const response = await app.inject({
@@ -431,45 +503,71 @@ describe('POST /api/servers - Server Creation', () => {
         },
       });
 
-      const events = response.body
-        .split('\n\n')
-        .filter(Boolean)
-        .map((event: string) => {
-          const dataMatch = event.match(/^data: (.+)$/m);
-          return dataMatch ? JSON.parse(dataMatch[1]) : null;
-        })
-        .filter(Boolean);
-
-      // Should have at least initializing, creating, configuring, starting, completed events
-      const eventTypes = events.map((e: any) => e.data?.status);
-      expect(eventTypes).toContain('initializing');
-      expect(eventTypes[eventTypes.length - 1]).toBe('completed');
+      const statuses = sseEvents(response.body).filter((e) => e.type === 'server-create').map((e) => e.data.status);
+      expect(statuses).toEqual(['initializing', 'creating', 'configuring', 'starting', 'completed']);
+      expect(sseEvents(response.body).at(-1)!.data.server).toEqual({
+        name: 'streamtest',
+        container: 'mc-streamtest',
+        status: 'starting',
+      });
     });
 
-    it('should return error event on script failure', async () => {
+    it('sends log lines as server-create-log and never treats their text as a failure (#658)', async () => {
       mockedServerExists.mockReturnValue(false);
+      fakeProvision(async (_config, run) => {
+        run.onLog?.('Warning: mDNS registration of error-test.local skipped: sudo failed');
+      });
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: { name: 'error-test', type: 'PAPER' },
+      });
+      const events = sseEvents(response.body);
+      expect(events.some((e) => e.type === 'server-create-log' && e.data.log.includes('skipped'))).toBe(true);
+      expect(events.at(-1)!.data.status).toBe('completed');
+    });
+
+    it('should return error event when provisioning fails', async () => {
+      mockedServerExists.mockReturnValue(false);
+      fakeProvision(async () => {
+        throw new Error('servers/compose.yml does not parse');
+      });
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/servers?follow=true',
         payload: {
           name: 'failtest',
-          type: 'PAPER', // Use valid type, failure is simulated by spawn mock checking for 'failtest' name
+          type: 'PAPER',
         },
       });
 
-      const events = response.body
-        .split('\n\n')
-        .filter(Boolean)
-        .map((event: string) => {
-          const dataMatch = event.match(/^data: (.+)$/m);
-          return dataMatch ? JSON.parse(dataMatch[1]) : null;
-        })
-        .filter(Boolean);
-
-      const lastEvent = events[events.length - 1];
-      // console.log('Events:', JSON.stringify(events, null, 2));
+      const lastEvent = sseEvents(response.body).at(-1);
       expect(lastEvent?.data?.status).toBe('error');
+      expect(lastEvent?.data?.message).toContain('servers/compose.yml does not parse');
+    });
+
+    it('completes with status created and a warning when the start fails (#675, decision 1)', async () => {
+      mockedServerExists.mockReturnValue(false);
+      fakeProvision(async (config, run) => {
+        run.onProgress?.('starting', 'Starting container...');
+        const { Server, ServerName, ServerType, McVersion, Memory, WorldOptions, ServerStartError } = await import('@minecraft-docker/shared');
+        throw new ServerStartError(
+          Server.create({
+            name: ServerName.create(config.name),
+            type: ServerType.create('PAPER'),
+            version: McVersion.create('1.21.1'),
+            memory: Memory.default(),
+            worldOptions: WorldOptions.default(),
+          }),
+          'image pull failed'
+        );
+      });
+      const response = await app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'nostart', type: 'PAPER' } });
+      const last = sseEvents(response.body).at(-1)!;
+      expect(last.data.status).toBe('completed');
+      expect(last.data.server.status).toBe('created');
+      expect(last.data.warning).toMatch(/image pull failed/);
     });
 
     it('should still return 409 if server exists', async () => {
@@ -489,7 +587,7 @@ describe('POST /api/servers - Server Creation', () => {
       expect(body.error).toBe('Conflict');
     });
 
-    it('should pass MCCTL_SUDO_PASSWORD env when sudoPassword is provided', async () => {
+    it('hands the sudo password to the avahi adapter option, not to a child environment (#682)', async () => {
       mockedServerExists.mockReturnValue(false);
 
       await app.inject({
@@ -501,39 +599,17 @@ describe('POST /api/servers - Server Creation', () => {
           sudoPassword: 'ssepassword',
         },
       });
+      await app.inject({ method: 'POST', url: '/api/servers?follow=true', payload: { name: 'test-nosudo', type: 'PAPER' } });
 
-      expect(mockedSpawn).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.any(Array),
-        expect.objectContaining({
-          env: expect.objectContaining({
-            MCCTL_SUDO_PASSWORD: 'ssepassword',
-          }),
-        })
-      );
-    });
-
-    it('should not include MCCTL_SUDO_PASSWORD env when sudoPassword is not provided', async () => {
-      mockedServerExists.mockReturnValue(false);
-
-      await app.inject({
-        method: 'POST',
-        url: '/api/servers?follow=true',
-        payload: {
-          name: 'test-nosudo-sse',
-          type: 'PAPER',
-        },
-      });
-
-      const lastCall = mockedSpawn.mock.calls[mockedSpawn.mock.calls.length - 1];
-      const options = lastCall[2] as any;
-      expect(options.env).not.toHaveProperty('MCCTL_SUDO_PASSWORD');
+      expect(provisions.map((p) => p.sudoPassword)).toEqual(['ssepassword', undefined]);
+      expect(mockedSpawn).not.toHaveBeenCalled();
     });
   });
 });
 
 describe('POST /api/servers - Modrinth Modpack Support', () => {
   let app: FastifyInstance;
+  let provisions: ProvisionCall[];
 
   beforeAll(async () => {
     app = await buildApp({ logger: false });
@@ -545,93 +621,39 @@ describe('POST /api/servers - Modrinth Modpack Support', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    provisions = fakeProvision();
   });
 
   describe('Schema Validation', () => {
-    it('should accept MODRINTH type', async () => {
+    it.each([
+      ['MODRINTH', 'adrenaline'],
+      ['AUTO_CURSEFORGE', 'enigmatica6'],
+    ])('should accept %s type', async (type, modpack) => {
       mockedServerExists.mockReturnValue(false);
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/servers?follow=true',
-        payload: {
-          name: 'modrinth-test',
-          type: 'MODRINTH',
-          modpack: 'adrenaline',
-        },
+        payload: { name: 'pack-test', type, modpack },
       });
 
       expect(response.statusCode).toBe(200);
       expect(response.headers['content-type']).toBe('text/event-stream');
     });
 
-    it('should accept AUTO_CURSEFORGE type', async () => {
-      mockedServerExists.mockReturnValue(false);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/servers?follow=true',
-        payload: {
-          name: 'curseforge-test',
-          type: 'AUTO_CURSEFORGE',
-          modpack: 'enigmatica6',
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(response.headers['content-type']).toBe('text/event-stream');
-    });
-
-    it('should accept modpack field', async () => {
-      mockedServerExists.mockReturnValue(false);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/servers?follow=true',
-        payload: {
-          name: 'modpack-test',
-          type: 'MODRINTH',
-          modpack: 'vault-hunters',
-          modpackVersion: '1.2.3',
-          modLoader: 'forge',
-        },
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
-    it('should return 400 if MODRINTH type without modpack', async () => {
+    it.each(['MODRINTH', 'AUTO_CURSEFORGE'])('should return 400 if %s type without modpack', async (type) => {
       mockedServerExists.mockReturnValue(false);
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/servers',
-        payload: {
-          name: 'modrinth-nopack',
-          type: 'MODRINTH',
-        },
+        payload: { name: 'nopack', type },
       });
 
       expect(response.statusCode).toBe(400);
       const body = JSON.parse(response.body);
       expect(body.message.toLowerCase()).toContain('modpack');
-    });
-
-    it('should return 400 if AUTO_CURSEFORGE type without modpack', async () => {
-      mockedServerExists.mockReturnValue(false);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/api/servers',
-        payload: {
-          name: 'curseforge-nopack',
-          type: 'AUTO_CURSEFORGE',
-        },
-      });
-
-      expect(response.statusCode).toBe(400);
-      const body = JSON.parse(response.body);
-      expect(body.message.toLowerCase()).toContain('modpack');
+      expect(provisions).toEqual([]);
     });
 
     it('should allow PAPER type without modpack', async () => {
@@ -650,8 +672,8 @@ describe('POST /api/servers - Modrinth Modpack Support', () => {
     });
   });
 
-  describe('Command Arguments', () => {
-    it('should pass modpack arguments to create script', async () => {
+  describe('Create options', () => {
+    it('passes the modpack options to the use case', async () => {
       mockedServerExists.mockReturnValue(false);
 
       await app.inject({
@@ -663,67 +685,34 @@ describe('POST /api/servers - Modrinth Modpack Support', () => {
           modpack: 'adrenaline',
           modpackVersion: '1.2.3',
           modLoader: 'fabric',
-        },
-      });
-
-      expect(mockedSpawn).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.arrayContaining([
-          'modpack-args',
-          '-t',
-          'MODRINTH',
-          '--modpack',
-          'adrenaline',
-          '--modpack-version',
-          '1.2.3',
-          '--mod-loader',
-          'fabric',
-        ]),
-        expect.any(Object)
-      );
-    });
-
-    it('should pass only modpack slug when version and loader not provided', async () => {
-      mockedServerExists.mockReturnValue(false);
-
-      await app.inject({
-        method: 'POST',
-        url: '/api/servers?follow=true',
-        payload: {
-          name: 'modpack-slug-only',
-          type: 'MODRINTH',
-          modpack: 'adrenaline',
-        },
-      });
-
-      const lastCall = mockedSpawn.mock.calls[mockedSpawn.mock.calls.length - 1];
-      const args = lastCall[1] as string[];
-      expect(args).toContain('--modpack');
-      expect(args).toContain('adrenaline');
-      expect(args).not.toContain('--modpack-version');
-      expect(args).not.toContain('--mod-loader');
-    });
-
-    it('should pass --exclude-files (comma-joined) when excludeFiles provided', async () => {
-      mockedServerExists.mockReturnValue(false);
-
-      await app.inject({
-        method: 'POST',
-        url: '/api/servers?follow=true',
-        payload: {
-          name: 'modpack-exclude',
-          type: 'MODRINTH',
-          modpack: 'create-plus',
-          modLoader: 'neoforge',
           excludeFiles: ['statuseffectbars', 'jei'],
         },
       });
 
-      expect(mockedSpawn).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.arrayContaining(['--exclude-files', 'statuseffectbars,jei']),
-        expect.any(Object)
-      );
+      expect(provisions[0]!.config).toMatchObject({
+        name: 'modpack-args',
+        type: 'MODRINTH',
+        modpackSlug: 'adrenaline',
+        modpackVersion: '1.2.3',
+        modLoader: 'fabric',
+        modpackExcludeFiles: ['statuseffectbars', 'jei'],
+      });
+    });
+
+    it('passes only the modpack slug when version and loader are not provided', async () => {
+      mockedServerExists.mockReturnValue(false);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers?follow=true',
+        payload: { name: 'modpack-slug-only', type: 'MODRINTH', modpack: 'adrenaline' },
+      });
+
+      const config = provisions[0]!.config;
+      expect(config.modpackSlug).toBe('adrenaline');
+      expect(config.modpackVersion).toBeUndefined();
+      expect(config.modLoader).toBeUndefined();
+      expect(config.modpackExcludeFiles).toBeUndefined();
     });
 
     it('should reject excludeFiles entries with shell metacharacters (400)', async () => {
@@ -745,34 +734,20 @@ describe('POST /api/servers - Modrinth Modpack Support', () => {
   });
 
   describe('Audit Logging', () => {
-    it('should log modpack information on success', async () => {
+    it('writes a success entry with the modpack', async () => {
       mockedServerExists.mockReturnValue(false);
+      const { writeAuditLog } = await import('../src/services/audit-log-service.js');
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/servers?follow=true',
-        payload: {
-          name: 'modpack-audit',
-          type: 'MODRINTH',
-          modpack: 'adrenaline',
-        },
+        payload: { name: 'modpack-audit', type: 'MODRINTH', modpack: 'adrenaline' },
       });
 
-      // Wait for async completion
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      // Check if audit log was written (test will verify through the response)
-      const events = response.body
-        .split('\n\n')
-        .filter(Boolean)
-        .map((event: string) => {
-          const dataMatch = event.match(/^data: (.+)$/m);
-          return dataMatch ? JSON.parse(dataMatch[1]) : null;
-        })
-        .filter(Boolean);
-
-      const completedEvent = events.find((e: any) => e.data?.status === 'completed');
-      expect(completedEvent).toBeDefined();
+      expect(sseEvents(response.body).find((e) => e.data?.status === 'completed')).toBeDefined();
+      expect(writeAuditLog).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'success', targetName: 'modpack-audit', details: expect.objectContaining({ modpack: 'adrenaline' }) })
+      );
     });
   });
 });

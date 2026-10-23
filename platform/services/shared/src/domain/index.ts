@@ -105,6 +105,7 @@ export {
   assertServerSpecDocument,
   validateHostname,
   routerHosts,
+  MC_VERSION_INPUT_PATTERN,
   type ServerSpecDocument,
   type ServerSpecErrorCode,
   type ServerSpecIssue,

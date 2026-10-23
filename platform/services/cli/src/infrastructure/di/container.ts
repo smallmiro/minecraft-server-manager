@@ -264,7 +264,8 @@ export class Container {
       {
         specRepo: this.serverSpecRepository,
         hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
-        runtime: this.containerRuntime,
+        // The first start can pull the image: create-server.sh ran compose up without a timeout.
+        runtime: new DockerComposeRuntimeAdapter({ root: this.paths.root, startTimeoutMs: 30 * 60_000 }),
         hostIps: () => resolveHostIps(this.paths),
       }
     );

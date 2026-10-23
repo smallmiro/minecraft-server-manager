@@ -5,9 +5,12 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 
 /**
- * Server create/delete hand user input to scripts (#720). These tests run the
- * real child process against fake scripts that record their argv, so a value
- * that a shell would interpret shows up as a side effect.
+ * User input reaches servers as data, never shell text (#720). Delete runs
+ * the real child process against a fake script that records its argv, so a
+ * value a shell would interpret shows up as a side effect. Create provisions
+ * in TypeScript (#675): the real use case and ServerSpec repository write the
+ * files under a temp root (no runtime, no avahi), and the values must land in
+ * config.env as given.
  */
 
 const ROOT = mkdtempSync(join(tmpdir(), 'mcctl-api-process-args-'));
@@ -43,7 +46,41 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 }));
 
 import { exec, execFile, spawn } from 'child_process';
-import { serverExists } from '@minecraft-docker/shared';
+import {
+  serverExists,
+  CreateServerUseCase,
+  ApiPromptAdapter,
+  ShellAdapter,
+  ServerRepository,
+  ConfigEnvWorldAssignmentAdapter,
+  FileServerSpecRepository,
+  Paths,
+} from '@minecraft-docker/shared';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { serverProvision } from '../src/routes/servers.js';
+
+/** The real provisioning on ROOT, without runtime or avahi. */
+function fileProvision(): void {
+  serverProvision.createUseCase = () => {
+    const paths = new Paths(ROOT);
+    return new CreateServerUseCase(
+      new ApiPromptAdapter({}),
+      new ShellAdapter({ paths }),
+      new ServerRepository(paths),
+      paths,
+      undefined,
+      undefined,
+      undefined,
+      new ConfigEnvWorldAssignmentAdapter(paths),
+      { specRepo: new FileServerSpecRepository(paths, undefined, undefined, () => []) }
+    );
+  };
+}
+
+/** The settings the provision wrote to servers/argv-test/config.env. */
+function configEnv(): Map<string, string> {
+  return parseEnvDocument(readFileSync(join(ROOT, 'servers', 'argv-test', 'config.env'), 'utf-8')).values;
+}
 
 const ARGV_FILE = join(ROOT, 'argv');
 
@@ -82,10 +119,13 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
   beforeEach(() => {
     vi.clearAllMocks();
     rmSync(ARGV_FILE, { force: true });
+    rmSync(join(ROOT, 'servers'), { recursive: true, force: true });
+    mkdirSync(join(ROOT, 'servers'), { recursive: true });
+    fileProvision();
   });
 
   describe('POST /api/servers (non-streaming)', () => {
-    it('passes seed and modpack version through untouched', async () => {
+    it('writes seed and modpack version into config.env as given, running no shell', async () => {
       vi.mocked(serverExists).mockReturnValue(false);
       const seed = `-123"; touch "${ROOT}/pwned-seed"; echo "`;
       const modpackVersion = `1.0 $(touch ${ROOT}/pwned-modpack) \`touch ${ROOT}/pwned-tick\``;
@@ -105,40 +145,28 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       });
 
       expect(response.statusCode).toBe(201);
-      expect(recordedArgv()).toEqual([
-        'argv-test',
-        '-t', 'MODRINTH',
-        '-v', '1.21.1',
-        '-s', seed,
-        '--modpack', 'fabric-example',
-        '--modpack-version', modpackVersion,
-        '--no-start',
-      ]);
+      expect(configEnv().get('SEED')).toBe(seed);
+      expect(configEnv().get('MODRINTH_VERSION')).toBe(modpackVersion);
+      expect(configEnv().get('MODRINTH_MODPACK')).toBe('fabric-example');
       expect(pwned('seed')).toBe(false);
       expect(pwned('modpack')).toBe(false);
       expect(pwned('tick')).toBe(false);
       expect(exec).not.toHaveBeenCalled();
-      expect(execFile).not.toHaveBeenCalled();
-      // Own process group, so a timeout can stop what the script started (#656)
-      expect(spawn).toHaveBeenCalledWith(
-        'bash',
-        [join(SCRIPTS, 'create-server.sh'), ...recordedArgv()],
-        expect.objectContaining({ cwd: ROOT, detached: true })
-      );
+      expect(spawn).not.toHaveBeenCalled();
     });
 
-    it('passes a world URL with command substitution untouched', async () => {
+    it('writes a world URL with command substitution as given', async () => {
       vi.mocked(serverExists).mockReturnValue(false);
       const worldUrl = 'http://example.com/w.zip?$(touch$IFS$MCCTL_ROOT/pwned-url)';
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/servers',
-        payload: { name: 'argv-test', worldUrl },
+        payload: { name: 'argv-test', worldUrl, autoStart: false },
       });
 
       expect(response.statusCode).toBe(201);
-      expect(recordedArgv()).toEqual(['argv-test', '-u', worldUrl]);
+      expect(configEnv().get('WORLD')).toBe(worldUrl);
       expect(pwned('url')).toBe(false);
       expect(exec).not.toHaveBeenCalled();
     });
@@ -148,8 +176,8 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
     const create = (payload: Record<string, unknown>) =>
       app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'argv-test', ...payload } });
 
-    // create-server.sh writes these into config.env as KEY=value lines (and
-    // VERSION through sed), so a line break would add another setting.
+    // These become config.env KEY=value lines, so a line break or a leading
+    // quote would add another setting (#726).
     it.each([
       { version: '1.21"; id; "' },
       { version: '1.21\nEULA=FALSE' },
@@ -169,7 +197,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       vi.mocked(serverExists).mockReturnValue(false);
       const response = await create(payload);
       expect(response.statusCode).toBe(400);
-      expect(spawn).not.toHaveBeenCalled();
+      expect(existsSync(join(ROOT, 'servers', 'argv-test'))).toBe(false);
     });
 
     it.each([
@@ -184,9 +212,11 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       { type: 'MODRINTH', modpack: 'pack', modpackVersion: 'Release 5 (beta)' },
     ])('accepts %j', async (payload) => {
       vi.mocked(serverExists).mockReturnValue(false);
-      const response = await create(payload);
-      expect(response.statusCode).toBe(201);
-      expect(recordedArgv()).toEqual(expect.arrayContaining(Object.values(payload)));
+      const response = await create({ ...payload, autoStart: false });
+      expect(response.statusCode, response.body).toBe(201);
+      // The seed is trimmed like every create path (WorldOptions); Compose trimmed it from the script's line too.
+      const expected = Object.values(payload).filter((v) => v !== 'MODRINTH').map((v) => String(v).trim());
+      expect([...configEnv().values()]).toEqual(expect.arrayContaining(expected));
     });
   });
 

@@ -10,6 +10,7 @@ import {
   WorldAssignmentError,
   checkAssign,
   buildCreateSpec,
+  MC_VERSION_INPUT_PATTERN,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import { Config, type Paths } from '../../utils/index.js';
@@ -111,7 +112,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
   private async createFiles(
     name: ServerName,
     options: CreateServerOptions,
-    run: CreateServerRunOptions
+    run: CreateServerRunOptions,
+    versionText?: string
   ): Promise<{ startError?: string }> {
     if (!this.provision) {
       const result = await this.shell.createServer(name, options);
@@ -128,7 +130,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         name: name.value,
         type: type.value,
         // The modpack decides the Minecraft version unless one is given (no VERSION).
-        version: type.isModpack && options.version.value === 'LATEST' ? undefined : options.version.value,
+        version:
+          versionText ?? (type.isModpack && options.version.value === 'LATEST' ? undefined : options.version.value),
         memory: (options.memory ?? (type.isModpack ? Memory.create('6G') : Memory.default())).formatted,
         seed: worldOptions.setupType === WorldSetupType.NEW ? worldOptions.seed : undefined,
         worldUrl: worldOptions.setupType === WorldSetupType.DOWNLOAD ? worldOptions.downloadUrl : undefined,
@@ -414,9 +417,17 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       throw new Error(`Modpack slug is required for ${type.label} server type`);
     }
 
-    const version = config.version
-      ? McVersion.create(config.version)
-      : McVersion.latest();
+    // Snapshots and pre-releases (24w14a, 1.20.5-rc1) are valid requests that
+    // McVersion cannot model: provisioning writes the text as given (#675).
+    let versionText: string | undefined;
+    let version: McVersion;
+    try {
+      version = config.version ? McVersion.create(config.version) : McVersion.latest();
+    } catch (error) {
+      if (!this.provision || !MC_VERSION_INPUT_PATTERN.test(config.version!)) throw error;
+      version = McVersion.latest();
+      versionText = config.version;
+    }
     const memory = config.memory
       ? Memory.create(config.memory)
       : type.isModpack
@@ -483,7 +494,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       whitelistPlayers: config.whitelistPlayers,
       playitDomain: config.playitDomain,
       noPlayitDomain: config.noPlayitDomain,
-    }, options).then(
+    }, options, versionText).then(
       (r) => {
         startError = r.startError;
         return { success: true, stderr: '' };

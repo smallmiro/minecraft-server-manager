@@ -229,6 +229,8 @@ export const CreateServerResponseSchema = Type.Object({
     container: Type.String(),
     status: Type.String(),
   }),
+  /** The server was created but did not start (#675): status is 'created'. */
+  warning: Type.Optional(Type.String()),
 });
 
 // Delete Server Response Schema

@@ -1,7 +1,6 @@
 import { ServerName, EXISTING_SERVER_NAME_PATTERN } from '../value-objects/ServerName.js';
 import { WORLD_NAME_PATTERN, EXISTING_WORLD_NAME_PATTERN } from '../value-objects/WorldName.js';
 import { ServerType } from '../value-objects/ServerType.js';
-import { McVersion } from '../value-objects/McVersion.js';
 import { Memory } from '../value-objects/Memory.js';
 import { ENV_KEY_RE, ENV_FILE_VALUE_RE } from '../../utils/env-file.js';
 
@@ -96,6 +95,13 @@ export class ServerSpecError extends Error {
 export type ServerSpecRules = 'create' | 'existing';
 
 const DIMENSION_SUFFIX = /_(nether|the_end)$/;
+
+/**
+ * A Minecraft version a new server may ask for: releases, LATEST, snapshots
+ * (24w14a) and pre-releases (1.20.5-rc1). The same rule as the API create
+ * schema; itzg resolves the value.
+ */
+export const MC_VERSION_INPUT_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const HOST_LABEL = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 /**
@@ -207,7 +213,14 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
   const type = str(value, 'type', 'type', true);
   if (type !== undefined) check('type', create ? rejects(ServerType.create, type) : envValueError(type));
   const version = str(value, 'version', 'version', false);
-  if (version !== undefined) check('version', create ? rejects(McVersion.create, version) : envValueError(version));
+  if (version !== undefined) {
+    check(
+      'version',
+      create
+        ? MC_VERSION_INPUT_PATTERN.test(version) ? undefined : `invalid Minecraft version '${version}' (e.g. 1.21.1, LATEST, 24w14a)`
+        : envValueError(version)
+    );
+  }
   const memory = str(value, 'memory', 'memory', false);
   if (memory !== undefined) check('memory', create ? rejects(Memory.create, memory) : envValueError(memory));
 

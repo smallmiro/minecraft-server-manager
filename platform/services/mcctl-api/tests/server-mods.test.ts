@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import { fakeProvision } from './fake-provision.js';
 
 // Mock child_process module
 vi.mock('child_process', async (importOriginal) => {
@@ -155,6 +156,7 @@ MEMORY=4G
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fakeProvision(); // POST /api/servers never provisions for real in tests (#675)
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(sampleConfigWithMods);
     mockWriteFileSync.mockImplementation(() => {});
