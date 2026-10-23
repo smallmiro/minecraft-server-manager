@@ -6,6 +6,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
+import * as readline from 'node:readline';
 import {
   ServerName,
   log,
@@ -109,6 +110,26 @@ describe('rconCommand (mcctl rcon / mcctl console)', () => {
     expect(d.session.events).toEqual(['send list', 'reply list', 'send say hello', 'reply say hello', 'end']);
     expect(d.printed()).toContain('ran list');
     expect(d.printed()).toContain('ran say hello');
+  });
+
+  it('does not prompt on the input closed by EOF (Node 24+ throws ERR_USE_AFTER_CLOSE)', async () => {
+    // Node 22 ignores prompt() after close; newer Node throws. Behave like the newer one.
+    const prompt = vi.spyOn(readline.Interface.prototype, 'prompt').mockImplementation(function (this: readline.Interface) {
+      if ((this as unknown as { closed: boolean }).closed) {
+        throw Object.assign(new Error('readline was closed'), { code: 'ERR_USE_AFTER_CLOSE' });
+      }
+    });
+    try {
+      const d = deps('running', ENDPOINT, 20);
+      const done = rconCommand(d.options);
+      await vi.waitFor(() => expect(d.options.connect).toHaveBeenCalled());
+      d.input.end('list\nsay hello\n');
+
+      expect(await done).toBe(0);
+      expect(d.session.events).toEqual(['send list', 'reply list', 'send say hello', 'reply say hello', 'end']);
+    } finally {
+      prompt.mockRestore();
+    }
   });
 
   it('ignores lines queued after exit', async () => {

@@ -166,6 +166,8 @@ export async function rconCommand(options: RconCommandOptions): Promise<number> 
 
   return new Promise((resolve) => {
     let done = false;
+    // After EOF the queue still drains, but the closed readline cannot prompt
+    let inputClosed = false;
     // Lines run one at a time, in order; EOF waits for the queue (piped input)
     let queue: Promise<void> = Promise.resolve();
 
@@ -197,7 +199,7 @@ export async function rconCommand(options: RconCommandOptions): Promise<number> 
           log.error(`Command failed: ${(err as Error).message}`);
         }
       }
-      if (!done) rl.prompt();
+      if (!done && !inputClosed) rl.prompt();
     };
 
     rl.on('line', (line) => {
@@ -205,6 +207,7 @@ export async function rconCommand(options: RconCommandOptions): Promise<number> 
     });
     // EOF (Ctrl+D, end of a pipe): finish the queued commands first
     rl.on('close', () => {
+      inputClosed = true;
       void queue.then(() => finish(0));
     });
     // Ctrl+C: leave now
