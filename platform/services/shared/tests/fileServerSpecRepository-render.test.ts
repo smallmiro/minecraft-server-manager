@@ -18,6 +18,9 @@ import {
   type RenderedFile,
 } from '../src/infrastructure/adapters/server-spec/DockerComposeRenderer.js';
 import { ServerSpecError, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
+import { WorldAssignmentError } from '../src/domain/services/worldAssignment.js';
+import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+import type { ContainerStatus } from '../src/types/index.js';
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), '../../cli/templates/servers/_template');
 const IP = '192.168.1.10';
@@ -330,5 +333,77 @@ describe('servers/compose.yml read-back', () => {
     const doc = (await repo.load('survival'))!.document;
     const error = await rejection(new FileServerSpecRepository(new Paths(root), new DroppingRenderer(5)).write(doc));
     expect(error.message).toMatch(/servers\/compose\.yml/);
+  });
+});
+
+describe('world assignment guard on a changed LEVEL (ADR-0003 R4, ADR-0002)', () => {
+  const runtime = (status: ContainerStatus) => ({ getStatus: () => status }) as unknown as IContainerRuntimePort;
+  const withRuntime = (status: ContainerStatus) => new FileServerSpecRepository(new Paths(root), undefined, runtime(status));
+
+  /** Hand-edit servers/<name>/server.yaml so world.level becomes `level`. */
+  function editLevel(name: string, level: string): void {
+    writeFileSync(file(name, 'server.yaml'), read(name, 'server.yaml').replace(/^  level: .*$/m, `  level: ${level}`));
+  }
+
+  async function worldRejection(promise: Promise<unknown>): Promise<WorldAssignmentError> {
+    const error = await promise.then(
+      () => {
+        throw new Error('expected a rejection');
+      },
+      (e: unknown) => e
+    );
+    expect(error).toBeInstanceOf(WorldAssignmentError);
+    return error as WorldAssignmentError;
+  }
+
+  beforeEach(async () => {
+    templateServer('alpha');
+    templateServer('beta');
+    await migrate('alpha');
+    await migrate('beta');
+  });
+
+  it("refuses a hand-edited level that another server uses ('conflict') and writes nothing", async () => {
+    editLevel('beta', 'alpha');
+    const yamlBefore = read('beta', 'server.yaml');
+    const configBefore = read('beta', 'config.env');
+    repo = withRuntime('exited');
+
+    const error = await worldRejection(migrate('beta'));
+    expect(error.code).toBe('conflict');
+    expect(error.servers).toEqual(['alpha']);
+    expect(read('beta', 'server.yaml')).toBe(yamlBefore);
+    expect(read('beta', 'config.env')).toBe(configBefore);
+  });
+
+  it("refuses a level change on a running server ('server_running')", async () => {
+    editLevel('beta', 'fresh');
+    repo = withRuntime('running');
+    expect((await worldRejection(migrate('beta'))).code).toBe('server_running');
+  });
+
+  it("refuses a level change when the runtime cannot be asked ('undetermined')", async () => {
+    editLevel('beta', 'fresh');
+    expect((await worldRejection(migrate('beta'))).code).toBe('undetermined');
+  });
+
+  it("refuses a level change while another server's world cannot be determined (R7)", async () => {
+    writeFileSync(file('alpha', 'config.env'), read('alpha', 'config.env').replace(/^LEVEL=.*$/m, 'LEVEL=${W}'));
+    editLevel('beta', 'fresh');
+    repo = withRuntime('exited');
+    expect((await worldRejection(migrate('beta'))).code).toBe('undetermined');
+  });
+
+  it('renders a level change to a free world on a stopped server', async () => {
+    editLevel('beta', 'fresh');
+    repo = withRuntime('exited');
+    await migrate('beta');
+    expect(parseEnvDocument(read('beta', 'config.env')).values.get('LEVEL')).toBe('fresh');
+  });
+
+  it('does not check (or need a runtime) when the level stays the same', async () => {
+    writeFileSync(file('beta', 'server.yaml'), read('beta', 'server.yaml').replace('memory: 4G', 'memory: 6G'));
+    await migrate('beta');
+    expect(parseEnvDocument(read('beta', 'config.env')).values.get('MEMORY')).toBe('6G');
   });
 });
