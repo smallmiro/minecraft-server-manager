@@ -6,6 +6,7 @@ import {
   AuditActionEnum,
   getServerPlayitDomain,
   resolvePlayitDomain,
+  ServerSpecError,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
@@ -17,6 +18,7 @@ import {
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
 import { createHostnameService } from '../../services/HostnameService.js';
+import { serverSpecFailure } from '../../lib/server-spec.js';
 
 // ============================================================
 // Types
@@ -106,6 +108,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         200: UpdateHostnamesResponseSchema,
         400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -175,6 +178,10 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
+      }
       if (error instanceof Error && (
         error.message.includes('Duplicate') ||
         error.message.includes('Invalid') ||

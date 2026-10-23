@@ -101,4 +101,24 @@ describe('PUT /api/servers/:name/hostnames - playit domain sync', () => {
     );
     expect(res.json().playitDomain).toBe('old.gl.joinmc.link');
   });
+
+  it.each([
+    ['invalid_spec', 400],
+    ['locked', 409],
+    ['compose_edited', 409],
+  ] as const)('maps a refused ServerSpec write (%s) to %i (#675)', async (code, status) => {
+    const { getServerPlayitDomain, ServerSpecError } = await import('@minecraft-docker/shared');
+    vi.mocked(getServerPlayitDomain).mockReturnValue(null);
+    hostnameService.getHostnames.mockReturnValue(hostData([]));
+    hostnameService.updateCustomHostnames.mockRejectedValue(new ServerSpecError(code, `spec ${code}`, 'factory'));
+
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/servers/factory/hostnames',
+      payload: { customHostnames: ['mc.example.com'] },
+    });
+
+    expect(res.statusCode).toBe(status);
+    expect(res.json().message).toContain(`spec ${code}`);
+  });
 });

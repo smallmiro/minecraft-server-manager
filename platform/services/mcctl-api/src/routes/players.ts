@@ -13,6 +13,7 @@ import {
   PlayerSessionUseCase,
   RconCliAdapter,
   SqlitePlayerSessionRepository,
+  ServerSpecError,
   type IPlayerManagementUseCase,
   type SessionHistory,
 } from '@minecraft-docker/shared';
@@ -43,6 +44,7 @@ import {
   type PlayerDetailQuery,
   type UsernameParams,
 } from '../schemas/player.js';
+import { serverSpecFailure } from '../lib/server-spec.js';
 import { StatusQuerySchema, type StatusQuery } from '../schemas/server.js';
 import {
   OperatorsListResponseSchema,
@@ -520,7 +522,13 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       tags: ['players'],
       params: ServerNameParamsSchema,
       body: WhitelistStatusRequestSchema,
-      response: { 200: WhitelistStatusResponseSchema, 404: ErrorResponseSchema, 500: ErrorResponseSchema },
+      response: {
+        200: WhitelistStatusResponseSchema,
+        400: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
     },
   }, async (request: FastifyRequest<WhitelistStatusRoute>, reply: FastifyReply) => {
     const { name } = request.params;
@@ -559,6 +567,10 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
+      }
       fastify.log.error(error, 'Failed to set whitelist status');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to set whitelist status' });
     }

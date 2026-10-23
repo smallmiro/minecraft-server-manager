@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vites
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
+import { ServerSpecError } from '@minecraft-docker/shared';
 import { ServerConfigSchema } from '../src/schemas/config.js';
 import { ConfigService } from '../src/services/ConfigService.js';
 
@@ -80,11 +81,12 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
 });
 
 // ServerSpec writes (#675) land on the mocked file writer, as the direct writes did
-vi.mock('../src/lib/server-spec.js', async () => {
+vi.mock('../src/lib/server-spec.js', async (importOriginal) => {
   const utils = await import('@minecraft-docker/shared/utils');
   const fs = await import('fs');
   const { join } = await import('path');
   return {
+    ...(await importOriginal<typeof import('../src/lib/server-spec.js')>()),
     writeServerConfig: vi.fn(async (root: string, server: string, changes: { set?: Record<string, string>; remove?: string[] }) => {
       const file = join(root, 'servers', server, 'config.env');
       const content = fs.existsSync(file) ? String(fs.readFileSync(file, 'utf-8')) : '';
@@ -711,6 +713,27 @@ GID=1000
         spy.mockRestore();
         expect(response.statusCode).toBe(400);
         expect(response.json()).toMatchObject({ error: 'BadRequest' });
+      });
+
+      it.each([
+        ['invalid_spec', 400],
+        ['locked', 409],
+        ['undetermined', 409],
+      ] as const)('maps a refused ServerSpec write (%s) to %i (#675)', async (code, status) => {
+        mockedServerExists.mockReturnValue(true);
+        const spy = vi
+          .spyOn(ConfigService.prototype, 'updateConfig')
+          .mockRejectedValueOnce(new ServerSpecError(code, `spec ${code}`, 'testserver'));
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { motd: 'Updated MOTD' },
+        });
+
+        spy.mockRestore();
+        expect(response.statusCode).toBe(status);
+        expect(response.json().message).toContain(`spec ${code}`);
       });
     });
   });

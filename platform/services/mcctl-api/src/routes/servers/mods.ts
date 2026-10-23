@@ -5,11 +5,13 @@ import {
   AuditActionEnum,
   ModSourceFactory,
   buildModpackCompatibilityMatrix,
+  ServerSpecError,
 } from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { createModConfigService } from '../../services/ModConfigService.js';
+import { serverSpecFailure } from '../../lib/server-spec.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
 import type { InstalledModEntry } from '../../services/ModConfigService.js';
@@ -105,7 +107,9 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       tags: ['servers', 'mods'],
       params: ServerNameParamsSchema,
       response: {
+        400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -154,6 +158,10 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       if (error instanceof EnvValueError) {
         return reply.code(400).send({ error: 'BadRequest', message: error.message });
       }
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
+      }
       fastify.log.error(error, 'Failed to add mods');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to add mods' });
     }
@@ -169,7 +177,9 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       tags: ['servers', 'mods'],
       params: ServerNameParamsSchema,
       response: {
+        400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -213,6 +223,10 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
+      }
       fastify.log.error(error, 'Failed to remove mod');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to remove mod' });
     }
@@ -472,6 +486,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       response: {
         404: ErrorResponseSchema,
         400: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -527,6 +542,10 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         restartRequired: true,
       });
     } catch (error) {
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
+      }
       fastify.log.error(error, 'Failed to toggle mod exclude');
       return reply.code(500).send({ error: 'InternalServerError', message: 'Failed to toggle mod exclude' });
     }
