@@ -610,7 +610,13 @@ mcctl delete [name] [options]
     - If `worlds/` already has a folder with the same name, the delete stops and nothing is removed. Rename the folder in `worlds/`, or pass `--delete-world`.
     - `--delete-world` deletes the world inside the server. It never deletes worlds in `worlds/`; use [`mcctl world delete`](#mcctl-world-delete) for those.
 
-If the server's container cannot be stopped, the delete stops and nothing is removed.
+Without `--delete-world`, the delete also stops before removing anything when the world cannot be kept with certainty:
+
+- `config.env` has a `LEVEL` line other than one plain `LEVEL=<name>` (letters, digits, `-`, `_`): for example a comment, quotes, spaces around `=`, a path, or two `LEVEL` lines. Without any `LEVEL` line the world is `world`.
+- `servers/<name>/` or its `data/` is a symlink, or only `<LEVEL>_nether`/`<LEVEL>_the_end` exist without `data/<LEVEL>`.
+- Another folder with a `level.dat` (an old world from a previous `LEVEL`, or the target of a symlink inside the server) would be deleted. The message lists them.
+
+If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, `mcctl delete <name>` refuses unless you pass `--force`.
 
 **Examples:**
 

@@ -610,7 +610,13 @@ mcctl delete [name] [options]
     - `worlds/`에 같은 이름의 폴더가 이미 있으면 삭제를 중단하고 아무것도 지우지 않습니다. `worlds/`의 폴더 이름을 바꾸거나 `--delete-world`를 지정하세요.
     - `--delete-world`는 서버 안의 월드를 삭제합니다. `worlds/`의 월드는 지우지 않으므로 [`mcctl world delete`](#mcctl-world-delete)로 지우세요.
 
-서버 컨테이너를 정지하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다.
+`--delete-world`가 없으면 월드를 확실히 보존할 수 없는 다음 경우에도 아무것도 지우지 않고 중단합니다.
+
+- `config.env`의 `LEVEL` 줄이 `LEVEL=<이름>`(영문자, 숫자, `-`, `_`) 한 줄이 아닌 경우: 주석, 따옴표, `=` 앞뒤 공백, 경로, `LEVEL` 줄이 둘 이상인 경우 등. `LEVEL` 줄이 아예 없으면 월드는 `world`로 봅니다.
+- `servers/<name>/`나 그 안의 `data/`가 심볼릭 링크이거나, `data/<LEVEL>` 없이 `<LEVEL>_nether`·`<LEVEL>_the_end`만 있는 경우.
+- `level.dat`가 있는 다른 폴더(이전 `LEVEL`의 옛 월드, 서버 안을 가리키는 심볼릭 링크의 대상)가 함께 지워지게 되는 경우. 메시지에 그 경로를 보여 줍니다.
+
+서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 `mcctl delete <name>`은 `--force` 없이는 삭제를 거부합니다.
 
 **예제:**
 
