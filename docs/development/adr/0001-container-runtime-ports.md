@@ -338,14 +338,14 @@ Production code that imports `child_process` outside `src/infrastructure/**` (23
 | 6 | api `utils/docker-compose.ts:85` | `docker compose up -d / stop / restart` | `runtime.start` / `.stop` / `.restart` | D2 | `stop` changes from compose stop to `docker stop` (open question 2) |
 | 7 | api `routes/servers.ts:1111` | facade `stopContainer` (sync) | `runtime.stop` | D2 | becomes awaited |
 | 8 | api `routes/servers.ts:61,858` (create and delete routes), `routes/backup.ts`, `services/backup-scheduler.ts` | `create-server.sh`, `delete-server.sh`, `backup.sh`, `git` | not a runtime port; move under `mcctl-api/src/infrastructure/` | D2; backup paths: #732 | needed before the rule becomes an error. #732 removes the backup ones (see [Backup Port](#backup-port-732-s3)) |
-| 9 | cli `lib/rcon.ts:16` | `docker inspect -f {{.State.Running}}` | `runtime.getStatus === 'running'` | D3 | same note as #2 |
-| 10 | cli `lib/rcon.ts:43` | `docker exec <c> rcon-cli ...` | `console.command` | D3 | caller keeps `output \|\| errorOutput` |
-| 11 | cli `lib/shell.ts:265` | `docker exec` with inherited stdio | `console.command` then print | D3 | output is buffered instead of streamed |
-| 12 | cli `commands/rcon.ts:24,39` | two `docker inspect` (IP, env) | `console.getEndpoint` | D3 | |
-| 13 | cli `lib/prompts/server-select.ts:109` | `docker ps -a ... {{.Status}}` | `runtime.list()` + `list({ running: true })` | D3 | "Up (Paused)" counted as running today |
-| 14 | cli `commands/migrate.ts:557` | `docker stop <c>` | `runtime.stop` (throw on `!success`) | D3 | |
-| 15 | cli `lib/shell.ts:145,167,298,321,348`, `commands/init.ts:344,349,679`, `commands/upgrade.ts:365` | `docker pull`, generic `docker compose`, `down`, `startAll`/`stopAll` pipelines, network create, router restart/recreate | not a runtime port: compose-project / platform-install operations; move under `cli/src/infrastructure/` | D3 | k8s platform lifecycle belongs to Helm (#641). C1 fixes the router service name |
-| 16 | cli `commands/console/init.ts`, `console/service.ts`, `update.ts`, `lib/pm2-utils.ts`, `lib/banner.ts` | `npm`, `pm2`, `git` | not a runtime port; move under `cli/src/infrastructure/` | D3 | needed before the rule becomes an error |
+| 9 | cli `lib/rcon.ts:16` | `docker inspect -f {{.State.Running}}` | `runtime.getStatusAsync` in `running`/`paused`/`restarting` | D3, done (#668) | `isContainerRunning` keeps the `{{.State.Running}}` meaning (paused and restarting count as running); the server comes from `serverOfContainer` |
+| 10 | cli `lib/rcon.ts:43` | `docker exec <c> rcon-cli ...` | `console.command` | D3, done (#668) | `execRconWithOutput` keeps `output = stdout \|\| stderr`; adds `--` |
+| 11 | cli `lib/shell.ts:265` | `docker exec` with inherited stdio | `console.command` then print | D3, done (#668) | `mcctl exec`; output is buffered instead of streamed. `ShellExecutor.execRcon` was removed |
+| 12 | cli `commands/rcon.ts:24,39` | two `docker inspect` (IP, env) | `console.getEndpoint` | done (#734) | |
+| 13 | cli `lib/prompts/server-select.ts:109` | `docker ps -a ... {{.Status}}` | `runtime.list()` + `getStatus` per server | D3, done (#668) | paused still counts as running ("Up (Paused)"); the choices are now sorted by name |
+| 14 | cli `commands/migrate.ts:557` | `docker stop <c>` | `runtime.stop` (throw on `!success`) | D3, done (#668) | |
+| 15 | cli `lib/shell.ts:145,167,298,321,348`, `commands/init.ts:344,349,679`, `commands/upgrade.ts:365` | `docker pull`, generic `docker compose`, `down`, `startAll`/`stopAll` pipelines, network create, router restart/recreate | not a runtime port: compose-project / platform-install operations; move under `cli/src/infrastructure/` | D3, done (#668) | moved unchanged to `infrastructure/ShellExecutor.ts` (`lib/shell.ts` re-exports it) and `infrastructure/compose-project.ts`. k8s platform lifecycle belongs to Helm (#641). C1 fixes the router service name |
+| 16 | cli `commands/console/init.ts`, `console/service.ts`, `update.ts`, `lib/pm2-utils.ts`, `lib/banner.ts` | `npm`, `pm2`, `git` | not a runtime port; move under `cli/src/infrastructure/` | D3, done (#668) | `infrastructure/npm.ts`, `infrastructure/pm2-cli.ts`. `banner.ts` `getGitHash` was deleted: its `require()` never ran in the ESM build |
 | 17 | shared `ServerRepository.ts:115` | facade `execCommandAsync('docker', ['inspect', ...])` | `runtime.getStatus` | D4 | done (#665) |
 | 18 | shared `WorldRepository.ts:299` | facade `getContainerStatus` | `runtime.getStatus` | D4 | done (#665) |
 | 19 | shared `prerequisite/PrerequisiteChecker.ts:1` | `which pm2`, `pm2 --version` | not a runtime port; move the probe under `infrastructure/` | D4 | the only shared finding left after D1 |
@@ -378,6 +378,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 - `pnpm lint` runs `eslint src --ext .ts` without `--max-warnings`, and CI (`ci.yml`) runs `pnpm lint`. Warnings therefore do not fail CI. Tests are not linted (`src` only), so tests that mock `child_process` are unaffected.
 - **Measured on 2026-10-23** with this exact config (dry run): shared **2** (`docker/index.ts`, `prerequisite/PrerequisiteChecker.ts`), cli **12**, mcctl-api **9** (6 files, including 3 dynamic `import()`s in `routes/servers.ts`). Total 23. After D1: shared **1**, total **22**. The override correctly exempts `RconCliAdapter` and `BlueMapCliRenderer`.
 - **Becoming an error**: per package, in the issue that brings the package to zero (cli: D3, mcctl-api: D2, shared: D4). Rows 8, 15, 16, and 19 above are not runtime work but still block the error.
+- **cli is an error since #668** (0 findings). No port method was added: the CLI uses `getStatusAsync`, `getStatus`, `list`, `stop`, and `console.command` as they are.
 
 ## Alignment with #715 (Script Removal)
 
@@ -481,7 +482,7 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 | `GitWorldBackupAdapter` | `list()` returns container names and they go back to `console.command` | #736 or `list()` returning server names |
 | `PlayerManagementUseCase` (`options.container`), `WorldInfoUseCase.getLivePlayerLocations(container)` | The API builds `mc-<name>`; public signatures unchanged | D2 (#667) |
 | `mcctl logs` for the router | `mc-router` is not a server | #641 |
-| CLI `lib/rcon.ts`, `commands/*` direct `docker` calls | Not port calls | D3 (#668) |
+| CLI `lib/rcon.ts` helpers, `mcctl exec`, the player server prompt, `migrate worlds` | Port calls since #668; they keep the container-name API and convert with `serverOfContainer`, which passes a `ServerName` and falls back to the string only for a name that is not a valid server container | #736 |
 
 ### Not done in #665
 
