@@ -173,6 +173,7 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('mcctl.sh', ['stop', serverName]);
   }
 
+  /** @deprecated Use IContainerRuntimePort.getStatus. Removed in v3.0.0 (#736). */
   async serverStatus(name: string): Promise<ShellResult> {
     return this.executeScript('mcctl.sh', ['status', name, '--json']);
   }
@@ -221,6 +222,7 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('lock.sh', args);
   }
 
+  /** @deprecated Use IWorldAssignmentPort.assign (#670). Removed in v3.0.0 (#736). */
   async worldAssign(
     worldName: string,
     serverName: string,
@@ -234,6 +236,7 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('mcctl.sh', args);
   }
 
+  /** @deprecated Use IWorldAssignmentPort.release (#670). Removed in v3.0.0 (#736). */
   async worldRelease(worldName: string): Promise<ShellResult> {
     // Use mcctl.sh world release which delegates to lock.sh unlock
     return this.executeScript('mcctl.sh', ['world', 'release', worldName]);

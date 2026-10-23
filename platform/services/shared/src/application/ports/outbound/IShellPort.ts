@@ -34,6 +34,9 @@ export interface IShellPort {
 
   /**
    * Get server status
+   *
+   * @deprecated `mcctl.sh status` ignores the name, so this never reported one
+   * server. Use IContainerRuntimePort.getStatus. Removed in v3.0.0 (#736).
    */
   serverStatus(name: string): Promise<ShellResult>;
 
@@ -80,11 +83,19 @@ export interface IShellPort {
 
   /**
    * Assign world to server
+   *
+   * @deprecated Writes a worlds/.locks file nothing reads (#670). Use
+   * IWorldAssignmentPort.assign (or WorldManagementUseCase.assignWorldByName).
+   * Removed in v3.0.0 (#736).
    */
   worldAssign(worldName: string, serverName: string, force?: boolean): Promise<ShellResult>;
 
   /**
    * Release world lock
+   *
+   * @deprecated Removes a worlds/.locks file nothing reads (#670). Use
+   * IWorldAssignmentPort.release (or WorldManagementUseCase.releaseWorldByName).
+   * Removed in v3.0.0 (#736).
    */
   worldRelease(worldName: string): Promise<ShellResult>;
 
