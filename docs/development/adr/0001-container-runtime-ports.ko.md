@@ -46,8 +46,8 @@
 | `IRouterStatusPort` | `getHealth()` (`getRouterHealthViaApi`), `getHostnames(name)` (`getContainerHostname`) | 동기 |
 | `IPlayitAgentPort` | `start()`, `stop()` | 비동기 |
 | `IHostnameRegistrarPort` | `getStatus()` (`getAvahiStatus`) | 동기 |
-| | `register(hostname, ip)`(#675), `unregister(hostname)`(#735) → `HostnameChangeResult { status: 'changed' \| 'unchanged' \| 'skipped'; reason? }`. 정확히 일치하는 이름만 다룬다(#660) | 비동기, reject하지 않음 |
-| `IServerSpecRepository`(#675, ADR-0003) | `list()` → 서버 이름, `get(name)` → `{ spec, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `save(spec, { expectedRevision?, create?, force? })`, `delete(name)`(#735). 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
+| | `register(hostname, ip)`(#675), `unregister(hostname)`(#735) → `HostnameChangeResult { status: 'changed' \| 'unchanged' \| 'skipped'; reason? }`. 정확히 일치하는 이름만 다룬다(#660). `unregister`는 README sudoers 모양(#751)인 `sudo -n sed -i <expr> /etc/avahi/hosts`를 셸 없이 argv로 실행한다. `<expr>`은 검증된 호스트명을 정규식 이스케이프하고 필드 경계로 앵커를 건다. 비밀번호가 있으면 먼저 `sudo -S -p '' -v` | 비동기, reject하지 않음 |
+| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete`(#735). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
 | `IRuntimeEnvironmentPort` | `isAvailable()`, `getEngineVersion()`, `getComposeVersion()` | 동기 |
 
 **수명주기 구현**:
@@ -112,7 +112,7 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 | `logs.sh`(#731에서 제거) | `getLogs`, `followLogs({ tail, follow })`, `readLogs` | 출력 형식은 CLI 표현 문제다. avahi `journalctl` 보기는 삭제했다(`journalctl -u avahi-daemon`을 직접 실행). `followLogs`에 선택 인자 `tail`(기본 0)과 `follow`(기본 true)를 추가해(기존 호출처 불변) "마지막 N줄 다음 follow"를 한 스트림으로 내고, `follow: false`는 마지막 N줄을 stdout·stderr 모두 출력한 뒤 종료한다. `onExit(code, error?)`는 docker 종료 코드나 spawn 오류를 한 번 알리며 promise는 v2.x 계약대로 항상 resolve된다. 호출자는 이로 `docker logs` 실패를 0이 아닌 종료 코드로 바꾼다 |
 | `mcctl.sh` | `start`, `stop`, `getStatus`. 콘솔은 `getEndpoint`와 기존 TCP 클라이언트로 처리한다 | TTY를 넘기는 `attach()`는 만들지 않는다 |
 | `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(시그니처는 #675에서 기록, 구현은 #735) |
-| `create-server.sh` | `start` | `IServerSpecRepository.save({ create: true })`(compose·include 생성), `register`(#675, ADR-0003 §5). `apply(spec)`는 만들지 않는다: k8s에서는 `save`가 렌더링과 적용을 맡는다 |
+| `create-server.sh` | `start` | `IServerSpecRepository.write(doc, { create: true })`(compose·include 생성), `register`(#675, ADR-0003 §5). `apply(spec)`는 만들지 않는다: k8s에서는 k8s 저장소 어댑터가 저장과 적용을 맡는다(#641) |
 | `backup.sh` | `console.command`로 `save-off`, `save-all flush`, `save-on` | git 저장소는 `IWorldBackupPort`가 맡는다([백업 포트](#백업-포트732-s3)) |
 | `lock.sh` | — | `LEVEL`에서 파생하는 `IWorldAssignmentPort.assign`/`release`로 대체. #670에서 `lock.sh` 삭제([ADR-0002](0002-world-server-assignment.ko.md)) |
 | `render-map.sh`(#733에서 제거) | — | Docker `IMapRenderer` 어댑터 `BlueMapCliRenderer`로 옮겼다(k8s에서는 Job) |

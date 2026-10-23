@@ -120,7 +120,13 @@ export interface IHostnameRegistrarPort {
   getStatus(): HostnameRegistrarStatus;
   /** #675: add `<ip> <hostname>` (exact-match check, #660). Never rejects. */
   register(hostname: string, ip: string): Promise<HostnameChangeResult>;
-  /** #735: remove lines that list exactly `hostname`. Never rejects. */
+  /**
+   * #735: remove the lines that list exactly `hostname` before any comment. Never rejects.
+   * Command (README sudoers shape, #751): argv, no shell:
+   *   sudo -n sed -i '/^[^#]*[[:space:]]<host>\([[:space:]]\|#\|$\)/d' /etc/avahi/hosts
+   * <host> is a validated hostname with `[ ] \ . * ^ $ /` escaped; the field-boundary
+   * anchors make the match exact. With a password, `sudo -S -p '' -v` runs first.
+   */
   unregister(hostname: string): Promise<HostnameChangeResult>;
 }
 
@@ -139,32 +145,41 @@ export interface IRuntimeEnvironmentPort {
 
 ### IServerSpecRepository (#675)
 
-Final shape from [ADR-0003](0003-server-spec.md) (schema in its §1). No new port: `save` renders the generated files through an infrastructure-internal `ServerSpecRenderer` (Docker compose now, k8s manifests in #641), so `IContainerRuntimePort` needs no `apply(spec)`.
+Settled by [ADR-0003](0003-server-spec.md) (schema in its §1). **The v2 contract is kept** (release rule, #715/#736): `ServerSpec` stays `{ name: string }` and the four reserved methods keep their signatures. The full type is the new `ServerSpecDocument extends ServerSpec`, and the new behaviour comes from two added methods, as #670 did for `IWorldAssignmentPort`. No new port: `write` renders the generated files through an infrastructure-internal `ServerSpecRenderer`, so `IContainerRuntimePort` needs no `apply(spec)`.
 
 ```ts
-// IServerSpecRepository.ts (replaces the D1 placeholder; ServerSpec moves to domain/server-spec and is re-exported here under the same name)
+// IServerSpecRepository.ts
+export interface ServerSpec { name: string }   // v2 export, unchanged
+// ServerSpecDocument (domain/server-spec) extends ServerSpec; re-exported here.
 export interface LoadedServerSpec {
-  spec: ServerSpec;
+  document: ServerSpecDocument;
   revision: string | null;   // sha256 of server.yaml; null = imported in memory, no server.yaml yet
-  warnings: string[];        // absorbed config.env edits, protected compose, import notes
+  warnings: string[];        // absorbed edits, protected compose, import notes
 }
-export interface SaveServerSpecOptions {
-  expectedRevision?: string | null; // from get(); mismatch → ServerSpecError 'conflict'
+export interface WriteServerSpecOptions {
+  expectedRevision?: string | null; // from load(); mismatch → ServerSpecError 'conflict'
   create?: boolean;                 // claim servers/<n> with mkdir, add the include entry, roll back on failure
   force?: boolean;                  // overwrite hand-edited generated files after writing a .bak
+  allowStorageChange?: boolean;     // only `mcctl migrate worlds`
 }
 export interface IServerSpecRepository {
-  /** Names of servers with server.yaml or config.env. */
-  list(): Promise<string[]>;
-  /** Imports in memory when server.yaml is missing; absorbs config.env hand edits. Never writes. */
-  get(name: string): Promise<LoadedServerSpec | null>;
-  save(spec: ServerSpec, options?: SaveServerSpecOptions): Promise<void>;
+  // v2 (D1) signatures, unchanged
+  /** One `{ name }` per server directory with server.yaml or config.env. */
+  list(): Promise<ServerSpec[]>;
+  /** The document, typed as the v2 ServerSpec. @deprecated Use load(). Removed in v3.0.0 (#736). */
+  get(name: string): Promise<ServerSpec | null>;
+  /** write(spec) after checking that `spec` is a full document; a bare { name } → 'invalid_spec' listing the missing fields. */
+  save(spec: ServerSpec): Promise<void>;
   /** #735: removes the include entry (exact name) and the definition files; data/ and worlds/ are the use case's. */
   delete(name: string): Promise<void>;
+  // added by #675
+  /** Imports in memory when server.yaml is missing; absorbs hand edits. No writes. */
+  load(name: string): Promise<LoadedServerSpec | null>;
+  write(doc: ServerSpecDocument, options?: WriteServerSpecOptions): Promise<void>;
 }
 // Errors: ServerSpecError (domain) with code 'invalid_spec' | 'not_found' | 'already_exists' | 'conflict'
-//   | 'edit_conflict' | 'compose_edited' | 'undetermined' | 'unsupported_spec_version'.
-//   API: invalid_spec → 400, not_found → 404, everything else → 409.
+//   | 'edit_conflict' | 'compose_edited' | 'undetermined' | 'storage_change' | 'unsupported_spec_version';
+//   the world guard rethrows ADR-0002's WorldAssignmentError. API: invalid_spec → 400, not_found → 404, others → 409.
 ```
 
 ### Reserved ports
@@ -244,7 +259,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
 | `stop(name)` | `docker stop -- <name>`, env, no timeout | `mcctl.sh stop` (`:464`), `stopContainer`, CLI `migrate.ts:557`, API delete route |
 | `restart(name)` | `docker compose restart <name>`, cwd = root, env + `COMPOSE_FILE`, timeout 60 s | API `executeServerAction('restart')` (only caller) |
 
-- `start` means "create if missing". `docker start` cannot start a server whose container was never created (`not_created` in the UI). For k8s, `start` is a scale to 1 after `IServerSpecRepository.save` has rendered and applied the manifests (ADR-0003).
+- `start` means "create if missing". `docker start` cannot start a server whose container was never created (`not_created` in the UI). For k8s, `start` is a scale to 1 after the k8s `IServerSpecRepository` adapter has written the spec and applied the manifests (ADR-0003, #641).
 - `stop` follows the majority (3 of 4 paths use `docker stop`). The API actions route uses `docker compose stop` today, so its move in D2 is a behaviour change and needs its own commit (see open questions).
 - **argv rule**: every Docker command that takes a workload name puts `--` before the name, as #720 does. Leaf functions already do this. New methods (`stop`, `readLogs`, `followLogs`, `command`, `getEndpoint`) add it. Names that reach these calls are already validated, so the only effect is defence in depth. Compose commands (`start`, `restart`) keep the API's current argv.
 - Timeouts stay as they are today (`listPlayers` 5 s, `readLogs` 10 s with a 10 MiB buffer, compose 60 s, router probe 3 s, the rest none). C2 sets them uniformly.
@@ -373,10 +388,10 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 | `player.sh` | Mojang API lookup | — | removed in #730 (`mcctl player info` covers it) |
 | `backup.sh` | git backup of worlds | flush via `console.command`: `save-off`, `save-all flush`, `save-on` | git storage is `IWorldBackupPort`, not runtime ([Backup Port](#backup-port-732-s3)) |
 | `render-map.sh` (removed in #733) | `docker image build`, `docker run --rm` BlueMap | — | moved into the Docker `IMapRenderer` adapter, `BlueMapCliRenderer` (k8s: Job) |
-| `create-server.sh` | compose generation, include, avahi register, `compose up` | `start` | `IServerSpecRepository.save({ create: true })` (renders compose, include), `IHostnameRegistrarPort.register` (#675, ADR-0003 §5); no `apply(spec)` |
+| `create-server.sh` | compose generation, include, avahi register, `compose up` | `start` | `IServerSpecRepository.write(doc, { create: true })` (renders compose, include), `IHostnameRegistrarPort.register` (#675, ADR-0003 §5); no `apply(spec)` |
 | `init.sh` | network, platform setup | — | removed in #729; `mcctl init` is TS and platform install is not a runtime port |
 
-Nothing in this table needed a method in D1. #715 (2026-10-23) adds the deferred methods to existing ports instead of new ports: `IHostnameRegistrarPort.register`/`unregister` and `IServerSpecRepository.save`/`delete` (recorded above by #675), `IContainerRuntimePort.remove` (#735), `IWorldAssignmentPort.release` (ADR-0002).
+Nothing in this table needed a method in D1. #715 (2026-10-23) adds the deferred methods to existing ports instead of new ports: `IHostnameRegistrarPort.register`/`unregister` and `IServerSpecRepository.save`/`delete` (kept with their D1 signatures; #675 adds `load`/`write`, see above), `IContainerRuntimePort.remove` (#735), `IWorldAssignmentPort.release` (ADR-0002).
 
 ## Implementation Plan for #654 (core-agent)
 
