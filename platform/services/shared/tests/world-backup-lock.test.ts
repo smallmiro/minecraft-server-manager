@@ -162,14 +162,25 @@ describe('backup lock release race (#732 review P2)', () => {
     await rename(lockPath, aside);
     // A finishes while its lock is aside
     const released = a.release();
-    await new Promise((r) => setTimeout(r, 100));
-    // B sees a nonce that is not the stale one and puts the file back
-    await link(aside, lockPath);
-    await unlink(aside);
     await released;
+    // B sees a nonce that is not the stale one and puts the file back (as takeOver does)
+    await link(aside, lockPath).catch(() => undefined);
+    await unlink(aside).catch(() => undefined);
     expect(existsSync(lockPath)).toBe(false);
     const next = await acquireBackupLock(root, 'push');
     expect(next.ok).toBe(true);
     if (next.ok) await next.release();
+  });
+
+  it('a lock put back before release is still removed by release', async () => {
+    const { rename, link, unlink } = await import('node:fs/promises');
+    const a = await acquireBackupLock(root, 'push');
+    if (!a.ok) throw new Error('lock failed');
+    const aside = `${lockPath}.b.stale`;
+    await rename(lockPath, aside);
+    await link(aside, lockPath);
+    await unlink(aside);
+    await a.release();
+    expect(existsSync(lockPath)).toBe(false);
   });
 });

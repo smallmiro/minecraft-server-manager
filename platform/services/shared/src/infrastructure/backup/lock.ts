@@ -4,9 +4,9 @@
  * host (ESRCH, or the host rebooted); never by age.
  */
 import { randomUUID } from 'node:crypto';
-import { link, mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
+import { link, mkdir, readdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { hostname, uptime } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import type { BackupLockHolder } from '../../application/ports/outbound/IWorldBackupPort.js';
 
 export type BackupLock =
@@ -65,6 +65,28 @@ async function takeOver(lockPath: string, stale: BackupLockHolder, nonce: string
   await unlink(aside).catch(() => undefined);
 }
 
+/**
+ * Remove our lock. A late contender may have moved it aside (takeOver) and will put
+ * it back when it sees our nonce; that would resurrect a released lock. So we also
+ * delete any aside copy holding our nonce (its put-back then fails), and re-read the
+ * lock afterwards in case the put-back happened first. No timing assumptions.
+ */
+async function release(lockPath: string, nonce: string): Promise<void> {
+  const ours = async () => parseHolder((await readText(lockPath)) ?? '')?.nonce === nonce;
+  if (await ours()) {
+    await unlink(lockPath).catch(() => undefined);
+    return;
+  }
+  const dir = dirname(lockPath);
+  const prefix = `${basename(lockPath)}.`;
+  for (const name of await readdir(dir).catch(() => [] as string[])) {
+    if (!name.startsWith(prefix) || !name.endsWith('.stale')) continue;
+    const aside = join(dir, name);
+    if (parseHolder((await readText(aside)) ?? '')?.nonce === nonce) await unlink(aside).catch(() => undefined);
+  }
+  if (await ours()) await unlink(lockPath).catch(() => undefined);
+}
+
 export async function acquireBackupLock(
   root: string,
   op: BackupLockHolder['op'],
@@ -92,11 +114,7 @@ export async function acquireBackupLock(
         await link(tmp, lockPath); // atomic, and the lock is never partially written
         return {
           ok: true,
-          release: async () => {
-            if (parseHolder((await readText(lockPath)) ?? '')?.nonce === me.nonce) {
-              await unlink(lockPath).catch(() => undefined);
-            }
-          },
+          release: () => release(lockPath, me.nonce),
         };
       } catch (e) {
         if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
