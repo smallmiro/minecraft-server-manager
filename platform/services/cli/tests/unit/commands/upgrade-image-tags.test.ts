@@ -13,6 +13,11 @@ vi.mock('node:fs', () => ({
   writeFileSync: (...args: any[]) => mockWriteFileSync(...args),
 }));
 
+vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
+  atomicWriteFileSync: (...args: any[]) => mockWriteFileSync(...args),
+}));
+
 // Mock node:path (passthrough)
 vi.mock('node:path', async () => {
   const actual = await vi.importActual<typeof import('node:path')>('node:path');

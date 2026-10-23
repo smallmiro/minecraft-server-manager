@@ -7,9 +7,10 @@ import {
 } from '@minecraft-docker/shared';
 // Auto-register mod source adapters
 import '@minecraft-docker/mod-source-modrinth';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { applyEnvChanges, atomicWriteFile, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 /**
  * Mod command options
@@ -161,7 +162,7 @@ async function modAdd(
   try {
     // Read current config
     const configContent = await readFile(configPath, 'utf-8');
-    const config = parseEnvFile(configContent);
+    const config = Object.fromEntries(parseEnvDocument(configContent).values);
 
     // Check server type supports mods
     const serverType = config['TYPE'] || 'PAPER';
@@ -209,10 +210,11 @@ async function modAdd(
     const currentMods = parseModList(config[envKey] || '');
     const newMods = [...new Set([...currentMods, ...modsToAdd])];
 
-    config[envKey] = newMods.join(',');
-
-    // Write updated config
-    await writeFile(configPath, formatEnvFile(config));
+    // Write updated config (only this key; comments and other lines are kept)
+    await atomicWriteFile(
+      configPath,
+      applyEnvChanges(configContent, { set: { [envKey]: newMods.join(',') } }, { raw: true })
+    );
 
     console.log('');
     console.log(colors.green(`✓ Added ${modsToAdd.length} mod(s) to ${serverName}`));
@@ -263,7 +265,7 @@ async function modList(
 
   try {
     const configContent = await readFile(configPath, 'utf-8');
-    const config = parseEnvFile(configContent);
+    const config = Object.fromEntries(parseEnvDocument(configContent).values);
     const serverType = config['TYPE'] || 'PAPER';
 
     const sources = [
@@ -345,9 +347,10 @@ async function modRemove(
 
   try {
     const configContent = await readFile(configPath, 'utf-8');
-    const config = parseEnvFile(configContent);
+    const config = Object.fromEntries(parseEnvDocument(configContent).values);
 
     let removed = 0;
+    const changed: Record<string, string> = {};
     const envKeys = ['MODRINTH_PROJECTS', 'CURSEFORGE_FILES', 'SPIGET_RESOURCES', 'MODS', 'PLUGINS'];
 
     for (const modName of modNames) {
@@ -358,6 +361,7 @@ async function modRemove(
         if (index !== -1) {
           mods.splice(index, 1);
           config[key] = mods.join(',');
+          changed[key] = config[key];
           removed++;
           console.log(`  ${colors.green('✓')} Removed ${modName} from ${key}`);
           break;
@@ -370,7 +374,7 @@ async function modRemove(
       return 0;
     }
 
-    await writeFile(configPath, formatEnvFile(config));
+    await atomicWriteFile(configPath, applyEnvChanges(configContent, { set: changed }, { raw: true }));
 
     console.log('');
     console.log(colors.green(`✓ Removed ${removed} mod(s) from ${serverName}`));
@@ -440,49 +444,6 @@ async function modSources(options: ModCommandOptions): Promise<number> {
   }
 
   return 0;
-}
-
-/**
- * Parse env file content into key-value pairs
- */
-function parseEnvFile(content: string): Record<string, string> {
-  const result: Record<string, string> = {};
-
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    const eqIndex = trimmed.indexOf('=');
-    if (eqIndex === -1) continue;
-
-    const key = trimmed.slice(0, eqIndex).trim();
-    let value = trimmed.slice(eqIndex + 1).trim();
-
-    // Remove quotes
-    if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1);
-    }
-
-    result[key] = value;
-  }
-
-  return result;
-}
-
-/**
- * Format key-value pairs back to env file
- */
-function formatEnvFile(config: Record<string, string>): string {
-  return Object.entries(config)
-    .map(([key, value]) => {
-      // Quote values with spaces or special chars
-      if (value.includes(' ') || value.includes(',') || value.includes('\n')) {
-        return `${key}="${value}"`;
-      }
-      return `${key}=${value}`;
-    })
-    .join('\n') + '\n';
 }
 
 /**

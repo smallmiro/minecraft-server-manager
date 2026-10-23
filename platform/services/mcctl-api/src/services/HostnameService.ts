@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { HostnameInfo, HostnameData } from '../schemas/hostname.js';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Regex for matching mc-router.host label in docker-compose.yml
@@ -206,7 +207,7 @@ export class HostnameService {
       throw new Error(`mc-router.host label not found in docker-compose.yml for server: ${serverName}`);
     }
 
-    writeFileSync(composePath, content, 'utf-8');
+    atomicWriteFileSync(composePath, content);
 
     // Return updated data
     return this.getHostnames(serverName);

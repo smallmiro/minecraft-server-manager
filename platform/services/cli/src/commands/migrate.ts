@@ -3,6 +3,7 @@ import { getContainer } from '../infrastructure/index.js';
 import { isContainerRunning } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 /**
  * Migrate command options
@@ -356,8 +357,7 @@ async function scanServers(paths: Paths): Promise<ServerMigrationInfo[]> {
                          configContent.includes('--universe');
 
     // Get LEVEL value
-    const levelMatch = configContent.match(/^LEVEL=(.*)$/m);
-    const levelValue = levelMatch ? levelMatch[1]?.trim() : 'world';
+    const levelValue = parseEnvDocument(configContent).values.get('LEVEL') ?? 'world';
 
     // Check if world exists in server's data directory
     const worldExistsInData = fs.existsSync(worldDir) &&
@@ -491,7 +491,7 @@ async function migrateServer(
     configContent += `\nLEVEL=${newLevelValue}\n`;
   }
 
-  fs.writeFileSync(configPath, configContent);
+  atomicWriteFileSync(configPath, configContent);
 }
 
 /**

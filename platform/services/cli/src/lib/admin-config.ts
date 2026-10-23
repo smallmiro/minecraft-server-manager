@@ -1,9 +1,10 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import * as yaml from 'js-yaml';
 import { randomBytes } from 'node:crypto';
 import { Paths } from '@minecraft-docker/shared';
+import { atomicWriteFile } from '@minecraft-docker/shared/utils';
 
 /**
  * API Access Mode
@@ -125,7 +126,7 @@ export class AdminConfigManager {
 #
 `;
 
-    await writeFile(this.configPath, header + yamlContent, 'utf-8');
+    await atomicWriteFile(this.configPath, header + yamlContent);
   }
 
   /**

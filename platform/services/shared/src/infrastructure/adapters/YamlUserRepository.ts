@@ -1,4 +1,4 @@
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { existsSync } from 'node:fs';
 import * as yaml from 'js-yaml';
@@ -7,6 +7,7 @@ import type { IUserRepository } from '../../application/ports/outbound/IUserRepo
 import { User } from '../../domain/entities/User.js';
 import { UserId } from '../../domain/value-objects/UserId.js';
 import { Username } from '../../domain/value-objects/Username.js';
+import { atomicWriteFile } from '../../utils/atomic-write.js';
 
 /**
  * YAML file structure for users storage
@@ -186,7 +187,7 @@ export class YamlUserRepository implements IUserRepository {
       forceQuotes: false,
     });
 
-    await writeFile(this.filePath, yamlContent, 'utf-8');
+    await atomicWriteFile(this.filePath, yamlContent);
   }
 
   /**

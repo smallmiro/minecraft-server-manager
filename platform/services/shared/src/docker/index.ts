@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type {
   ContainerStatus,
@@ -14,7 +14,8 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot } from '../utils/index.js';
-import { assertEnvFileValue } from '../utils/env-file.js';
+import { assertEnvFileValue, parseEnvDocument } from '../utils/env-file.js';
+import { atomicWriteFileSync } from '../utils/atomic-write.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
   DockerComposeRuntimeAdapter,
@@ -469,30 +470,7 @@ export function readServerConfigEnv(serverName: string, serversDir?: string): Re
   }
 
   try {
-    const content = readFileSync(configPath, 'utf-8');
-    const config: Record<string, string> = {};
-
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      // Skip comments and empty lines
-      if (!trimmed || trimmed.startsWith('#')) continue;
-
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex === -1) continue;
-
-      const key = trimmed.substring(0, eqIndex).trim();
-      let value = trimmed.substring(eqIndex + 1).trim();
-
-      // Remove quotes if present
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-
-      config[key] = value;
-    }
-
-    return config;
+    return Object.fromEntries(parseEnvDocument(readFileSync(configPath, 'utf-8')).values);
   } catch {
     return {};
   }
@@ -601,8 +579,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
     try {
       const envContent = readFileSync(envPath, 'utf-8');
       // Check if PLAYIT_SECRET_KEY is set and not empty
-      const secretMatch = envContent.match(/^PLAYIT_SECRET_KEY=(.+)$/m);
-      secretKeyConfigured = !!(secretMatch && secretMatch[1] && secretMatch[1].trim());
+      secretKeyConfigured = !!parseEnvDocument(envContent).values.get('PLAYIT_SECRET_KEY');
     } catch {
       // Ignore read errors
     }
@@ -754,7 +731,7 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
     content += `${suffix}\n# playit.gg External Domain\nPLAYIT_DOMAIN=${domain}\n`;
   }
 
-  writeFileSync(configPath, content, 'utf-8');
+  atomicWriteFileSync(configPath, content);
 
   const composePath = join(dir, serverName, 'docker-compose.yml');
   if (!existsSync(composePath)) return;
@@ -763,6 +740,6 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
   if (hosts.length === 0) return;
   const nextHosts = swapRouterHost(hosts, previousDomain, domain);
   if (nextHosts.join(',') !== hosts.join(',')) {
-    writeFileSync(composePath, replaceRouterHosts(compose, nextHosts), 'utf-8');
+    atomicWriteFileSync(composePath, replaceRouterHosts(compose, nextHosts));
   }
 }

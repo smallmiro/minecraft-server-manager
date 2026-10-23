@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { Paths } from '../../utils/index.js';
+import { Paths, parseEnvDocument } from '../../utils/index.js';
 import { execCommandAsync } from '../../docker/index.js';
 import {
   Server,
@@ -156,7 +156,7 @@ export class ServerRepository implements IServerRepository {
 
     try {
       const content = await readFile(configPath, 'utf-8');
-      const config = this.parseEnvFile(content);
+      const config = Object.fromEntries(parseEnvDocument(content).values);
 
       return {
         name,
@@ -210,37 +210,4 @@ export class ServerRepository implements IServerRepository {
     return servers.filter((s) => s.status === ServerStatus.STOPPED);
   }
 
-  /**
-   * Parse env file content
-   */
-  private parseEnvFile(content: string): Record<string, string> {
-    const result: Record<string, string> = {};
-
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-
-      // Skip comments and empty lines
-      if (!trimmed || trimmed.startsWith('#')) {
-        continue;
-      }
-
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex === -1) {
-        continue;
-      }
-
-      const key = trimmed.substring(0, eqIndex).trim();
-      let value = trimmed.substring(eqIndex + 1).trim();
-
-      // Remove quotes
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-
-      result[key] = value;
-    }
-
-    return result;
-  }
 }

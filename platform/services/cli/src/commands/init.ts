@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -15,6 +15,7 @@ import {
   fetchLatestVersionForced,
   isUpdateAvailable,
 } from '../lib/update-checker.js';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Initialize the platform
@@ -144,7 +145,7 @@ export async function initCommand(options: {
     if (transform) {
       let content = readFileSync(srcPath, 'utf-8');
       content = transform(content);
-      writeFileSync(destPath, content, 'utf-8');
+      atomicWriteFileSync(destPath, content);
     } else {
       copyFileSync(srcPath, destPath);
     }
@@ -218,7 +219,7 @@ export async function initCommand(options: {
         console.log(`  ✓ Set HOST_IPS=${selectedIPs}`);
       }
 
-      writeFileSync(envPath, envContent, 'utf-8');
+      atomicWriteFileSync(envPath, envContent);
     }
   }
   console.log('');
@@ -310,7 +311,7 @@ export async function initCommand(options: {
         }
       }
 
-      writeFileSync(envPath, envContent, 'utf-8');
+      atomicWriteFileSync(envPath, envContent);
       console.log(`  ✓ Saved PLAYIT_SECRET_KEY to .env`);
     }
   }
@@ -729,7 +730,7 @@ async function updateServerHostnames(paths: Paths, newHostIPs: string): Promise<
       if (match) {
         const hostnames = mergeHostnames(serverName, newHostIPs, match[2] ?? '');
         content = content.replace(hostLabelRegex, `$1${hostnames}$3`);
-        writeFileSync(composeFile, content, 'utf-8');
+        atomicWriteFileSync(composeFile, content);
         updatedCount++;
       }
     } catch {

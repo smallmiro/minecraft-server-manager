@@ -1,7 +1,8 @@
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { Operator, OpLevel } from '@minecraft-docker/shared';
 import type { MinecraftOpsJson } from '@minecraft-docker/shared';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Adapter for reading and writing Minecraft ops.json files
@@ -42,7 +43,7 @@ export class OpsJsonAdapter {
       mkdirSync(dir, { recursive: true });
     }
 
-    writeFileSync(this.filePath, JSON.stringify(opsData, null, 2), 'utf-8');
+    atomicWriteFileSync(this.filePath, JSON.stringify(opsData, null, 2));
   }
 
   /**

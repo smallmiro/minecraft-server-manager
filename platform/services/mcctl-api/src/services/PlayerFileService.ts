@@ -1,5 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 interface WhitelistPlayer {
   name: string;
@@ -85,24 +86,14 @@ export class PlayerFileService {
   }
 
   private writeJsonFile<T>(filePath: string, data: T[]): void {
-    writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    atomicWriteFileSync(filePath, JSON.stringify(data, null, 2));
   }
 
   private readConfigEnv(serverName: string): Map<string, string> {
     const configPath = this.getConfigEnvPath(serverName);
     if (!existsSync(configPath)) return new Map();
 
-    const content = readFileSync(configPath, 'utf-8');
-    const result = new Map<string, string>();
-    for (const line of content.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eqIndex = trimmed.indexOf('=');
-      if (eqIndex > 0) {
-        result.set(trimmed.substring(0, eqIndex).trim(), trimmed.substring(eqIndex + 1).trim());
-      }
-    }
-    return result;
+    return parseEnvDocument(readFileSync(configPath, 'utf-8')).values;
   }
 
   private writeConfigEnv(serverName: string, key: string, value: string): void {
@@ -112,29 +103,8 @@ export class PlayerFileService {
       mkdirSync(serverDir, { recursive: true });
     }
 
-    if (!existsSync(configPath)) {
-      writeFileSync(configPath, `${key}=${value}\n`, 'utf-8');
-      return;
-    }
-
-    const content = readFileSync(configPath, 'utf-8');
-    const lines = content.split('\n');
-    let found = false;
-
-    const updated = lines.map(line => {
-      const trimmed = line.trim();
-      if (trimmed.startsWith(`${key}=`)) {
-        found = true;
-        return `${key}=${value}`;
-      }
-      return line;
-    });
-
-    if (!found) {
-      updated.push(`${key}=${value}`);
-    }
-
-    writeFileSync(configPath, updated.join('\n'), 'utf-8');
+    const content = existsSync(configPath) ? readFileSync(configPath, 'utf-8') : '';
+    atomicWriteFileSync(configPath, applyEnvChanges(content, { set: { [key]: value } }, { raw: true }));
   }
 
   private parseCommaSeparated(value: string | undefined): string[] {

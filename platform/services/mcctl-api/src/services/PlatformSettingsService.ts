@@ -6,7 +6,7 @@ import {
   applyEnvChanges,
   serializeEnvValue,
   envRevision,
-  writeFileAtomic,
+  atomicWriteFile,
 } from '@minecraft-docker/shared/utils';
 import { REGISTRY, SECRET_NAME_RE, isApiScoped } from './platform-settings/registry.js';
 import type {
@@ -202,7 +202,7 @@ export class PlatformSettingsService {
       // Re-read right before writing: narrows the window against external writers (mcctl init, backup init, ...).
       const latest = envRevision(await this.readEnv());
       if (latest !== revision) throw new PlatformSettingsStaleError(latest);
-      await writeFileAtomic(this.envPath, next, 0o600);
+      await atomicWriteFile(this.envPath, next, { mode: 0o600 });
       newRevision = envRevision(next);
     }
 

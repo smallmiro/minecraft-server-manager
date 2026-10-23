@@ -20,7 +20,7 @@ process.env.NODE_ENV = 'test';
 // Spy on the real functions: the processes still run.
 vi.mock('child_process', async (importOriginal) => {
   const actual = await importOriginal<typeof import('child_process')>();
-  return { ...actual, exec: vi.fn(actual.exec), execFile: vi.fn(actual.execFile) };
+  return { ...actual, exec: vi.fn(actual.exec), execFile: vi.fn(actual.execFile), spawn: vi.fn(actual.spawn) };
 });
 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
@@ -42,7 +42,7 @@ vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { exec, execFile } from 'child_process';
+import { exec, execFile, spawn } from 'child_process';
 import { serverExists } from '@minecraft-docker/shared';
 
 const ARGV_FILE = join(ROOT, 'argv');
@@ -118,11 +118,12 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       expect(pwned('modpack')).toBe(false);
       expect(pwned('tick')).toBe(false);
       expect(exec).not.toHaveBeenCalled();
-      expect(execFile).toHaveBeenCalledWith(
+      expect(execFile).not.toHaveBeenCalled();
+      // Own process group, so a timeout can stop what the script started (#656)
+      expect(spawn).toHaveBeenCalledWith(
         'bash',
         [join(SCRIPTS, 'create-server.sh'), ...recordedArgv()],
-        expect.objectContaining({ cwd: ROOT, timeout: 120000 }),
-        expect.any(Function)
+        expect.objectContaining({ cwd: ROOT, detached: true })
       );
     });
 
@@ -168,7 +169,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       vi.mocked(serverExists).mockReturnValue(false);
       const response = await create(payload);
       expect(response.statusCode).toBe(400);
-      expect(execFile).not.toHaveBeenCalled();
+      expect(spawn).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -198,11 +199,10 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       expect(response.statusCode).toBe(200);
       expect(recordedArgv()).toEqual(['My_Server', '--force']);
       expect(exec).not.toHaveBeenCalled();
-      expect(execFile).toHaveBeenCalledWith(
+      expect(spawn).toHaveBeenCalledWith(
         'bash',
         [join(SCRIPTS, 'delete-server.sh'), 'My_Server', '--force'],
-        expect.objectContaining({ cwd: ROOT, timeout: 60000 }),
-        expect.any(Function)
+        expect.objectContaining({ cwd: ROOT, detached: true })
       );
     });
 

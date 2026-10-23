@@ -69,6 +69,85 @@ describe('parseEnvDocument', () => {
   });
 });
 
+// How Docker Compose (compose-go dotenv) reads each line of an env_file (#656).
+// Every TS reader of .env / config.env goes through parseEnvDocument, so this
+// table is the single parsing rule.
+const COMPOSE_COMPAT: Array<[line: string, key: string, value: string | undefined]> = [
+  ['A=plain', 'A', 'plain'],
+  ['A=  padded  ', 'A', 'padded'],
+  ['A = spaced', 'A', 'spaced'],
+  ['  A=indented', 'A', 'indented'],
+  ['export A=exported', 'A', 'exported'],
+  ['A=', 'A', ''],
+  ['A=x=y', 'A', 'x=y'],
+  ['A=value # comment', 'A', 'value'],
+  ['A=value#hash', 'A', 'value#hash'],
+  ['A="double quoted"', 'A', 'double quoted'],
+  ["A='single quoted'", 'A', 'single quoted'],
+  ['A="quoted" # comment', 'A', 'quoted'],
+  ['A="has # hash"', 'A', 'has # hash'],
+  ['A="a\\"b"', 'A', 'a"b'],
+  ['A="line\\nbreak"', 'A', 'line\nbreak'],
+  ['A="back\\\\slash"', 'A', 'back\\slash'],
+  ["A='no \\n escape'", 'A', 'no \\n escape'],
+  ['A=§aMOTD §lbold', 'A', '§aMOTD §lbold'],
+  ['# A=commented', 'A', undefined],
+  ['not a setting', 'A', undefined],
+];
+
+describe('parseEnvDocument Compose compatibility', () => {
+  test.each(COMPOSE_COMPAT)('%s', (line, key, value) => {
+    expect(parseEnvDocument(`${line}\n`).values.get(key)).toBe(value);
+  });
+
+  test('an unterminated quote is read literally (Compose rejects the file)', () => {
+    expect(parseEnvDocument('A="open\n').values.get('A')).toBe('"open');
+  });
+});
+
+describe('codec round-trip', () => {
+  const values = ['plain', 'a b c', '$(id)', 'x=y', 'semi;colon', '§aMOTD', '', 'p@ss:w/rd', 'with "double" inside'];
+
+  test.each(values)('quoted style: %j reads back unchanged', (value) => {
+    const out = applyEnvChanges('', { set: { K: value } });
+    expect(parseEnvDocument(out).values.get('K')).toBe(value);
+  });
+
+  test.each(values)('raw style (config.env): %j reads back unchanged', (value) => {
+    const out = applyEnvChanges('', { set: { K: value } }, { raw: true });
+    expect(out).toBe(`K=${value}\n`);
+    expect(parseEnvDocument(out).values.get('K')).toBe(value);
+  });
+
+  test.each([
+    ['mod #1.jar', "'mod #1.jar'"],
+    [' padded ', "' padded '"],
+    ['"" B=1', `'"" B=1'`],
+    ['"quoted"', `'"quoted"'`],
+  ])('raw style single-quotes %j, which raw cannot represent', (value, written) => {
+    const out = applyEnvChanges('', { set: { K: value } }, { raw: true });
+    expect(out).toBe(`K=${written}\n`);
+    expect(parseEnvDocument(out).values.get('K')).toBe(value);
+  });
+
+  test.each(['a\nB=1', 'x\u0000y', "it's #1", "'open"])('raw style rejects %j, which it cannot represent', (value) => {
+    expect(() => applyEnvChanges('', { set: { K: value } }, { raw: true })).toThrow(EnvValueError);
+  });
+
+  test('raw style keeps a quoted value through read, change of another item, write, read', () => {
+    const src = "TYPE=MODRINTH\nMODRINTH_EXCLUDE_FILES='mod #1.jar,other.jar'\n";
+    const excluded = parseEnvDocument(src).values.get('MODRINTH_EXCLUDE_FILES')!.split(',');
+    const out = applyEnvChanges(src, { set: { MODRINTH_EXCLUDE_FILES: excluded.filter((f) => f !== 'other.jar').join(',') } }, { raw: true });
+    expect(out).toBe("TYPE=MODRINTH\nMODRINTH_EXCLUDE_FILES='mod #1.jar'\n");
+    expect(parseEnvDocument(out).values.get('MODRINTH_EXCLUDE_FILES')).toBe('mod #1.jar');
+  });
+
+  test('raw style keeps untouched lines and rewrites an export line in place', () => {
+    const src = '# c\nexport A=1\nB=2\n';
+    expect(applyEnvChanges(src, { set: { A: 'x y' } }, { raw: true })).toBe('# c\nA=x y\nB=2\n');
+  });
+});
+
 describe('applyEnvChanges', () => {
   test('no changes returns the content unchanged', () => {
     expect(applyEnvChanges(SAMPLE, {})).toBe(SAMPLE);

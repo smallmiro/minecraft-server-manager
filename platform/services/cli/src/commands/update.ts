@@ -10,10 +10,11 @@ import { checkServiceAvailability, PM2_SERVICE_NAMES } from '../lib/pm2-utils.js
 import { Pm2ServiceManagerAdapter } from '../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import { ShellExecutor } from '../lib/shell.js';
 import { spawnSync } from 'child_process';
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
 import { printTelemetryNotice } from '../lib/telemetry-notice.js';
+import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
 
@@ -64,16 +65,7 @@ const LATEST_VERSION_IMAGE_TAG = 'java25';
  * Returns null if VERSION is not found.
  */
 function parseVersionFromConfig(configContent: string): string | null {
-  for (const line of configContent.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('#') || !trimmed) continue;
-    const match = trimmed.match(/^VERSION=(.*)$/);
-    if (match) {
-      // Strip surrounding quotes
-      return match[1]!.replace(/^["']|["']$/g, '').trim();
-    }
-  }
-  return null;
+  return parseEnvDocument(configContent).values.get('VERSION') ?? null;
 }
 
 /**
@@ -171,7 +163,7 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
     }
 
     if (changed) {
-      writeFileSync(composePath, fileContent);
+      atomicWriteFileSync(composePath, fileContent);
       updatedCount++;
     }
   }

@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { ModSourceFactory } from '@minecraft-docker/shared';
-import { assertEnvFileValue } from '@minecraft-docker/shared/utils';
+import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 
 // ============================================================
 // Installed Mod Types
@@ -24,46 +24,6 @@ function getExcludeEnvKey(envMap: Map<string, string>): string {
     return 'CF_EXCLUDE_MODS';
   }
   return 'MODRINTH_EXCLUDE_FILES';
-}
-
-/**
- * Parse config.env file content into key-value pairs
- */
-function parseEnvFile(content: string): Map<string, string> {
-  const result = new Map<string, string>();
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eqIndex = line.indexOf('=');
-    if (eqIndex > 0) {
-      result.set(line.substring(0, eqIndex).trim(), line.substring(eqIndex + 1).trim());
-    }
-  }
-  return result;
-}
-
-/**
- * Update a single key in env file content while preserving comments and structure
- */
-function updateEnvFile(content: string, key: string, value: string): string {
-  assertEnvFileValue(key, value);
-  const lines = content.split('\n');
-  let found = false;
-  const result = lines.map((line) => {
-    const eqIndex = line.indexOf('=');
-    if (eqIndex > 0) {
-      const lineKey = line.substring(0, eqIndex).trim();
-      if (lineKey === key) {
-        found = true;
-        return `${key}=${value}`;
-      }
-    }
-    return line;
-  });
-  if (!found) {
-    result.push(`${key}=${value}`);
-  }
-  return result.join('\n');
 }
 
 /**
@@ -108,7 +68,7 @@ export class ModConfigService {
     }
 
     const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvFile(content);
+    const envMap = parseEnvDocument(content).values;
 
     const mods: Record<string, string[]> = {};
     for (const adapter of ModSourceFactory.getAllAdapters()) {
@@ -132,7 +92,7 @@ export class ModConfigService {
     const envKey = adapter.getEnvKey();
 
     const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvFile(content);
+    const envMap = parseEnvDocument(content).values;
     const existing = parseModList(envMap.get(envKey));
 
     const added: string[] = [];
@@ -145,8 +105,8 @@ export class ModConfigService {
       }
     }
 
-    const updatedContent = updateEnvFile(content, envKey, existing.join(','));
-    writeFileSync(configPath, updatedContent, 'utf-8');
+    const updatedContent = applyEnvChanges(content, { set: { [envKey]: existing.join(',') } }, { raw: true });
+    atomicWriteFileSync(configPath, updatedContent);
 
     return { added, mods: existing };
   }
@@ -174,7 +134,7 @@ export class ModConfigService {
     let excludedSet = new Set<string>();
     if (existsSync(configPath)) {
       const content = readFileSync(configPath, 'utf-8');
-      const envMap = parseEnvFile(content);
+      const envMap = parseEnvDocument(content).values;
       const excludeKey = getExcludeEnvKey(envMap);
       const excludeList = parseModList(envMap.get(excludeKey));
       excludedSet = new Set(excludeList);
@@ -200,12 +160,14 @@ export class ModConfigService {
   ): { excludeKey: string; excludeList: string[] } {
     const configPath = this.getConfigPath(serverName);
     const content = existsSync(configPath) ? readFileSync(configPath, 'utf-8') : '';
-    const envMap = parseEnvFile(content);
+    const envMap = parseEnvDocument(content).values;
     const excludeKey = getExcludeEnvKey(envMap);
     const current = parseModList(envMap.get(excludeKey));
 
     let updated: string[];
     if (excluded) {
+      // The filename may become the first entry of the list (#726)
+      assertEnvFileValue(excludeKey, filename);
       // Add if not present
       updated = current.includes(filename) ? current : [...current, filename];
     } else {
@@ -213,8 +175,8 @@ export class ModConfigService {
       updated = current.filter((f) => f !== filename);
     }
 
-    const updatedContent = updateEnvFile(content, excludeKey, updated.join(','));
-    writeFileSync(configPath, updatedContent, 'utf-8');
+    const updatedContent = applyEnvChanges(content, { set: { [excludeKey]: updated.join(',') } }, { raw: true });
+    atomicWriteFileSync(configPath, updatedContent);
 
     return { excludeKey, excludeList: updated };
   }
@@ -227,7 +189,7 @@ export class ModConfigService {
   removeMod(serverName: string, slug: string): { removed: boolean; sourceName: string } {
     const configPath = this.getConfigPath(serverName);
     const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvFile(content);
+    const envMap = parseEnvDocument(content).values;
 
     let updatedContent = content;
 
@@ -240,8 +202,8 @@ export class ModConfigService {
       const index = mods.indexOf(slug);
       if (index !== -1) {
         mods.splice(index, 1);
-        updatedContent = updateEnvFile(updatedContent, envKey, mods.join(','));
-        writeFileSync(configPath, updatedContent, 'utf-8');
+        updatedContent = applyEnvChanges(updatedContent, { set: { [envKey]: mods.join(',') } }, { raw: true });
+        atomicWriteFileSync(configPath, updatedContent);
         return { removed: true, sourceName: adapter.sourceName };
       }
     }

@@ -1,10 +1,11 @@
 import { homedir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { McctlConfig, EnvConfig } from '../types/index.js';
-import { applyEnvChanges, writeFileAtomic } from './env-file.js';
+import { applyEnvChanges, parseEnvDocument } from './env-file.js';
+import { atomicWriteFile, atomicWriteFileSync } from './atomic-write.js';
 
 /**
  * Get the package root directory
@@ -262,7 +263,7 @@ export class Config {
       mkdirSync(dir, { recursive: true });
     }
 
-    writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    atomicWriteFileSync(configPath, JSON.stringify(config, null, 2));
   }
 
   /**
@@ -294,25 +295,7 @@ export class Config {
     }
 
     try {
-      const content = readFileSync(envPath, 'utf-8');
-      const lines = content.split('\n');
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) continue;
-
-        const eqIndex = trimmed.indexOf('=');
-        if (eqIndex === -1) continue;
-
-        const key = trimmed.slice(0, eqIndex).trim();
-        let value = trimmed.slice(eqIndex + 1).trim();
-
-        // Remove quotes
-        if ((value.startsWith('"') && value.endsWith('"')) ||
-            (value.startsWith("'") && value.endsWith("'"))) {
-          value = value.slice(1, -1);
-        }
-
+      for (const [key, value] of parseEnvDocument(readFileSync(envPath, 'utf-8')).values) {
         (config as Record<string, string | boolean>)[key] =
           value === 'true' ? true : value === 'false' ? false : value;
       }
@@ -335,7 +318,7 @@ export class Config {
     const next = applyEnvChanges(content, { set });
 
     mkdirSync(dirname(envPath), { recursive: true });
-    await writeFileAtomic(envPath, next);
+    await atomicWriteFile(envPath, next, { mode: 0o600 });
   }
 }
 
@@ -357,6 +340,7 @@ export function isTelemetryEnabled(
 export { formatWorldBytes } from './format.js';
 
 export * from './env-file.js';
+export * from './atomic-write.js';
 
 /**
  * Console output utilities with colors

@@ -1,5 +1,6 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { atomicWriteFile } from '@minecraft-docker/shared/utils';
 
 /**
  * Player entry in Minecraft JSON files (whitelist.json, ops.json, etc.)
@@ -54,7 +55,7 @@ export async function readPlayerJson(path: string): Promise<PlayerEntry[]> {
  */
 export async function writePlayerJson(path: string, entries: PlayerEntry[]): Promise<void> {
   const content = JSON.stringify(entries, null, 2);
-  await writeFile(path, content, 'utf-8');
+  await atomicWriteFile(path, content);
 }
 
 /**
@@ -82,7 +83,7 @@ export async function writeBannedPlayersJson(
   entries: BannedPlayerEntry[]
 ): Promise<void> {
   const content = JSON.stringify(entries, null, 2);
-  await writeFile(path, content, 'utf-8');
+  await atomicWriteFile(path, content);
 }
 
 /**
@@ -107,7 +108,7 @@ export async function readBannedIpsJson(path: string): Promise<BannedIpEntry[]> 
  */
 export async function writeBannedIpsJson(path: string, entries: BannedIpEntry[]): Promise<void> {
   const content = JSON.stringify(entries, null, 2);
-  await writeFile(path, content, 'utf-8');
+  await atomicWriteFile(path, content);
 }
 
 /**

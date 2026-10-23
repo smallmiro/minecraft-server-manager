@@ -2,6 +2,11 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { ConfigService } from '../src/services/ConfigService.js';
 
+vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
+  atomicWriteFileSync: vi.fn(),
+}));
+
 // Mock fs module
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
@@ -13,10 +18,11 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 const mockedReadFileSync = vi.mocked(readFileSync);
-const mockedWriteFileSync = vi.mocked(writeFileSync);
+const mockedWriteFileSync = vi.mocked(atomicWriteFileSync);
 const mockedExistsSync = vi.mocked(existsSync);
 
 describe('ConfigService', () => {
@@ -1070,5 +1076,16 @@ MAX_PLAYERS=20
       expect(config.motd).toBe('Test');
       expect(config.maxPlayers).toBe(20);
     });
+  });
+});
+
+describe('ConfigService env codec (#656)', () => {
+  it('reads quoted values and drops inline comments like Compose', () => {
+    vi.mocked(existsSync).mockReturnValue(true);
+    vi.mocked(readFileSync).mockReturnValue('MOTD="Hello World" # greeting\nMEMORY=4G # heap\nexport DIFFICULTY=hard\n');
+    const config = new ConfigService('/test/platform').getConfig('alpha');
+    expect(config.motd).toBe('Hello World');
+    expect(config.memory).toBe('4G');
+    expect(config.difficulty).toBe('hard');
   });
 });

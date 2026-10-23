@@ -58,11 +58,29 @@ import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
+import { delay, runScript, startScriptGroup } from '../lib/script-process.js';
 
-// No shell: script arguments carry user input (#720)
-const execFilePromise = promisify(execFile);
+/**
+ * Time limits for the create/delete scripts (#656). Scripts run in their own
+ * process group (no shell: arguments carry user input, #720). A script past its
+ * limit gets SIGTERM, then SIGKILL after killGraceMs, and the create/delete
+ * queue moves on once it exits or killGraceMs after SIGKILL.
+ * Mutable so tests can shorten them.
+ */
+export const lifecycleLimits = {
+  /** JSON create. */
+  createTimeoutMs: 120_000,
+  /** Streaming create: image pulls and modpack downloads can take a while. */
+  sseCreateTimeoutMs: 30 * 60_000,
+  /** Delete. */
+  deleteTimeoutMs: 60_000,
+  /** SIGTERM to SIGKILL, and SIGKILL to giving up on the exit. */
+  killGraceMs: 10_000,
+};
+
+function createTimeoutMessage(): string {
+  return `Server creation timed out after ${Math.round(lifecycleLimits.sseCreateTimeoutMs / 1000)}s`;
+}
 
 /**
  * Map Docker container status to SSE-compatible status
@@ -141,6 +159,22 @@ interface StatusRoute {
  * Provides REST API for Minecraft server management
  */
 const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  // Server create and delete run one at a time (#656): a request queues behind
+  // the running one, then does its own existence check, so concurrent clients
+  // get the normal 201/200/404/409 answers instead of racing on servers/.
+  // ponytail: in-process queue; a second API process would need a file lock.
+  // The queue moves on when the task settles or after maxHoldMs, whichever is
+  // first, so a script that never returns cannot block it for good.
+  let lifecycleTail: Promise<unknown> = Promise.resolve();
+  const runSerial = <T>(task: () => Promise<T>, maxHoldMs: () => number): Promise<T> => {
+    const started = lifecycleTail.then(() => {
+      const run = task();
+      return { run, hold: Promise.race([run.catch(() => undefined), delay(maxHoldMs())]) };
+    });
+    lifecycleTail = started.then(({ hold }) => hold);
+    return started.then(({ run }) => run);
+  };
+
   /**
    * GET /api/servers
    * List all Minecraft servers
@@ -691,7 +725,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.post<CreateServerRoute>('/api/servers', {
     schema: {
-      description: 'Create a new Minecraft server (supports SSE streaming)',
+      description: 'Create a new Minecraft server (supports SSE streaming). Create and delete requests run one at a time; a request waits for the running one.',
       tags: ['servers'],
       body: CreateServerRequestSchema,
       querystring: CreateServerQuerySchema,
@@ -702,7 +736,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         500: ErrorResponseSchema,
       },
     },
-  }, async (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => {
+  }, (request: FastifyRequest<CreateServerRoute>, reply: FastifyReply) => runSerial(async () => {
     const { name, type, version, memory, seed, worldUrl, worldName, autoStart, sudoPassword, modpack, modpackVersion, modLoader, excludeFiles } = request.body;
     const { follow = false } = request.query;
 
@@ -855,7 +889,6 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // SSE streaming mode
     if (follow) {
-      const { spawn } = await import('node:child_process');
 
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
@@ -870,16 +903,16 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         data: { status: 'initializing', message: 'Initializing server creation...' },
       })}\n\n`);
 
-      // Spawn create-server.sh with spawn for real-time output
-      const createProcess = spawn(command, commandArgs, {
+      // Run create-server.sh in its own process group, streaming its output
+      const run = startScriptGroup(command, commandArgs, {
         cwd: mcctlRoot,
         env: childProcessEnv({
           MCCTL_ROOT: mcctlRoot,
           ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         }),
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
+      }, { timeoutMs: lifecycleLimits.sseCreateTimeoutMs, graceMs: lifecycleLimits.killGraceMs });
+      const createProcess = run.child;
 
       let hasError = false;
       let stderrOutput = '';
@@ -968,9 +1001,11 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           })}\n\n`);
         } else {
           const errorDetail = stderrOutput.trim();
-          const errorMessage = errorDetail
-            ? `Server creation failed: ${errorDetail}`
-            : `Server creation failed with exit code ${code}`;
+          const errorMessage = run.timedOut
+            ? createTimeoutMessage()
+            : errorDetail
+              ? `Server creation failed: ${errorDetail}`
+              : `Server creation failed with exit code ${code}`;
 
           await writeAuditLog({
             action: AuditActionEnum.SERVER_CREATE,
@@ -996,27 +1031,39 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         reply.raw.end();
       });
 
-      // Cleanup on client disconnect
-      request.raw.on('close', () => {
+      // Client disconnect (an ended response also emits close; ignore that)
+      const onDisconnect = () => {
+        if (reply.raw.writableFinished) return;
         clearInterval(heartbeat);
-        createProcess.kill();
+        run.stop();
         reply.raw.end();
-      });
+      };
+      request.raw.on('close', onDisconnect);
+      reply.raw.on('close', onDisconnect);
 
+      // Hold the create/delete queue until the script exits, or until a stop gives up
+      const exited = await run.settled;
+      clearInterval(heartbeat);
+      if (!exited && !reply.raw.writableEnded) {
+        reply.raw.write(`data: ${JSON.stringify({
+          type: 'server-create',
+          data: { status: 'error', message: run.timedOut ? createTimeoutMessage() : 'Server creation was stopped' },
+        })}\n\n`);
+        reply.raw.end();
+      }
       return;
     }
 
     // Standard JSON response (non-streaming)
     try {
-      const { stdout, stderr } = await execFilePromise(command, commandArgs, {
+      const { stdout, stderr } = await runScript(command, commandArgs, {
         cwd: mcctlRoot,
-        timeout: 120000, // 2 minute timeout for server creation
         env: childProcessEnv({
           MCCTL_ROOT: mcctlRoot,
           ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
           ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
         }),
-      });
+      }, { timeoutMs: lifecycleLimits.createTimeoutMs, graceMs: lifecycleLimits.killGraceMs });
 
       fastify.log.info({ stdout, stderr }, 'Server created');
 
@@ -1071,7 +1118,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: errorMessage,
       });
     }
-  });
+  }, () => (request.query.follow ? lifecycleLimits.sseCreateTimeoutMs : lifecycleLimits.createTimeoutMs)
+    + 3 * lifecycleLimits.killGraceMs));
 
   /**
    * DELETE /api/servers/:name
@@ -1079,7 +1127,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    */
   fastify.delete<DeleteServerRoute>('/api/servers/:name', {
     schema: {
-      description: 'Delete a Minecraft server',
+      description: 'Delete a Minecraft server. Create and delete requests run one at a time; a request waits for the running one.',
       tags: ['servers'],
       params: ServerNameParamsSchema,
       querystring: DeleteServerQuerySchema,
@@ -1089,7 +1137,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         500: ErrorResponseSchema,
       },
     },
-  }, async (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => {
+  }, (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => runSerial(async () => {
     const { name } = request.params;
     const { force, deleteWorld } = request.query;
     const containerName = `mc-${name}`;
@@ -1130,14 +1178,13 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         commandArgs = ['delete', ...deleteArgs];
       }
 
-      const { stdout, stderr } = await execFilePromise(command, commandArgs, {
+      const { stdout, stderr } = await runScript(command, commandArgs, {
         cwd: mcctlRoot,
-        timeout: 60000, // 1 minute timeout
         env: childProcessEnv({
           MCCTL_ROOT: mcctlRoot,
           ...(resolvedScript ? { MCCTL_SCRIPTS: resolvedScript.scriptsDir } : {}),
         }),
-      });
+      }, { timeoutMs: lifecycleLimits.deleteTimeoutMs, graceMs: lifecycleLimits.killGraceMs });
 
       fastify.log.info({ stdout, stderr }, 'Server deleted');
 
@@ -1176,7 +1223,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: errorMessage,
       });
     }
-  });
+  }, () => lifecycleLimits.deleteTimeoutMs + 3 * lifecycleLimits.killGraceMs));
 };
 
 export default fp(serversPlugin, {

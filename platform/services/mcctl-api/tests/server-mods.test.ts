@@ -99,6 +99,11 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
 // Mock @minecraft-docker/mod-source-modrinth (auto-register)
 vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
 
+vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
+  atomicWriteFileSync: vi.fn(),
+}));
+
 // Mock fs module
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
@@ -116,12 +121,13 @@ import {
   serverExists,
   ModSourceFactory,
 } from '@minecraft-docker/shared';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 const mockedServerExists = vi.mocked(serverExists);
 const mockExistsSync = vi.mocked(existsSync);
 const mockReadFileSync = vi.mocked(readFileSync);
-const mockWriteFileSync = vi.mocked(writeFileSync);
+const mockWriteFileSync = vi.mocked(atomicWriteFileSync);
 
 describe('Server Mods Routes', () => {
   let app: FastifyInstance;
