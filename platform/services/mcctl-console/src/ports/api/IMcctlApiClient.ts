@@ -71,7 +71,7 @@ export interface CreateServerResponse {
     container: string;
     status: string;
   };
-  /** The server was created but did not start (#675): server.status is 'created'. */
+  /** The server was created but did not start, or is still starting in the background (#675): server.status is 'created'. */
   warning?: string;
 }
 

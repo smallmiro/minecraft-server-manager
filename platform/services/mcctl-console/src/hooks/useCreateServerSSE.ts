@@ -28,7 +28,7 @@ export type CreateServerStatus =
 export interface UseCreateServerSSEOptions {
   /**
    * Callback when server creation succeeds. `warning`: the server was created
-   * but did not start (#675); it stays created, start it from the list.
+   * but did not start, or is still starting (#675); it stays created.
    */
   onSuccess?: (serverName: string, warning?: string) => void;
 
@@ -68,7 +68,7 @@ export interface UseCreateServerSSEReturn {
   error: string | null;
 
   /**
-   * Set when the server was created but did not start (#675)
+   * Set when the server was created but did not start, or is still starting (#675)
    */
   warning: string | null;
 
@@ -203,14 +203,11 @@ export function useCreateServerSSE(
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // Created but not started (#675, decision 1): success with the cause, no retry
+        // Created but not started, or still starting (#675, decision 1): success with
+        // the API's warning as the message (it names the server and the next step), no retry
         const startWarning: string | undefined = result?.warning;
         setWarning(startWarning ?? null);
-        updateProgress(
-          'completed',
-          startWarning ? `Server created, but it did not start: ${startWarning}` : 'Server created successfully!',
-          100
-        );
+        updateProgress('completed', startWarning ?? 'Server created successfully!', 100);
         // Refresh the server list so the newly created server shows up without
         // a manual reload. Other mutations (delete/start/stop) already do this.
         queryClient.invalidateQueries({ queryKey: ['servers'] });

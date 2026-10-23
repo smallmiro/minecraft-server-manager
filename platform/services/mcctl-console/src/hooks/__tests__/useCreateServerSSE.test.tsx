@@ -112,7 +112,8 @@ describe('useCreateServerSSE', () => {
       expect(result.current.status).toBe('completed');
     }, { timeout: ASYNC_TIMEOUT });
     expect(result.current.warning).toMatch(/port is already allocated/);
-    expect(result.current.message).toMatch(/created, but it did not start/);
+    // The API warning is the whole message; it is not wrapped in another sentence
+    expect(result.current.message).toBe("Server 'test-server' was created but did not start: port is already allocated");
     expect(onSuccess).toHaveBeenCalledWith('test-server', expect.stringMatching(/port is already allocated/));
   });
 

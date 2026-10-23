@@ -228,6 +228,7 @@ export default function ServersPage() {
         status={createServer.status}
         progress={createServer.progress}
         message={createServer.message}
+        warning={createServer.warning}
       />
     </>
   );
