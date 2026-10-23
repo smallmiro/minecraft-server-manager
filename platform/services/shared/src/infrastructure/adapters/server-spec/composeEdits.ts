@@ -29,7 +29,12 @@ export function composeOutsideEdits(
   renderedText: string,
   environmentMoved: boolean
 ): string[] {
-  const current = yaml.load(currentText) as Record<string, unknown>;
+  let current: Record<string, unknown>;
+  try {
+    current = yaml.load(currentText) as Record<string, unknown>;
+  } catch {
+    return ['(the file does not parse as YAML)'];
+  }
   const rendered = yaml.load(renderedText) as { services: Record<string, Record<string, unknown>> };
   const service = `mc-${name}`;
   const ours = rendered.services[service]!;

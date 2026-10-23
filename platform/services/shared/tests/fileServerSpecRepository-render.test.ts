@@ -275,6 +275,16 @@ describe('compose edits', () => {
 });
 
 describe('guards', () => {
+  it("refuses with 'compose_edited' when the compose no longer parses", async () => {
+    templateServer('survival');
+    const doc = await migrate('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), 'services: [broken\n');
+    const error = await rejection(repo.write({ ...doc, image: 'itzg/minecraft-server:java21' }));
+    expect(error.code).toBe('compose_edited');
+    expect(error.message).toMatch(/does not parse/);
+  });
+
+
   it("refuses a storage change without allowStorageChange ('storage_change')", async () => {
     templateServer('survival');
     const doc = await migrate('survival');
