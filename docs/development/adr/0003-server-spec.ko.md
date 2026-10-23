@@ -5,7 +5,7 @@
 | **상태** | system-architect 리뷰 후 수정하여 승인(2026-10-23) |
 | **이슈** | [#675](https://github.com/smallmiro/minecraft-server-manager/issues/675)(강건화 D5, 마일스톤 M4 #645). #715 S8(`create-server.sh` 교체) 포함 |
 | **바꾸는 ADR** | [ADR-0001](0001-container-runtime-ports.ko.md): `IServerSpecRepository`에 `load`/`write` 추가(v2 메서드 유지), `IHostnameRegistrarPort.register`/`unregister` 추가 |
-| **기반** | [ADR-0002](0002-world-server-assignment.ko.md)(#670, 배정의 원천은 `LEVEL`. 머지 전까지 `feature/670-world-server-assignment`에 있음), PR #749(#656: env 코덱, `atomicWriteFile`, API 생성·삭제 대기열), #651, #649, #654, #751(avahi sudoers 모양) |
+| **기반** | [ADR-0002](0002-world-server-assignment.ko.md)(#670, 배정의 원천은 `LEVEL`. PR #750으로 머지됨), PR #749(#656: env 코덱, `atomicWriteFile`, API 생성·삭제 대기열), #651, #649, #654, #751(avahi sudoers 모양) |
 | **관련** | #735(S7 삭제), #657, #658, #736(S9, v3.0.0), #641(k8s), #655, #737, #726 |
 
 영어판([0003-server-spec.md](0003-server-spec.md))이 원본이다. 이 문서는 결정과 표를 줄여 옮겼다.
@@ -156,13 +156,13 @@
 
 | PR | 내용 | 동작 변화 |
 |----|------|-----------|
-| 1 스키마+가져오기 | `ServerSpecDocument`, 검증, `buildCreateSpec`, `load`(+ v2 `list`/`get` 구현)와 가져오기(읽기 전용), `mcctl migrate spec --dry-run`, 지금 `create-server.sh` 출력의 골든 파일(3단계 동등성 기준) | 없음 |
-| 2 렌더러+쓰기 | `ServerSpecRenderer`, `DockerComposeRenderer`, 헤더·수정 감지, `write`/`save`(리비전, 선점, 되돌리기, 월드 보호), `mcctl migrate spec` 쓰기, `upgrade` 보고 | `migrate spec`만 씀 |
-| 3 쓰기 경로(#715 S8) | `register`와 avahi 어댑터, provision, CLI·API 생성(SSE, 시작 실패 경고, 콘솔 확인), §6 전체, `create-server.sh`와 bats 3개 삭제, `IShellPort.createServer`·`ShellAdapter.createServer`·`Server.toCliArgs`·`WorldOptions.toCliArgs`·`setServerPlayitDomain`·`replaceRouterHosts`·`IServerSpecRepository.get`에 `@deprecated`, 셸 생성 경로는 "removed in #675" 오류, 저장소 어댑터 밖에서 `config.env`나 서버 compose를 쓰면 실패하는 시험(허용 목록: `server-env-migration`), 문서 EN/KO, `test:scripts`·`verify:package` 통과. 3a·3b로 나눌 수 있다 | 있음 |
+| 1 스키마+가져오기 | `ServerSpecDocument`, 검증, `server.yaml`만 다루는 `load`/`write`(리비전 확인, 렌더링은 아직 없음)와 v2 `list`/`get`/`save`, 가져오기(월드 저장 위치는 #670 배정 어댑터와 같은 `effectiveExtraArgs.ts` 규칙으로 읽음), `mcctl migrate spec`(dry run 또는 `server.yaml`만 씀) | 없음: `migrate spec`만 쓰고 아직 `server.yaml`을 읽는 곳이 없다 |
+| 2 렌더러+쓰기 | `ServerSpecRenderer`, `DockerComposeRenderer`, 헤더·수정 감지, `write` 렌더링(선점, 되돌리기, 저장 위치 보호), `mcctl migrate spec` 렌더링, `upgrade` 보고 | `migrate spec`만 씀 |
+| 3 쓰기 경로(#715 S8) | 지금 `create-server.sh` 출력의 옵션 조합별 골든 파일(스크립트 삭제 전에 bats 하네스로 캡처, 동등성 기준), `buildCreateSpec`, `write`의 R1 월드 보호(`checkProposed`), `register`와 avahi 어댑터, provision, CLI·API 생성(SSE, 시작 실패 경고, 콘솔 확인), §6 전체, `create-server.sh`와 bats 3개 삭제, `IShellPort.createServer`·`ShellAdapter.createServer`·`Server.toCliArgs`·`WorldOptions.toCliArgs`·`setServerPlayitDomain`·`replaceRouterHosts`·`IServerSpecRepository.get`에 `@deprecated`, 셸 생성 경로는 "removed in #675" 오류, 저장소 어댑터 밖에서 `config.env`나 서버 compose를 쓰면 실패하는 시험(허용 목록: `server-env-migration`), 문서 EN/KO, `test:scripts`·`verify:package` 통과. 3a·3b로 나눌 수 있다 | 있음 |
 
 #675의 완료 조건 8개는 PR 3에서 모두 충족되므로 **#675는 PR 3 뒤에 닫는다**. 이전의 4단계("이전 형식 지원 종료")는 쓰기 보호 시험과 문서로 줄여 PR 3에 합쳤다. PR 3부터 `server-env-migration` 말고는 이전 방식으로 쓰는 코드가 없다. `server.yaml`이 없는 서버는 지연 가져오기로 계속 지원한다. **#736(v3.0.0)으로 미루는 것**: 위 `@deprecated` export, `IShellPort`/`ShellAdapter`, `server-env-migration` 삭제. v3.0.0에서 ServerSpec 동작은 바뀌지 않는다.
 
-순서: PR 1–2는 #749(#656) 머지 뒤, PR 3은 #670 머지 뒤, #735는 PR 3 뒤.
+순서: PR 1–2는 #749(#656) 머지 뒤, PR 3은 #670(PR #750으로 머지됨) 뒤, #735는 PR 3 뒤. PR 1의 `migrate spec`으로 `server.yaml`을 쓴 뒤 v2 쓰기 경로가 `config.env`를 바꾼 서버는 헤더가 없으므로, PR 2가 다음 load에서 그 변경을 흡수한다(§3).
 
 ## 8. 시험(TDD)
 
