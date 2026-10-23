@@ -4,7 +4,6 @@ import {
   // Infrastructure adapters from shared
   ShellAdapter,
   DockerServerConsoleAdapter,
-  DockerComposeRuntimeAdapter,
   ServerRepository,
   WorldRepository,
   ConfigEnvWorldAssignmentAdapter,
@@ -35,7 +34,6 @@ import {
   type IServerRepository,
   type IWorldRepository,
   type IWorldAssignmentPort,
-  type IContainerRuntimePort,
   type IDocProvider,
   type IAuditLogPort,
   type IModSourcePort,
@@ -68,7 +66,6 @@ export class Container {
   // Adapters (singleton)
   private _promptPort?: IPromptPort;
   private _shellPort?: IShellPort;
-  private _runtimePort?: IContainerRuntimePort;
   private _worldBackupPort?: IWorldBackupPort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
@@ -117,11 +114,9 @@ export class Container {
     return this._shellPort;
   }
 
+  /** Same adapter as {@link containerRuntime} (kept for the logs command). */
   get runtimePort(): IContainerRuntimePort {
-    if (!this._runtimePort) {
-      this._runtimePort = new DockerComposeRuntimeAdapter();
-    }
-    return this._runtimePort;
+    return this.containerRuntime;
   }
 
   get serverRepository(): IServerRepository {
