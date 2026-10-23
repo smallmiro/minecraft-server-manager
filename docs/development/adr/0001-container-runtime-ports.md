@@ -310,7 +310,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 | `backup.sh` | git backup of worlds | flush via `command(['save-all'])`, or `stop` | git storage is a backup adapter, not runtime |
 | `render-map.sh` | `docker image build`, `docker run --rm` BlueMap | — | stays inside the Docker `IMapRenderer` adapter (k8s: Job) |
 | `create-server.sh` | compose generation, include, avahi register, `compose up` | `start` | `apply(spec)`, `IHostnameRegistrarPort.register`, `IServerSpecRepository.save` (D5) |
-| `init.sh` | network, platform setup | — | `mcctl init` in TS; platform install is not a runtime port |
+| `init.sh` | network, platform setup | — | removed in #729; `mcctl init` is TS and platform install is not a runtime port |
 
 Nothing in this table needs a method added to the D1 ports now. Every deferred method has no TypeScript caller today.
 
