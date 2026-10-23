@@ -153,6 +153,17 @@
 | Q8 | 받아들이고 문서화한다 |
 | Q9 | #734가 맡는다 |
 
+**PR #745 리뷰 반영**(2026-10-23):
+
+- `IContainerRuntimePort.list`에 `strict` 옵션을 추가했다. 조회에 실패하면 `[]` 대신 throw한다. 기존 호출자는 D1 계약을 그대로 쓴다.
+- 백업의 flush, 복원 확인, 교체 직전 재확인은 strict로 조회하고, 실패하면 `runtime_unavailable`로 아무것도 바꾸기 전에 중단한다.
+- 첫 rename 전에 live 대상과 관리 대상 상위 경로(`worlds/`, `servers/<n>/`, `servers/<n>/data/`)를 `lstat`으로 검사한다. symlink이거나 장치가 `backups/`와 다르면 `unsupported_layout`이다. push도 `worlds/`나 `servers/` 루트가 링크이면 거부한다.
+- prune은 원격 정규화와 fetch만 하고, 건드리지 않은 로컬 tip을 origin과 비교한다. 다르면 checkout이나 ref 변경 없이 건너뛴다.
+- 잠금 해제는 자기 nonce가 든 `.stale` 사본을 지운 뒤 잠금을 다시 읽는다. 늦은 인계자가 해제된 잠금을 되돌려 놓는 일을 막는다.
+- flush나 복사가 실패한 상태에서 `save-on`도 실패하면, 그 서버와 원인을 실패 결과(메시지, `servers`)에 남긴다.
+- 복원 정리(cleanup) 오류는 주 오류를 덮지 않고 메시지에 덧붙는다.
+- 완전히 롤백된 슬롯은 바로 지워서 회전 개수에 들어가지 않는다.
+
 **재검토에서 확정한 것**:
 
 - 옵션 이름은 CLI `--allow-missing`, API `allowMissing`이다.
