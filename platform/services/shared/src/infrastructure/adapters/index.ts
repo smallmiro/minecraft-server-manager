@@ -73,3 +73,4 @@ export {
   GitWorldBackupAdapter,
   type GitWorldBackupAdapterOptions,
 } from './GitWorldBackupAdapter.js';
+export { ConfigEnvWorldAssignmentAdapter } from './ConfigEnvWorldAssignmentAdapter.js';
