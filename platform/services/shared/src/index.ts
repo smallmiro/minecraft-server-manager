@@ -125,6 +125,18 @@ export {
   type WorldAssignment,
   type WorldAssignmentSnapshot,
   type WorldAssignmentErrorCode,
+  // ServerSpec (#675, ADR-0003)
+  ServerSpecError,
+  SERVER_SPEC_VERSION,
+  SERVER_SPEC_MANAGED_ENV_KEYS,
+  validateServerSpecDocument,
+  assertServerSpecDocument,
+  validateHostname,
+  type ServerSpecDocument,
+  type ServerSpecErrorCode,
+  type ServerSpecIssue,
+  type ServerSpecRules,
+  type WorldStorage,
   // Entities
   Server,
   ServerStatus,

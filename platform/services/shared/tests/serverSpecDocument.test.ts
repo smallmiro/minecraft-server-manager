@@ -55,7 +55,7 @@ describe('validateServerSpecDocument', () => {
   it('rejects unknown keys at every level with their path', () => {
     const value = doc({ extra: 1, world: { level: 'w', storage: 'data', x: 1 } });
     (value['routing'] as Record<string, unknown>)['autoScale'] = { up: true, down: true, sideways: true };
-    expect(paths(value)).toEqual(['extra', 'world.x', 'routing.autoScale.sideways']);
+    expect(paths(value)).toEqual(['world.x', 'routing.autoScale.sideways', 'extra']);
   });
 
   it('rejects non-string scalars and says to quote them', () => {
