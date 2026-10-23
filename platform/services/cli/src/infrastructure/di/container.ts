@@ -3,6 +3,7 @@ import {
   Paths,
   // Infrastructure adapters from shared
   ShellAdapter,
+  DockerServerConsoleAdapter,
   ServerRepository,
   WorldRepository,
   DocsAdapter,
@@ -214,7 +215,8 @@ export class Container {
       this.promptPort,
       this.shellPort,
       this.serverRepository,
-      this.auditLogPort
+      this.auditLogPort,
+      new DockerServerConsoleAdapter()
     );
   }
 

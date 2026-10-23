@@ -204,6 +204,20 @@ describe('McctlApiAdapter', () => {
       );
     });
 
+    it('deleteServer should forward deleteWorld=true (#652)', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true, server: 'test', message: 'Deleted' }),
+      });
+
+      await adapter.deleteServer('test', true, true);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test?force=true&deleteWorld=true',
+        expect.objectContaining({ method: 'DELETE' })
+      );
+    });
+
     it('startServer should POST to start endpoint', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

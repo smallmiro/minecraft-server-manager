@@ -180,7 +180,7 @@ Click on any server card to open the detailed server management view. The detail
 - Server name, `Minecraft <version> · <type>`, hostname, and uptime
 - A status badge showing the current server state, a health badge (e.g., `Healthy`, `Unhealthy`), and a **Reconnecting** badge while the real-time connection is being restored
 - **Start** for a stopped server, or **Stop** and **Restart** for a running server
-- A **⋮** menu with **Delete Server**. The confirmation dialog requires you to type the server name, and the deletion cannot be undone
+- A **⋮** menu with **Delete Server**. The confirmation dialog requires you to type the server name, and the deletion cannot be undone. The dialog also asks what to do with the world: **Keep the world (move to worlds/)** is the default and moves the server's world to `worlds/` (a world already in `worlds/` is just unassigned); **Delete the world inside the server too** removes the server's own world. Worlds in `worlds/` are never deleted. If the deletion fails (for example `worlds/<name> already exists`), nothing is deleted and the error is shown in the page
 
 #### Navigation Tabs
 

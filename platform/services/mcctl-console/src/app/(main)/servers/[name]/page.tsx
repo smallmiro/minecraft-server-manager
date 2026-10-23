@@ -11,11 +11,16 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
 import IconButton from '@mui/material/IconButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
@@ -81,6 +86,7 @@ export default function ServerDetailPage() {
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
+  const [deleteWorld, setDeleteWorld] = useState(false);
 
   const startServer = useStartServer();
   const stopServer = useStopServer();
@@ -133,7 +139,7 @@ export default function ServerDetailPage() {
   const handleDeleteServer = () => {
     if (deleteConfirmInput !== serverName) return;
     deleteServer.mutate(
-      { name: serverName, force: true },
+      { name: serverName, force: true, deleteWorld },
       { onSuccess: () => router.push('/servers') },
     );
   };
@@ -192,6 +198,7 @@ export default function ServerDetailPage() {
             setMenuAnchorEl(null);
             setDeleteDialogOpen(true);
             setDeleteConfirmInput('');
+            setDeleteWorld(false);
           }}
           sx={{ color: 'error.main' }}
         >
@@ -355,6 +362,25 @@ export default function ServerDetailPage() {
             fullWidth
             autoFocus
           />
+          <FormControl sx={{ mt: 2 }}>
+            <FormLabel id="delete-world-label">World</FormLabel>
+            <RadioGroup
+              aria-labelledby="delete-world-label"
+              value={deleteWorld ? 'delete' : 'keep'}
+              onChange={(event) => setDeleteWorld(event.target.value === 'delete')}
+            >
+              <FormControlLabel
+                value="keep"
+                control={<Radio />}
+                label="Keep the world (move to worlds/)"
+              />
+              <FormControlLabel
+                value="delete"
+                control={<Radio />}
+                label="Delete the world inside the server too"
+              />
+            </RadioGroup>
+          </FormControl>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button

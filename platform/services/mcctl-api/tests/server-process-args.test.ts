@@ -205,5 +205,17 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
         expect.any(Function)
       );
     });
+
+    it('passes --delete-world only when deleteWorld=true (#652)', async () => {
+      vi.mocked(serverExists).mockReturnValue(true);
+
+      const keep = await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=false' });
+      expect(keep.statusCode).toBe(200);
+      expect(recordedArgv()).toEqual(['alpha', '--force']);
+
+      const drop = await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=true' });
+      expect(drop.statusCode).toBe(200);
+      expect(recordedArgv()).toEqual(['alpha', '--force', '--delete-world']);
+    });
   });
 });

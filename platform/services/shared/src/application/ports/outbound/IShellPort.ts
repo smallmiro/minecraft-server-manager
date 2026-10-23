@@ -18,9 +18,9 @@ export interface IShellPort {
   ): Promise<ShellResult>;
 
   /**
-   * Delete a server
+   * Delete a server. Its world is moved to worlds/ unless deleteWorld is true.
    */
-  deleteServer(name: ServerName, force?: boolean): Promise<ShellResult>;
+  deleteServer(name: ServerName, force?: boolean, deleteWorld?: boolean): Promise<ShellResult>;
 
   /**
    * Start a server

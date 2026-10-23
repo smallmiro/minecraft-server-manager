@@ -97,8 +97,8 @@ export class MockShellAdapter implements IShellPort {
     return this.makeResult(this.config.createServerResult);
   }
 
-  async deleteServer(name: ServerName, force?: boolean): Promise<ShellResult> {
-    this.log('deleteServer', name.value, { force });
+  async deleteServer(name: ServerName, force?: boolean, deleteWorld?: boolean): Promise<ShellResult> {
+    this.log('deleteServer', name.value, { force, deleteWorld });
     return this.makeResult(this.config.deleteServerResult);
   }
 

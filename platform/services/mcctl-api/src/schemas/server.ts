@@ -241,6 +241,13 @@ export const DeleteServerResponseSchema = Type.Object({
 // Delete Server Query Schema
 export const DeleteServerQuerySchema = Type.Object({
   force: Type.Optional(Type.Boolean({ default: false })),
+  deleteWorld: Type.Optional(
+    Type.Boolean({
+      default: false,
+      description:
+        'Delete the world inside the server (servers/<name>/data/<LEVEL>) instead of moving it to worlds/. Worlds already in worlds/ are never deleted.',
+    })
+  ),
 });
 
 // Type exports

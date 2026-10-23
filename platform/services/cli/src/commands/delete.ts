@@ -8,7 +8,12 @@ import { promptSudoPasswordIfNeeded } from '../lib/sudo-utils.js';
 export interface DeleteCommandOptions {
   root?: string;
   name?: string;
+  /** Delete even when players are online (implies yes). */
   force?: boolean;
+  /** Skip the confirmation question. */
+  yes?: boolean;
+  /** Delete the world inside the server instead of moving it to worlds/. */
+  deleteWorld?: boolean;
   sudoPassword?: string;
 }
 
@@ -27,6 +32,13 @@ export async function deleteCommand(options: DeleteCommandOptions): Promise<numb
     return 1;
   }
 
+  const yes = options.yes === true || options.force === true;
+  // Nobody can answer the question: refuse rather than delete unasked.
+  if (!yes && !process.stdin.isTTY) {
+    log.error('Refusing to delete without confirmation in a non-interactive shell. Pass --yes to confirm.');
+    return 1;
+  }
+
   // Prompt for sudo password if needed (avahi installed but no password provided)
   const sudoPassword = await promptSudoPasswordIfNeeded(options.sudoPassword);
 
@@ -38,10 +50,10 @@ export async function deleteCommand(options: DeleteCommandOptions): Promise<numb
   // Determine execution mode
   if (options.name) {
     // CLI argument mode - use executeWithName
-    return deleteWithArguments(container, options);
+    return deleteWithArguments(container, { ...options, yes });
   } else {
     // Interactive mode - use execute
-    return deleteInteractive(container);
+    return deleteInteractive(container, options.deleteWorld ?? false);
   }
 }
 
@@ -55,17 +67,23 @@ async function deleteWithArguments(
   const useCase = container.deleteServerUseCase;
 
   try {
-    const deleted = await useCase.executeWithName(options.name!, options.force ?? false);
+    const deleted = await useCase.executeWithName(options.name!, {
+      force: options.force ?? false,
+      yes: options.yes ?? false,
+      deleteWorld: options.deleteWorld ?? false,
+    });
 
     if (deleted) {
       console.log('');
       console.log(colors.green(`✓ Server '${options.name}' deleted successfully!`));
-      console.log(colors.dim('  World data has been preserved in worlds/ directory.'));
       console.log('');
     }
 
     return deleted ? 0 : 1;
   } catch (error) {
+    if (container.promptPort.isCancel(error)) {
+      return 1; // Not deleted
+    }
     const message = error instanceof Error ? error.message : String(error);
     log.error(message);
     return 1;
@@ -76,12 +94,13 @@ async function deleteWithArguments(
  * Delete server interactively (with prompts)
  */
 async function deleteInteractive(
-  container: ReturnType<typeof getContainer>
+  container: ReturnType<typeof getContainer>,
+  deleteWorld: boolean
 ): Promise<number> {
   const useCase = container.deleteServerUseCase;
 
   try {
-    const deleted = await useCase.execute();
+    const deleted = await useCase.execute({ deleteWorld });
     return deleted ? 0 : 1;
   } catch (error) {
     // Check if user cancelled

@@ -244,6 +244,19 @@ validate_server_name() {
     return 0
 }
 
+# Validate the name of a server that already exists (EXISTING_SERVER_NAME_PATTERN):
+# legacy names stay usable, path and shell characters do not.
+# Prints the reason and returns 1 when invalid.
+validate_existing_server_name() {
+    local LC_ALL=C
+    local pattern='^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$'
+    if [[ ! "$1" =~ $pattern ]]; then
+        echo "Invalid server name '$1'"
+        return 1
+    fi
+    return 0
+}
+
 # Validate a world (LEVEL) name: letters, digits, hyphens, underscores.
 # Prints the reason and returns 1 when invalid.
 validate_world_name() {

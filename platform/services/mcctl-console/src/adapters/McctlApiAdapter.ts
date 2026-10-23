@@ -192,8 +192,12 @@ export class McctlApiAdapter implements IMcctlApiClient {
     });
   }
 
-  async deleteServer(name: string, force?: boolean): Promise<DeleteServerResponse> {
-    const query = force ? '?force=true' : '';
+  async deleteServer(name: string, force?: boolean, deleteWorld?: boolean): Promise<DeleteServerResponse> {
+    const params = new URLSearchParams();
+    if (force) params.set('force', 'true');
+    if (deleteWorld) params.set('deleteWorld', 'true');
+    const qs = params.toString();
+    const query = qs ? `?${qs}` : '';
     return this.fetch<DeleteServerResponse>(
       `/api/servers/${encodeURIComponent(name)}${query}`,
       { method: 'DELETE' }

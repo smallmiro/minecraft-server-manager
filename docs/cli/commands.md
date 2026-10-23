@@ -597,11 +597,26 @@ mcctl delete [name] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--force` | `-y` | Skip confirmation |
+| `--yes` | `-y` | Skip confirmation |
+| `--force` | | Delete even if players are online (implies `--yes`) |
+| `--delete-world` | | Delete the world inside the server instead of moving it to `worlds/` |
 | `--sudo-password` | | Sudo password for mDNS deregistration (automation) |
 
-!!! warning "World Data Preserved"
-    `mcctl delete` removes the server configuration but preserves world data in the `worlds/` directory.
+`mcctl delete` asks for confirmation. Without a terminal (scripts, CI) it refuses to delete unless you pass `--yes` or `--force`.
+
+!!! info "Worlds outlive their server"
+    - A world in `worlds/` is kept. It is only no longer assigned to the deleted server.
+    - A world inside the server (`servers/<name>/data/<LEVEL>`, plus `<LEVEL>_nether` and `<LEVEL>_the_end`) is moved to `worlds/<LEVEL>` before the server directory is removed. You can assign it to another server afterwards.
+    - If `worlds/` already has a folder with the same name, the delete stops and nothing is removed. Rename the folder in `worlds/`, or pass `--delete-world`.
+    - `--delete-world` deletes the world inside the server. It never deletes worlds in `worlds/`; use [`mcctl world delete`](#mcctl-world-delete) for those.
+
+Without `--delete-world`, the delete also stops before removing anything when the world cannot be kept with certainty:
+
+- `config.env` has a `LEVEL` line other than one plain `LEVEL=<name>` (letters, digits, `-`, `_`): for example a comment, quotes, spaces around `=`, a path, or two `LEVEL` lines. Without any `LEVEL` line the world is `world`.
+- `servers/<name>/` or its `data/` is a symlink, or only `<LEVEL>_nether`/`<LEVEL>_the_end` exist without `data/<LEVEL>`.
+- Another world folder (one with `level.dat`, `level.dat_old`, `region/` or `*.mca` files, such as an old world from a previous `LEVEL`) would be deleted, or a symlink inside the server points to something inside the server. The message lists them.
+
+If `worlds/` resolves to a folder inside the server (for example a symlink into `servers/<name>/`), the delete stops even with `--delete-world`. If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, `mcctl delete <name>` refuses unless you pass `--force`.
 
 **Examples:**
 
@@ -612,11 +627,14 @@ mcctl delete
 # Delete specific server with confirmation
 mcctl delete myserver
 
-# Force delete without confirmation
-mcctl delete myserver --force
+# Delete without confirmation
+mcctl delete myserver --yes
+
+# Delete the server and the world inside it
+mcctl delete myserver --yes --delete-world
 
 # Automation with sudo password
-MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --force
+MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --yes
 ```
 
 ---

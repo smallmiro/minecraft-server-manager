@@ -164,6 +164,30 @@ describe('useMcctl hooks', () => {
     });
   });
 
+  describe('useDeleteServer deleteWorld (#652)', () => {
+    it('forwards deleteWorld=true in the query', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+      const { result } = renderHook(() => useDeleteServer(), { wrapper: createWrapper() });
+      result.current.mutate({ name: 'test', force: true, deleteWorld: true });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/servers/test?force=true&deleteWorld=true',
+        expect.objectContaining({ method: 'DELETE' })
+      );
+    });
+
+    it('omits deleteWorld when false', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+      const { result } = renderHook(() => useDeleteServer(), { wrapper: createWrapper() });
+      result.current.mutate({ name: 'test', force: true, deleteWorld: false });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/servers/test?force=true',
+        expect.objectContaining({ method: 'DELETE' })
+      );
+    });
+  });
+
   describe('useStartServer', () => {
     it('should start a server', async () => {
       const mockResponse = { success: true, server: 'test', action: 'start', timestamp: '2024-01-01' };

@@ -1,6 +1,7 @@
 import { describe, it, beforeEach } from 'vitest';
 import assert from 'node:assert';
 import { DeleteServerUseCase, ServerStatus } from '@minecraft-docker/shared';
+import type { IServerConsolePort } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,
@@ -116,9 +117,142 @@ describe('DeleteServerUseCase Integration', () => {
       ]);
       useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
 
-      const result = await useCase.executeWithName('busy', true);
+      const result = await useCase.executeWithName('busy', { force: true });
 
       assert.strictEqual(result, true);
+    });
+
+    // v2.x keeps the boolean form as deprecated (#715 release policy)
+    it('still accepts the deprecated boolean force without asking', async () => {
+      serverRepo = new MockServerRepository([
+        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
+      ]);
+      promptAdapter = new MockPromptAdapter({ confirm: false });
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      assert.strictEqual(await useCase.executeWithName('busy', true), true);
+    });
+
+    it('keeps the players guard for the deprecated boolean false', async () => {
+      serverRepo = new MockServerRepository([
+        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
+      ]);
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      await assert.rejects(useCase.executeWithName('busy', false), /5 player\(s\) online/);
+    });
+  });
+
+  // #652: the guard, confirmation and world option
+  describe('players online guard (#652)', () => {
+    const consoleWith = (online: number | null): IServerConsolePort => ({
+      listPlayers: async () => (online === null ? null : { online, max: 20, players: [] }),
+      command: async () => ({ exitCode: 0, stdout: '', stderr: '' }),
+      getEndpoint: async () => null,
+    });
+
+    it('reads the player count over RCON and refuses without force', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(3));
+
+      await assert.rejects(useCase.executeWithName('server1', { yes: true }), /3 player\(s\) online/);
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('deletes when nobody is online', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(0));
+
+      assert.strictEqual(await useCase.executeWithName('server1', { yes: true }), true);
+    });
+
+    it('refuses an unknown player count (RCON failed) even with yes (#652 review)', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(null));
+
+      await assert.rejects(useCase.executeWithName('server1', { yes: true }), /RCON/);
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('deletes with an unknown player count when forced (#652 review)', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(null));
+
+      assert.strictEqual(await useCase.executeWithName('server1', { force: true, yes: true }), true);
+    });
+
+    it('does not query RCON for a stopped server', async () => {
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, undefined, consoleWith(3));
+
+      assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
+    });
+  });
+
+  // v2.x: only an explicit options object opts into the new confirmation (#715)
+  describe('second-argument compatibility (#652 review)', () => {
+    beforeEach(() => {
+      promptAdapter = new MockPromptAdapter({ confirm: false });
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+    });
+
+    it.each([
+      ['omitted', [] as unknown[]],
+      ['undefined', [undefined]],
+      ['false', [false]],
+      ['true', [true]],
+    ])('%s deletes without asking, as before', async (_label, rest) => {
+      const call = useCase.executeWithName as (name: string, ...rest: unknown[]) => Promise<boolean>;
+      assert.strictEqual(await call.call(useCase, 'server2', ...rest), true);
+      assert.ok(shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('{} asks (declined here) and keeps the server', async () => {
+      assert.strictEqual(await useCase.executeWithName('server2', {}), false);
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('omitted still applies the players guard', async () => {
+      serverRepo = new MockServerRepository([
+        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
+      ]);
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      await assert.rejects(useCase.executeWithName('busy'), /5 player\(s\) online/);
+    });
+  });
+
+  describe('confirmation (#652)', () => {
+    it('asks before deleting and keeps the server when declined', async () => {
+      promptAdapter = new MockPromptAdapter({ confirm: false });
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      assert.strictEqual(await useCase.executeWithName('server2', {}), false);
+      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
+    });
+
+    it('skips the question with yes', async () => {
+      promptAdapter = new MockPromptAdapter({ confirm: false });
+      useCase = new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo);
+
+      assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
+    });
+  });
+
+  describe('world option (#652)', () => {
+    const deleteArgs = () =>
+      shellAdapter.commandLog.find((c) => c.command === 'deleteServer')!.args[1] as {
+        deleteWorld?: boolean;
+      };
+
+    it('keeps the world by default', async () => {
+      await useCase.executeWithName('server2', { yes: true });
+      assert.strictEqual(deleteArgs().deleteWorld, false);
+    });
+
+    it('passes deleteWorld to the shell (by name)', async () => {
+      await useCase.executeWithName('server2', { yes: true, deleteWorld: true });
+      assert.strictEqual(deleteArgs().deleteWorld, true);
+    });
+
+    it('passes deleteWorld to the shell (interactive)', async () => {
+      await useCase.execute({ deleteWorld: true });
+      assert.strictEqual(deleteArgs().deleteWorld, true);
     });
   });
 

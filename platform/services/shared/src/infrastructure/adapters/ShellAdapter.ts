@@ -145,10 +145,13 @@ export class ShellAdapter implements IShellPort {
     return this.executeScript('create-server.sh', args);
   }
 
-  async deleteServer(name: ServerName, force = false): Promise<ShellResult> {
+  async deleteServer(name: ServerName, force = false, deleteWorld = false): Promise<ShellResult> {
     const args: string[] = [name.value];
     if (force) {
       args.push('--force');
+    }
+    if (deleteWorld) {
+      args.push('--delete-world');
     }
     return this.executeScript('delete-server.sh', args);
   }

@@ -2,10 +2,12 @@ import { Server, ServerStatus } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import type {
   IDeleteServerUseCase,
+  DeleteServerOptions,
   IPromptPort,
   IShellPort,
   IServerRepository,
   IAuditLogPort,
+  IServerConsolePort,
 } from '../ports/index.js';
 
 /**
@@ -17,13 +19,33 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
-    private readonly auditLog?: IAuditLogPort
+    private readonly auditLog?: IAuditLogPort,
+    private readonly serverConsole?: IServerConsolePort
   ) {}
+
+  /**
+   * Fill in who is online (the repository does not). Returns false when the
+   * server runs but RCON could not tell; without a console port it stays 0.
+   */
+  private async loadPlayerCount(server: Server): Promise<boolean> {
+    if (!server.isRunning || !this.serverConsole) return true;
+    const players = await this.serverConsole.listPlayers(server.containerName).catch(() => null);
+    if (!players) return false;
+    server.setPlayerCount(players.online);
+    return true;
+  }
+
+  private confirmMessage(deleteWorld: boolean): string {
+    return deleteWorld
+      ? 'Delete this server AND the world inside it? This cannot be undone.'
+      : 'Delete this server? Its world will be kept in worlds/.';
+  }
 
   /**
    * Execute interactive server deletion
    */
-  async execute(): Promise<boolean> {
+  async execute(options: Pick<DeleteServerOptions, 'deleteWorld'> = {}): Promise<boolean> {
+    const deleteWorld = options.deleteWorld ?? false;
     this.prompt.intro('Delete Minecraft Server');
 
     try {
@@ -38,6 +60,9 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
       // Prompt for server selection
       const server = await this.prompt.promptServerSelection(servers);
+      if (!(await this.loadPlayerCount(server))) {
+        this.prompt.warn('Could not read the online player count over RCON.');
+      }
 
       // Show server info
       this.prompt.note(
@@ -57,7 +82,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
 
       // Confirm deletion
       const confirmed = await this.prompt.confirm({
-        message: 'Are you sure you want to delete this server?',
+        message: this.confirmMessage(deleteWorld),
         initialValue: false,
       });
 
@@ -67,7 +92,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       }
 
       // Execute deletion
-      return await this.performDeletion(server);
+      return await this.performDeletion(server, deleteWorld);
     } catch (error) {
       if (this.prompt.isCancel(error)) {
         this.prompt.outro('Deletion cancelled');
@@ -80,38 +105,57 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
    * Execute server deletion with provided name
    */
-  async executeWithName(name: string, force = false): Promise<boolean> {
+  async executeWithName(name: string, options?: DeleteServerOptions | boolean): Promise<boolean> {
+    // Omitted, undefined or the deprecated boolean `force`: the v2.x behaviour
+    // without a question (#715). Only an options object asks.
+    const opts =
+      options === undefined || typeof options === 'boolean'
+        ? { force: options ?? false, yes: true }
+        : options;
+    const { force = false, yes = false, deleteWorld = false } = opts;
     // Check if server exists
     const server = await this.serverRepo.findByName(name);
 
     if (!server) {
       throw new Error(`Server '${name}' not found`);
     }
+    const playersKnown = await this.loadPlayerCount(server);
 
-    // If not force mode and server has players, throw error
-    if (!force && server.isRunning && server.hasPlayers) {
-      // Log audit failure
+    // Refuse without force when players are online, or when that is unknown
+    if (!force && server.isRunning && (!playersKnown || server.hasPlayers)) {
+      const reason = playersKnown
+        ? `has ${server.playerCount} player(s) online`
+        : 'is running and its online players could not be read over RCON';
       await this.auditLog?.log({
         action: AuditActionEnum.SERVER_DELETE,
         actor: 'cli:local',
         targetType: 'server',
         targetName: name,
         status: 'failure',
-        errorMessage: `Server has ${server.playerCount} player(s) online`,
+        errorMessage: `Server ${reason}`,
         details: null,
       });
-      throw new Error(
-        `Server '${name}' has ${server.playerCount} player(s) online. Use --force to delete anyway.`
-      );
+      throw new Error(`Server '${name}' ${reason}. Use --force to delete anyway.`);
     }
 
-    return await this.performDeletion(server, force);
+    if (!yes) {
+      const confirmed = await this.prompt.confirm({
+        message: this.confirmMessage(deleteWorld),
+        initialValue: false,
+      });
+      if (!confirmed) {
+        this.prompt.outro('Deletion cancelled');
+        return false;
+      }
+    }
+
+    return await this.performDeletion(server, deleteWorld);
   }
 
   /**
    * Perform the actual deletion
    */
-  private async performDeletion(server: Server, force = false): Promise<boolean> {
+  private async performDeletion(server: Server, deleteWorld: boolean): Promise<boolean> {
     const spinner = this.prompt.spinner();
 
     try {
@@ -127,7 +171,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
       spinner.start('Removing server...');
       spinner.stop('Running delete script...');
 
-      const result = await this.shell.deleteServer(server.name, true);
+      const result = await this.shell.deleteServer(server.name, true, deleteWorld);
 
       if (!result.success) {
         this.prompt.error(result.stderr || 'Unknown error occurred');
@@ -155,15 +199,8 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
         errorMessage: null,
       });
 
+      // The script's summary already says what happened to the world.
       this.prompt.success(`Server '${server.name.value}' deleted`);
-
-      // Note about world preservation
-      if (server.worldOptions.isExistingWorld) {
-        this.prompt.note(
-          `World data preserved in worlds/${server.worldOptions.worldName}/`,
-          'World Data'
-        );
-      }
 
       this.prompt.outro('Server removed successfully');
       return true;

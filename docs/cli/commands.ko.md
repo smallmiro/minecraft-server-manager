@@ -597,11 +597,26 @@ mcctl delete [name] [options]
 
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
-| `--force` | `-y` | 확인 건너뛰기 |
+| `--yes` | `-y` | 확인 건너뛰기 |
+| `--force` | | 접속 중인 플레이어가 있어도 삭제 (`--yes` 포함) |
+| `--delete-world` | | 서버 안의 월드를 `worlds/`로 옮기지 않고 삭제 |
 | `--sudo-password` | | mDNS 해제용 sudo 비밀번호 (자동화용) |
 
-!!! warning "월드 데이터 보존"
-    `mcctl delete`는 서버 설정만 제거하고 월드 데이터는 `worlds/` 디렉토리에 보존됩니다.
+`mcctl delete`는 삭제 전에 확인을 묻습니다. 터미널이 없는 환경(스크립트, CI)에서는 `--yes`나 `--force`를 주지 않으면 삭제하지 않습니다.
+
+!!! info "월드는 서버를 삭제해도 남습니다"
+    - `worlds/`에 있는 월드는 그대로 둡니다. 삭제한 서버에 배정된 상태만 풀립니다.
+    - 서버 안의 월드(`servers/<name>/data/<LEVEL>`와 `<LEVEL>_nether`, `<LEVEL>_the_end`)는 서버 디렉터리를 지우기 전에 `worlds/<LEVEL>`로 옮깁니다. 옮긴 월드는 다른 서버에 배정할 수 있습니다.
+    - `worlds/`에 같은 이름의 폴더가 이미 있으면 삭제를 중단하고 아무것도 지우지 않습니다. `worlds/`의 폴더 이름을 바꾸거나 `--delete-world`를 지정하세요.
+    - `--delete-world`는 서버 안의 월드를 삭제합니다. `worlds/`의 월드는 지우지 않으므로 [`mcctl world delete`](#mcctl-world-delete)로 지우세요.
+
+`--delete-world`가 없으면 월드를 확실히 보존할 수 없는 다음 경우에도 아무것도 지우지 않고 중단합니다.
+
+- `config.env`의 `LEVEL` 줄이 `LEVEL=<이름>`(영문자, 숫자, `-`, `_`) 한 줄이 아닌 경우: 주석, 따옴표, `=` 앞뒤 공백, 경로, `LEVEL` 줄이 둘 이상인 경우 등. `LEVEL` 줄이 아예 없으면 월드는 `world`로 봅니다.
+- `servers/<name>/`나 그 안의 `data/`가 심볼릭 링크이거나, `data/<LEVEL>` 없이 `<LEVEL>_nether`·`<LEVEL>_the_end`만 있는 경우.
+- 다른 월드 폴더(`level.dat`, `level.dat_old`, `region/`, `*.mca` 중 하나가 있는 폴더. 예: 이전 `LEVEL`의 옛 월드)가 함께 지워지게 되거나, 서버 안의 심볼릭 링크가 서버 안을 가리키는 경우. 메시지에 그 경로를 보여 줍니다.
+
+`worlds/`의 실제 경로가 서버 안(예: `servers/<name>/`을 가리키는 심볼릭 링크)이면 `--delete-world`를 줘도 중단합니다. 서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 `mcctl delete <name>`은 `--force` 없이는 삭제를 거부합니다.
 
 **예제:**
 
@@ -612,11 +627,14 @@ mcctl delete
 # 확인과 함께 특정 서버 삭제
 mcctl delete myserver
 
-# 확인 없이 강제 삭제
-mcctl delete myserver --force
+# 확인 없이 삭제
+mcctl delete myserver --yes
+
+# 서버와 서버 안의 월드를 함께 삭제
+mcctl delete myserver --yes --delete-world
 
 # 자동화 시 sudo 비밀번호 사용
-MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --force
+MCCTL_SUDO_PASSWORD="your-password" mcctl delete myserver --yes
 ```
 
 ---

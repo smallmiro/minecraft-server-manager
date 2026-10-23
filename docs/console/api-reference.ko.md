@@ -412,6 +412,9 @@ Minecraft 서버를 삭제합니다.
 | 매개변수 | 타입 | 기본값 | 설명 |
 |----------|------|--------|------|
 | `force` | boolean | false | 실행 중이어도 강제 삭제 |
+| `deleteWorld` | boolean | false | 서버 안의 월드(`servers/<name>/data/<LEVEL>`)를 `worlds/`로 옮기지 않고 삭제. `worlds/`의 월드는 지우지 않음 |
+
+기본 동작은 서버 안의 월드를 `worlds/<LEVEL>`로 옮기는 것입니다. `worlds/`에 같은 이름이 이미 있거나, 서버 안의 월드 위치를 확정할 수 없거나([`mcctl delete`](../cli/commands.ko.md#mcctl-delete) 참고), Docker 조회나 컨테이너 정지에 실패하면 `500`으로 실패하고 아무것도 지우지 않습니다.
 
 **예제:**
 

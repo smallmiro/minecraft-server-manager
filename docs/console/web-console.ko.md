@@ -180,7 +180,7 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 - 서버 이름, `Minecraft <버전> · <유형>`, 호스트명, 가동 시간(Uptime)
 - 현재 서버 상태를 나타내는 상태 배지, 헬스 배지(예: `Healthy`, `Unhealthy`), 실시간 연결 복구 중에 표시되는 **Reconnecting** 배지
 - 중지된 서버에는 **Start**, 실행 중인 서버에는 **Stop**과 **Restart** 버튼
-- **⋮** 메뉴의 **Delete Server**. 확인 다이얼로그에서 서버 이름을 직접 입력해야 하며, 삭제는 되돌릴 수 없습니다
+- **⋮** 메뉴의 **Delete Server**. 확인 다이얼로그에서 서버 이름을 직접 입력해야 하며, 삭제는 되돌릴 수 없습니다. 다이얼로그에서 월드 처리 방식도 선택합니다. 기본값인 **Keep the world (move to worlds/)** 는 서버 내부 월드를 `worlds/`로 옮기고(이미 `worlds/`에 있는 월드는 할당만 해제), **Delete the world inside the server too** 는 서버 내부 월드까지 삭제합니다. `worlds/`의 월드는 삭제되지 않습니다. 삭제가 실패하면(예: `worlds/<이름> already exists`) 아무것도 삭제되지 않으며 오류가 화면에 표시됩니다
 
 #### 탐색 탭
 
