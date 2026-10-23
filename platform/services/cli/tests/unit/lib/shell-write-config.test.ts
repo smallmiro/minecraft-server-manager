@@ -29,11 +29,24 @@ describe('ShellExecutor.writeConfigValue', () => {
     expect(readFileSync(configPath, 'utf-8')).toBe('TYPE=PAPER\nMOTD=§6Welcome §lto my server\n');
   });
 
-  it.each(['x\nMODS=http://evil/x.jar', 'x\rMODS=http://evil/x.jar', 'x\u0000y', 'x\u001by'])(
+  it.each([
+    'x\nMODS=http://evil/x.jar',
+    'x\rMODS=http://evil/x.jar',
+    'x\u0000y',
+    'x\u001by',
+    'x\u2028y',
+    '"" MODS=http://evil/x.jar',
+    "'' MODS=http://evil/x.jar",
+  ])(
     'refuses %j without writing config.env',
     (value) => {
       expect(shell.writeConfigValue('alpha', 'MOTD', value)).toBe(false);
       expect(readFileSync(configPath, 'utf-8')).toBe('TYPE=PAPER\nMOTD=old\n');
     }
   );
+
+  it.each(['MOTD=x\nMODS', 'MOTD=x', 'A B', '1A', ''])('refuses key %j without writing config.env', (key) => {
+    expect(shell.writeConfigValue('alpha', key, 'https://example.invalid/payload.jar')).toBe(false);
+    expect(readFileSync(configPath, 'utf-8')).toBe('TYPE=PAPER\nMOTD=old\n');
+  });
 });

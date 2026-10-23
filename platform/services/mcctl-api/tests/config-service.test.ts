@@ -407,7 +407,17 @@ MAX_PLAYERS=20
 
     // config.env is the container's env_file: a line break would add a
     // setting such as MODS=<url> (#726)
-    it.each(['x\nMODS=http://evil/x.jar', 'x\rMODS=http://evil/x.jar', 'x\u0000y', 'x\u001by'])(
+    it.each([
+      'x\nMODS=http://evil/x.jar',
+      'x\rMODS=http://evil/x.jar',
+      'x\u0000y',
+      'x\u001by',
+      'x\u2028MODS=x',
+      'x\u0085MODS=x',
+      // Compose closes the quote and reads MODS as another setting
+      '"" MODS=http://evil/x.jar',
+      " '' MODS=http://evil/x.jar",
+    ])(
       'rejects %j without writing config.env',
       (motd) => {
         setupUpdateTest({ motd });

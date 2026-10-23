@@ -258,7 +258,7 @@ MEMORY=4G
     });
 
     // The slugs end up in config.env, the container's env_file (#726)
-    it.each(['x\nMODS=http://evil/x.jar', 'x\rMODS=http://evil/x.jar', 'x\u0000y'])(
+    it.each(['x\nMODS=http://evil/x.jar', 'x\rMODS=http://evil/x.jar', 'x\u0000y', '"" MODS=http://evil/x.jar'])(
       'rejects slug %j with 400 without writing config.env',
       async (slug) => {
         mockedServerExists.mockReturnValue(true);

@@ -569,6 +569,8 @@ GID=1000
         [field, 'x\rMODS=http://evil/x.jar'],
         [field, 'x\u0000y'],
         [field, 'x\u001by'],
+        [field, 'x\u2028MODS=x'],
+        [field, '"" MODS=http://evil/x.jar'],
       ]))('rejects %s=%j with 400 without writing config.env', async (field, value) => {
         mockedServerExists.mockReturnValue(true);
 
@@ -585,6 +587,7 @@ GID=1000
       it.each([
         { motd: '§6Welcome §lto my server§r - have fun!' },
         { motd: 'A Minecraft Server, v2 (beta) & friends' },
+        { motd: 'The "best" server' },
         { seed: '-9223372036854775808' },
         { seed: 'a text seed with spaces' },
         { icon: 'https://example.com/icon.png' },

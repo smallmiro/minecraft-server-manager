@@ -174,7 +174,7 @@ describe('Docker helper functions for playit.gg', () => {
     });
 
     // config.env is the container's env_file: a line break adds a setting (#726)
-    test.each(['x.example.com\nMODS=http://evil/x.jar', 'x.example.com\r', 'x\u0000y'])(
+    test.each(['x.example.com\nMODS=http://evil/x.jar', 'x.example.com\r', 'x\u0000y', '"" MODS=http://evil/x.jar', 'x\u2028y'])(
       'should reject %j without writing config.env',
       (domain) => {
         const configPath = join(testServersDir, 'survival', 'config.env');
