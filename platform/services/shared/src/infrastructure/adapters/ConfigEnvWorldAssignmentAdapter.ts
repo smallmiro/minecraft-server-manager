@@ -1,27 +1,19 @@
-import type { Dirent } from 'node:fs';
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { applyEnvChanges, parseEnvDocument } from '../../utils/env-file.js';
+import { applyEnvChanges } from '../../utils/env-file.js';
 import { atomicWriteFile } from '../../utils/atomic-write.js';
 import {
-  EXISTING_WORLD_NAME_PATTERN,
   WorldAssignmentError,
   checkAssign,
   checkRemoval,
   holdersOf,
   planRelease,
-  resolveWorldName,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
 } from '../../domain/index.js';
 import type { IWorldAssignmentPort } from '../../application/ports/outbound/IWorldAssignmentPort.js';
-import {
-  isInterpolated,
-  readInheritedExtraArgs,
-  universeLocation,
-  type InheritedExtraArgs,
-} from './effectiveExtraArgs.js';
+import { readWorldAssignmentSnapshot } from './effectiveExtraArgs.js';
 
 /**
  * World assignments derived from each server's `LEVEL` in
@@ -80,61 +72,11 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     return plan;
   }
 
-  private async read(
+  private read(
     override?: { server: string; content: string },
     dotenvOverride?: string
   ): Promise<WorldAssignmentSnapshot> {
-    let entries: Dirent[] = [];
-    try {
-      entries = await readdir(this.paths.servers, { withFileTypes: true });
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-    }
-    const names = new Set(entries.filter((e) => e.isDirectory() && !e.name.startsWith('_')).map((e) => e.name));
-    if (override) names.add(override.server);
-
-    const inherited = await readInheritedExtraArgs(this.paths, dotenvOverride);
-    const assignments: WorldAssignment[] = [];
-    const undetermined: string[] = [];
-    for (const server of [...names].sort()) {
-      let content: string;
-      if (override?.server === server) {
-        content = override.content;
-      } else {
-        try {
-          content = await readFile(this.configPath(server), 'utf-8');
-        } catch (err) {
-          // Same filter as ServerRepository.listNames: no config.env, no server.
-          if ((err as NodeJS.ErrnoException).code !== 'ENOENT') undetermined.push(server);
-          continue;
-        }
-      }
-      const assignment = this.parse(server, content, inherited);
-      if (assignment) assignments.push(assignment);
-      else undetermined.push(server);
-    }
-    return { assignments, undetermined };
-  }
-
-  /** The server's assignment, or undefined when it cannot be determined (R7). */
-  private parse(server: string, content: string, inherited: InheritedExtraArgs): WorldAssignment | undefined {
-    const doc = parseEnvDocument(content);
-    const env = Object.fromEntries(doc.values);
-    const world = resolveWorldName(env);
-    const worldKey = env['LEVEL']?.trim() ? 'LEVEL' : 'WORLD_NAME';
-    if (!EXISTING_WORLD_NAME_PATTERN.test(world) || isInterpolated(doc, worldKey)) return undefined;
-
-    let extraArgs: string | undefined;
-    if (doc.values.has('EXTRA_ARGS')) {
-      if (isInterpolated(doc, 'EXTRA_ARGS')) return undefined;
-      extraArgs = doc.values.get('EXTRA_ARGS');
-    } else {
-      if (inherited instanceof Error) return undefined;
-      extraArgs = inherited;
-    }
-    const location = universeLocation(extraArgs ?? '');
-    if (!location) return undefined;
-    return { world, server, internal: location === 'internal' };
+    return readWorldAssignmentSnapshot(this.paths, override, dotenvOverride);
   }
 
   private configPath(server: string): string {

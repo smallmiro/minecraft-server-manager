@@ -1,12 +1,18 @@
-import { readFile } from 'node:fs/promises';
+import type { Dirent } from 'node:fs';
+import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Paths } from '../../utils/index.js';
 import { parseEnvDocument, type EnvDocument } from '../../utils/env-file.js';
+import { EXISTING_WORLD_NAME_PATTERN, resolveWorldName } from '../../domain/value-objects/WorldName.js';
+import type { WorldAssignment, WorldAssignmentSnapshot } from '../../domain/services/worldAssignment.js';
 
 /**
  * How a server's effective EXTRA_ARGS (and so where its world lives) is
- * resolved (ADR-0002). One copy for the world assignment adapter (#670) and
- * the ServerSpec import (#675, ADR-0003), so both read a server the same way.
+ * resolved, and the world assignment snapshot built from it (ADR-0002). One
+ * copy for the world assignment adapter (#670) and the ServerSpec repository
+ * (#675, ADR-0003), so both read a server the same way. The repository uses
+ * the snapshot reader directly, not the adapter, because the adapter's
+ * writes go through the repository (ADR-0003 §2).
  */
 
 /** Inherited EXTRA_ARGS: a value, none, or unreadable (the servers relying on it are undetermined). */
@@ -70,4 +76,67 @@ export async function readInheritedExtraArgs(paths: Paths, dotenvOverride?: stri
   } catch (err) {
     return err as Error;
   }
+}
+
+/** The server's assignment, or undefined when it cannot be determined (R7). */
+function parseAssignment(server: string, content: string, inherited: InheritedExtraArgs): WorldAssignment | undefined {
+  const doc = parseEnvDocument(content);
+  const env = Object.fromEntries(doc.values);
+  const world = resolveWorldName(env);
+  const worldKey = env['LEVEL']?.trim() ? 'LEVEL' : 'WORLD_NAME';
+  if (!EXISTING_WORLD_NAME_PATTERN.test(world) || isInterpolated(doc, worldKey)) return undefined;
+
+  let extraArgs: string | undefined;
+  if (doc.values.has('EXTRA_ARGS')) {
+    if (isInterpolated(doc, 'EXTRA_ARGS')) return undefined;
+    extraArgs = doc.values.get('EXTRA_ARGS');
+  } else {
+    if (inherited instanceof Error) return undefined;
+    extraArgs = inherited;
+  }
+  const location = universeLocation(extraArgs ?? '');
+  if (!location) return undefined;
+  return { world, server, internal: location === 'internal' };
+}
+
+/**
+ * World assignments derived from each server's config.env (ADR-0002).
+ * `override` replaces one server's config.env (preview), `dotenvOverride`
+ * the platform .env. Rejects only when servers/ cannot be listed.
+ */
+export async function readWorldAssignmentSnapshot(
+  paths: Paths,
+  override?: { server: string; content: string },
+  dotenvOverride?: string
+): Promise<WorldAssignmentSnapshot> {
+  let entries: Dirent[] = [];
+  try {
+    entries = await readdir(paths.servers, { withFileTypes: true });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+  }
+  const names = new Set(entries.filter((e) => e.isDirectory() && !e.name.startsWith('_')).map((e) => e.name));
+  if (override) names.add(override.server);
+
+  const inherited = await readInheritedExtraArgs(paths, dotenvOverride);
+  const assignments: WorldAssignment[] = [];
+  const undetermined: string[] = [];
+  for (const server of [...names].sort()) {
+    let content: string;
+    if (override?.server === server) {
+      content = override.content;
+    } else {
+      try {
+        content = await readFile(join(paths.servers, server, 'config.env'), 'utf-8');
+      } catch (err) {
+        // Same filter as ServerRepository.listNames: no config.env, no server.
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') undetermined.push(server);
+        continue;
+      }
+    }
+    const assignment = parseAssignment(server, content, inherited);
+    if (assignment) assignments.push(assignment);
+    else undetermined.push(server);
+  }
+  return { assignments, undetermined };
 }
