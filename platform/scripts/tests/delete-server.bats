@@ -32,7 +32,6 @@ setup() {
 }
 
 @test "delete: drops the include entry from servers/compose.yml" {
-    require_gnu_sed
     printf 'include:\n  - alpha/docker-compose.yml\n  - beta/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
     run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
     [ "$status" -eq 0 ]
@@ -41,7 +40,6 @@ setup() {
 }
 
 @test "delete: restores compose.yml and keeps the server when validation fails" {
-    require_gnu_sed
     printf 'include:\n  - alpha/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
     FAKE_DOCKER_CONFIG_RC=1 run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
     [ "$status" -eq 1 ]
@@ -351,4 +349,42 @@ exec /bin/mv "$@"'
     [ "$status" -eq 0 ]
     [ ! -d "$PLATFORM/servers/alpha" ]
     [ -f "$BATS_TEST_TMPDIR/elsewhere/alpha/level.dat" ]
+}
+
+# --- #660: exact name matching -------------------------------------------------
+
+@test "delete: wood keeps ironwood's include line (#660)" {
+    add_server wood
+    add_server ironwood
+    printf 'include:\n  - wood/docker-compose.yml\n  - ironwood/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force --keep-avahi
+    [ "$status" -eq 0 ]
+    [ "$(cat "$PLATFORM/servers/compose.yml")" = "$(printf 'include:\n  - ironwood/docker-compose.yml')" ]
+}
+
+@test "delete: dropping the last include also drops the include: line (#660)" {
+    printf 'include:\n  - alpha/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 0 ]
+    run ! grep -q include "$PLATFORM/servers/compose.yml"
+}
+
+@test "delete: compose.yml keeps its file mode (#660)" {
+    printf 'include:\n  - alpha/docker-compose.yml\n  - beta/docker-compose.yml\n' > "$PLATFORM/servers/compose.yml"
+    chmod 640 "$PLATFORM/servers/compose.yml"
+    run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi
+    [ "$status" -eq 0 ]
+    [ "$(ls -l "$PLATFORM/servers/compose.yml" | cut -c1-10)" = "-rw-r-----" ]
+}
+
+@test "delete: wood removes only wood.local from avahi hosts (#660)" {
+    add_server wood
+    fake_cmd sudo 'while [[ "${1:-}" == -* ]]; do shift; done
+exec "$@"'
+    fake_cmd systemctl 'exit 0'
+    export AVAHI_HOSTS="$BATS_TEST_TMPDIR/avahi-hosts"
+    printf '# wood.local note\n10.0.0.1 ironwood.local\n10.0.0.1 wood.local\n10.0.0.1 woodXlocal\n10.0.0.1 wood.localdomain\n' > "$AVAHI_HOSTS"
+    run bash "$SCRIPTS_DIR/delete-server.sh" wood --force
+    [ "$status" -eq 0 ]
+    [ "$(cat "$AVAHI_HOSTS")" = "$(printf '# wood.local note\n10.0.0.1 ironwood.local\n10.0.0.1 woodXlocal\n10.0.0.1 wood.localdomain')" ]
 }
