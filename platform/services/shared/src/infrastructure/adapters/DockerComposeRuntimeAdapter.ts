@@ -275,10 +275,17 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     container: string,
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
-    options?: { tail?: number }
+    options?: { tail?: number; follow?: boolean }
   ): Promise<void> {
     return new Promise((resolve) => {
-      const dockerLogs = spawn('docker', ['logs', '-f', '--tail', String(options?.tail ?? 0), '--', container], {
+      const dockerLogs = spawn('docker', [
+          'logs',
+          ...(options?.follow === false ? [] : ['-f']),
+          '--tail',
+          String(options?.tail ?? 0),
+          '--',
+          container,
+        ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         signal,
       });

@@ -309,6 +309,23 @@ describe('DockerComposeRuntimeAdapter.followLogs', () => {
     });
   });
 
+  it('follow: false runs docker logs without -f, streams stdout and stderr, resolves on close', async () => {
+    const child = bareChild();
+    vi.mocked(spawn).mockReturnValue(child as never);
+    const chunks: string[] = [];
+    const controller = new AbortController();
+    const done = runtime.followLogs('mc-a', (c) => chunks.push(c), controller.signal, { follow: false, tail: 7 });
+    child.stdout.emit('data', Buffer.from('out\n'));
+    child.stderr.emit('data', Buffer.from('java.lang.Exception\n'));
+    child.emit('close', 0);
+    await done;
+    expect(chunks).toEqual(['out\n', 'java.lang.Exception\n']);
+    expect(spawn).toHaveBeenCalledWith('docker', ['logs', '--tail', '7', '--', 'mc-a'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      signal: controller.signal,
+    });
+  });
+
   it('resolves on a spawn error', async () => {
     const child = bareChild();
     vi.mocked(spawn).mockReturnValue(child as never);

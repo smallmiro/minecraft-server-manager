@@ -60,22 +60,25 @@ export async function logsCommand(options: LogsCommandOptions): Promise<number> 
     return 1;
   }
 
-  if (options.follow) {
-    const controller = new AbortController();
-    const abort = () => controller.abort();
-    options.signal?.addEventListener('abort', abort);
-    process.once('SIGINT', abort);
-    try {
-      await runtime.followLogs(workload, write, controller.signal, { tail: lines });
-    } finally {
-      options.signal?.removeEventListener('abort', abort);
-      process.off('SIGINT', abort);
-    }
-    return 0;
+  // One streaming path for both modes: docker logs merges stdout and stderr (getLogs drops stderr).
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  options.signal?.addEventListener('abort', abort);
+  process.once('SIGINT', abort);
+  const chunks: string[] = [];
+  try {
+    await runtime.followLogs(workload, options.follow ? write : (c) => void chunks.push(c), controller.signal, {
+      follow: options.follow === true,
+      tail: lines,
+    });
+  } finally {
+    options.signal?.removeEventListener('abort', abort);
+    process.off('SIGINT', abort);
   }
+  if (options.follow) return 0;
 
-  const text = runtime.getLogs(workload, lines);
-  const all = text === '' ? [] : text.split('\n');
+  const text = chunks.join('').replace(/\r?\n$/, '');
+  const all = text === '' ? [] : text.split(/\r?\n/);
   write(options.json ? JSON.stringify(all, null, 2) + '\n' : text === '' ? '' : text + '\n');
   return 0;
 }
