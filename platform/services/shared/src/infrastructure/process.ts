@@ -116,3 +116,49 @@ export function execScriptInteractive(
     });
   });
 }
+
+/**
+ * Spawn a command with explicit argv (no shell), streaming complete stderr
+ * lines to onStderr as they arrive, and resolve with the exit code and the
+ * captured output once the process closes.
+ */
+export function execCommandStreaming(
+  file: string,
+  args: string[],
+  onStderr: (line: string) => void,
+  options?: { cwd?: string; env?: NodeJS.ProcessEnv }
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(file, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: options?.cwd,
+      env: options?.env,
+    });
+    let stdout = '';
+    let stderr = '';
+    let stderrBuf = '';
+
+    child.stdout.setEncoding('utf-8');
+    child.stdout.on('data', (chunk: string) => {
+      stdout += chunk;
+    });
+
+    child.stderr.setEncoding('utf-8');
+    child.stderr.on('data', (chunk: string) => {
+      stderr += chunk;
+      stderrBuf += chunk;
+      // Emit complete lines as they arrive so progress streams in real time.
+      let nl: number;
+      while ((nl = stderrBuf.indexOf('\n')) !== -1) {
+        onStderr(stderrBuf.slice(0, nl));
+        stderrBuf = stderrBuf.slice(nl + 1);
+      }
+    });
+
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (stderrBuf.length > 0) onStderr(stderrBuf);
+      resolve({ code: code ?? 0, stdout, stderr });
+    });
+  });
+}

@@ -1,10 +1,10 @@
-import { spawn } from 'node:child_process';
 import type {
   IMapRenderer,
   MapRenderOptions,
   MapRenderProgress,
   MapRenderResult,
 } from '../../application/ports/outbound/IMapRenderer.js';
+import { execCommandStreaming } from '../process.js';
 
 /** Process options (working directory / environment) for the render script. */
 export interface RenderSpawnOptions {
@@ -65,41 +65,6 @@ export function parseResultJson(stdout: string): MapRenderResult {
   return JSON.parse(stdout.slice(start, end + 1)) as MapRenderResult;
 }
 
-const defaultSpawn: RenderSpawn = (file, args, onStderr, options) =>
-  new Promise((resolve, reject) => {
-    const child = spawn(file, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      cwd: options?.cwd,
-      env: options?.env,
-    });
-    let stdout = '';
-    let stderr = '';
-    let stderrBuf = '';
-
-    child.stdout.setEncoding('utf-8');
-    child.stdout.on('data', (chunk: string) => {
-      stdout += chunk;
-    });
-
-    child.stderr.setEncoding('utf-8');
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk;
-      stderrBuf += chunk;
-      // Emit complete lines as they arrive so progress streams in real time.
-      let nl: number;
-      while ((nl = stderrBuf.indexOf('\n')) !== -1) {
-        onStderr(stderrBuf.slice(0, nl));
-        stderrBuf = stderrBuf.slice(nl + 1);
-      }
-    });
-
-    child.on('error', reject);
-    child.on('close', (code) => {
-      if (stderrBuf.length > 0) onStderr(stderrBuf);
-      resolve({ code: code ?? 0, stdout, stderr });
-    });
-  });
-
 /**
  * {@link IMapRenderer} backed by the BlueMap CLI via `scripts/render-map.sh`.
  *
@@ -115,7 +80,7 @@ export class BlueMapCliRenderer implements IMapRenderer {
    */
   constructor(
     private readonly scriptPath: string,
-    private readonly run: RenderSpawn = defaultSpawn,
+    private readonly run: RenderSpawn = execCommandStreaming,
     private readonly spawnOptions: RenderSpawnOptions = {}
   ) {}
 
