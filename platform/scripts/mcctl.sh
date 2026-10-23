@@ -484,17 +484,33 @@ cmd_config() {
         return 1
     fi
 
+    if [[ ! "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        error "Invalid config key: $key"
+        return 1
+    fi
+    # config.env is an env_file, which has no escape syntax: a line break
+    # would add another setting (#726)
+    if [[ "$value" =~ [[:cntrl:]] ]]; then
+        error "Value for ${key} must be a single line without control characters"
+        return 1
+    fi
+
     local config_file="$PLATFORM_DIR/servers/$server/config.env"
     if [[ ! -f "$config_file" ]]; then
         error "Server '$server' config not found: $config_file"
         return 1
     fi
 
-    if grep -q "^${key}=" "$config_file"; then
-        sed -i "s|^${key}=.*|${key}=${value}|" "$config_file"
-    else
-        echo "${key}=${value}" >> "$config_file"
-    fi
+    # awk with ENVIRON writes the value literally; in a sed expression '|',
+    # '&' and the e flag are interpreted (#726)
+    local updated
+    updated="$(KEY="$key" VALUE="$value" awk '
+        BEGIN { line = ENVIRON["KEY"] "=" ENVIRON["VALUE"]; prefix = ENVIRON["KEY"] "=" }
+        index($0, prefix) == 1 { print line; found = 1; next }
+        { print }
+        END { if (!found) print line }
+    ' "$config_file")"
+    printf '%s\n' "$updated" > "$config_file"
     info "Set ${key}=${value} in servers/${server}/config.env"
 }
 
