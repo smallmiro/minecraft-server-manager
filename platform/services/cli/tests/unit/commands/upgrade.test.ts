@@ -16,6 +16,11 @@ vi.mock('node:fs', () => ({
   readdirSync: (...args: any[]) => mockReaddirSync(...args),
 }));
 
+vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
+  atomicWriteFileSync: (...args: any[]) => mockWriteFileSync(...args),
+}));
+
 // Mock child_process (docker compose up -d router)
 const mockExecSync = vi.fn();
 vi.mock('node:child_process', () => ({
@@ -235,7 +240,7 @@ describe('upgradeCommand', () => {
     await upgradeCommand({ root: '/mock/root', nonInteractive: true });
 
     expect(mockCopyFileSync).toHaveBeenCalledWith('/mock/templates/servers/global.env', '/mock/root/servers/global.env');
-    expect(mockWriteFileSync).toHaveBeenCalledWith('/mock/root/servers/a/docker-compose.yml', 'env_file:\n  - ../global.env\n', 'utf-8');
+    expect(mockWriteFileSync).toHaveBeenCalledWith('/mock/root/servers/a/docker-compose.yml', 'env_file:\n  - ../global.env\n');
     expect(prompts.log.warn).toHaveBeenCalledWith(expect.stringContaining('mcctl stop a && mcctl start a'));
   });
 

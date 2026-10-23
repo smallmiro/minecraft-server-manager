@@ -1,5 +1,6 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /** env_file entry that injected the whole platform .env into a server container. */
 const LEGACY_ENV_FILE_RE = /^(\s*-\s*)\.\.\/\.\.\/\.env[ \t]*$/gm;
@@ -41,7 +42,7 @@ export function migrateServerEnv(root: string, templatesDir: string, dryRun: boo
     const content = readFileSync(composePath, 'utf-8');
     const updated = content.replace(LEGACY_ENV_FILE_RE, '$1../global.env');
     if (updated === content) continue;
-    if (!dryRun) writeFileSync(composePath, updated, 'utf-8');
+    if (!dryRun) atomicWriteFileSync(composePath, updated);
     result.migrated.push(entry.name);
   }
   return result;

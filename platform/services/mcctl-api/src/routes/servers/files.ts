@@ -2,12 +2,13 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import multipart from '@fastify/multipart';
 import { resolve, join, basename, dirname } from 'path';
-import { existsSync, statSync, readdirSync, readFileSync, writeFileSync, mkdirSync, renameSync, rmSync, realpathSync, createReadStream, createWriteStream } from 'fs';
+import { existsSync, statSync, readdirSync, readFileSync, mkdirSync, renameSync, rmSync, realpathSync, createReadStream, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { serverExists, AuditActionEnum } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 // ============================================================
 // Types
@@ -299,7 +300,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         return reply.code(400).send({ error: 'BadRequest', message: 'Cannot write to a directory' });
       }
 
-      writeFileSync(targetPath, content, 'utf-8');
+      atomicWriteFileSync(targetPath, content);
 
       const actor = getActor(request);
       await writeAuditLog({

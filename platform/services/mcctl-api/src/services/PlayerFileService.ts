@@ -1,5 +1,6 @@
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 interface WhitelistPlayer {
   name: string;
@@ -85,7 +86,7 @@ export class PlayerFileService {
   }
 
   private writeJsonFile<T>(filePath: string, data: T[]): void {
-    writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    atomicWriteFileSync(filePath, JSON.stringify(data, null, 2));
   }
 
   private readConfigEnv(serverName: string): Map<string, string> {
@@ -113,7 +114,7 @@ export class PlayerFileService {
     }
 
     if (!existsSync(configPath)) {
-      writeFileSync(configPath, `${key}=${value}\n`, 'utf-8');
+      atomicWriteFileSync(configPath, `${key}=${value}\n`);
       return;
     }
 
@@ -134,7 +135,7 @@ export class PlayerFileService {
       updated.push(`${key}=${value}`);
     }
 
-    writeFileSync(configPath, updated.join('\n'), 'utf-8');
+    atomicWriteFileSync(configPath, updated.join('\n'));
   }
 
   private parseCommaSeparated(value: string | undefined): string[] {

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { multiselect, isCancel } from '@clack/prompts';
 import {
@@ -25,6 +25,7 @@ import {
 } from '../../lib/pm2-utils.js';
 import { printTelemetryNotice } from '../../lib/telemetry-notice.js';
 import { displayPrerequisiteReport } from '../../lib/prerequisite-display.js';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Check if mcctl-console is available on npm
@@ -807,7 +808,7 @@ export async function consoleInitCommand(
       { accessMode, apiKey, allowedIps },
       paths.root
     );
-    writeFileSync(ecosystemPath, ecosystemContent, 'utf-8');
+    atomicWriteFileSync(ecosystemPath, ecosystemContent);
 
     spinner.stop('PM2 ecosystem config generated');
 

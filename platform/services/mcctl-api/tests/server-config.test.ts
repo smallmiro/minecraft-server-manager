@@ -79,6 +79,11 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   };
 });
 
+vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
+  atomicWriteFileSync: vi.fn(),
+}));
+
 // Mock fs module with path-aware logic
 vi.mock('fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs')>();
@@ -96,13 +101,14 @@ import {
   serverExists,
   getContainerStatus,
 } from '@minecraft-docker/shared';
-import { existsSync, readFileSync, writeFileSync, readdirSync, rmSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 const mockedServerExists = vi.mocked(serverExists);
 const mockedGetContainerStatus = vi.mocked(getContainerStatus);
 const mockExistsSync = vi.mocked(existsSync);
 const mockReadFileSync = vi.mocked(readFileSync);
-const mockWriteFileSync = vi.mocked(writeFileSync);
+const mockWriteFileSync = vi.mocked(atomicWriteFileSync);
 const mockReaddirSync = vi.mocked(readdirSync);
 const mockRmSync = vi.mocked(rmSync);
 

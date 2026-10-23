@@ -7,9 +7,10 @@ import {
 } from '@minecraft-docker/shared';
 // Auto-register mod source adapters
 import '@minecraft-docker/mod-source-modrinth';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
+import { atomicWriteFile } from '@minecraft-docker/shared/utils';
 
 /**
  * Mod command options
@@ -212,7 +213,7 @@ async function modAdd(
     config[envKey] = newMods.join(',');
 
     // Write updated config
-    await writeFile(configPath, formatEnvFile(config));
+    await atomicWriteFile(configPath, formatEnvFile(config));
 
     console.log('');
     console.log(colors.green(`✓ Added ${modsToAdd.length} mod(s) to ${serverName}`));
@@ -370,7 +371,7 @@ async function modRemove(
       return 0;
     }
 
-    await writeFile(configPath, formatEnvFile(config));
+    await atomicWriteFile(configPath, formatEnvFile(config));
 
     console.log('');
     console.log(colors.green(`✓ Removed ${removed} mod(s) from ${serverName}`));

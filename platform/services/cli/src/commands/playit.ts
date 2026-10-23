@@ -11,8 +11,9 @@ import {
   getConfiguredServers,
 } from '@minecraft-docker/shared';
 import * as p from '@clack/prompts';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 export interface PlayitCommandOptions {
   root?: string;
@@ -69,9 +70,9 @@ function ensurePlayitService(paths: Paths): void {
   // Insert before 'networks:' section if it exists, otherwise append before end
   if (content.includes('\nnetworks:')) {
     const updated = content.replace('\nnetworks:', playitService + '\nnetworks:');
-    writeFileSync(composePath, updated, 'utf-8');
+    atomicWriteFileSync(composePath, updated);
   } else {
-    writeFileSync(composePath, content + playitService, 'utf-8');
+    atomicWriteFileSync(composePath, content + playitService);
   }
 }
 
@@ -91,7 +92,7 @@ function updatePlayitEnabled(paths: Paths, enabled: boolean): void {
   }
 
   config.playitEnabled = enabled;
-  writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  atomicWriteFileSync(configPath, JSON.stringify(config, null, 2));
 }
 
 /**

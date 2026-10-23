@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Config, type Paths } from '@minecraft-docker/shared';
-import { writeFileAtomic } from '@minecraft-docker/shared/utils';
+import { atomicWriteFile } from '@minecraft-docker/shared/utils';
 import { ECOSYSTEM_CONFIG_FILE } from './pm2-utils.js';
 
 const KEYS = ['BETTER_AUTH_SECRET', 'BETTER_AUTH_BASE_URL'] as const;
@@ -55,6 +55,6 @@ export async function migrateConsoleAuthEnv(paths: Paths, dryRun: boolean): Prom
     stripped = stripped.replace(lineRe(key), '');
     result.moved.push(key);
   }
-  if (stripped !== original) await writeFileAtomic(ecoPath, stripped);
+  if (stripped !== original) await atomicWriteFile(ecoPath, stripped, { mode: 0o600 });
   return result;
 }

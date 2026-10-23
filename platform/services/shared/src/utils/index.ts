@@ -1,11 +1,11 @@
 import { homedir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import type { McctlConfig, EnvConfig } from '../types/index.js';
 import { applyEnvChanges } from './env-file.js';
-import { writeFileAtomic } from './atomic-write.js';
+import { atomicWriteFile, atomicWriteFileSync } from './atomic-write.js';
 
 /**
  * Get the package root directory
@@ -263,7 +263,7 @@ export class Config {
       mkdirSync(dir, { recursive: true });
     }
 
-    writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+    atomicWriteFileSync(configPath, JSON.stringify(config, null, 2));
   }
 
   /**
@@ -336,7 +336,7 @@ export class Config {
     const next = applyEnvChanges(content, { set });
 
     mkdirSync(dirname(envPath), { recursive: true });
-    await writeFileAtomic(envPath, next);
+    await atomicWriteFile(envPath, next, { mode: 0o600 });
   }
 }
 

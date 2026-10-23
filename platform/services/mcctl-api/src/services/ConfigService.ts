@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { resolveWorldName } from '@minecraft-docker/shared';
-import { assertEnvFileValue } from '@minecraft-docker/shared/utils';
+import { assertEnvFileValue, atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -455,7 +455,7 @@ export class ConfigService {
     // Only write if there are changes
     if (changedFields.length > 0) {
       const updatedContent = updateEnvFile(content, envUpdates);
-      writeFileSync(configPath, updatedContent, 'utf-8');
+      atomicWriteFileSync(configPath, updatedContent);
     }
 
     // Read back the updated configuration

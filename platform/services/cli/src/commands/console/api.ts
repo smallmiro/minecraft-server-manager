@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import * as p from '@clack/prompts';
 import { Paths, colors } from '@minecraft-docker/shared';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Console API command options
@@ -73,7 +74,7 @@ function loadConfig(): ApiConfig {
  */
 function saveConfig(config: ApiConfig): void {
   const configPath = getConfigPath();
-  writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8');
+  atomicWriteFileSync(configPath, JSON.stringify(config, null, 2));
   console.log(
     colors.yellow(
       `Note: saved to ${configPath} only. mcctl-api reads AUTH_* from ecosystem.config.cjs ` +

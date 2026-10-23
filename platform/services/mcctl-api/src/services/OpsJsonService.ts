@@ -1,6 +1,7 @@
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { Operator, OpLevel } from '@minecraft-docker/shared';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Service for reading/writing ops.json with level support
@@ -46,7 +47,7 @@ export class OpsJsonService {
   writeOps(serverName: string, operators: Operator[]): void {
     const opsPath = this.getOpsJsonPath(serverName);
     const json = operators.map((op) => op.toMinecraftOpsJson());
-    writeFileSync(opsPath, JSON.stringify(json, null, 2), 'utf-8');
+    atomicWriteFileSync(opsPath, JSON.stringify(json, null, 2));
   }
 
   /**

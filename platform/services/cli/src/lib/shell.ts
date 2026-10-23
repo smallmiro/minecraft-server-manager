@@ -1,8 +1,8 @@
 import { join } from 'node:path';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { Paths, execScriptInteractive, log } from '@minecraft-docker/shared';
-import { ENV_KEY_RE, assertEnvFileValue } from '@minecraft-docker/shared/utils';
+import { ENV_KEY_RE, assertEnvFileValue, atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 export interface ShellExecutorOptions {
   paths?: Paths;
@@ -203,7 +203,7 @@ export class ShellExecutor {
       updatedLines.push(`${key}=${value}`);
     }
 
-    writeFileSync(configPath, updatedLines.join('\n'));
+    atomicWriteFileSync(configPath, updatedLines.join('\n'));
     return true;
   }
 

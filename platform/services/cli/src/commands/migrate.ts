@@ -3,6 +3,7 @@ import { getContainer } from '../infrastructure/index.js';
 import { isContainerRunning } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /**
  * Migrate command options
@@ -491,7 +492,7 @@ async function migrateServer(
     configContent += `\nLEVEL=${newLevelValue}\n`;
   }
 
-  fs.writeFileSync(configPath, configContent);
+  atomicWriteFileSync(configPath, configContent);
 }
 
 /**

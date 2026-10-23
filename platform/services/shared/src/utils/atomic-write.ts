@@ -5,14 +5,16 @@
  *
  * Steps: resolve a symlink (the link is kept), write a temp file in the same
  * directory, set mode/owner, fsync, rename over the target. The temp file is
- * removed on failure.
+ * removed on failure. An existing file that is not writable is refused (EACCES)
+ * like an in-place write would be.
  */
 import { randomUUID } from 'node:crypto';
 import {
-  closeSync, fchmodSync, fchownSync, fsyncSync, openSync, realpathSync, renameSync, rmSync, statSync, writeFileSync,
+  accessSync, constants, closeSync, fchmodSync, fchownSync, fsyncSync, openSync, realpathSync, renameSync, rmSync,
+  statSync, writeFileSync,
   type Stats,
 } from 'node:fs';
-import { open, realpath, rename, rm, stat } from 'node:fs/promises';
+import { access, open, realpath, rename, rm, stat } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 
 export interface AtomicWriteOptions {
@@ -53,6 +55,8 @@ export async function atomicWriteFile(
 ): Promise<void> {
   const target = (await ifExistsAsync(realpath(path))) ?? path;
   const existing = await ifExistsAsync(stat(target));
+  // A read-only file stays read-only, as with an in-place write.
+  if (existing) await access(target, constants.W_OK);
   const mode = modeFor(options, existing);
   const tmp = tempPathFor(target);
   const file = await open(tmp, 'wx', mode ?? 0o666);
@@ -81,6 +85,7 @@ export function atomicWriteFileSync(
 ): void {
   const target = ifExists(() => realpathSync(path)) ?? path;
   const existing = ifExists(() => statSync(target));
+  if (existing) accessSync(target, constants.W_OK);
   const mode = modeFor(options, existing);
   const tmp = tempPathFor(target);
   const fd = openSync(tmp, 'wx', mode ?? 0o666);

@@ -1,9 +1,10 @@
-import { readFile, readdir, stat, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, readdir, stat, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import type { IConfigFileCollector } from '../../application/ports/outbound/IConfigFileCollector.js';
 import { ConfigSnapshotFile } from '../../domain/value-objects/ConfigSnapshotFile.js';
+import { atomicWriteFile } from '../../utils/atomic-write.js';
 
 /**
  * Known config file names that are always collected if present
@@ -110,7 +111,7 @@ export class FileSystemConfigFileCollector implements IConfigFileCollector {
     const fullPath = join(this.serversDir, serverName, filePath);
     const fileDir = dirname(fullPath);
     await mkdir(fileDir, { recursive: true });
-    await writeFile(fullPath, content, 'utf-8');
+    await atomicWriteFile(fullPath, content);
   }
 
   /**

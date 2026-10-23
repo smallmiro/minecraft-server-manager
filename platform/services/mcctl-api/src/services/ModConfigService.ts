@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { ModSourceFactory } from '@minecraft-docker/shared';
-import { assertEnvFileValue } from '@minecraft-docker/shared/utils';
+import { assertEnvFileValue, atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 // ============================================================
 // Installed Mod Types
@@ -146,7 +146,7 @@ export class ModConfigService {
     }
 
     const updatedContent = updateEnvFile(content, envKey, existing.join(','));
-    writeFileSync(configPath, updatedContent, 'utf-8');
+    atomicWriteFileSync(configPath, updatedContent);
 
     return { added, mods: existing };
   }
@@ -214,7 +214,7 @@ export class ModConfigService {
     }
 
     const updatedContent = updateEnvFile(content, excludeKey, updated.join(','));
-    writeFileSync(configPath, updatedContent, 'utf-8');
+    atomicWriteFileSync(configPath, updatedContent);
 
     return { excludeKey, excludeList: updated };
   }
@@ -241,7 +241,7 @@ export class ModConfigService {
       if (index !== -1) {
         mods.splice(index, 1);
         updatedContent = updateEnvFile(updatedContent, envKey, mods.join(','));
-        writeFileSync(configPath, updatedContent, 'utf-8');
+        atomicWriteFileSync(configPath, updatedContent);
         return { removed: true, sourceName: adapter.sourceName };
       }
     }

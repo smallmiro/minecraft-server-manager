@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, writeFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 const DEFAULT_GID = '999';
 
@@ -33,6 +34,6 @@ export function setDockerGid(envPath: string, gid: number | null): boolean {
   const next = current === undefined
     ? `${content}${content.endsWith('\n') ? '' : '\n'}DOCKER_GID=${gid}\n`
     : content.replace(line, `DOCKER_GID=${gid}`);
-  writeFileSync(envPath, next, 'utf-8');
+  atomicWriteFileSync(envPath, next);
   return true;
 }

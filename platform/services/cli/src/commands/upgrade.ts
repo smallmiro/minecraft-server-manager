@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -10,6 +10,7 @@ import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
 import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
 import * as prompts from '@clack/prompts';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 export interface UpgradeCommandOptions {
   root?: string;
@@ -228,7 +229,7 @@ async function migrateEnvFile(
 
   // Apply diff
   const updatedContent = applyEnvDiff(userContent, diff, values);
-  writeFileSync(userEnvPath, updatedContent, 'utf-8');
+  atomicWriteFileSync(userEnvPath, updatedContent);
   prompts.log.success(`.env updated with ${totalNew} new variable(s).`);
 
   return { changed: true, error: false };
@@ -328,7 +329,7 @@ async function migrateComposeFile(
   const backup = `${paths.composeFile}.bak-${stamp}`;
   try {
     copyFileSync(paths.composeFile, backup);
-    writeFileSync(paths.composeFile, result.content, 'utf-8');
+    atomicWriteFileSync(paths.composeFile, result.content);
   } catch (err) {
     try { copyFileSync(backup, paths.composeFile); } catch { /* backup restore best effort */ }
     prompts.log.error(`Failed to update docker-compose.yml: ${(err as Error).message}`);

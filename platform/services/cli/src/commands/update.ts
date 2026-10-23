@@ -10,10 +10,11 @@ import { checkServiceAvailability, PM2_SERVICE_NAMES } from '../lib/pm2-utils.js
 import { Pm2ServiceManagerAdapter } from '../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import { ShellExecutor } from '../lib/shell.js';
 import { spawnSync } from 'child_process';
-import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
 import { printTelemetryNotice } from '../lib/telemetry-notice.js';
+import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
 
@@ -171,7 +172,7 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
     }
 
     if (changed) {
-      writeFileSync(composePath, fileContent);
+      atomicWriteFileSync(composePath, fileContent);
       updatedCount++;
     }
   }

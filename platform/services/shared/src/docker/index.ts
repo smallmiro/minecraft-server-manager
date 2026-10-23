@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type {
   ContainerStatus,
@@ -15,6 +15,7 @@ import type {
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot } from '../utils/index.js';
 import { assertEnvFileValue } from '../utils/env-file.js';
+import { atomicWriteFileSync } from '../utils/atomic-write.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
   DockerComposeRuntimeAdapter,
@@ -754,7 +755,7 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
     content += `${suffix}\n# playit.gg External Domain\nPLAYIT_DOMAIN=${domain}\n`;
   }
 
-  writeFileSync(configPath, content, 'utf-8');
+  atomicWriteFileSync(configPath, content);
 
   const composePath = join(dir, serverName, 'docker-compose.yml');
   if (!existsSync(composePath)) return;
@@ -763,6 +764,6 @@ export function setServerPlayitDomain(serverName: string, domain: string | null,
   if (hosts.length === 0) return;
   const nextHosts = swapRouterHost(hosts, previousDomain, domain);
   if (nextHosts.join(',') !== hosts.join(',')) {
-    writeFileSync(composePath, replaceRouterHosts(compose, nextHosts), 'utf-8');
+    atomicWriteFileSync(composePath, replaceRouterHosts(compose, nextHosts));
   }
 }
