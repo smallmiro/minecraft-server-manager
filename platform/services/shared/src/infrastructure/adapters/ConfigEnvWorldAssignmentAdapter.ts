@@ -2,7 +2,7 @@ import type { Dirent } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { applyEnvChanges, parseEnvDocument, type EnvDocument } from '../../utils/env-file.js';
+import { applyEnvChanges, parseEnvDocument } from '../../utils/env-file.js';
 import { atomicWriteFile } from '../../utils/atomic-write.js';
 import {
   EXISTING_WORLD_NAME_PATTERN,
@@ -16,37 +16,12 @@ import {
   type WorldAssignmentSnapshot,
 } from '../../domain/index.js';
 import type { IWorldAssignmentPort } from '../../application/ports/outbound/IWorldAssignmentPort.js';
-
-/** Inherited EXTRA_ARGS: a value, none, or unreadable (the servers relying on it are undetermined). */
-type Inherited = string | undefined | Error;
-
-/**
- * Whether the effective (last) `KEY=` line is subject to Compose
- * interpolation: unquoted and double-quoted values are, single-quoted ones
- * are literal. Such a value has no fixed name, so it is undetermined (R7).
- */
-function isInterpolated(doc: EnvDocument, key: string): boolean {
-  const line = [...doc.lines].reverse().find((l) => l.key === key);
-  if (!line) return false;
-  const raw = line.raw.slice(line.raw.indexOf('=') + 1).trim();
-  return !raw.startsWith("'") && raw.includes('$');
-}
-
-/**
- * Where --universe puts worlds: 'worlds' for /worlds, 'internal' for none or
- * /data (the container's working directory), undefined for anything else.
- */
-function universeLocation(extraArgs: string): 'worlds' | 'internal' | undefined {
-  const args = extraArgs.trim().split(/\s+/).filter(Boolean);
-  const i = args.findIndex((a) => a === '--universe' || a.startsWith('--universe='));
-  if (i < 0) return 'internal';
-  const value = args[i]!.startsWith('--universe=') ? args[i]!.slice('--universe='.length) : args[i + 1];
-  if (!value || value.includes('$')) return undefined;
-  const path = value.replace(/\/+$/, '') || '/';
-  if (path === '/worlds') return 'worlds';
-  if (path === '/data' || path === '.' || path === './') return 'internal';
-  return undefined;
-}
+import {
+  isInterpolated,
+  readInheritedExtraArgs,
+  universeLocation,
+  type InheritedExtraArgs,
+} from './effectiveExtraArgs.js';
 
 /**
  * World assignments derived from each server's `LEVEL` in
@@ -118,7 +93,7 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     const names = new Set(entries.filter((e) => e.isDirectory() && !e.name.startsWith('_')).map((e) => e.name));
     if (override) names.add(override.server);
 
-    const inherited = await this.inheritedExtraArgs(dotenvOverride);
+    const inherited = await readInheritedExtraArgs(this.paths, dotenvOverride);
     const assignments: WorldAssignment[] = [];
     const undetermined: string[] = [];
     for (const server of [...names].sort()) {
@@ -142,7 +117,7 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
   }
 
   /** The server's assignment, or undefined when it cannot be determined (R7). */
-  private parse(server: string, content: string, inherited: Inherited): WorldAssignment | undefined {
+  private parse(server: string, content: string, inherited: InheritedExtraArgs): WorldAssignment | undefined {
     const doc = parseEnvDocument(content);
     const env = Object.fromEntries(doc.values);
     const world = resolveWorldName(env);
@@ -160,35 +135,6 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     const location = universeLocation(extraArgs ?? '');
     if (!location) return undefined;
     return { world, server, internal: location === 'internal' };
-  }
-
-  /** EXTRA_ARGS a server gets from servers/global.env (and the platform .env). */
-  private async inheritedExtraArgs(dotenvOverride?: string): Promise<Inherited> {
-    const read = async (file: string): Promise<string | undefined> => {
-      try {
-        return await readFile(file, 'utf-8');
-      } catch (err) {
-        if ((err as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
-        throw err;
-      }
-    };
-    try {
-      const global = await read(join(this.paths.servers, 'global.env'));
-      if (global === undefined) return undefined;
-      const doc = parseEnvDocument(global);
-      if (doc.values.has('EXTRA_ARGS')) {
-        return isInterpolated(doc, 'EXTRA_ARGS') ? new Error('interpolated') : doc.values.get('EXTRA_ARGS');
-      }
-      if (!/^\s*EXTRA_ARGS\s*$/m.test(global)) return undefined;
-      const dotenv = dotenvOverride ?? (await read(this.paths.envFile));
-      // A bare key with no platform value leaves the variable unset.
-      if (dotenv === undefined) return undefined;
-      const dotenvDoc = parseEnvDocument(dotenv);
-      // Compose interpolates .env values too: such a value has no fixed location (R7)
-      return isInterpolated(dotenvDoc, 'EXTRA_ARGS') ? new Error('interpolated') : dotenvDoc.values.get('EXTRA_ARGS');
-    } catch (err) {
-      return err as Error;
-    }
   }
 
   private configPath(server: string): string {
