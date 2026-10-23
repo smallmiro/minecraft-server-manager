@@ -21,7 +21,7 @@ All agent definitions are in `.claude/agents/`. Agents have no `tools:` restrict
 |-------|------|-------|-------|
 | `orchestrator-agent` | Entry point for requests. Analyzes, plans, delegates, coordinates. Does not write code. | opus | `agent:orchestrator` |
 | `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (domain entities, value objects, use cases, ports/adapters) | opus | `agent:core` |
-| `cli-agent` | `platform/services/cli/`, `platform/scripts/`, `templates/` | sonnet | `agent:cli` |
+| `cli-agent` | `platform/services/cli/`, `platform/scripts/` | sonnet | `agent:cli` |
 | `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | `agent:backend` |
 | `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | `agent:frontend` |
 | `devops-agent` | Docker files and the rest of `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | `agent:devops` |
@@ -106,7 +106,7 @@ The main session acts as the orchestrator. The most specific path wins.
 | Paths in `Files to Modify` | Owner |
 |----------------------------|-------|
 | `platform/services/shared/**`, `platform/services/mod-source-*/**` | core-agent |
-| `platform/services/cli/**`, `platform/scripts/**`, `templates/**` | cli-agent |
+| `platform/services/cli/**`, `platform/scripts/**` | cli-agent |
 | `platform/services/mcctl-api/**` | backend-agent |
 | `platform/services/mcctl-console/**` | frontend-agent |
 | rest of `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` | devops-agent |

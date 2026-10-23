@@ -330,7 +330,7 @@ These are set in `~/minecraft-servers/.env` and passed to mc-router:
 | `AUTO_SCALE_UP` | Auto-start servers on connect | `true` | Manual |
 | `AUTO_SCALE_DOWN` | Auto-stop idle servers | `true` | Manual |
 | `AUTO_SCALE_DOWN_AFTER` | Idle timeout | `10m` | Manual |
-| `DOCKER_TIMEOUT` | Server startup timeout (sec) | `120` | Manual |
+| `DOCKER_TIMEOUT` | Server startup timeout (Go duration, e.g. `120s`) | `120s` | Manual |
 | `AUTO_SCALE_ASLEEP_MOTD` | MOTD for sleeping servers | - | Manual |
 | `API_BINDING` | Management API binding | `:8080` | Auto |
 

@@ -330,7 +330,7 @@ mcctl console service restart
 | `AUTO_SCALE_UP` | 접속 시 서버 자동 시작 | `true` | 수동 |
 | `AUTO_SCALE_DOWN` | 유휴 서버 자동 중지 | `true` | 수동 |
 | `AUTO_SCALE_DOWN_AFTER` | 유휴 타임아웃 | `10m` | 수동 |
-| `DOCKER_TIMEOUT` | 서버 시작 타임아웃 (초) | `120` | 수동 |
+| `DOCKER_TIMEOUT` | 서버 시작 타임아웃 (Go duration, 예: `120s`) | `120s` | 수동 |
 | `AUTO_SCALE_ASLEEP_MOTD` | 슬리핑 서버 MOTD | - | 수동 |
 | `API_BINDING` | 관리 API 바인딩 | `:8080` | 자동 |
 

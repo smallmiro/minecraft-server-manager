@@ -516,7 +516,7 @@ sudo firewall-cmd --reload
 1. Check Docker timeout in `.env`:
    ```bash
    # ~/minecraft-servers/.env
-   DOCKER_TIMEOUT=180  # Increase if server takes long to start
+   DOCKER_TIMEOUT=180s # Increase if server takes long to start
    ```
 
 2. Check server logs:

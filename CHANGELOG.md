@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **New servers created their world inside the server folder** (#651) - `mcctl create` copies the template bundled in the CLI package, which never received the `EXTRA_ARGS=--universe /worlds/` fix from #165, so worlds ended up in `servers/<name>/data/<LEVEL>` instead of the shared `worlds/<LEVEL>`. The template now has the line again.
+
+### Changed
+- **One template source** (#651) - `platform/services/cli/templates/` is the only copy. The root `templates/` directory is removed and `platform/docker-compose.yml`, `platform/.env.example` and `platform/servers/{_template,global.env}` are symlinks to it. CI fails if they diverge. Template defaults now agree with the docs: `AUTO_SCALE_DOWN_AFTER=10m`, `DOCKER_TIMEOUT=120s`, console/API ports 5000/5001 in `ecosystem.config.js`.
+- **Existing installs are not changed.** Servers you already created keep their current `config.env` (including world location),. `mcctl upgrade` refreshes `servers/_template`, so servers you create afterwards get the shared `/worlds` layout. Migrating existing servers is a later hardening item.
+
 ## [2.33.0] - 2026-10-18
 
 > **Upgrade notes.** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/): run `mcctl upgrade`, then `mcctl console service restart --console`. Coming from 2.31.x or earlier, this is the version to upgrade to: it includes all of 2.32.0 without the console sign-out (#699). If you are on 2.32.0 and were signed out, this restores the previous secret and base URL, so you are signed out once more.
