@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **상태** | system-architect 리뷰 후 수정하여 승인(2026-10-23) |
+| **상태** | system-architect 리뷰 후 수정하여 승인(2026-10-23). PR 1·2(#754), PR 3(`feature/675-provision`)으로 구현 |
 | **이슈** | [#675](https://github.com/smallmiro/minecraft-server-manager/issues/675)(강건화 D5, 마일스톤 M4 #645). #715 S8(`create-server.sh` 교체) 포함 |
 | **바꾸는 ADR** | [ADR-0001](0001-container-runtime-ports.ko.md): `IServerSpecRepository`에 `load`/`write` 추가(v2 메서드 유지), `IHostnameRegistrarPort.register`/`unregister` 추가 |
 | **기반** | [ADR-0002](0002-world-server-assignment.ko.md)(#670, 배정의 원천은 `LEVEL`. PR #750으로 머지됨), PR #749(#656: env 코덱, `atomicWriteFile`, API 생성·삭제 대기열), #651, #649, #654, #751(avahi sudoers 모양) |
@@ -48,7 +48,7 @@
 |------|------|--------------------------|
 | `name` | `ServerName`(DNS-1123, 예약어, #649), 디렉터리 이름과 같아야 함 | `EXISTING_SERVER_NAME_PATTERN` |
 | `world.level` | `WORLD_NAME_PATTERN`, `*_nether`/`*_the_end` 금지(ADR-0002) | `EXISTING_WORLD_NAME_PATTERN` |
-| `type`, `version`, `memory` | `ServerType`, `McVersion`, `Memory` | env 값 규칙 |
+| `type`, `version`, `memory` | `ServerType`, `MC_VERSION_INPUT_PATTERN`(정식 버전, `LATEST`, 스냅샷·프리릴리스, API 생성 규칙과 같음), `Memory` | env 값 규칙 |
 | 호스트명, `playitDomain` | 호스트명 규칙(`HostnameService`에서 도메인으로 이동) | 같음 |
 | `env` 키·값 | `ENV_KEY_RE` / `assertEnvFileValue`(#726) | 같음 |
 
@@ -114,7 +114,7 @@
 
 ## 5. provision(`create-server.sh` 대체)
 
-`CreateServerUseCase`에 선택 인자 `specRepo?`, `hostnames?`, `runtime?`(#670의 `assignments?` 뒤)를 추가하고 `executeWithConfig(config, options?: { onProgress?, onLog? })`로 바꾼다. `specRepo`가 없으면 deprecated 셸 경로를 쓴다. PR 3에서 스크립트를 지운 뒤에는 이 경로와 `ShellAdapter.createServer`가 ENOENT 대신 명확한 오류를 낸다: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`.
+`CreateServerUseCase`에 선택 인자 하나 `provision?: ServerProvisionDeps`(`{ specRepo, hostnames?, runtime?, hostIps? }`, #670의 `assignments?` 뒤. #665와 겹치는 생성자 변경을 줄이려고 객체 하나로 받는다)를 추가하고 `executeWithConfig(config, options?: CreateServerRunOptions)`(`{ onProgress?, onLog? }`)로 바꾼다. 스크립트를 지웠으므로 이것이 없는 경로와 `ShellAdapter.createServer`는 ENOENT 대신 명확한 오류를 낸다: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`.
 
 | # | `create-server.sh` | TS provision | 진행 |
 |---|--------------------|--------------|------|
@@ -146,7 +146,7 @@
 | CLI `update` | 이미지 태그, loading-MOTD 라벨 | `doc.image`, 라벨은 템플릿에서 |
 | CLI upgrade `server-env-migration` | `env_file` 경로 | **#736까지 유지**: 가져오지 않은 서버가 남기 때문(결정 4) |
 | `ConfigEnvWorldAssignmentAdapter.assign/release`(#670) | `LEVEL` | 저장소를 거쳐 `world.level` |
-| `WorldManagementUseCase` → `shell.setServerConfig` | `SEED`, `LEVEL` | `setEnvKey` |
+| `WorldManagementUseCase` → `shell.setServerConfig`, #734부터 `assign(world, server, { seed })` | `SEED`, `LEVEL` | `world.level`과 같은 쓰기의 `env.SEED`(바로 위 행) |
 | `mcctl migrate worlds`(#655) | `EXTRA_ARGS`, `LEVEL` | `allowStorageChange`와 함께 `world.storage = 'universe'` |
 | 설정 스냅샷 복원 | `config.env`, compose | 스냅샷에 `server.yaml`이 있으면 복원 후 렌더링(`KNOWN_CONFIG_FILES`에 추가), 옛 스냅샷은 파일을 쓴 뒤 흡수 |
 | `create-server.sh` / `delete-server.sh` | 전부 | provision(§5) / #735의 `repo.delete` |
@@ -164,6 +164,15 @@
 #675의 완료 조건 8개는 PR 3에서 모두 충족되므로 **#675는 PR 3 뒤에 닫는다**. 이전의 4단계("이전 형식 지원 종료")는 쓰기 보호 시험과 문서로 줄여 PR 3에 합쳤다. PR 3부터 `server-env-migration` 말고는 이전 방식으로 쓰는 코드가 없다. `server.yaml`이 없는 서버는 지연 가져오기로 계속 지원한다. **#736(v3.0.0)으로 미루는 것**: 위 `@deprecated` export, `IShellPort`/`ShellAdapter`, `server-env-migration` 삭제. v3.0.0에서 ServerSpec 동작은 바뀌지 않는다.
 
 순서: PR 1–2는 #749(#656) 머지 뒤, PR 3은 #670(PR #750으로 머지됨) 뒤, #735는 PR 3 뒤. PR 1의 `migrate spec`으로 `server.yaml`을 쓴 뒤 v2 쓰기 경로가 `config.env`를 바꾼 서버는 헤더가 없으므로, PR 2가 다음 load에서 그 변경을 흡수한다(§3).
+
+**PR 3 메모**(구현 기준):
+
+- 렌더링한 서버 compose는 모든 문자열을 따옴표로 감싼다. v2 라벨 리더(`parseRouterHosts`, `HostnameService`)가 `mc-router.host: "..."` 형태로 찾기 때문이다.
+- §6의 쓰기 경로는 모두 `updateServerSpec`/`setEnvKeys`를 거친다. 예외는 `setServerPlayitDomain`(deprecated v2 export, mcctl은 더 이상 부르지 않음), `server-env-migration`(#736까지), config 스냅샷 복원이다. 복원은 일관된 묶음을 쓴다: 스냅샷과 `mcctl server-backup`에 이제 `server.yaml`이 들어가고, 그것이 없는 #675 이전 묶음은 다음 load에서 흡수한다. 쓰기 감시 테스트가 예외마다 이유를 적는다.
+- `ConfigEnvWorldAssignmentAdapter`는 생성자로 저장소를 받는다. 런타임이 있는 저장소가 없으면 `LEVEL` 변경을 거부한다(R7). 새 월드의 `SEED`도 같은 쓰기로 들어간다. `WorldManagementUseCase`가 `assign`에 넘긴다(#734).
+- CLI와 API는 테스트가 바꿔 끼울 수 있는 작은 팩토리(`serverSpecRepositories`, `serverProvision`)로 저장소를 만든다. 테스트는 docker, sudo, 실제 플랫폼 루트를 건드리지 않는다.
+- provision은 `docker compose up`에 30분 제한을 둔다(`DockerComposeRuntimeAdapter`의 `startTimeoutMs`). 첫 시작에 이미지를 받을 수 있고, 스크립트는 제한이 없었다.
+- 버전 없는 모드팩 타입은 `VERSION`을 쓰지 않는다(CLI는 `LATEST`를 넘겼다). API가 허용하는 스냅샷·프리릴리스 버전은 그대로 쓴다.
 
 ## 8. 시험(TDD)
 
