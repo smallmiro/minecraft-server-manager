@@ -595,6 +595,13 @@ describe('restore', () => {
     expect(existsSync(join(ctx.root, 'backups', '.restore-crashed'))).toBe(false);
   });
 
+  it('scrubs a legacy token URL before fetching (#11)', async () => {
+    const { a } = await twoCommits();
+    git(ctx.cache, ['remote', 'set-url', 'origin', `https://${TOKEN}@github.com/${REPO}.git`]);
+    ok(await ctx.adapter.restore(a));
+    expect(await readFile(join(ctx.cache, '.git', 'config'), 'utf8')).not.toContain(TOKEN);
+  });
+
   it('prepares the cache when it does not exist yet', async () => {
     const { a } = await twoCommits();
     await rm(ctx.cache, { recursive: true, force: true });
