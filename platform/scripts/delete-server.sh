@@ -137,42 +137,99 @@ if [ ! -d "$SERVER_DIR" ]; then
 fi
 
 # =============================================================================
-# World plan: decided before anything is touched
+# World plan
 # =============================================================================
+# Without --delete-world nothing is deleted unless every world inside the
+# server can be located and moved. The plan is made before anything is
+# touched (fail fast) and again once the container is gone (the server may
+# create folders while it stops); only the second plan is acted on.
 WORLDS_DIR="$PLATFORM_DIR/worlds"
-# LEVEL names the world; the image uses "world" when it is unset.
-LEVEL=$(sed -n 's/^LEVEL=//p' "$SERVER_DIR/config.env" 2>/dev/null | tail -n 1 | tr -d "\r\"'")
-LEVEL="${LEVEL:-world}"
 
-# World folders inside the server. Symlinks are skipped: rm -rf removes the
-# link, not its target.
-INTERNAL_WORLDS=()
-if validate_world_name "$LEVEL" > /dev/null; then
-    LEVEL_VALID="true"
+# plan_worlds: sets LEVEL and INTERNAL_WORLDS (folders under data/ to move to
+# worlds/). Returns 1 with the reason in PLAN_ERROR when that is not safe.
+plan_worlds() {
+    INTERNAL_WORLDS=()
+    LEVEL=""
+    PLAN_ERROR=""
+    local config="$SERVER_DIR/config.env" defs="" rc=0 suffix dir files file found world covered hidden=""
+
+    # Only a single plain `LEVEL=<world name>` line is understood. Anything
+    # else Compose may read differently (comments, quotes, spaces, export).
+    if [ -f "$config" ]; then
+        defs=$(grep -E '^[[:space:]]*(export[[:space:]]+)?LEVEL[[:space:]]*=' "$config") || rc=$?
+        if [ "$rc" -gt 1 ]; then
+            PLAN_ERROR="cannot read servers/$SERVER_NAME/config.env"
+            return 1
+        fi
+    fi
+    if [ -z "$defs" ]; then
+        LEVEL="world"  # the image default when LEVEL is unset
+    elif [ "$(printf '%s\n' "$defs" | grep -c '')" -gt 1 ]; then
+        PLAN_ERROR="LEVEL is defined more than once in servers/$SERVER_NAME/config.env"
+        return 1
+    elif [[ "$defs" != LEVEL=* ]] || ! validate_world_name "${defs#LEVEL=}" > /dev/null; then
+        PLAN_ERROR="cannot resolve '$defs' in servers/$SERVER_NAME/config.env (expected LEVEL=<name> with letters, digits, - or _ only)"
+        return 1
+    else
+        LEVEL="${defs#LEVEL=}"
+    fi
+
+    # A symlinked server or data directory would move or delete data elsewhere.
+    if [ -L "$SERVER_DIR" ] || [ -L "$SERVER_DIR/data" ]; then
+        PLAN_ERROR="servers/$SERVER_NAME or its data/ is a symlink"
+        return 1
+    fi
+
+    # Symlinked world folders are not moved: rm -rf removes only the link. A
+    # target inside the server shows up below as a world that would be lost.
     for suffix in "" _nether _the_end; do
         dir="$SERVER_DIR/data/$LEVEL$suffix"
         if [ -d "$dir" ] && [ ! -L "$dir" ]; then
             INTERNAL_WORLDS+=("$LEVEL$suffix")
         fi
     done
-else
-    LEVEL_VALID="false"
-    if [ "$DELETE_WORLD" != "true" ] && [ -e "$SERVER_DIR/data/$LEVEL" ]; then
-        echo -e "${RED}Error: LEVEL '$LEVEL' in servers/$SERVER_NAME/config.env is not a valid world name, so its world cannot be moved safely.${NC}" >&2
-        echo "Nothing was deleted. Move the world out of servers/$SERVER_NAME/data/ yourself, or pass --delete-world." >&2
-        exit 1
+    if [ ${#INTERNAL_WORLDS[@]} -gt 0 ] && [ "${INTERNAL_WORLDS[0]}" != "$LEVEL" ]; then
+        PLAN_ERROR="data/ has dimension folders of '$LEVEL' but no data/$LEVEL"
+        return 1
     fi
-fi
 
-if [ "$DELETE_WORLD" != "true" ]; then
+    # Any other world (a folder with level.dat) in the server would be deleted.
+    files=$(find "$SERVER_DIR" -name level.dat -type f) || {
+        PLAN_ERROR="cannot scan servers/$SERVER_NAME for worlds"
+        return 1
+    }
+    while IFS= read -r file; do
+        [ -n "$file" ] || continue
+        found=$(dirname "$file")
+        covered="false"
+        for world in "${INTERNAL_WORLDS[@]}"; do
+            case "$found/" in "$SERVER_DIR/data/$world/"*) covered="true" ;; esac
+        done
+        [ "$covered" = "true" ] || hidden="$hidden ${found#"$SERVER_DIR"/}"
+    done <<< "$files"
+    if [ -n "$hidden" ]; then
+        PLAN_ERROR="worlds that are not LEVEL '$LEVEL' would be deleted:$hidden"
+        return 1
+    fi
+
     for world in "${INTERNAL_WORLDS[@]}"; do
         if [ -e "$WORLDS_DIR/$world" ] || [ -L "$WORLDS_DIR/$world" ]; then
-            echo -e "${RED}Error: worlds/$world already exists, so the server's world cannot be moved there.${NC}" >&2
-            echo "Nothing was deleted. Rename or remove worlds/$world, or pass --delete-world to delete the server's copy." >&2
-            exit 1
+            PLAN_ERROR="worlds/$world already exists, so the server's world cannot be moved there"
+            return 1
         fi
     done
-fi
+}
+
+# require_world_plan <what was done so far>: abort unless --delete-world.
+require_world_plan() {
+    plan_worlds && return 0
+    [ "$DELETE_WORLD" = "true" ] && return 0
+    echo -e "${RED}Error: $PLAN_ERROR.${NC}" >&2
+    echo "$1 Move the world(s) yourself, or pass --delete-world to delete them with the server." >&2
+    exit 1
+}
+
+require_world_plan "Nothing was deleted."
 
 # Confirmation prompt
 if [ "$FORCE_DELETE" != "true" ]; then
@@ -193,7 +250,7 @@ if [ "$FORCE_DELETE" != "true" ]; then
             echo -e "${GREEN}World inside the server will be moved to worlds/: ${INTERNAL_WORLDS[*]}${NC}"
         fi
     fi
-    if [ "$LEVEL_VALID" = "true" ] && [ -d "$WORLDS_DIR/$LEVEL" ]; then
+    if [ -n "$LEVEL" ] && [ -d "$WORLDS_DIR/$LEVEL" ]; then
         echo -e "${GREEN}World worlds/$LEVEL will be kept (no longer assigned to this server).${NC}"
     fi
     echo ""
@@ -218,19 +275,26 @@ container_failed() {
     echo -e "${RED}Error: Failed to $1 container mc-$SERVER_NAME. Nothing was deleted.${NC}" >&2
     exit 1
 }
-if docker compose ps "mc-$SERVER_NAME" 2>/dev/null | grep -q "mc-$SERVER_NAME"; then
+# docker ps -a decides whether the container exists: an unreachable daemon
+# is not "no container".
+if ! CONTAINERS=$(docker ps -a --format '{{.Names}}'); then
+    echo -e "${RED}Error: Cannot list Docker containers (is Docker running?). Nothing was deleted.${NC}" >&2
+    exit 1
+fi
+if ! grep -qx "mc-$SERVER_NAME" <<< "$CONTAINERS"; then
+    echo "   Container mc-$SERVER_NAME not found"
+elif docker compose ps "mc-$SERVER_NAME" 2>/dev/null | grep -q "mc-$SERVER_NAME"; then
     docker compose stop "mc-$SERVER_NAME" || container_failed stop
     docker compose rm -f "mc-$SERVER_NAME" || container_failed remove
     echo "   Container mc-$SERVER_NAME stopped and removed"
 else
-    # Check if container exists but not managed by compose (exited state)
-    if docker ps -a --format '{{.Names}}' | grep -q "^mc-$SERVER_NAME$"; then
-        docker rm -f "mc-$SERVER_NAME" || container_failed remove
-        echo "   Container mc-$SERVER_NAME removed"
-    else
-        echo "   Container mc-$SERVER_NAME not found"
-    fi
+    # Not in the compose project (e.g. include already gone): remove directly
+    docker rm -f "mc-$SERVER_NAME" || container_failed remove
+    echo "   Container mc-$SERVER_NAME removed"
 fi
+
+# The server can no longer write: plan again and act only on this plan.
+require_world_plan "Only the container was stopped and removed; nothing else was changed."
 
 # =============================================================================
 # Step 2: Update servers/compose.yml
@@ -301,13 +365,26 @@ fi
 # =============================================================================
 echo -e "${BLUE}[4/4]${NC} Handling world data and deleting server directory..."
 
+# move_failed <reason>: report what already moved and keep the server dir.
+MOVED=()
+move_failed() {
+    echo -e "${RED}Error: $1. servers/$SERVER_NAME/ was kept (its container and compose entry are already removed).${NC}" >&2
+    for world in "${MOVED[@]}"; do
+        echo "Already moved: servers/$SERVER_NAME/data/$world -> worlds/$world" >&2
+    done
+    exit 1
+}
 if [ "$DELETE_WORLD" != "true" ] && [ ${#INTERNAL_WORLDS[@]} -gt 0 ]; then
     mkdir -p "$WORLDS_DIR"
     for world in "${INTERNAL_WORLDS[@]}"; do
-        if ! mv "$SERVER_DIR/data/$world" "$WORLDS_DIR/$world"; then
-            echo -e "${RED}Error: Failed to move data/$world to worlds/. servers/$SERVER_NAME/ was kept.${NC}" >&2
-            exit 1
+        # ponytail: check-then-mv is not atomic; a folder created in between
+        # makes mv nest the world (worlds/<w>/<w>). Concurrent create/delete
+        # of the same world name is rare; a world lock (#670) would close it.
+        if [ -e "$WORLDS_DIR/$world" ] || [ -L "$WORLDS_DIR/$world" ]; then
+            move_failed "worlds/$world appeared before data/$world could be moved"
         fi
+        mv "$SERVER_DIR/data/$world" "$WORLDS_DIR/$world" || move_failed "Failed to move data/$world to worlds/"
+        MOVED+=("$world")
         echo -e "   ${GREEN}Moved data/$world to worlds/$world${NC}"
     done
 fi
@@ -317,7 +394,7 @@ if [ -d "$SERVER_DIR/data" ]; then
     for link in "$SERVER_DIR/data"/*; do
         if [ -L "$link" ]; then
             target=$(readlink "$link")
-            echo "   Note: Symlink found: $(basename "$link") -> $target (preserved in worlds/)"
+            echo "   Note: removing symlink $(basename "$link") -> $target (the link only)"
         fi
     done
 fi
@@ -341,11 +418,14 @@ if [ "$KEEP_AVAHI" != "true" ]; then
     echo "  - avahi hostname: $SERVER_NAME.local"
 fi
 echo ""
-if [ ${#INTERNAL_WORLDS[@]} -gt 0 ] && [ "$DELETE_WORLD" = "true" ]; then
-    echo -e "${YELLOW}World deleted with the server (--delete-world): ${INTERNAL_WORLDS[*]}${NC}"
+if [ "$DELETE_WORLD" = "true" ]; then
+    echo -e "${YELLOW}World data inside the server was deleted with it (--delete-world).${NC}"
+    if [ -n "$LEVEL" ] && [ -d "$WORLDS_DIR/$LEVEL" ]; then
+        echo -e "${GREEN}World worlds/$LEVEL was kept; it is no longer assigned to this server.${NC}"
+    fi
 elif [ ${#INTERNAL_WORLDS[@]} -gt 0 ]; then
     echo -e "${GREEN}World moved to worlds/$LEVEL; it can be assigned to another server.${NC}"
-elif [ "$LEVEL_VALID" = "true" ] && [ -d "$WORLDS_DIR/$LEVEL" ]; then
+elif [ -d "$WORLDS_DIR/$LEVEL" ]; then
     echo -e "${GREEN}World worlds/$LEVEL was kept; it is no longer assigned to this server.${NC}"
 else
     echo "No world data found for LEVEL '$LEVEL'."
