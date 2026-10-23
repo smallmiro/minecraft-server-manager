@@ -4,7 +4,8 @@ import { existsSync } from 'node:fs';
 import { tmpdir, hostname, uptime } from 'node:os';
 import { join } from 'node:path';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { acquireBackupLock } from '../src/infrastructure/backup/lock.js';
+import { acquireBackupLock, lockFsOps } from '../src/infrastructure/backup/lock.js';
+import { vi } from 'vitest';
 
 const bootTime = () => Math.round(Date.now() - uptime() * 1000);
 
@@ -181,6 +182,32 @@ describe('backup lock release race (#732 review P2)', () => {
     await link(aside, lockPath);
     await unlink(aside);
     await a.release();
+    expect(existsSync(lockPath)).toBe(false);
+  });
+
+  it('a takeover between the ownership check and unlink cannot resurrect the lock', async () => {
+    const { rename, link, unlink } = await import('node:fs/promises');
+    const a = await acquireBackupLock(root, 'push');
+    if (!a.ok) throw new Error('lock failed');
+    const aside = `${lockPath}.b.stale`;
+    const real = lockFsOps.unlink;
+    let injected = false;
+    const spy = vi.spyOn(lockFsOps, 'unlink').mockImplementation(async (path) => {
+      if (path === lockPath && !injected) {
+        injected = true;
+        await rename(lockPath, aside); // B moves A's lock aside after A's ours() check
+      }
+      return real(path);
+    });
+    try {
+      await a.release();
+    } finally {
+      spy.mockRestore();
+    }
+    expect(injected).toBe(true);
+    // B sees a nonce that is not the stale one and puts the file back (as takeOver does)
+    await link(aside, lockPath).catch(() => undefined);
+    await unlink(aside).catch(() => undefined);
     expect(existsSync(lockPath)).toBe(false);
   });
 });

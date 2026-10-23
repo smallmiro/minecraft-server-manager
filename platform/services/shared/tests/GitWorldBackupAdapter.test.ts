@@ -297,6 +297,24 @@ describe('push', () => {
     expect(out.skipped.join('\n')).toContain('linked');
   });
 
+  it('keeps save-on failures in the error when the git push fails after a good copy', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ok(await ctx.adapter.push({ message: 'base' }));
+    const flag = join(ctx.base, 'reject');
+    await rejectPushes(ctx.bare, flag);
+    await writeFile(flag, '');
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A2');
+    ctx.runtime.running = ['mc-a'];
+    ctx.console.handler = (_n, args) =>
+      args[0] === 'save-on' ? { exitCode: 1, stdout: '', stderr: 'rcon down' } : { exitCode: 0, stdout: '', stderr: '' };
+    const r = await ctx.adapter.push();
+    expect(errCode(r)).toBe('git_failed');
+    if (!r.ok) {
+      expect(r.error.message).toContain('save-on failed for a: rcon down');
+      expect(r.error.servers).toEqual(['a']);
+    }
+  });
+
   it('keeps save-on failures in the error when the flush also failed (P2)', async () => {
     await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
     ctx.runtime.running = ['mc-a', 'mc-b'];
