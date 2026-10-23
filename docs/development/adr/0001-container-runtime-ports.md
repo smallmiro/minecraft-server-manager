@@ -391,14 +391,14 @@ export interface IWorldBackupPort {
   history(limit?: number): Promise<WorldBackupResult<WorldBackupCommit[]>>;   // newest first, default 20; [] without a cache
   push(options?: { message?: string; allowMissing?: boolean } & LockOptions): Promise<WorldBackupResult<PushOutcome>>;
   restore(commit: string, options?: LockOptions): Promise<WorldBackupResult<{ commit: string; previousDir: string; skipped: string[] }>>;
-  prune(policy: BackupRetentionPolicy, options?: LockOptions): Promise<WorldBackupResult<{ removed: number }>>;
+  prune(policy: BackupRetentionPolicy, options?: LockOptions): Promise<WorldBackupResult<{ removed: number; warnings: string[] }>>;
   testConnection(credentials: { token: string; repository: string }): Promise<WorldBackupResult<void>>;  // no .env, no lock
 }
 ```
 
 | Item | Decision |
 |------|----------|
-| Adapter | `infrastructure/adapters/GitWorldBackupAdapter.ts`, `new GitWorldBackupAdapter({ root, runtime: IContainerRuntimePort, environment: IRuntimeEnvironmentPort, console: IServerConsolePort, remoteBase? = 'https://github.com/' })`. Private helpers (not exported): `infrastructure/backup/lock.ts`, `git-env.ts`, `restore-plan.ts`. The adapter may import domain types (`BackupRetentionPolicy`, the world-name validator) |
+| Adapter | `infrastructure/adapters/GitWorldBackupAdapter.ts`, `new GitWorldBackupAdapter({ root, runtime: IContainerRuntimePort, environment: IRuntimeEnvironmentPort, console: IServerConsolePort, remoteBase? = 'https://github.com/' })`. Private helpers (not exported): `infrastructure/backup/lock.ts`, `git.ts` (runner and env), `restore-slots.ts` (swap and slots), `support.ts`. The adapter may import domain types (`BackupRetentionPolicy`, the world-name validator) |
 | Policy location (B-Q1) | Lock, flush and running checks live in the adapter. Every caller routes through it, and the injected ports make it testable with fakes. No later split is promised (S1) |
 | Config | `<root>/.env` through `parseEnvDocument` **on every call**, falling back to `process.env` for keys the file lacks. The API no longer reads a stale `process.env` after `backup init` |
 | Names | Ports take container names (`mc-<server>`, D1). Results report server names. One private `serverNameOf()`/`containerNameOf()` pair does the conversion, and D4 moves it |
@@ -424,8 +424,8 @@ export interface IWorldBackupPort {
 
 ### B3. Git environment and token
 
-- One helper builds every git child env. It starts from `process.env` and removes the repository-local variables (the list printed by `git rev-parse --local-env-vars`: `GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE`, …) plus every `GIT_CONFIG_*`. User settings such as proxy and CA variables are kept. Then it adds `GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `LC_ALL=C`, and the backup identity (`GIT_AUTHOR_*`/`GIT_COMMITTER_*` = `Minecraft Backup <minecraft-backup@localhost>`) for **every** commit, the README init commit included.
-- Network commands (`ls-remote`, `clone`, `fetch`, `push`) also get `GIT_CONFIG_COUNT=3`:
+- One helper builds every git child env. It starts from `process.env` and removes the repository-local variables (the list printed by `git rev-parse --local-env-vars`: `GIT_DIR`, `GIT_INDEX_FILE`, `GIT_WORK_TREE`, …) plus every `GIT_CONFIG_*`. User settings such as proxy and CA variables are kept. Then it adds `GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`, `LC_ALL=C`, and the backup identity (`GIT_AUTHOR_*`/`GIT_COMMITTER_*` = `Minecraft Backup <minecraft-backup@localhost>`) for **every** commit, the README init commit included. Every git child gets `GIT_CONFIG_KEY_0=commit.gpgSign` / `false`, so a user's global signing setting cannot break backup commits.
+- Network commands (`ls-remote`, `clone`, `fetch`, `push`) also get three more entries (`GIT_CONFIG_COUNT=4`):
   - `http.<remoteBase>.extraHeader=` (an empty value resets the multi-valued list, R14)
   - `http.<remoteBase>.extraHeader=Authorization: Basic <base64("x-access-token:"+token)>`
   - `credential.helper=` (empty)
@@ -470,7 +470,7 @@ A server has an internal world when `servers/<n>/data/<LEVEL>/level.dat` is a re
 5. **Flush and copy**:
    - Add each server to the cleanup list **before** sending `save-off`.
    - Send `save-off`, then `save-all flush`, each with `signal: AbortSignal.timeout(60_000)`. A non-zero exit or an abort → `flush_failed`, and nothing is copied.
-   - Copy: `fs.rm` + `fs.cp(src, dst, { recursive: true, filter })`. The filter skips `.locks` and throws on any symlink → `unsupported_layout`, no commit.
+   - Copy: `fs.rm` + `fs.cp(src, dst, { recursive: true, filter })`. `.locks` is never copied, and a symlink → `unsupported_layout` with no commit. `worlds/` is scanned for symlinks before any RCON; internal worlds are checked by the copy filter.
    - **`finally`**: send `save-on` to each server in the cleanup list, independently. A failure goes to `warnings` with the server name; the push itself still succeeds.
 6. **Commit and push**:
    - `add -A`. If `diff --cached --quiet` exits 0 → `{ changed: false }`, which is success (#8).
