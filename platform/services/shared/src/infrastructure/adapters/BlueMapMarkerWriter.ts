@@ -35,7 +35,7 @@ export interface BlueMapMarkerSet {
   markers: Record<string, BlueMapMarker>;
 }
 
-/** Map a structure's dimension to its BlueMap map id (matches render-map.sh). */
+/** Map a structure's dimension to its BlueMap map id (matches BlueMapCliRenderer). */
 const DIMENSION_MAP_ID: Record<Dimension, string> = {
   [Dimension.Overworld]: 'overworld',
   [Dimension.Nether]: 'nether',

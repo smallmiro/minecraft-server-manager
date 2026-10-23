@@ -78,3 +78,21 @@ export function resolveScriptPath(
 
   return null;
 }
+
+/** Directory of the Docker build contexts bundled with the package (synced from `platform/docker`). */
+export function getBundledDockerDir(): string {
+  return join(getApiPackageRoot(), 'docker');
+}
+
+/**
+ * BlueMap image build context: the version-matched copy bundled with the
+ * package, else `<mcctlRoot>/docker/bluemap`. The renderer only needs it when
+ * the image is missing, and reports a missing Dockerfile itself.
+ */
+export function resolveBlueMapDockerDir(
+  mcctlRoot: string,
+  bundledDockerDir: string = getBundledDockerDir(),
+): string {
+  const bundled = join(bundledDockerDir, 'bluemap');
+  return existsSync(join(bundled, 'Dockerfile')) ? bundled : join(mcctlRoot, 'docker', 'bluemap');
+}

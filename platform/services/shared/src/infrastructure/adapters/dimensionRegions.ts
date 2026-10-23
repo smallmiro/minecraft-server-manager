@@ -6,6 +6,18 @@ import { Dimension } from '../../domain/index.js';
 export interface DimensionRegionDir {
   dimension: Dimension;
   dir: string;
+  /**
+   * World-save root that holds {@link dir}: the world itself, or a Paper
+   * satellite (`<name>_nether` / `<name>_the_end`). BlueMap mounts this and
+   * resolves `DIM-1`/`DIM1`/`dimensions/minecraft/<dim>` below it.
+   */
+  root: string;
+}
+
+/** A layout candidate: a region directory and the world-save root holding it. */
+interface RegionCandidate {
+  dir: string;
+  root: string;
 }
 
 /** True when a directory holds at least one `.mca` region file. */
@@ -37,18 +49,18 @@ function newestRegionMtime(dir: string): number {
  * one candidate holds region data — e.g. a world migrated from Paper (split
  * folders) to a single-folder server type leaves a stale satellite behind —
  * pick whichever was written most recently, i.e. the layout the server is
- * actually using. Ties keep the earlier candidate (the split satellite),
- * matching render-map.sh's behavior. Returns undefined when none have data.
+ * actually using. Ties keep the earlier candidate (the split satellite).
+ * Returns undefined when none have data.
  */
-function pickRegionDir(candidates: string[]): string | undefined {
-  const withData = candidates.filter(hasRegionData);
+function pickRegionDir(candidates: RegionCandidate[]): RegionCandidate | undefined {
+  const withData = candidates.filter((c) => hasRegionData(c.dir));
   if (withData.length <= 1) return withData[0];
   let best = withData[0]!;
-  let bestMtime = newestRegionMtime(best);
-  for (const dir of withData.slice(1)) {
-    const m = newestRegionMtime(dir);
+  let bestMtime = newestRegionMtime(best.dir);
+  for (const candidate of withData.slice(1)) {
+    const m = newestRegionMtime(candidate.dir);
     if (m > bestMtime) {
-      best = dir;
+      best = candidate;
       bestMtime = m;
     }
   }
@@ -61,35 +73,37 @@ function pickRegionDir(candidates: string[]): string | undefined {
  * `<name>_the_end`) and latest-Minecraft (`dimensions/minecraft/<dim>/region`,
  * #546) layouts. A candidate only wins if it actually contains region data;
  * when several layouts hold data the more recently written one is chosen, so a
- * stale layout never shadows the active one (mirrors render-map.sh). Single
- * source of truth shared by the structure reader (#530) and block scanner
- * (#531).
+ * stale layout never shadows the active one. Single source of truth shared by
+ * the structure reader (#530), block scanner (#531) and map renderer (#733).
  */
 export function resolveRegionDirs(worldPath: string): DimensionRegionDir[] {
+  const nether = `${worldPath}_nether`;
+  const end = `${worldPath}_the_end`;
+  const at = (root: string, ...dir: string[]): RegionCandidate => ({ dir: join(root, ...dir), root });
   // Layout candidates per dimension, oldest-style first. The last entry is the
   // `dimensions/minecraft/<dim>/region` layout used by latest Minecraft, where
   // every dimension (overworld included) lives under `dimensions/` (#546).
-  const candidates: Record<Dimension, string[]> = {
+  const candidates: Record<Dimension, RegionCandidate[]> = {
     [Dimension.Overworld]: [
-      join(worldPath, 'region'),
-      join(worldPath, 'dimensions', 'minecraft', 'overworld', 'region'),
+      at(worldPath, 'region'),
+      at(worldPath, 'dimensions', 'minecraft', 'overworld', 'region'),
     ],
     [Dimension.Nether]: [
-      join(`${worldPath}_nether`, 'DIM-1', 'region'),
-      join(worldPath, 'DIM-1', 'region'),
-      join(worldPath, 'dimensions', 'minecraft', 'the_nether', 'region'),
+      at(nether, 'DIM-1', 'region'),
+      at(worldPath, 'DIM-1', 'region'),
+      at(worldPath, 'dimensions', 'minecraft', 'the_nether', 'region'),
     ],
     [Dimension.End]: [
-      join(`${worldPath}_the_end`, 'DIM1', 'region'),
-      join(worldPath, 'DIM1', 'region'),
-      join(worldPath, 'dimensions', 'minecraft', 'the_end', 'region'),
+      at(end, 'DIM1', 'region'),
+      at(worldPath, 'DIM1', 'region'),
+      at(worldPath, 'dimensions', 'minecraft', 'the_end', 'region'),
     ],
   };
 
   const out: DimensionRegionDir[] = [];
   for (const dimension of [Dimension.Overworld, Dimension.Nether, Dimension.End]) {
-    const dir = pickRegionDir(candidates[dimension]);
-    if (dir) out.push({ dimension, dir });
+    const picked = pickRegionDir(candidates[dimension]);
+    if (picked) out.push({ dimension, ...picked });
   }
   return out;
 }

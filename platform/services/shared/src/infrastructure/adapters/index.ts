@@ -56,9 +56,7 @@ export {
   BlueMapCliRenderer,
   MapRenderError,
   parseProgressLine,
-  parseResultJson,
-  type RenderSpawn,
-  type RenderSpawnOptions,
+  type BlueMapCliRendererPaths,
 } from './BlueMapCliRenderer.js';
 export {
   DockerComposeRuntimeAdapter,
