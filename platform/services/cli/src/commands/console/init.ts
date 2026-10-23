@@ -7,6 +7,7 @@ import {
   log,
   colors,
   checkConsolePrerequisites,
+  API_PM2_KILL_TIMEOUT_MS,
 } from '@minecraft-docker/shared';
 import { toApiAuthEnv } from '../../lib/api-auth-env.js';
 import { readLegacyAuthSecret, ensureConsoleAuthSecret } from '../../lib/console-auth-secret.js';
@@ -238,7 +239,7 @@ async function stopAdminServices(paths: Paths): Promise<boolean> {
 /**
  * Service installation options
  */
-interface ServiceInstallOptions {
+export interface ServiceInstallOptions {
   installApi: boolean;
   installConsole: boolean;
 }
@@ -246,7 +247,7 @@ interface ServiceInstallOptions {
 /**
  * Auth configuration for ecosystem config
  */
-interface AuthConfig {
+export interface AuthConfig {
   accessMode: string;
   apiKey: string | null;
   allowedIps: string[];
@@ -256,7 +257,7 @@ interface AuthConfig {
  * Generate ecosystem.config.cjs content
  * Only includes services that are selected for installation
  */
-function generateEcosystemConfig(
+export function generateEcosystemConfig(
   apiPort: number,
   consolePort: number,
   apiScriptPath: string,
@@ -302,6 +303,8 @@ ${apiEnvVars.join('\n')}
       watch: false,
       autorestart: true,
       max_memory_restart: '500M',
+      // Shutdown waits for a running auto-backup to re-enable auto-save (#734)
+      kill_timeout: ${API_PM2_KILL_TIMEOUT_MS},
     }`);
   }
 

@@ -120,6 +120,24 @@ mcctl console service restart --force               # 일반 restart는 옛 env�
 
 **확인:** `AUTH_MODE`가 `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined` 중 하나이고, API `/health`가 200이며 Console에서 서버 목록이 보임(7-6단계).
 
+### 4-2. mcctl-api가 자동 백업을 마칠 시간 주기 (#734) {#pm2-kill-timeout}
+
+이 릴리스 전에 `mcctl console init`을 실행했고 `BACKUP_AUTO_ON_STOP=true`인 호스트에서 한 번만 합니다.
+
+API나 콘솔에서 정지하면 자동 백업이 백그라운드에서 돌고, mcctl-api는 종료할 때 이 백업을 최대 2분 기다립니다. 그래야 백업이 플러시한 서버의 자동 저장(`save-on`)을 다시 켤 수 있습니다. PM2는 앱에 `kill_timeout`이 없으면 정지를 요청하고 1.6초 뒤에 프로세스를 죽입니다. 이제 `mcctl console init`은 mcctl-api에 `kill_timeout: 130000`을 씁니다. `mcctl update`와 `mcctl upgrade`는 `ecosystem.config.cjs`를 다시 쓰지 않고, 일반 PM2 재시작은 예전 설정을 유지합니다.
+
+```bash
+cd $ROOT
+grep -n "kill_timeout" ecosystem.config.cjs || echo "없음: 추가하세요"
+# mcctl-api 앱의 max_memory_restart 옆에 다음 줄을 추가:
+#       kill_timeout: 130000,
+mcctl console service restart --force               # 파일에서 앱을 다시 등록
+```
+
+파일을 고치는 대신 `mcctl console init --force`를 다시 실행해도 되지만, 이 경우 파일 전체를 다시 쓰고 설정 질문을 모두 다시 묻습니다.
+
+**확인:** `pm2 describe mcctl-api`에 `kill timeout` 130000이 보임(재시작 전에는 `grep kill_timeout ecosystem.config.cjs`로 확인).
+
 ## 5. 서버 이미지 반영
 
 중지된 서버는 다음 기동 때 새 이미지가 적용됩니다. 실행 중인 서버는 사용자 영향이 없는 시간에 `mcctl stop <server> && mcctl start <server>`로 재기동합니다(월드는 보존).

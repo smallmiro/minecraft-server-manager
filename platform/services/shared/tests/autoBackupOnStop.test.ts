@@ -6,6 +6,8 @@ import { describe, test, expect, vi } from 'vitest';
 import {
   autoBackupOnStop,
   AUTO_BACKUP_LOCK_WAIT_MS,
+  AUTO_BACKUP_CLOSE_WAIT_MS,
+  API_PM2_KILL_TIMEOUT_MS,
 } from '../src/application/use-cases/autoBackupOnStop.js';
 import type { IWorldBackupPort, WorldBackupStatus } from '../src/application/ports/index.js';
 
@@ -75,5 +77,10 @@ describe('autoBackupOnStop', () => {
       status: 'failed',
       error: { code: 'io_failed', message: 'boom' },
     });
+  });
+
+  test('PM2 gives mcctl-api longer than the close wait (templates/ecosystem.config.js pins 130000)', () => {
+    expect(AUTO_BACKUP_CLOSE_WAIT_MS).toBe(120_000);
+    expect(API_PM2_KILL_TIMEOUT_MS).toBe(130_000);
   });
 });

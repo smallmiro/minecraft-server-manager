@@ -119,6 +119,24 @@ The `sed` leaves the other modes untouched. Instead of editing the file, you can
 
 **Gate:** `AUTH_MODE` is one of `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined`; API `/health` returns 200 and the Console can list servers (step 7-6).
 
+### 4-2. Give mcctl-api time to finish an auto-backup (#734) {#pm2-kill-timeout}
+
+Do this once on hosts where `mcctl console init` was run before this release and `BACKUP_AUTO_ON_STOP=true` is set.
+
+A stop from the API or the Console runs the auto-backup in the background, and mcctl-api waits up to 2 minutes for it when it shuts down, so the backup can turn auto-save back on (`save-on`) on the servers it flushed. PM2 kills a process 1.6 seconds after asking it to stop unless the app sets `kill_timeout`. `mcctl console init` now writes `kill_timeout: 130000` for mcctl-api; `mcctl update` and `mcctl upgrade` do not rewrite `ecosystem.config.cjs`, and a plain PM2 restart keeps the old setting.
+
+```bash
+cd $ROOT
+grep -n "kill_timeout" ecosystem.config.cjs || echo "missing: add it"
+# add the line to the mcctl-api app, next to max_memory_restart:
+#       kill_timeout: 130000,
+mcctl console service restart --force               # re-registers the apps from the file
+```
+
+Instead of editing the file, you can re-run `mcctl console init --force`, which rewrites the whole file and asks every setup question again.
+
+**Gate:** `pm2 describe mcctl-api` shows `kill timeout` 130000 (or `grep kill_timeout ecosystem.config.cjs` shows it before the restart).
+
 ## 5. Apply server images
 
 Stopped servers get the new image on next start. Restart running servers at a quiet time with `mcctl stop <server> && mcctl start <server>` (worlds are preserved).

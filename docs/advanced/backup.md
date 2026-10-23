@@ -168,7 +168,7 @@ Enable automatic backup when servers stop:
 BACKUP_AUTO_ON_STOP=true
 ```
 
-`mcctl stop <server>`, and a stop from the web console or the API, back up after the server has stopped, like `mcctl backup push --auto`: no prompt, and a wait of up to 10 minutes when another backup is running. A failed backup is a warning (CLI) or a log entry (API); it never fails the stop. The API runs it in the background, so the stop request returns first. `mcctl stop --all` does not back up.
+`mcctl stop <server>`, and a stop from the web console or the API, back up after the server has stopped, like `mcctl backup push --auto`: no prompt, and a wait of up to 10 minutes when another backup is running. A failed backup is a warning (CLI) or a log entry (API); it never fails the stop. The API runs it in the background, so the stop request returns first; when mcctl-api shuts down it waits up to 2 minutes for a running backup. Installs set up with `mcctl console init` before this release need `kill_timeout` in `ecosystem.config.cjs` for that wait ([Upgrade runbook, step 4-2](upgrade-runbook.md#pm2-kill-timeout)). `mcctl stop --all` does not back up.
 
 ### Scheduled Backups
 

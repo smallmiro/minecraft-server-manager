@@ -7,6 +7,16 @@ import type {
 /** How long an auto-backup waits for another backup operation (same as `backup push --auto`). */
 export const AUTO_BACKUP_LOCK_WAIT_MS = 600_000;
 
+/**
+ * How long mcctl-api's close waits for running auto-backups. The backup's
+ * finally re-enables auto-save (save-on) on servers it flushed; shutdown
+ * must not cut that off.
+ */
+export const AUTO_BACKUP_CLOSE_WAIT_MS = 120_000;
+
+/** PM2 kill_timeout for mcctl-api: the close wait plus a margin, so PM2 does not SIGKILL it first. */
+export const API_PM2_KILL_TIMEOUT_MS = AUTO_BACKUP_CLOSE_WAIT_MS + 10_000;
+
 export type AutoBackupOnStopResult =
   | { status: 'skipped' }
   | { status: 'done'; outcome: WorldBackupPushOutcome }

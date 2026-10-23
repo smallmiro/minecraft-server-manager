@@ -8,7 +8,13 @@ import {
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { createWorldBackupPort } from '../../lib/world-backup.js';
 import { config } from '../../config/index.js';
-import { AuditActionEnum, EXISTING_SERVER_NAME_PATTERN, ServerName, autoBackupOnStop } from '@minecraft-docker/shared';
+import {
+  AuditActionEnum,
+  AUTO_BACKUP_CLOSE_WAIT_MS,
+  EXISTING_SERVER_NAME_PATTERN,
+  ServerName,
+  autoBackupOnStop,
+} from '@minecraft-docker/shared';
 
 // ============================================================
 // Types
@@ -41,13 +47,6 @@ function toAuditAction(action: ServerAction): AuditActionEnum {
     case 'restart': return AuditActionEnum.SERVER_RESTART;
   }
 }
-
-/**
- * How long close waits for running auto-backups. The backup's finally
- * re-enables auto-save (save-on) on servers it flushed; process.exit after
- * app.close() must not cut that off.
- */
-export const AUTO_BACKUP_CLOSE_WAIT_MS = 120_000;
 
 async function handleServerAction(
   request: FastifyRequest<{ Params: ServerNameParams }>,
