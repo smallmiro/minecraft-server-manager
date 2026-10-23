@@ -24,6 +24,7 @@ function setup(opts: {
   status?: string;
   noPort?: boolean;
   undetermined?: string[];
+  currentCompose?: string;
 }) {
   const snapshotOf = (levels: Record<string, string>): WorldAssignmentSnapshot => ({
     assignments: Object.entries(levels)
@@ -44,7 +45,13 @@ function setup(opts: {
   const storage = {
     retrieve: vi.fn().mockResolvedValue(new Map(Object.entries(opts.files))),
   } as unknown as IConfigSnapshotStorage;
-  const collector = { writeFileContent: vi.fn() } as unknown as IConfigFileCollector;
+  const collector = {
+    writeFileContent: vi.fn(),
+    readFileContent: vi.fn(async () => {
+      if (opts.currentCompose === undefined) throw new Error('ENOENT');
+      return opts.currentCompose;
+    }),
+  } as unknown as IConfigFileCollector;
   const runtime = { getStatus: vi.fn(() => opts.status ?? 'exited') } as unknown as IContainerRuntimePort;
   const useCase = new ConfigSnapshotUseCaseImpl(
     repository,
@@ -133,3 +140,62 @@ describe('ConfigSnapshotUseCase.restore - world assignment (#670)', () => {
   });
 });
 
+
+const COMPOSE = `services:
+  mc-alpha:
+    image: itzg/minecraft-server:java25
+    env_file:
+      - ../global.env
+      - config.env
+    environment:
+      EULA: "TRUE"
+    volumes:
+      - ./data:/data
+      - ./logs:/data/logs
+      - ../../worlds:/worlds:rw
+`;
+
+describe('ConfigSnapshotUseCase.restore - docker-compose.yml (#670, Codex PR #750)', () => {
+  test('refuses a compose file that sets LEVEL, WORLD_NAME or EXTRA_ARGS in environment', async () => {
+    for (const env of ['LEVEL: held', '- WORLD_NAME=held', 'EXTRA_ARGS: "--universe /data"']) {
+      const environment = `    environment:\n      ${env}\n`;
+      const restored = COMPOSE.replace('    environment:\n      EULA: "TRUE"\n', environment);
+      const { useCase, collector, snapshotId } = setup({
+        levels: { alpha: 'alpha' },
+        files: { 'docker-compose.yml': restored },
+        currentCompose: COMPOSE,
+      });
+
+      await expect(useCase.restore(snapshotId)).rejects.toBeInstanceOf(WorldAssignmentError);
+      expect(collector.writeFileContent).not.toHaveBeenCalled();
+    }
+  });
+
+  test('refuses a compose file whose /worlds or /data mapping differs from the current one', async () => {
+    for (const restored of [
+      COMPOSE.replace('../../worlds:/worlds:rw', '/srv/other:/worlds:rw'),
+      COMPOSE.replace('./data:/data', './old-data:/data'),
+    ]) {
+      const { useCase, collector, snapshotId } = setup({
+        levels: { alpha: 'alpha' },
+        files: { 'docker-compose.yml': restored },
+        currentCompose: COMPOSE,
+      });
+
+      await expect(useCase.restore(snapshotId)).rejects.toBeInstanceOf(WorldAssignmentError);
+      expect(collector.writeFileContent).not.toHaveBeenCalled();
+    }
+  });
+
+  test('restores a compose file with the same world mappings and no world keys', async () => {
+    const { useCase, collector, snapshotId } = setup({
+      levels: { alpha: 'alpha' },
+      files: { 'docker-compose.yml': COMPOSE.replace('java25', 'java21') },
+      currentCompose: COMPOSE,
+    });
+
+    await useCase.restore(snapshotId);
+
+    expect(collector.writeFileContent).toHaveBeenCalledTimes(1);
+  });
+});
