@@ -625,7 +625,7 @@ At the top of the list:
 
 - **ALL** -- Show all worlds
 - **AVAILABLE** -- Show only available (unassigned) worlds
-- **LOCKED** -- Show only worlds currently assigned to a server
+- **ASSIGNED** -- Show only worlds currently assigned to a server
 
 A **Search worlds...** box lets you filter worlds by name.
 
