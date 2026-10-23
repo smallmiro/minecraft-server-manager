@@ -26,6 +26,16 @@ const mockLockedWorld: World = {
 };
 
 describe('WorldCard', () => {
+  it('warns when more than one server uses the world (#670)', () => {
+    renderWithTheme(<WorldCard world={{ ...mockLockedWorld, servers: ['a', 'b'] }} />);
+    expect(screen.getByText('Assigned to 2 servers')).toBeInTheDocument();
+  });
+
+  it('shows no multi-server warning for a single server', () => {
+    renderWithTheme(<WorldCard world={{ ...mockLockedWorld, servers: ['a'] }} />);
+    expect(screen.queryByText(/Assigned to \d+ servers/)).not.toBeInTheDocument();
+  });
+
   it('should render world name', () => {
     renderWithTheme(<WorldCard world={mockAvailableWorld} />);
     expect(screen.getByText('survival-world')).toBeInTheDocument();
@@ -41,9 +51,9 @@ describe('WorldCard', () => {
     expect(screen.getByText('Available')).toBeInTheDocument();
   });
 
-  it('should display Locked status for locked world', () => {
+  it('should display Assigned status for an assigned world (#670)', () => {
     renderWithTheme(<WorldCard world={mockLockedWorld} />);
-    expect(screen.getByText('Locked')).toBeInTheDocument();
+    expect(screen.getByText('Assigned')).toBeInTheDocument();
   });
 
   it('should display locked by server name', () => {

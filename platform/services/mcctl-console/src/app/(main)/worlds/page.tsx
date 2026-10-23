@@ -179,6 +179,14 @@ export default function WorldsPage() {
         </Alert>
       )}
 
+      {(data?.assignmentWarnings?.length ?? 0) > 0 && (
+        <Alert severity="warning" aria-label="World assignment warnings" sx={{ mb: 3 }}>
+          {data!.assignmentWarnings!.map((warning) => (
+            <Box key={warning}>{warning}</Box>
+          ))}
+        </Alert>
+      )}
+
       {createWorld.isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
           Failed to create world: {createWorld.error?.message}

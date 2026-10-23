@@ -121,6 +121,8 @@ export interface World {
 export interface WorldListResponse {
   worlds: World[];
   total: number;
+  /** Duplicate assignments and unreadable server configs (#670); reported, never fixed. */
+  assignmentWarnings?: string[];
 }
 
 export interface WorldDetailResponse {
@@ -263,6 +265,10 @@ export interface ReleaseWorldResponse {
   success: boolean;
   worldName: string;
   previousServer?: string;
+  /** The world the previous holder now uses: its own name (#670). */
+  fallbackWorld?: string;
+  /** Whether worlds/<fallbackWorld> already exists (else created on next start). */
+  fallbackExists?: boolean;
 }
 
 export interface DeleteWorldResponse {

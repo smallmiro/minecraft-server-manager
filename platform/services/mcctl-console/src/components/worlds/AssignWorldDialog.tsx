@@ -70,7 +70,7 @@ export function AssignWorldDialog({
               <>
                 {stoppedServers.length === 0 && runningServers.length > 0 && (
                   <Alert severity="warning">
-                    All servers are currently running. It is recommended to assign worlds to stopped servers.
+                    All servers are currently running. Stop a server before assigning it a world.
                   </Alert>
                 )}
 
@@ -98,12 +98,12 @@ export function AssignWorldDialog({
                   {runningServers.length > 0 && (
                     <MenuItem disabled>
                       <Typography variant="caption" color="text.secondary">
-                        Running Servers (not recommended)
+                        Running Servers (stop them first)
                       </Typography>
                     </MenuItem>
                   )}
                   {runningServers.map((server) => (
-                    <MenuItem key={server.name} value={server.name}>
+                    <MenuItem key={server.name} value={server.name} disabled>
                       {server.name}
                     </MenuItem>
                   ))}
