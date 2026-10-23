@@ -216,6 +216,8 @@ async function createBackup(
 
   // Define files to backup
   const backupTargets = [
+    // The server definition (#675): restoring it with the files rendered from it keeps them in step
+    { path: 'server.yaml', required: false },
     { path: 'config.env', required: true },
     { path: 'docker-compose.yml', required: true },
     { path: 'data/ops.json', required: false },
