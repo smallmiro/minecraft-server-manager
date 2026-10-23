@@ -21,6 +21,7 @@ const fakes = vi.hoisted(() => ({
   avahi: [] as Array<{ sudoPassword?: string; unregistered: string[] }>,
   removed: [] as string[],
   removeResult: { success: true } as { success: boolean; error?: string },
+  unregisterResult: { status: 'changed' } as { status: string; reason?: string },
 }));
 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => {
@@ -41,7 +42,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     }
     async unregister(host: string) {
       this.record.unregistered.push(host);
-      return { status: 'changed' };
+      return fakes.unregisterResult;
     }
   }
   class FakeRuntime {
@@ -90,6 +91,7 @@ describe('DELETE /api/servers/:name (#735)', () => {
     fakes.avahi.length = 0;
     fakes.removed.length = 0;
     fakes.removeResult = { success: true };
+    fakes.unregisterResult = { status: 'changed' };
     rmSync(at('servers'), { recursive: true, force: true });
     rmSync(at('worlds'), { recursive: true, force: true });
     mkdirSync(at('servers', 'alpha', 'data', 'alpha'), { recursive: true });
@@ -121,7 +123,10 @@ describe('DELETE /api/servers/:name (#735)', () => {
     expect(response.statusCode, response.body).toBe(200);
     expect(fakes.avahi).toEqual([{ sudoPassword: SECRET, unregistered: ['alpha.local'] }]);
     expect(JSON.stringify(vi.mocked(writeAuditLog).mock.calls)).not.toContain(SECRET);
-    expect(JSON.stringify(logged.map((spy) => spy.mock.calls))).not.toContain(SECRET);
+    // Fastify's own request lines go through pino's req serializer (method, url, host), never the body.
+    const routeLogs = logged.flatMap((spy) => spy.mock.calls).filter((c) => !['incoming request', 'request completed'].includes(c[1] as string));
+    expect(routeLogs.length).toBeGreaterThan(0);
+    expect(JSON.stringify(routeLogs)).not.toContain(SECRET);
     expect(Object.values(process.env)).not.toContain(SECRET);
     logged.forEach((spy) => spy.mockRestore());
   });
@@ -129,6 +134,18 @@ describe('DELETE /api/servers/:name (#735)', () => {
   it('without a body there is no password (sudo -n, NOPASSWD)', async () => {
     await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
     expect(fakes.avahi.map((a) => a.sudoPassword)).toEqual([undefined]);
+  });
+
+  it('a hostname that could not be removed is a warning on a successful delete', async () => {
+    fakes.unregisterResult = { status: 'skipped', reason: 'sudo authentication failed; check the sudo password' };
+    const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      success: true,
+      server: 'alpha',
+      message: 'Server deleted successfully',
+      warning: 'mDNS hostname alpha.local was not removed: sudo authentication failed; check the sudo password',
+    });
   });
 
   it('deleteWorld deletes the world inside the server', async () => {
