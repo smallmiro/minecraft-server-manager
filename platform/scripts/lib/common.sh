@@ -138,25 +138,61 @@ avahi_hosts_without() {
         { for (i = 2; i <= NF; i++) { if ($i ~ /^#/) break; if ($i == ENVIRON["MCCTL_MATCH"]) next } print }' "$1"
 }
 
-# remove_include_entry <compose-file> <server>: drops the line that is exactly
-# "- <server>/docker-compose.yml" (indent/trailing blanks ignored), then the
-# "include:" line if no entries remain. Rewrites through a temp file + mv with
-# the original mode/owner (cp -p). Returns 1 and leaves the file untouched when
-# the entry is absent.
+# remove_include_entry <compose-file> <server>: drops the items of the
+# top-level "include:" block whose value is <server>/docker-compose.yml
+# (plain, "double" or 'single' quoted, optional trailing "# comment"); other
+# list items elsewhere in the file are never touched. An include: left with no
+# items is dropped too. The file is rewritten through a temp file + mv, with
+# the original mode/owner (cp -p).
+# Returns 0 removed, 1 not present (file untouched), 2 failure or a form that
+# cannot be edited (inline "include: [...]" naming the server); the file is
+# untouched in every non-zero case.
 remove_include_entry() {
-    local file="$1" tmp
+    local file="$1" tmp rc=0
     tmp=$(mktemp "$file.XXXXXX") || return 2
     cp -p "$file" "$tmp" || { rm -f "$tmp"; return 2; }
-    MCCTL_MATCH="- $2/docker-compose.yml" awk '
-        { l = $0; sub(/^[ \t]+/, "", l); sub(/[ \t\r]+$/, "", l) }
-        l == ENVIRON["MCCTL_MATCH"] { removed = 1; next }
-        { lines[++n] = $0; if (l ~ /^- /) entries++ }
+    MCCTL_MATCH="$2/docker-compose.yml" awk '
+        function item_value(l,   v, q) {
+            v = l; sub(/^[ \t]*-[ \t]+/, "", v)
+            q = substr(v, 1, 1)
+            if (q == "\"" || q == "\047") { v = substr(v, 2); i = index(v, q); return i ? substr(v, 1, i - 1) : v }
+            sub(/[ \t]+#.*$/, "", v); sub(/[ \t\r]+$/, "", v); return v
+        }
+        { lines[++n] = $0 }
+        /^include:/ { inc = 1; inc_idx = n; rest = $0; sub(/^include:[ \t]*/, "", rest); sub(/[ \t]*#.*$/, "", rest)
+                      if (rest != "" && index(rest, ENVIRON["MCCTL_MATCH"])) bad = 1; next }
+        inc && /^[^ \t#-]/ { inc = 0 }
+        inc && /^[ \t]*-[ \t]+/ {
+            if (item_value($0) == ENVIRON["MCCTL_MATCH"]) { removed = 1; n--; next }
+            items++
+        }
         END {
-            for (i = 1; i <= n; i++) if (entries || lines[i] !~ /^include:/) print lines[i]
+            if (bad) exit 3
+            for (i = 1; i <= n; i++) if (!(removed && inc_idx && !items && i == inc_idx && lines[i] ~ /^include:[ \t]*(#.*)?$/)) print lines[i]
             exit !removed
-        }' "$file" > "$tmp"
-    if [ $? -ne 0 ]; then rm -f "$tmp"; return 1; fi
-    mv "$tmp" "$file"
+        }' "$file" > "$tmp" || rc=$?
+    if [ "$rc" -ne 0 ]; then
+        rm -f "$tmp"
+        [ "$rc" -eq 1 ] && return 1
+        return 2
+    fi
+    mv "$tmp" "$file" || { rm -f "$tmp"; return 2; }
+}
+
+# avahi_remove_host <hosts-file> <hostname>: removes the lines listing exactly
+# <hostname>. The new content is built completely in a temp file next to the
+# original (sudo cp -p keeps owner/mode) and swapped in with one sudo mv, so a
+# failure at any step leaves the original intact. Non-zero on failure.
+avahi_remove_host() {
+    local file="$1" new tmp="$1.mcctl-tmp.$$"
+    new=$(avahi_hosts_without "$file" "$2") || return 1
+    if run_with_sudo cp -p "$file" "$tmp" \
+        && printf '%s\n' "$new" | run_with_sudo_stdin tee "$tmp" > /dev/null \
+        && run_with_sudo mv "$tmp" "$file"; then
+        return 0
+    fi
+    run_with_sudo rm -f "$tmp" > /dev/null 2>&1 || true
+    return 1
 }
 
 # Check if sudo password is configured for automation

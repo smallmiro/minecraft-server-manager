@@ -379,14 +379,24 @@ echo -e "${BLUE}[2/4]${NC} Updating servers/compose.yml..."
 
 if [ -f "$SERVERS_COMPOSE" ]; then
     # Backup original
-    cp "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"
-
-    # Remove include entry
-    if remove_include_entry "$SERVERS_COMPOSE" "$SERVER_NAME"; then
-        echo "   Removed from include section"
-    else
-        echo "   Server not found in compose.yml"
+    if ! cp -p "$SERVERS_COMPOSE" "$SERVERS_COMPOSE.bak"; then
+        echo -e "${RED}   Error: cannot back up servers/compose.yml; nothing was deleted.${NC}" >&2
+        exit 1
     fi
+
+    # Remove include entry (0 removed, 1 absent, 2 failed: stop before deleting)
+    include_rc=0
+    remove_include_entry "$SERVERS_COMPOSE" "$SERVER_NAME" || include_rc=$?
+    case "$include_rc" in
+        0) echo "   Removed from include section" ;;
+        1) echo "   Server not found in compose.yml" ;;
+        *)
+            echo -e "${RED}   Error: cannot update servers/compose.yml (I/O failure or an include form that is not editable).${NC}" >&2
+            echo "   The server directory was not deleted. Backup kept at $SERVERS_COMPOSE.bak" >&2
+            echo "   Remove the '$SERVER_NAME/docker-compose.yml' include by hand and run again." >&2
+            exit 1
+            ;;
+    esac
 
     # Verify the changes
     if docker compose -f "$MAIN_COMPOSE" config --quiet 2>/dev/null; then
@@ -411,10 +421,7 @@ if [ "$KEEP_AVAHI" = "true" ]; then
     echo "   Skipped (--keep-avahi specified)"
 elif [ -f "$AVAHI_HOSTS" ]; then
     if avahi_host_registered "$AVAHI_HOSTS" "$SERVER_NAME.local"; then
-        # tee into the existing file keeps its owner/mode (it is root-owned)
-        # filtered content is built first so a failed awk never truncates the file
-        if new_hosts=$(avahi_hosts_without "$AVAHI_HOSTS" "$SERVER_NAME.local") \
-            && printf '%s\n' "$new_hosts" | run_with_sudo_stdin tee "$AVAHI_HOSTS" > /dev/null 2>&1; then
+        if avahi_remove_host "$AVAHI_HOSTS" "$SERVER_NAME.local"; then
             run_with_sudo systemctl restart avahi-daemon 2>/dev/null || true
             echo -e "   ${GREEN}Removed $SERVER_NAME.local from avahi${NC}"
         else
