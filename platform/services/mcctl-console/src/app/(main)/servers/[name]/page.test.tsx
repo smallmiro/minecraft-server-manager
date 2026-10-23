@@ -193,4 +193,45 @@ describe('ServerDetailPage', () => {
     });
     expect(deleteButton).toBeEnabled();
   });
+
+  describe('delete world handling (#652)', () => {
+    const openDialog = () => {
+      renderPage();
+      fireEvent.click(screen.getByRole('button', { name: 'Server actions' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Delete Server' }));
+      fireEvent.change(screen.getByRole('textbox', { name: 'Server name' }), {
+        target: { value: 'test-server' },
+      });
+    };
+
+    it('defaults to keeping the world and sends deleteWorld=false', () => {
+      openDialog();
+      expect(screen.getByRole('radio', { name: /keep the world.*worlds\//i })).toBeChecked();
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(deleteMutation.mutate).toHaveBeenCalledWith(
+        { name: 'test-server', force: true, deleteWorld: false },
+        expect.anything(),
+      );
+    });
+
+    it('sends deleteWorld=true when choosing to delete the world too', () => {
+      openDialog();
+      fireEvent.click(screen.getByRole('radio', { name: /delete the world inside the server too/i }));
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(deleteMutation.mutate).toHaveBeenCalledWith(
+        { name: 'test-server', force: true, deleteWorld: true },
+        expect.anything(),
+      );
+    });
+
+    it('shows the API error message when delete fails', () => {
+      vi.mocked(useDeleteServer).mockReturnValue({
+        ...deleteMutation,
+        isError: true,
+        error: new Error('worlds/x already exists. Nothing was deleted.'),
+      } as never);
+      renderPage();
+      expect(screen.getByText(/already exists\. Nothing was deleted\./)).toBeInTheDocument();
+    });
+  });
 });
