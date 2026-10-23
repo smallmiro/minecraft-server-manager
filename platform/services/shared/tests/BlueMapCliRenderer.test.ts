@@ -303,6 +303,11 @@ describe('BlueMapCliRenderer', () => {
   // the way render-map.sh did: <scripts>/.. is the platform root unless
   // MCCTL_ROOT is set, and the build context is ${MCCTL_DOCKER:-<scripts>/../docker}/bluemap.
   describe('deprecated script-path constructor', () => {
+    beforeEach(() => {
+      vi.stubEnv('MCCTL_ROOT', '');
+      vi.stubEnv('MCCTL_DOCKER', '');
+    });
+
     const expectedRender = (): string[] => [
       ...runPrefix,
       '-v', `${join(mapsDir, 'w', 'config')}:/work/config`,
@@ -342,6 +347,18 @@ describe('BlueMapCliRenderer', () => {
       expect(renderCall()).toEqual(expectedRender());
     });
 
+    it('reads MCCTL_ROOT and MCCTL_DOCKER from process.env when no spawn env is given', async () => {
+      mkRegion(join(worldsDir, 'w', 'region'));
+      vi.stubEnv('FAKE_IMAGE_PRESENT', '0');
+      vi.stubEnv('MCCTL_ROOT', tmp);
+      vi.stubEnv('MCCTL_DOCKER', join(tmp, 'docker'));
+
+      await new BlueMapCliRenderer(join(tmp, 'pkg', 'scripts', 'render-map.sh')).renderWorld('w');
+
+      expect(calls()[1]).toEqual(['build', '-t', IMAGE, '--', dockerDir]);
+      expect(renderCall()).toEqual(expectedRender());
+    });
+
     it('runs docker through a custom run with the given spawn options', async () => {
       mkRegion(join(worldsDir, 'w', 'region'));
       const options = { cwd: tmp, env: { ...process.env } };
@@ -370,13 +387,14 @@ describe('deprecated v2 BlueMap API (#733, removed in v3.0.0 #736)', () => {
     expect(typeof shared.BlueMapCliRenderer).toBe('function');
   });
 
-  it('old constructor and type exports still type-check', () => {
+  it('old constructor, type exports and v2 DimensionRegionDir objects still type-check', () => {
     const testsDir = dirname(fileURLToPath(import.meta.url));
     const file = join(testsDir, `.bluemap-compat-${process.pid}.ts`);
     writeFileSync(
       file,
       [
-        "import { BlueMapCliRenderer, parseResultJson, type MapRenderResult, type RenderSpawn, type RenderSpawnOptions } from '../src/index.js';",
+        "import { BlueMapCliRenderer, parseResultJson, type DimensionRegionDir, type MapRenderResult, type RenderSpawn, type RenderSpawnOptions } from '../src/index.js';",
+        "import { Dimension } from '../src/domain/index.js';",
         "const run: RenderSpawn = async (_file, _args, onStderr) => { onStderr(''); return { code: 0, stdout: '', stderr: '' }; };",
         "const options: RenderSpawnOptions = { cwd: '/p', env: { MCCTL_ROOT: '/p' } };",
         "export const renderers = [",
@@ -386,6 +404,7 @@ describe('deprecated v2 BlueMap API (#733, removed in v3.0.0 #736)', () => {
         "  new BlueMapCliRenderer({ worldsDir: '/p/worlds', mapsDir: '/p/maps', dockerDir: '/p/docker/bluemap' }),",
         "];",
         "export const result: MapRenderResult = parseResultJson('{}');",
+        "export const region: DimensionRegionDir = { dimension: Dimension.Overworld, dir: '/world/region' };",
       ].join('\n')
     );
     try {
