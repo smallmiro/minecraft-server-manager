@@ -6,6 +6,7 @@ import type { Paths } from '../../../utils/index.js';
 import { parseEnvDocument } from '../../../utils/env-file.js';
 import { resolveWorldName } from '../../../domain/value-objects/WorldName.js';
 import {
+  ServerSpecError,
   validateServerSpecDocument,
   type ServerSpecDocument,
 } from '../../../domain/server-spec/ServerSpecDocument.js';
@@ -37,7 +38,7 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
  * Compose `labels`/`environment` in map or list (`KEY=value`) form as a map.
  * null = a bare key (Compose passes the shell's value through).
  */
-function composeMap(value: unknown): Map<string, string | null> {
+export function composeMap(value: unknown): Map<string, string | null> {
   const out = new Map<string, string | null>();
   if (Array.isArray(value)) {
     for (const item of value) {
@@ -310,4 +311,67 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
     },
     warnings
   );
+}
+
+function undeterminedError(name: string, err: unknown): unknown {
+  return err instanceof Refused ? new ServerSpecError('undetermined', `Cannot read server '${name}': ${err.message}`, name) : err;
+}
+
+function existingOnly(document: ServerSpecDocument): ServerSpecDocument {
+  const issues = validateServerSpecDocument(document, 'existing');
+  if (issues.length > 0) refuse(`${issues.map((i) => `${i.path}: ${i.message}`).join('; ')}`);
+  return document;
+}
+
+/**
+ * `doc` with a hand-edited config.env read back into it (ADR-0003 §3):
+ * type, version, memory, world, playit domain and env come from the file.
+ * Rejects ServerSpecError('undetermined') like a refused import.
+ */
+export async function absorbConfigEnv(
+  doc: ServerSpecDocument,
+  configText: string,
+  paths: Paths,
+  warnings: string[]
+): Promise<ServerSpecDocument> {
+  try {
+    const { playitDomain, ...c } = await readConfigEnv(doc.name, configText, paths, warnings);
+    const { playitDomain: _old, ...routing } = doc.routing;
+    return existingOnly({
+      specVersion: doc.specVersion,
+      name: doc.name,
+      type: c.type,
+      ...(c.version !== undefined && { version: c.version }),
+      ...(c.memory !== undefined && { memory: c.memory }),
+      image: doc.image,
+      world: c.world,
+      routing: { ...routing, ...(playitDomain !== undefined && { playitDomain }) },
+      env: c.env,
+    });
+  } catch (err) {
+    throw undeterminedError(doc.name, err);
+  }
+}
+
+/**
+ * `doc` with the spec-owned fields of a hand-edited docker-compose.yml
+ * (image, mc-router labels) read back into it (ADR-0003 §3). Environment
+ * entries are not spec-owned here: they count as edits outside the spec.
+ */
+export function absorbCompose(
+  doc: ServerSpecDocument,
+  composeText: string,
+  hostIps: string[],
+  warnings: string[]
+): ServerSpecDocument {
+  try {
+    const compose = readCompose(doc.name, composeText);
+    return existingOnly({
+      ...doc,
+      image: compose.image,
+      routing: readRouting(doc.name, compose.labels, doc.routing.playitDomain, hostIps, warnings),
+    });
+  } catch (err) {
+    throw undeterminedError(doc.name, err);
+  }
 }

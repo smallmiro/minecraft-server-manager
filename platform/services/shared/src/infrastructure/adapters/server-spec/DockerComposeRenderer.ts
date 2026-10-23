@@ -92,6 +92,20 @@ function renderCompose(doc: ServerSpecDocument, hostIps: string[], templateText:
   return yaml.dump({ ...tpl, services: { [`mc-${doc.name}`]: service } }, DUMP_OPTIONS);
 }
 
+const includePaths = (e: unknown): unknown[] =>
+  typeof e === 'string' ? [e] : isMapping(e) ? [e['path']].flat() : [];
+
+/** Whether servers/compose.yml text has an include entry for `<name>/docker-compose.yml`. */
+export function hasIncludeEntry(text: string | undefined, name: string): boolean {
+  if (text === undefined) return false;
+  try {
+    const list = (yaml.load(text) as { include?: unknown } | null)?.include;
+    return Array.isArray(list) && list.some((e) => includePaths(e).includes(`${name}/docker-compose.yml`));
+  } catch {
+    return false;
+  }
+}
+
 /** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
 function renderInclude(name: string, current: string | undefined): string {
   const entry = `${name}/docker-compose.yml`;
@@ -107,7 +121,6 @@ function renderInclude(name: string, current: string | undefined): string {
   if (!isMapping(parsed)) throw unreadable('is not a mapping');
   const list = parsed['include'] ?? [];
   if (!Array.isArray(list)) throw unreadable("has an 'include' that is not a list");
-  const paths = (e: unknown): unknown[] => (typeof e === 'string' ? [e] : isMapping(e) ? [e['path']].flat() : []);
-  if (list.some((e) => paths(e).includes(entry))) return current;
+  if (list.some((e) => includePaths(e).includes(entry))) return current;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
 }

@@ -6,7 +6,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Paths } from '../src/utils/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ServerSpecError, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
@@ -44,8 +45,15 @@ function serverDir(name: string, configEnv?: string, compose?: string): string {
   return dir;
 }
 
-const COMPOSE = (name: string, image = 'itzg/minecraft-server:java25') =>
-  `services:\n  mc-${name}:\n    image: ${image}\n    labels:\n      mc-router.host: "${name}.local"\n      mc-router.auto-scale-up: "true"\n      mc-router.auto-scale-down: "true"\n`;
+const TEMPLATE_COMPOSE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../cli/templates/servers/_template/docker-compose.yml'),
+  'utf-8'
+);
+/** A server compose as create-server.sh writes it from the bundled template. */
+const COMPOSE = (name: string) =>
+  TEMPLATE_COMPOSE.replace(/mc-template/g, `mc-${name}`).replace('mc-router.host: "template.local"', `mc-router.host: "${name}.local"`);
+
+const VALID = 'TYPE=PAPER\nEXTRA_ARGS=--universe /worlds/\n';
 
 async function rejection(promise: Promise<unknown>): Promise<ServerSpecError> {
   const error = await promise.then(
@@ -70,7 +78,7 @@ afterEach(() => {
 
 describe('write', () => {
   it('writes server.yaml in a fixed key order, quoting what YAML would retype', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     await repo.write(spec());
 
     expect(readFileSync(yamlPath('survival'), 'utf-8')).toBe(
@@ -103,7 +111,7 @@ describe('write', () => {
   });
 
   it('round-trips through load with the revision of the bytes', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     await repo.write(spec());
     const loaded = await repo.load('survival');
     expect(loaded).toEqual({
@@ -114,14 +122,14 @@ describe('write', () => {
   });
 
   it("gives a new server.yaml config.env's file mode", async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     chmodSync(join(root, 'servers', 'survival', 'config.env'), 0o600);
     await repo.write(spec());
     expect(statSync(yamlPath('survival')).mode & 0o777).toBe(0o600);
   });
 
   it('checks the expected revision', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     expect((await rejection(repo.write(spec(), { expectedRevision: 'abc' }))).code).toBe('conflict');
     await repo.write(spec(), { expectedRevision: null });
 
@@ -133,7 +141,7 @@ describe('write', () => {
   });
 
   it('does not rewrite an unchanged file', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     await repo.write(spec());
     const before = statSync(yamlPath('survival')).mtimeMs;
     await new Promise((r) => setTimeout(r, 20));
@@ -142,7 +150,7 @@ describe('write', () => {
   });
 
   it('refuses an invalid document and writes nothing', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     const error = await rejection(repo.write({ ...spec(), env: { LEVEL: 'x' } }));
     expect(error.code).toBe('invalid_spec');
     expect(error.message).toContain('env.LEVEL');
@@ -191,24 +199,24 @@ describe('load', () => {
   });
 
   it('rejects a server.yaml that does not parse, retypes a value or names another server', async () => {
-    serverDir('a', 'TYPE=PAPER\n');
+    serverDir('a', VALID, COMPOSE('a'));
     writeFileSync(yamlPath('a'), 'specVersion: 1\nname: [\n');
     expect((await rejection(repo.load('a'))).code).toBe('invalid_spec');
 
-    serverDir('b', 'TYPE=PAPER\n');
+    serverDir('b', VALID, COMPOSE('b'));
     await repo.write(spec({ name: 'b' }));
     writeFileSync(yamlPath('b'), readFileSync(yamlPath('b'), 'utf-8').replace('version: "1.21"', 'version: 1.21'));
     const retyped = await rejection(repo.load('b'));
     expect(retyped.code).toBe('invalid_spec');
     expect(retyped.message).toMatch(/version.*quote/);
 
-    serverDir('c', 'TYPE=PAPER\n');
+    serverDir('c', VALID, COMPOSE('c'));
     writeFileSync(yamlPath('c'), readFileSync(yamlPath('b'), 'utf-8').replace('version: 1.21', 'version: "1.21"'));
     expect((await rejection(repo.load('c'))).message).toMatch(/name/);
   });
 
   it("rejects 'unsupported_spec_version' for a newer file", async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     await repo.write(spec());
     writeFileSync(yamlPath('survival'), readFileSync(yamlPath('survival'), 'utf-8').replace('specVersion: 1', 'specVersion: 2'));
     expect((await rejection(repo.load('survival'))).code).toBe('unsupported_spec_version');
@@ -217,10 +225,10 @@ describe('load', () => {
 
 describe('v2 methods', () => {
   it('list returns { name } per directory with server.yaml or config.env, sorted', async () => {
-    serverDir('b', 'TYPE=PAPER\n');
+    serverDir('b', VALID, COMPOSE('b'));
     serverDir('a');
     writeFileSync(yamlPath('a'), 'specVersion: 1\n');
-    serverDir('_template', 'TYPE=PAPER\n');
+    serverDir('_template', VALID, COMPOSE('_template'));
     serverDir('empty');
     writeFileSync(join(root, 'servers', 'compose.yml'), 'include: []\n');
     expect(await repo.list()).toEqual([{ name: 'a' }, { name: 'b' }]);
@@ -232,14 +240,14 @@ describe('v2 methods', () => {
   });
 
   it('get returns the document or null', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     await repo.write(spec());
     expect(await repo.get('survival')).toEqual(spec());
     expect(await repo.get('missing')).toBeNull();
   });
 
   it('save writes a full document and rejects a bare { name } listing the missing fields', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     const error = await rejection(repo.save({ name: 'survival' }));
     expect(error.code).toBe('invalid_spec');
     expect(error.issues.map((i) => i.path)).toEqual(['specVersion', 'type', 'image', 'world', 'routing', 'env']);
@@ -249,7 +257,7 @@ describe('v2 methods', () => {
   });
 
   it('delete says it arrives with #735', async () => {
-    serverDir('survival', 'TYPE=PAPER\n');
+    serverDir('survival', VALID, COMPOSE('survival'));
     await expect(repo.delete('survival')).rejects.toThrow(/#735/);
     expect(existsSync(join(root, 'servers', 'survival'))).toBe(true);
   });

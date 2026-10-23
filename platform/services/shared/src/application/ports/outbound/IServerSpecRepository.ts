@@ -14,6 +14,10 @@ export interface LoadedServerSpec {
 export interface WriteServerSpecOptions {
   /** Revision from load(); a mismatch rejects with ServerSpecError 'conflict'. Omit to write unconditionally. */
   expectedRevision?: string | null;
+  /** Overwrite hand-edited generated files after writing a .bak (edit_conflict, compose_edited, refused import). */
+  force?: boolean;
+  /** Allow a world.storage change (only `mcctl migrate worlds`); otherwise 'storage_change'. */
+  allowStorageChange?: boolean;
 }
 
 /**
@@ -32,8 +36,8 @@ export interface IServerSpecRepository {
   save(spec: ServerSpec): Promise<void>;
   /** #735: removes the include entry (exact name) and the definition files; data/ and worlds/ are the use case's. */
   delete(name: string): Promise<void>;
-  /** Imports in memory when server.yaml is missing ('undetermined' when the import is refused). No writes. */
+  /** Imports in memory when server.yaml is missing ('undetermined' when refused); absorbs hand edits. No writes. */
   load(name: string): Promise<LoadedServerSpec | null>;
-  /** Writes server.yaml ('not_found' when the server directory does not exist). */
+  /** Writes server.yaml and renders the generated files ('not_found' when the server directory does not exist). */
   write(doc: ServerSpecDocument, options?: WriteServerSpecOptions): Promise<void>;
 }

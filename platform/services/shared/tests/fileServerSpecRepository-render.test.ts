@@ -243,7 +243,7 @@ describe('compose edits', () => {
 
     it('is reported on load with the differing path', async () => {
       const { warnings } = (await repo.load('survival'))!;
-      expect(warnings.join('\n')).toMatch(/protected.*services\.mc-survival\.ports/);
+      expect(warnings.join('\n')).toMatch(/services\.mc-survival\.ports.*protected/);
     });
 
     it('is left untouched by a write that does not change the rendered compose', async () => {
