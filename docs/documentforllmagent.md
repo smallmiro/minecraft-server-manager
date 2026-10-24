@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 3.0.1
+> **Version**: 3.0.2
 > **Last Updated**: 2026-10-24
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2873,6 +2873,12 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 3.0.2 (2026-10-24) - Recreate Only Changed Images
+
+Upgrade: from v3.0.x `mcctl update`; from v2.x `upgrade-v3.sh`.
+
+**Fixed:** `mcctl update` and `upgrade-v3.sh` step 7b no longer offer to recreate stopped servers already on the current image; they report `up to date` (#810).
 
 ### Version 3.0.1 (2026-10-24) - Upgrade Fixes
 

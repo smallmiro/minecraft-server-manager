@@ -1016,6 +1016,12 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [3.0.2] - 2026-10-24
+
+**Upgrade:** from v3.0.x run `mcctl update`; from v2.x use `upgrade-v3.sh`.
+
+**Fixed:** `mcctl update` and `upgrade-v3.sh` no longer offer to recreate stopped servers that already run the current image; they report `up to date` (#810). See [CHANGELOG.md](CHANGELOG.md).
+
 ### [3.0.1] - 2026-10-24
 
 **Upgrade:** from v2.x use the fixed `upgrade-v3.sh`; from v3.0.0 run `mcctl update` twice (the stopped-server offer needs the new CLI).
