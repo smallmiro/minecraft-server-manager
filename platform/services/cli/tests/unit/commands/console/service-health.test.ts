@@ -91,6 +91,8 @@ describe('consoleServiceCommand health probe', () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    // these tests exercise the interactive select (mocked), which needs a TTY
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
     vi.clearAllMocks();
     mockIsInitialized.mockReturnValue(true);
     mockStatus.mockResolvedValue(procs());
