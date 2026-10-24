@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Routing Table grouped by server** (#799) - The console Routing page shows one row per server instead of one per hostname. A row shows the primary address (with copy), how many more hostnames there are, the hostname types and an **N not routed** warning; **Wake/Start** and the links appear once per server. Click a row to list all its hostnames; **Expand all** / **Collapse all** toggles every server. Searching a hostname opens its server and highlights the match. The page header counts servers and hostnames.
 
+### Fixed
+- **`mcctl console service` without a terminal** (#795) - `start`, `stop`, `restart` and `logs` no longer crash with `TTY initialization failed: uv_tty_init returned EINVAL` when both services are installed and neither `--api` nor `--console` is given. They exit 1 with `No terminal to ask which services to <action>. Pass --console (API + Console) or --api.` and choose nothing. Prompts in a terminal are unchanged.
+
 ## [3.0.0] - 2026-10-24
 
 > **Upgrade notes (v3.0.0, BREAKING).** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts). All Bash scripts are gone (#715, #736).
