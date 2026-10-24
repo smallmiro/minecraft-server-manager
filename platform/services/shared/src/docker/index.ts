@@ -13,7 +13,8 @@ import type {
   RouteInfo,
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
-import { resolveMcctlRoot } from '../utils/index.js';
+import { resolveMcctlRoot, Paths } from '../utils/index.js';
+import { resolveHostIps } from '../infrastructure/hostIps.js';
 import { assertEnvFileValue, parseEnvDocument } from '../utils/env-file.js';
 import { atomicWriteFileSync } from '../utils/atomic-write.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
@@ -310,8 +311,7 @@ export function getRouterDetailInfo(): RouterDetailInfo {
     detailed.autoScale = parseRouterAutoScaleEnv(routerConfig.env);
   }
 
-  const resolver = readRouterResolver();
-  if (resolver) detailed.resolver = resolver;
+  detailed.resolver = readRouterResolver();
 
   // Get routes from all mc-* containers; one label inspect gives hostnames and auto-scale overrides
   const containers = getMcContainers();
@@ -366,14 +366,14 @@ export async function getRouterDetailInfoAsync(
   return detailed;
 }
 
-/** Resolver addresses from the platform .env; undefined when it cannot be read (#768). */
-function readRouterResolver(): RouterResolver | undefined {
-  try {
-    const text = readFileSync(join(resolveMcctlRoot(), '.env'), 'utf-8');
-    return parseResolverEnv(Object.fromEntries(parseEnvDocument(text).values));
-  } catch {
-    return undefined;
-  }
+/**
+ * Resolver addresses (#768), resolved the way create-server.sh picks nip.io
+ * hosts: `.env` HOST_IPS / HOST_IP comma lists, else the probed host address.
+ * The first one is the primary, as for avahi.
+ */
+function readRouterResolver(): RouterResolver {
+  const hostIps = resolveHostIps(new Paths());
+  return hostIps.length > 0 ? { hostIp: hostIps[0], hostIps } : { hostIps };
 }
 
 /**

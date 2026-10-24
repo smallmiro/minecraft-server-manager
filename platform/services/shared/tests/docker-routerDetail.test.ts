@@ -168,10 +168,18 @@ describe('getRouterDetailInfo (#768)', () => {
     expect(info.uptime).toBeUndefined();
   });
 
-  it('omits resolver when the platform .env is unreadable', () => {
+  it('reads HOST_IP as a comma list like create-server does', () => {
+    writeFileSync(join(root, '.env'), 'HOST_IP=192.168.1.10,100.64.0.5\n');
+    fakeDocker({ routerStatus: 'running', routerConfig: ROUTER_CONFIG, containers: {} });
+    expect(getRouterDetailInfo().resolver).toEqual({ hostIp: '192.168.1.10', hostIps: ['192.168.1.10', '100.64.0.5'] });
+  });
+
+  it('falls back to the probed host address when .env sets none, as nip.io hosts were created', () => {
     rmSync(join(root, '.env'));
     fakeDocker({ routerStatus: 'running', routerConfig: ROUTER_CONFIG, containers: {} });
-    expect(getRouterDetailInfo().resolver).toBeUndefined();
+    const resolver = getRouterDetailInfo().resolver!;
+    expect(Array.isArray(resolver.hostIps)).toBe(true);
+    expect(resolver.hostIp).toBe(resolver.hostIps[0]);
   });
 });
 
