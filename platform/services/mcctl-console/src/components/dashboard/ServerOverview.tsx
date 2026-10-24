@@ -1,17 +1,12 @@
 'use client';
 
-import {
-  Box,
-  Typography,
-  CircularProgress,
-  Chip,
-} from '@mui/material';
+import { Box, Typography, CircularProgress } from '@mui/material';
 import NextLink from 'next/link';
 import { startLoading } from '@/components/providers';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import type { ServerStatusMap } from '@/hooks/useServersSSE';
-import { HostnameDisplay } from '@/components/common';
+import { ServerOverviewRow } from './ServerOverviewRow';
 import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 
 export interface ServerOverviewProps {
@@ -40,33 +35,6 @@ export function ServerOverview({
       onServerClick(serverName);
     } else {
       router.push(`/servers/${serverName}`);
-    }
-  };
-
-  const getStatusColor = (status: string): 'success' | 'error' | 'default' | 'warning' => {
-    switch (status) {
-      case 'running':
-        return 'success';
-      case 'stopped':
-      case 'exited':
-        return 'error';
-      case 'created':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-  const getHealthColor = (health: string): 'success' | 'error' | 'warning' | 'default' => {
-    switch (health) {
-      case 'healthy':
-        return 'success';
-      case 'unhealthy':
-        return 'error';
-      case 'starting':
-        return 'warning';
-      default:
-        return 'default';
     }
   };
 
@@ -121,47 +89,13 @@ export function ServerOverview({
             const currentHealth = sseStatus?.health || server.health;
 
             return (
-              <Box
+              <ServerOverviewRow
                 key={server.name}
-                role="button"
-                onClick={() => handleServerClick(server.name)}
-                sx={{
-                  p: 2,
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    backgroundColor: 'action.hover',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={600} noWrap>
-                      {server.name}
-                    </Typography>
-                    <HostnameDisplay hostname={server.hostname} fontSize={12} />
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
-                    <Chip
-                      label={currentStatus}
-                      color={getStatusColor(currentStatus)}
-                      size="small"
-                    />
-                    {currentHealth !== 'none' && (
-                      <Chip
-                        label={currentHealth}
-                        color={getHealthColor(currentHealth)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                </Box>
-              </Box>
+                server={server}
+                status={currentStatus}
+                health={currentHealth}
+                onClick={handleServerClick}
+              />
             );
           })}
         </Box>
