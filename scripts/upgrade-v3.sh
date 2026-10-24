@@ -37,6 +37,7 @@ LOG=""
 LOG_DIR=""
 BACKUP_DIR=""
 SCRIPTS_BACKED=0
+BACKED=""
 RESULTS=""
 WARNINGS=""
 RC=0
@@ -251,13 +252,29 @@ finish() {
     say "  - If cron jobs, timers or your own scripts called <root>/scripts/*.sh, switch them to mcctl:"
     say "      $DOCS_URL"
   fi
-  say "Rollback (the old version was ${CUR_OLD:-unknown}):"
-  say "  npm install -g $PKG@${CUR_OLD:-<previous>} && $RESTART_CMD"
-  if [ -n "$BACKUP_DIR" ]; then
-    say "  config backup: $BACKUP_DIR (copy files back as in the runbook, step 8)"
-  fi
+  rollback_hint
   say "Log: $LOG"
   exit "$RC"
+}
+
+# The same order as runbook step 8: files, CLI, api/console/shared, restart
+rollback_hint() {
+  local old=${CUR_OLD:-<previous>} svc=$ROOT pkgs="" p
+  say "Rollback (the old version was ${CUR_OLD:-unknown}; runbook step 8):"
+  if [ -n "$BACKED" ]; then
+    say "  Copy these back from $BACKUP_DIR to the same paths under $ROOT, then run 'docker compose up -d router':"
+    say "$(printf '%s' "$BACKED" | sed 's/^/      /')"
+  fi
+  say "  npm install -g $PKG@$old"
+  # where mcctl update installs them: .services/ when it exists, else the root
+  if [ -d "$ROOT/.services" ]; then svc=$ROOT/.services; fi
+  for p in mcctl-api mcctl-console shared; do
+    if [ -d "$svc/node_modules/@minecraft-docker/$p" ]; then pkgs="$pkgs @minecraft-docker/$p@$old"; fi
+  done
+  if [ -n "$pkgs" ]; then
+    say "  cd $svc && npm install$pkgs"
+    say "  $RESTART_CMD"
+  fi
 }
 
 stop_with() {
@@ -445,10 +462,11 @@ copy_into() {
     # dangling link: keep the link itself
     cp -RP "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
     log "  copied dangling link $rel"
-    return 0
+  else
+    cp -RpL "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
+    log "  copied $rel"
   fi
-  cp -RpL "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
-  log "  copied $rel"
+  BACKED="${BACKED}$rel"$'\n'
 }
 
 step2_update() {

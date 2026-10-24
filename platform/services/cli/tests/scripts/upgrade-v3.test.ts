@@ -562,6 +562,42 @@ describe('upgrade-v3.sh', () => {
     expect(todo).toContain('mcctl console service restart --console --force');
   });
 
+  it('prints a rollback for the files, the CLI, the services and the restart', () => {
+    for (const p of ['mcctl-api', 'mcctl-console', 'shared']) {
+      put(join(ctx.root, '.services/node_modules/@minecraft-docker', p, 'package.json'), '{}');
+    }
+    const r = run({ args: ['--yes'] });
+    const rb = r.out.slice(r.out.indexOf('Rollback'));
+    expect(rb).toContain(`Copy these back from ${backupDir()} to the same paths under ${ctx.root}`);
+    for (const f of [
+      'docker-compose.yml',
+      '.env',
+      '.mcctl.json',
+      'ecosystem.config.cjs',
+      'servers/_template',
+      'servers/compose.yml',
+      'servers/alpha/config.env',
+      'servers/alpha/docker-compose.yml',
+      'scripts',
+    ]) {
+      expect(rb, f).toContain(`\n      ${f}\n`);
+    }
+    expect(rb).toContain('docker compose up -d router');
+    expect(rb).toContain('  npm install -g @minecraft-docker/mcctl@2.33.0\n');
+    expect(rb).toContain(
+      `  cd ${join(ctx.root, '.services')} && npm install @minecraft-docker/mcctl-api@2.33.0 @minecraft-docker/mcctl-console@2.33.0 @minecraft-docker/shared@2.33.0\n`,
+    );
+    expect(rb).toContain('  mcctl console service restart --console --force\n');
+  });
+
+  it('rolls back services installed in the root itself (no .services)', () => {
+    put(join(ctx.root, 'node_modules/@minecraft-docker/mcctl-api/package.json'), '{}');
+    const r = run({ args: ['--yes'] });
+    expect(r.out.slice(r.out.indexOf('Rollback'))).toContain(
+      `  cd ${ctx.root} && npm install @minecraft-docker/mcctl-api@2.33.0\n`,
+    );
+  });
+
   it('retries the API health check', () => {
     const r = run({ args: ['--yes'], env: { FAKE_CURL_FAIL_FIRST: '2' } });
     expect(r.code).toBe(0);
