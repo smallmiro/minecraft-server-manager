@@ -513,6 +513,7 @@ describe('upgrade-v3.sh', () => {
         expect(r.out).toContain(`is not under npm's global prefix (${nvm})`);
         expect(r.out).toContain('export PATH="/opt/node22/bin:$PATH"');
         expect(r.out).toContain('did not finish');
+        expect(r.out).not.toContain('Rollback');
       }
       expect(snapshot(ctx.root)).toEqual(before);
       expect(calls()).not.toMatch(/mcctl (update|upgrade)/);
@@ -687,6 +688,24 @@ describe('upgrade-v3.sh', () => {
       `  cd ${join(ctx.root, '.services')} && npm install @minecraft-docker/mcctl-api@2.33.0 @minecraft-docker/mcctl-console@2.33.0 @minecraft-docker/shared@2.33.0\n`,
     );
     expect(rb).toContain('  mcctl console service restart --console --force\n');
+  });
+
+  it('prints no rollback when nothing was changed', () => {
+    const r = run({ args: ['--dry-run'] });
+    expect(r.out).toContain('Dry run: nothing was changed.');
+    expect(r.out).not.toContain('Rollback');
+  });
+
+  it('points the rollback at the ecosystem .bak when step 1 was declined', () => {
+    const answers = join(ctx.base, 'answers');
+    put(answers, 'n\n' + 'y\n'.repeat(20)); // no backup, yes to the rest (kill_timeout is added)
+    const r = run({ env: { MCCTL_UPGRADE_TTY: answers } });
+    expect(existsSync(join(ctx.root, 'backups'))).toBe(false);
+    const bak = readdirSync(ctx.root).find((n) => n.startsWith('ecosystem.config.cjs.bak-'));
+    expect(bak).toBeDefined();
+    expect(r.out.slice(r.out.indexOf('Rollback'))).toContain(
+      `Copy ${join(ctx.root, bak!)} back to ${join(ctx.root, 'ecosystem.config.cjs')}`,
+    );
   });
 
   it('rolls back services installed in the root itself (no .services)', () => {

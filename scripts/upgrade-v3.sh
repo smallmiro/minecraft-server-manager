@@ -43,6 +43,7 @@ RESULTS=""
 WARNINGS=""
 RC=0
 STOPPED=0
+PAST_PREFLIGHT=0
 CUR_OLD=""
 CUR_NOW=""
 MCCTL_INSTALLS=""
@@ -280,7 +281,8 @@ finish() {
     say "  - If cron jobs, timers or your own scripts called <root>/scripts/*.sh, switch them to mcctl:"
     say "      $DOCS_URL"
   fi
-  rollback_hint
+  # a dry run or a stop in pre-flight changed nothing, so there is nothing to undo
+  if [ "$DRY" = 0 ] && [ "$PAST_PREFLIGHT" = 1 ]; then rollback_hint; fi
   say "Log: $LOG"
   exit "$RC"
 }
@@ -292,6 +294,9 @@ rollback_hint() {
   if [ -n "$BACKED" ]; then
     say "  Copy these back from $BACKUP_DIR to the same paths under $ROOT, then run 'docker compose up -d router':"
     say "$(printf '%s' "$BACKED" | sed 's/^/      /')"
+  elif [ -n "$ECO_BAK" ]; then
+    # no backup folder (step 1 declined): only the copy step 5 made before editing
+    say "  Copy $ECO_BAK back to $ROOT/ecosystem.config.cjs"
   fi
   say "  npm install -g $PKG@$old"
   # where mcctl update installs them: .services/ when it exists, else the root
@@ -1088,6 +1093,7 @@ main() {
   fi
 
   step0_precheck
+  PAST_PREFLIGHT=1
   step1_backup
   step2_update
   step3_upgrade
