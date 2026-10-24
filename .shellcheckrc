@@ -1,2 +1,0 @@
-# Severity is a command-line option, not an rc key: see platform/scripts/tests/lint.sh.
-external-sources=true

@@ -1,6 +1,5 @@
 /**
- * World (LEVEL) name rule: the single source for the CLI, API and scripts
- * (platform/scripts/lib/common.sh mirrors it in bash). A world name is a
+ * World (LEVEL) name rule: the single source for the CLI, API and console. A world name is a
  * directory under worlds/, so only characters safe in paths and commands.
  */
 export const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
