@@ -829,6 +829,8 @@ mcctl upgrade --non-interactive  # apply defaults without prompting
 
 `mcctl upgrade` only patches the router's `image` tag and `group_add` in `docker-compose.yml` (a timestamped `.bak` is written first), and recreates the router. For the complete, release-independent procedure including backups, verification, and rollback, see the [Upgrade Runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/).
 
+Upgrading from v2.x to v3.0.0? A guided script checks your host, backs up, updates and migrates with a question per step: see [the upgrade script](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-upgrade-script).
+
 ### Automation (sudo Password Handling)
 
 For CI/CD or scripting, you can provide sudo password for mDNS registration:

@@ -6,6 +6,65 @@ The same procedure for every release: upgrade the whole system (CLI, API, Consol
     - `mcctl update` upgrades packages only (CLI/API/Console/shared). **It does not run `mcctl upgrade`** (`.env`, `servers/_template`, root compose router). Run `mcctl upgrade` separately.
     - Run every command in a shell using **the same Node version PM2 uses** (step 0). If they differ, the native `better-sqlite3` module can hit an ABI mismatch and the Console returns 500.
 
+## v3.0.0 upgrade script {#v300-upgrade-script}
+
+For v2.x to v3.0.0, `scripts/upgrade-v3.sh` walks through the steps below and asks before each change. Look first, then run it:
+
+```bash
+# 1. Dry run: checks and shows the plan, changes nothing
+curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run
+# 2. Real run (asks before each change)
+curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash
+```
+
+To read the script before running it:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh
+less upgrade-v3.sh
+bash upgrade-v3.sh --dry-run
+```
+
+It is safe to pipe into `bash`: questions are read from the terminal, every command it starts gets empty input, and a download cut short runs nothing. Linux and macOS (bash 3.2) are supported. Without a terminal and without `--yes`, steps that change something are skipped. The full output is also written to `upgrade.log` (in the backup folder, or in a temporary folder on a dry run).
+
+| Option | Meaning |
+|---|---|
+| `--root <dir>` | Platform root (default `$MCCTL_ROOT`, else `~/minecraft-servers`) |
+| `--yes` | Do not ask; use each question's default answer |
+| `--dry-run` | Check and show the plan; change nothing |
+| `--skip-update` | Do not run `mcctl update` (CLI already updated, or a local build) |
+| `--remove-scripts` | Delete `<root>/scripts` after it was backed up, without asking |
+| `--help` | Show the options |
+
+Before the first step the script reads `mcctl --version` and `npm view @minecraft-docker/mcctl version`. If the CLI is already 3.x the update is skipped. If npm `latest` is not 3.x it stops (use `--skip-update` with a v3 build).
+
+| Step | What it does | Kind (default answer) |
+|---|---|---|
+| 0 Pre-flight | Root files, `which -a mcctl`, PM2 vs shell Node, git 2.31 for backups, cron and timers that call `scripts/*.sh` or `player lookup\|uuid`, macOS `mcctl console` note | automatic, read only |
+| 1 Backup | Copies the files of [step 1](#1-backup) and `<root>/scripts` to `<root>/backups/upgrade-v3-<time>/`; optional `mcctl backup push` | optional (yes; push: no) |
+| 2 Update | `mcctl update --yes`, then checks the version is 3.x | optional (yes) |
+| 3 Upgrade | Shows `mcctl upgrade --dry-run`, then `mcctl upgrade --non-interactive` | optional (yes) |
+| 4 `<root>/scripts` | Keeps or removes the folder (only after the backup; a link is unlinked) | optional (keep) |
+| 5 `ecosystem.config.cjs` | Before v2.32.0, rewrites old `AUTH_MODE` values ([4-1](#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633)); adds `kill_timeout` to mcctl-api ([4-2](#pm2-kill-timeout)); then `mcctl console service restart --force` | optional (AUTH_MODE: no; kill_timeout: yes if `BACKUP_AUTO_ON_STOP=true`; restart: yes) |
+| 6 ServerSpec | Shows `mcctl migrate spec --all --dry-run`, optionally runs it | optional (no) |
+| 7 Worlds | Shows `mcctl world list`, highlights duplicate or warning lines | automatic |
+| 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
+| 9 Summary | Result of each step, what is left, rollback, log path | automatic |
+
+If step 2 is skipped (you answer no, or there is no terminal and no `--yes`) or fails, the script runs no later step and stops with "The upgrade did not finish": the later steps need the v3 CLI. Fix the cause and run the script again. A failed backup or `mcctl upgrade` stops it the same way. Any failed step makes the exit code 1.
+
+On a dry run with a v2 CLI, the `mcctl upgrade --dry-run` preview is the plan of the v2 CLI installed now; the v3 plan appears after the update.
+
+Step 5 loads `ecosystem.config.cjs` with `node` (so it runs the file, like PM2 does), edits it only if the mcctl-api `name:` line is `name: 'mcctl-api',` alone on its line, loads it again to check the result and puts the original back if the check fails (no restart then). A symbolic link or a one-line app object is not edited; the script tells you what to add by hand.
+
+**What the script does not do** (the summary repeats these):
+
+- **Restart running servers.** Do it at a quiet time: `mcctl stop <server> && mcctl start <server>`.
+- **Replace cron jobs, timers or your own scripts** that called `<root>/scripts/*.sh`. It only warns; use the [table in 3-1](#v300-scripts).
+- **Roll back.** The summary prints the command: `npm install -g @minecraft-docker/mcctl@<old version> && mcctl console service restart --force`, plus the backup folder to copy files back from ([step 8](#8-rollback)).
+
+Test hook: `MCCTL_UPGRADE_TTY` replaces `/dev/tty` (a readable file gives the answers, a path that cannot be opened means "no terminal").
+
 ## 0. Pre-flight
 
 ```bash
