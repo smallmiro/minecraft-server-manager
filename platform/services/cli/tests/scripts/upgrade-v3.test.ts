@@ -140,7 +140,9 @@ fi`),
     0o755,
   );
   // inspect answers from $FAKE_DIR/<container>.state, .image and .ref; compose up gives
-  // a new image under a new tag (as when step 2 moved the server from java21 to java25)
+  // a new image under a new tag (as when step 2 moved the server from java21 to java25).
+  // compose config --images answers from <container>.svcref, image inspect from
+  // img-<ref with / and : as _>; a missing file is a failed lookup.
   put(
     join(bin, 'docker'),
     FAKE_LOGGER(`case "$1" in
@@ -153,8 +155,10 @@ fi`),
       *Config.Image*) cat "$FAKE_DIR/$4.ref" 2>/dev/null || echo "itzg/minecraft-server:java21" ;;
       *) cat "$FAKE_DIR/$4.image" 2>/dev/null ;;
     esac ;;
+  image) f="$FAKE_DIR/img-$(echo "$5" | tr '/:' '__')"; [ -f "$f" ] || exit 1; cat "$f" ;;
   compose)
     case "$*" in
+      *"config --images"*) [ -f "$FAKE_DIR/$4.svcref" ] || exit 1; cat "$FAKE_DIR/$4.svcref" ;;
       *"up --no-start"*)
         [ -n "$FAKE_COMPOSE_FAIL" ] && exit 1
         for a; do :; done
@@ -723,6 +727,50 @@ describe('upgrade-v3.sh', () => {
       put(join(ctx.fake, `mc-${name}.image`), 'sha256:old\n');
     };
 
+    // the compose service of mc-<name> names <ref>, which is <localId> on this host
+    const service = (name: string, ref: string, localId?: string): void => {
+      put(join(ctx.fake, `mc-${name}.svcref`), `${ref}\n`);
+      if (localId) put(join(ctx.fake, `img-${ref.replace(/[/:]/g, '_')}`), `${localId}\n`);
+    };
+
+    it('leaves out a stopped server that already runs its service image, without asking', () => {
+      server('alpha', 'exited');
+      put(join(ctx.fake, 'mc-alpha.image'), 'sha256:cur\n');
+      service('alpha', 'itzg/minecraft-server:java21', 'sha256:cur');
+      const r = run({ args: ['--yes'] });
+      expect(r.out).toContain('Up to date: alpha');
+      expect(r.out).not.toContain('Recreate the stopped server containers');
+      expect(r.out).toMatch(/\[ok\] Step 7b .* - up to date: alpha$/m);
+      expect(calls()).not.toMatch(/compose up/);
+      expect(todo(r.out)).not.toContain('mc-alpha');
+      expect(r.code).toBe(0);
+    });
+
+    it('asks only about servers whose service image changed', () => {
+      server('alpha', 'exited');
+      service('alpha', 'itzg/minecraft-server:java25', 'sha256:new'); // container: sha256:old
+      server('beta', 'exited');
+      put(join(ctx.fake, 'mc-beta.image'), 'sha256:cur\n');
+      service('beta', 'itzg/minecraft-server:java21', 'sha256:cur');
+      const r = run({ args: ['--yes'] });
+      expect(r.out).toContain('Stopped: alpha');
+      expect(r.out).toContain('Up to date: beta');
+      expect(r.out).toContain('Recreate the stopped server containers');
+      expect(todo(r.out)).toContain('docker compose up --no-start --no-deps mc-alpha');
+      expect(todo(r.out)).not.toContain('mc-beta');
+    });
+
+    it('keeps a server as a candidate when its image reference or local image cannot be read', () => {
+      server('alpha', 'exited'); // no service reference
+      server('beta', 'exited');
+      service('beta', 'itzg/minecraft-server:java25'); // reference, but no local image
+      const r = run({ args: ['--yes'] });
+      expect(r.out).toContain('Stopped: alpha beta');
+      expect(r.out).not.toContain('Up to date');
+      expect(todo(r.out)).toContain('mc-alpha');
+      expect(todo(r.out)).toContain('mc-beta');
+    });
+
     const yesToAll = (): string => {
       const answers = join(ctx.base, 'answers');
       put(answers, 'y\n'.repeat(30));
@@ -763,6 +811,7 @@ describe('upgrade-v3.sh', () => {
       const r = run({ args: ['--dry-run'] });
       expect(r.out).toContain('Stopped: alpha');
       expect(r.out).toMatch(/\[dry-run\] would ask \(default: no\).*docker compose up --no-start --no-deps/);
+      expect(r.out).toContain('Compared before the update'); // the v2 CLI has not pulled yet
       expect(calls()).not.toMatch(/compose up/);
       expect(readFileSync(join(ctx.fake, 'mc-alpha.image'), 'utf8')).toBe('sha256:old\n');
     });
