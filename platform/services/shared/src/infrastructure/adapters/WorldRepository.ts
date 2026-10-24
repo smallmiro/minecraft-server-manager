@@ -15,7 +15,13 @@ import { randomUUID } from 'node:crypto';
 import * as unzipper from 'unzipper';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
-import { World, WORLD_NAME_PATTERN, holdersOf, type WorldAssignmentSnapshot } from '../../domain/index.js';
+import {
+  World,
+  WORLD_NAME_PATTERN,
+  EXISTING_WORLD_DIR_PATTERN,
+  holdersOf,
+  type WorldAssignmentSnapshot,
+} from '../../domain/index.js';
 import type {
   IWorldRepository,
   WorldWithServerStatus,
@@ -181,6 +187,8 @@ export class WorldRepository implements IWorldRepository {
    * Find world by name
    */
   async findByName(name: string): Promise<World | null> {
+    // Lookups answer "not found" for a name that is not one directory under worlds/ (#728)
+    if (!EXISTING_WORLD_DIR_PATTERN.test(name)) return null;
     return this.load(name, await this.snapshot());
   }
 
@@ -227,8 +235,7 @@ export class WorldRepository implements IWorldRepository {
    * Check if world exists
    */
   async exists(name: string): Promise<boolean> {
-    const worldPath = join(this.worldsDir, name);
-    return existsSync(worldPath);
+    return EXISTING_WORLD_DIR_PATTERN.test(name) && existsSync(join(this.worldsDir, name));
   }
 
   /**
@@ -408,6 +415,7 @@ export class WorldRepository implements IWorldRepository {
    * Get seed for a world from .meta file
    */
   async getSeed(name: string): Promise<string | null> {
+    if (!EXISTING_WORLD_DIR_PATTERN.test(name)) return null;
     const metaPath = join(this.worldsDir, name, '.meta');
 
     if (!existsSync(metaPath)) {

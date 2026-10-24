@@ -152,3 +152,18 @@ describe('WorldRepository assignment hydration', () => {
     expect(existsSync(file)).toBe(true);
   });
 });
+
+// Defense in depth behind the API's path-parameter schema (#728): a name that
+// is not one directory under worlds/ is not found.
+describe('WorldRepository world names (#728)', () => {
+  it.each(['', '..', '../servers', '.locks', 'a/b'])('does not find %j outside worlds/<one directory>', async (name) => {
+    mkdirSync(join(root, 'servers'), { recursive: true });
+    writeFileSync(join(root, '.meta'), JSON.stringify({ seed: 'outside' }));
+    mkdirSync(join(root, 'worlds', '.locks'), { recursive: true });
+    mkdirSync(join(root, 'worlds', 'a', 'b'), { recursive: true });
+
+    expect(await repo.findByName(name)).toBeNull();
+    expect(await repo.exists(name)).toBe(false);
+    expect(await repo.getSeed(name)).toBeNull();
+  });
+});
