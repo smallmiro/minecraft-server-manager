@@ -570,6 +570,9 @@ mcctl console api whitelist remove 192.168.1.100
 
 Manage Management Console lifecycle via PM2.
 
+!!! note "Without a terminal"
+    When both the API and the Console are installed, `start`, `stop`, `restart` and `logs` ask which services to act on. Without a terminal (cron, CI, a pipe) they cannot ask, so they exit with code 1 unless you pass `--console` (API + Console) or `--api`. Nothing is chosen for you.
+
 ### Subcommands
 
 | Subcommand | Description |
