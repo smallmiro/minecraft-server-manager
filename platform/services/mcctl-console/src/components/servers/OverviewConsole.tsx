@@ -18,7 +18,7 @@ import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrow
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
 import SendIcon from '@mui/icons-material/Send';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
-import { BentoPanel } from '@/components/bento';
+import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 import { useServerLogs } from '@/hooks/useServerLogs';
 import { classifyLogLine, parseLogLine, stripAnsi, type LogEvent } from '@/utils/log';
 
@@ -131,72 +131,65 @@ export function OverviewConsole({
 
   return (
     <BentoPanel aria-label="Server console" sx={{ gridColumn: '1 / -1' }}>
-      <Box
-        sx={{
-          px: { xs: 2, sm: 2.5 },
-          py: 1.25,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          columnGap: 1.25,
-          rowGap: 0.5,
-        }}
-      >
-        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
-          Console
-        </Typography>
-        <Box
-          aria-hidden
-          sx={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            bgcolor: isConnected ? 'success.main' : 'error.main',
-          }}
-        />
-        <Typography variant="label" color="text.secondary">
-          {isConnected ? 'Connected' : 'Disconnected'}
-        </Typography>
-        <Box
-          role="toolbar"
-          aria-label="Console tools"
-          sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}
-        >
-          {!isAtBottom && (
-            <Tooltip title="Jump to latest">
-              <IconButton size="small" aria-label="Jump to latest" onClick={scrollToBottom}>
-                <KeyboardDoubleArrowDownIcon fontSize="small" />
+      <BentoPanelHeader
+        title="Console"
+        subtitle={
+          <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+            <Box
+              component="span"
+              aria-hidden
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                bgcolor: isConnected ? 'success.main' : 'error.main',
+              }}
+            />
+            <Typography variant="label" color="text.secondary">
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </Typography>
+          </Box>
+        }
+        action={
+          <Box
+            role="toolbar"
+            aria-label="Console tools"
+            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+          >
+            {!isAtBottom && (
+              <Tooltip title="Jump to latest">
+                <IconButton size="small" aria-label="Jump to latest" onClick={scrollToBottom}>
+                  <KeyboardDoubleArrowDownIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title="Download logs">
+              <span>
+                <IconButton
+                  size="small"
+                  aria-label="Download logs"
+                  onClick={handleDownload}
+                  disabled={logs.length === 0}
+                >
+                  <FileDownloadOutlinedIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+            <Tooltip title="Clear console (screen only)">
+              <IconButton size="small" aria-label="Clear console" onClick={clearLogs}>
+                <DeleteSweepOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
-          <Tooltip title="Download logs">
-            <span>
-              <IconButton
-                size="small"
-                aria-label="Download logs"
-                onClick={handleDownload}
-                disabled={logs.length === 0}
-              >
-                <FileDownloadOutlinedIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Clear console (screen only)">
-            <IconButton size="small" aria-label="Clear console" onClick={clearLogs}>
-              <DeleteSweepOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {onExpand && (
-            <Tooltip title="Expand console">
-              <IconButton size="small" aria-label="Expand console" onClick={onExpand}>
-                <OpenInFullIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-        </Box>
-      </Box>
+            {onExpand && (
+              <Tooltip title="Expand console">
+                <IconButton size="small" aria-label="Expand console" onClick={onExpand}>
+                  <OpenInFullIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        }
+      />
 
       <Box
         ref={logRef}
@@ -210,6 +203,8 @@ export function OverviewConsole({
           overflowY: 'auto',
           px: { xs: 2, sm: 2.5 },
           py: 1.5,
+          borderTop: '1px solid',
+          borderColor: 'divider',
           lineHeight: 1.7,
           whiteSpace: 'pre-wrap',
           overflowWrap: 'anywhere',

@@ -25,7 +25,7 @@ import BackupOutlinedIcon from '@mui/icons-material/BackupOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClient';
-import { BentoGrid, BentoMetricCard, BentoPanel } from '@/components/bento';
+import { BentoGrid, BentoMetricCard, BentoPanel, BentoPanelHeader } from '@/components/bento';
 import { useInstalledMods } from '@/hooks/useMods';
 import { ServerConsole } from './ServerConsole';
 import { OverviewConsole } from './OverviewConsole';
@@ -301,12 +301,8 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
 function ServerSettingsSummary({ server }: { server: ServerDetailType }) {
   return (
     <BentoPanel aria-label="Server settings" sx={{ height: '100%' }}>
-      <Box sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
-          Settings
-        </Typography>
-      </Box>
-      <Box component="dl" sx={{ m: 0, px: 2.5, py: 1 }}>
+      <BentoPanelHeader title="Settings" />
+      <Box component="dl" sx={{ m: 0, px: 2.5, pb: 1.5 }}>
         <SettingRow label="Container" value={server.container} />
         <SettingRow label="Memory allocation" value={server.memory} />
         <SettingRow label="World" value={server.worldName} />

@@ -12,7 +12,7 @@ import Typography from '@mui/material/Typography';
 import PersonIcon from '@mui/icons-material/Person';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import type { PlayerSummary, ServerDetail } from '@/ports/api/IMcctlApiClient';
-import { BentoPanel } from '@/components/bento';
+import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 import { useServerPlayers } from '@/hooks/useServerPlayers';
 import { PlayerDetailModal } from './PlayerDetailModal';
 
@@ -51,26 +51,16 @@ export function OverviewPlayerList({ serverName, players }: OverviewPlayerListPr
 
   return (
     <BentoPanel aria-label="Players" sx={{ height: '100%' }}>
-      <Box
-        sx={{
-          px: 2.5,
-          py: 1.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
-          Players
-        </Typography>
-        {players && (
-          <Typography variant="mono" color="text.secondary">
-            {`${players.online} / ${players.max}`}
-          </Typography>
-        )}
-      </Box>
+      <BentoPanelHeader
+        title="Players"
+        action={
+          players && (
+            <Typography variant="mono" color="text.secondary">
+              {`${players.online} / ${players.max}`}
+            </Typography>
+          )
+        }
+      />
 
       {onlinePlayers.length === 0 ? (
         <Box sx={{ px: 2.5, py: 4, textAlign: 'center', color: 'text.secondary' }}>

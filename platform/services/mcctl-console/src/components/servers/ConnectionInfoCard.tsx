@@ -3,7 +3,7 @@
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
-import { BentoPanel } from '@/components/bento';
+import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 import { usePlayitStatus } from '@/hooks/usePlayit';
 import { CopyButton } from '@/components/common';
 import { parseHostnames, sortHostnames, classifyHostname, HOSTNAME_KIND_LABEL } from '@/utils/hostname';
@@ -74,12 +74,8 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
 
   return (
     <BentoPanel aria-label="Connection" sx={{ height: '100%' }}>
-      <Box sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
-          Connection
-        </Typography>
-      </Box>
-      <Box sx={{ px: 2.5, py: 1.5 }}>
+      <BentoPanelHeader title="Connection" />
+      <Box sx={{ px: 2.5, pb: 2 }}>
         <Typography variant="label" component="div" color="text.secondary" sx={{ py: 0.5 }}>
           Addresses
         </Typography>
