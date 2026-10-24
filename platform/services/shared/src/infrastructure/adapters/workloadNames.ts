@@ -2,8 +2,8 @@
  * Docker naming rules for server workloads (ADR-0001, D4 #665).
  *
  * The runtime rules (`mc-<server>` container, `<server>.local` hostname) live
- * here, not in the domain. No runtime imports: the deprecated ServerName getters
- * delegate here and `@minecraft-docker/shared/naming` must stay browser-safe.
+ * here, not in the domain. No runtime imports: ServerName builds its
+ * reserved-name message here and `@minecraft-docker/shared/naming` must stay browser-safe.
  */
 import type { ServerName } from '../../domain/value-objects/ServerName.js';
 

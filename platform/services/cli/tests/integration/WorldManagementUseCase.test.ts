@@ -3,7 +3,6 @@ import assert from 'node:assert';
 import { WorldManagementUseCase } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
-  MockShellAdapter,
   MockServerRepository,
   MockWorldRepository,
   MockWorldAssignmentPort,
@@ -12,7 +11,6 @@ import {
 
 describe('WorldManagementUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
-  let shellAdapter: MockShellAdapter;
   let serverRepo: MockServerRepository;
   let worldRepo: MockWorldRepository;
   let assignments: MockWorldAssignmentPort;
@@ -22,7 +20,6 @@ describe('WorldManagementUseCase Integration', () => {
   const makeUseCase = () =>
     new WorldManagementUseCase(
       promptAdapter,
-      shellAdapter,
       worldRepo,
       serverRepo,
       assignments,
@@ -34,7 +31,6 @@ describe('WorldManagementUseCase Integration', () => {
       confirm: true,
       selectIndex: 0,
     });
-    shellAdapter = new MockShellAdapter();
     serverRepo = new MockServerRepository([
       { name: 'server1' },
       { name: 'server2' },
@@ -68,9 +64,8 @@ describe('WorldManagementUseCase Integration', () => {
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.worldName, 'seededworld');
       assert.strictEqual(result.seed, '12345');
-      // SEED goes with LEVEL through the assignment port; mcctl.sh config is gone (#734)
+      // SEED goes with LEVEL through the assignment port (#734)
       assert.strictEqual(assignments.seeds.get('server1'), '12345');
-      assert.ok(!shellAdapter.wasCommandCalled('setServerConfig'));
     });
 
     it('should return error when world already exists', async () => {
@@ -101,7 +96,6 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, false);
       assert.strictEqual(result.errorCode, 'server_running');
-      assert.ok(!shellAdapter.wasCommandCalled('stopServer'));
       assert.ok(!assignments.wasCalled('assign'));
       assert.strictEqual(await worldRepo.exists('newworld'), false);
     });
@@ -149,7 +143,6 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, false);
       assert.ok(result.error?.includes('Config error'));
-      assert.ok(!shellAdapter.wasCommandCalled('setServerConfig'));
     });
   });
 
@@ -219,7 +212,6 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, true);
       assert.deepStrictEqual(assignments.calls[0], { method: 'assign', args: ['survival', 'server1'] });
-      assert.ok(!shellAdapter.wasCommandCalled('worldAssign'));
     });
 
     it('should show intro message', async () => {
@@ -288,7 +280,6 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, true);
       assert.ok(assignments.wasCalled('release'));
-      assert.ok(!shellAdapter.wasCommandCalled('worldRelease'));
     });
 
     it('should show intro message', async () => {

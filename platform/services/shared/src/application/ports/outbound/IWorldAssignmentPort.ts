@@ -8,18 +8,9 @@ export type { WorldAssignment, WorldAssignmentSnapshot };
  * Assignments are derived from each server's LEVEL; the rules are the pure
  * domain functions in domain/services/worldAssignment.ts. Errors are
  * WorldAssignmentError. `server_running` is the use case's job: the port knows
- * nothing about the runtime. getAssignment/listAssignments keep their v2
- * shape (#715, #736); snapshot, preview and release were added by #670.
+ * nothing about the runtime.
  */
 export interface IWorldAssignmentPort {
-  /**
-   * The server holding `world` (or one of its dimension folders), or null.
-   * Rejects with `undetermined` instead of answering null while a server's
-   * assignment cannot be read.
-   *
-   * @deprecated Use snapshot() with holdersOf. Removed in v3.0.0 (#736).
-   */
-  getAssignment(world: string): Promise<string | null>;
   /** The readable assignments. Undetermined servers are left out: use snapshot() to see them. */
   listAssignments(): Promise<WorldAssignment[]>;
   /** Assignments plus undetermined servers. Rejects only when servers/ cannot be listed (ENOENT = empty). */

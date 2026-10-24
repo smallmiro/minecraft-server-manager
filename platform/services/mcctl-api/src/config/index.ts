@@ -6,7 +6,7 @@ const presetKeys = new Set(Object.keys(process.env));
 const dotenvKeys = Object.keys(loadEnv().parsed ?? {}).filter((key) => !presetKeys.has(key));
 
 /**
- * Environment for docker compose and platform scripts. Keys loaded from .env at
+ * Environment for docker compose. Keys loaded from .env at
  * startup are dropped so children read the current .env (compose interpolates
  * servers/global.env from it) instead of values frozen when the API started.
  */

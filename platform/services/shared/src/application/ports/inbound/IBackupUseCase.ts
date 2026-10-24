@@ -45,7 +45,7 @@ export interface IBackupUseCase {
 }
 
 /**
- * Options for a non-interactive push (ignored by the deprecated IShellPort path)
+ * Options for a non-interactive push
  */
 export interface BackupPushOptions {
   /** Consent to drop worlds that are in the last backup but missing now. */
@@ -63,7 +63,7 @@ export interface BackupPushResult {
   message?: string;
   worldsBackedUp?: string[];
   error?: string;
-  /** IWorldBackupPort error code, when the port path failed. */
+  /** IWorldBackupPort error code, when the push failed. */
   errorCode?: string;
   /** The backup succeeded without a new commit. */
   noChanges?: boolean;
@@ -99,7 +99,7 @@ export interface BackupRestoreResult {
   commitHash: string;
   worldsRestored?: string[];
   error?: string;
-  /** IWorldBackupPort error code, when the port path failed. */
+  /** IWorldBackupPort error code, when the restore failed. */
   errorCode?: string;
   /** Where the replaced data was kept. */
   previousDir?: string;

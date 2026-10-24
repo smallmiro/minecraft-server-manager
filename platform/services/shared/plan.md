@@ -33,22 +33,19 @@ Implementation plan for the shared package. Most features are already implemente
   - [x] `World`
 
 ### Phase 3: Application Layer ✅
+> v3.0.0 (#736): the bash script port and adapter, `ServerStatusUseCase` and `PlayerLookupUseCase` were removed; see CHANGELOG.
 - [x] Outbound Ports
   - [x] `IPromptPort`
-  - [x] `IShellPort`
   - [x] `IServerRepository`
   - [x] `IWorldRepository`
 - [x] Use Cases
   - [x] `CreateServerUseCase`
   - [x] `DeleteServerUseCase`
-  - [x] `ServerStatusUseCase`
   - [x] `WorldManagementUseCase`
-  - [x] `PlayerLookupUseCase`
   - [x] `BackupUseCase`
 
 ### Phase 4: Infrastructure Layer ✅
 - [x] Adapters
-  - [x] `ShellAdapter`
   - [x] `ServerRepository`
   - [x] `WorldRepository`
 - [x] Docker Utilities

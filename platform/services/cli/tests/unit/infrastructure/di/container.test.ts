@@ -86,3 +86,34 @@ describe('Container.worldBackupPort (#732)', () => {
     expect(status.configured).toBe(false);
   });
 });
+
+describe('Container use case wiring (#736)', () => {
+  let root: string;
+
+  beforeEach(async () => {
+    const { mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    root = mkdtempSync(join(tmpdir(), 'mcctl-container-'));
+  });
+
+  afterEach(async () => {
+    const { rmSync } = await import('node:fs');
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('deletes through the runtime and ServerSpec repository (the plan runs before any container call)', async () => {
+    const container = new Container(root);
+    await expect(container.deleteServerUseCase.deprovision('ghost')).rejects.toThrow(
+      "Server 'ghost' not found (no servers/ghost directory)"
+    );
+  });
+
+  it('gives the world use case the assignment port', async () => {
+    const container = new Container(root);
+    await expect(container.worldManagementUseCase.getAssignmentReport()).resolves.toEqual({
+      duplicates: [],
+      undetermined: [],
+    });
+  });
+});

@@ -32,11 +32,8 @@ vi.mock('@minecraft-docker/shared', () => ({
   Paths: vi.fn().mockImplementation((root?: string) => ({
     root: root ?? '/tmp/test-root',
     servers: (root ?? '/tmp/test-root') + '/servers',
-    scripts: (root ?? '/tmp/test-root') + '/scripts',
     templates: (root ?? '/tmp/test-root') + '/templates',
   })),
-  execScript: vi.fn(),
-  execScriptInteractive: vi.fn(),
 }));
 
 import { ShellExecutor } from '../../../src/lib/shell.js';

@@ -38,7 +38,6 @@ export class ShellExecutor {
     const env: Record<string, string> = {
       MCCTL_ROOT: this.paths.root,
       MCCTL_TEMPLATES: this.paths.templates,
-      MCCTL_SCRIPTS: this.paths.scripts,
     };
 
     // Support MCCTL_SUDO_PASSWORD from:

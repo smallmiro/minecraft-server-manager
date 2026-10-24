@@ -1,6 +1,5 @@
 import type {
   IWorldRepository,
-  WorldLockData,
   WorldWithServerStatus,
 } from '@minecraft-docker/shared';
 import { World } from '@minecraft-docker/shared';
@@ -103,17 +102,6 @@ export class MockWorldRepository implements IWorldRepository {
 
   async listNames(): Promise<string[]> {
     return Array.from(this.worlds.keys());
-  }
-
-  async getLockStatus(name: string): Promise<WorldLockData | null> {
-    const world = this.worlds.get(name);
-    if (!world || !world.isLocked) return null;
-
-    return {
-      worldName: world.name,
-      serverName: world.lockedBy ?? 'unknown',
-      timestamp: new Date(),
-    };
   }
 
   async findAllWithServerStatus(): Promise<WorldWithServerStatus[]> {

@@ -3,7 +3,6 @@
  * Concrete implementations of application ports
  */
 
-export { ShellAdapter, type ShellAdapterOptions } from './ShellAdapter.js';
 export { ServerRepository } from './ServerRepository.js';
 export { WorldRepository, findWorldLayout, type WorldLayout } from './WorldRepository.js';
 export { DocsAdapter } from './DocsAdapter.js';
@@ -56,10 +55,7 @@ export {
   BlueMapCliRenderer,
   MapRenderError,
   parseProgressLine,
-  parseResultJson,
   type BlueMapCliRendererPaths,
-  type RenderSpawn,
-  type RenderSpawnOptions,
 } from './BlueMapCliRenderer.js';
 export {
   DockerComposeRuntimeAdapter,

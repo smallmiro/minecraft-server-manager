@@ -18,7 +18,6 @@ import { Paths } from '../../utils/index.js';
 import { World, WORLD_NAME_PATTERN, holdersOf, type WorldAssignmentSnapshot } from '../../domain/index.js';
 import type {
   IWorldRepository,
-  WorldLockData,
   WorldWithServerStatus,
   ServerStatus,
   WorldAvailabilityCategory,
@@ -273,18 +272,6 @@ export class WorldRepository implements IWorldRepository {
     } catch {
       return [];
     }
-  }
-
-  /**
-   * The server a world is assigned to, derived from the assignments.
-   * `timestamp` is the time of the read; `pid` is always undefined.
-   *
-   * @deprecated Lock files are gone (#670). Use IWorldAssignmentPort.snapshot
-   * with holdersOf. Removed in v3.0.0 (#736).
-   */
-  async getLockStatus(name: string): Promise<WorldLockData | null> {
-    const serverName = holdersOf(await this.snapshot(), name)[0];
-    return serverName ? { worldName: name, serverName, timestamp: new Date(), pid: undefined } : null;
   }
 
   /**

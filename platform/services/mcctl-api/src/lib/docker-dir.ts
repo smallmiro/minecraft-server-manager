@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
  * Resolve the mcctl-api package root (the directory containing its package.json)
  * starting from this module's location.
  *
- * The compiled module lives at `<pkgRoot>/dist/lib/script-resolver.js`, so we
+ * The compiled module lives at `<pkgRoot>/dist/lib/docker-dir.js`, so we
  * walk up until we find the `@minecraft-docker/mcctl-api` package.json.
  */
 function getApiPackageRoot(): string {
@@ -38,8 +38,7 @@ export function getBundledDockerDir(): string {
 
 /**
  * `platform/docker` when running from the monorepo source tree (the package
- * sits at `platform/services/mcctl-api`), the way `Paths` finds
- * `platform/scripts`. Does not exist in an npm install.
+ * sits at `platform/services/mcctl-api`). Does not exist in an npm install.
  */
 export function getRepoDockerDir(): string {
   return join(getApiPackageRoot(), '..', '..', 'docker');

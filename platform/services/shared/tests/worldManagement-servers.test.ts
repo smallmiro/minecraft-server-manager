@@ -2,7 +2,6 @@ import { describe, test, expect } from 'vitest';
 import { WorldManagementUseCase } from '../src/application/use-cases/WorldManagementUseCase.js';
 import type {
   IPromptPort,
-  IShellPort,
   IWorldRepository,
   IServerRepository,
   ServerConfigData,
@@ -41,8 +40,7 @@ function makeUseCase(worlds: string[], serverRepo: IServerRepository) {
     findAll: async () => worlds.map(world),
   } as unknown as IWorldRepository;
   const prompt = {} as IPromptPort;
-  const shell = {} as IShellPort;
-  return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo);
+  return new WorldManagementUseCase(prompt, worldRepo, serverRepo);
 }
 
 describe('WorldManagementUseCase.listWorlds - servers using each world', () => {

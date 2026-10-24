@@ -7,10 +7,9 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CreateServerUseCase } from '../src/application/use-cases/CreateServerUseCase.js';
-import { Paths } from '../src/utils/index.js';
+import { Config, Paths } from '../src/utils/index.js';
 import type {
   IPromptPort,
-  IShellPort,
   IServerRepository,
   IWorldAssignmentPort,
   IServerSpecRepository,
@@ -25,19 +24,17 @@ function setup(levels: Record<string, string>, opts: { undetermined?: string[]; 
     assign: vi.fn(),
     release: vi.fn(),
   };
-  const shell = { createServer: vi.fn() };
   const specRepo = { write: vi.fn(async () => undefined) };
   const serverRepo = { exists: vi.fn().mockResolvedValue(false) };
   const useCase = new CreateServerUseCase(
     {} as IPromptPort,
-    shell as unknown as IShellPort,
     serverRepo as unknown as IServerRepository,
-    new Paths(mkdtempSync(join(tmpdir(), 'mcctl-create-'))),
+    new Config(new Paths(mkdtempSync(join(tmpdir(), 'mcctl-create-')))),
+    { specRepo: specRepo as unknown as IServerSpecRepository },
     undefined,
     undefined,
     undefined,
-    opts.noPort ? undefined : port,
-    { specRepo: specRepo as unknown as IServerSpecRepository }
+    opts.noPort ? undefined : port
   );
   return { useCase, specRepo };
 }

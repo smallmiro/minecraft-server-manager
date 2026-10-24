@@ -19,8 +19,6 @@ const ALLOWED: Record<string, string> = {
   'cli/src/lib/server-env-migration.ts': 'repoints env_file of never-imported servers; kept until v3.0.0 (#736)',
   'shared/src/infrastructure/adapters/FileSystemConfigFileCollector.ts':
     'config snapshot restore writes a consistent set (server.yaml with its generated files), or a pre-#675 set that load() absorbs',
-  'shared/src/docker/index.ts':
-    'setServerPlayitDomain: deprecated v2 export kept until v3.0.0 (#736); mcctl itself no longer calls it',
   // Name config.env / docker-compose.yml only to read them, or name the platform docker-compose.yml /
   // the bundled servers/_template copies; the files they write are other files.
   'shared/src/infrastructure/adapters/GitWorldBackupAdapter.ts': 'reads config.env (LEVEL); writes the backup repository',

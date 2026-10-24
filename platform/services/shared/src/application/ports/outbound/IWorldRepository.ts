@@ -61,15 +61,6 @@ export interface IWorldRepository {
   listNames(): Promise<string[]>;
 
   /**
-   * Get lock status for a world
-   *
-   * @deprecated Derived from the LEVEL assignments since #670 (`pid` is always
-   * undefined). Use IWorldAssignmentPort.snapshot with holdersOf.
-   * Removed in v3.0.0 (#736).
-   */
-  getLockStatus(name: string): Promise<WorldLockData | null>;
-
-  /**
    * Get all worlds with their server status
    * Returns worlds categorized by availability
    */
@@ -104,17 +95,4 @@ export interface IWorldRepository {
    * Writes .meta. Throws if name exists or no level.dat found.
    */
   importFromZip(name: string, zipPath: string): Promise<World>;
-}
-
-/**
- * World lock data from lock file
- *
- * @deprecated worlds/.locks is no longer used (#670); see WorldAssignment.
- * Removed in v3.0.0 (#736).
- */
-export interface WorldLockData {
-  worldName: string;
-  serverName: string;
-  timestamp: Date;
-  pid?: number;
 }
