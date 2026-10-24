@@ -1,16 +1,26 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
 import Skeleton from '@mui/material/Skeleton';
+import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import RouterIcon from '@mui/icons-material/Router';
 import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
-import { RoutingTable, RouterGatewayCard } from '@/components/routing';
-import { AvahiStatus, PlayitSection } from '@/components/settings';
-import { useRouterStatus } from '@/hooks/useMcctl';
+import {
+  RestartRouterDialog,
+  RoutingTable,
+  RouterGatewayCard,
+  RouterResolverCard,
+  extractServerName,
+} from '@/components/routing';
+import { PlayitSection } from '@/components/settings';
+import { useRestartRouter, useRouterStatus } from '@/hooks/useMcctl';
 import { usePlayitStatus } from '@/hooks/usePlayit';
 
 const embeddedCardSx = {
@@ -50,7 +60,33 @@ export default function RoutingPage() {
   const { data, isLoading, error } = useRouterStatus();
   const { data: playit } = usePlayitStatus();
   const playitDomains = useMemo(() => (playit?.servers ?? []).map((server) => server.playitDomain), [playit?.servers]);
+  const restartRouter = useRestartRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
   const router = data?.router;
+  const firstRoute = router?.routes[0];
+
+  const handleRestart = () => {
+    restartRouter.mutate(undefined, {
+      onSuccess: (result) => {
+        setConfirmOpen(false);
+        setSnackbar({ open: true, message: result.message || 'mc-router restarted', severity: 'success' });
+      },
+      onError: (restartError) => {
+        setConfirmOpen(false);
+        setSnackbar({
+          open: true,
+          message: `Failed to restart mc-router: ${restartError.message}`,
+          severity: 'error',
+        });
+      },
+    });
+  };
+
   const statusLabel = isLoading ? 'Checking' : router?.status ?? 'Unavailable';
   const statusColor = isLoading ? 'default' : router?.status === 'running' ? 'success' : router ? 'warning' : 'error';
 
@@ -62,6 +98,17 @@ export default function RoutingPage() {
         description="Server routing and network configuration"
         eyebrow="Network"
         icon={<RouterIcon />}
+        actions={
+          <Button
+            variant="outlined"
+            color="warning"
+            startIcon={restartRouter.isPending ? <CircularProgress size={16} color="inherit" /> : <RestartAltIcon />}
+            disabled={restartRouter.isPending || !router}
+            onClick={() => setConfirmOpen(true)}
+          >
+            Restart mc-router
+          </Button>
+        }
         status={
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             <Chip aria-label="Router status" label={statusLabel} color={statusColor} size="small" />
@@ -107,10 +154,14 @@ export default function RoutingPage() {
           </BentoPanel>
           <BentoPanel
             role="region"
-            aria-label="Avahi status"
-            sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 4' } }}
+            aria-label="Hostname resolver"
+            sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 4' } }}
           >
-            <AvahiStatus avahi={data.avahi} />
+            <RouterResolverCard
+              resolver={router.resolver}
+              avahi={data.avahi}
+              serverName={firstRoute ? extractServerName(firstRoute.target) : undefined}
+            />
           </BentoPanel>
           <BentoPanel
             role="region"
@@ -125,6 +176,29 @@ export default function RoutingPage() {
           <Box color="text.secondary">Router status is unavailable.</Box>
         </BentoPanel>
       )}
+
+      <RestartRouterDialog
+        open={confirmOpen}
+        pending={restartRouter.isPending}
+        onConfirm={handleRestart}
+        onCancel={() => setConfirmOpen(false)}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }

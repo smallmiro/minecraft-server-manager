@@ -1,14 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RoutingPage from './page';
-import { useRouterStatus } from '@/hooks/useMcctl';
+import { useRouterStatus, useRestartRouter } from '@/hooks/useMcctl';
 import { usePlayitStatus } from '@/hooks/usePlayit';
 
 // Mock the hooks
 vi.mock('@/hooks/useMcctl', () => ({
   useRouterStatus: vi.fn(),
+  useRestartRouter: vi.fn(),
+  useStartServer: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
+
+const mockRestart = vi.fn();
 
 vi.mock('@/hooks/usePlayit', () => ({
   usePlayitStatus: vi.fn(() => ({
@@ -53,6 +57,9 @@ const mockRouterStatusData = {
   },
 };
 
+const mockLoaded = () =>
+  vi.mocked(useRouterStatus).mockReturnValue({ data: mockRouterStatusData, isLoading: false, error: null } as any);
+
 describe('RoutingPage', () => {
   let queryClient: QueryClient;
 
@@ -64,6 +71,7 @@ describe('RoutingPage', () => {
       },
     });
     vi.clearAllMocks();
+    vi.mocked(useRestartRouter).mockReturnValue({ mutate: mockRestart, isPending: false } as any);
   });
 
   const renderComponent = () =>
@@ -217,7 +225,77 @@ describe('RoutingPage', () => {
 
     expect(screen.getByRole('region', { name: 'Router routes' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'mc-router Gateway' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Avahi status' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Hostname resolver' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Avahi status' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Playit tunnel' })).toBeInTheDocument();
+  });
+
+  it('shows Avahi status once, inside the resolver card', () => {
+    mockLoaded();
+    renderComponent();
+    expect(screen.getAllByText('mDNS (Avahi)')).toHaveLength(1);
+    const resolver = screen.getByRole('region', { name: 'Hostname resolver' });
+    expect(within(resolver).getByLabelText('Avahi status')).toHaveTextContent('running');
+  });
+
+  it('uses the first route server in the resolver nip.io example', () => {
+    vi.mocked(useRouterStatus).mockReturnValue({
+      data: {
+        ...mockRouterStatusData,
+        router: {
+          ...mockRouterStatusData.router,
+          resolver: { hostIp: '192.168.1.5', hostIps: ['192.168.1.5'] },
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    renderComponent();
+    expect(screen.getByText('survival.192.168.1.5.nip.io')).toBeInTheDocument();
+  });
+
+  describe('Restart mc-router', () => {
+    it('is offered in the hero actions', () => {
+      mockLoaded();
+      renderComponent();
+      expect(within(screen.getByTestId('page-hero')).getByRole('button', { name: 'Restart mc-router' })).toBeInTheDocument();
+    });
+
+    it('asks for confirmation and does nothing on cancel', () => {
+      mockLoaded();
+      renderComponent();
+      fireEvent.click(screen.getByRole('button', { name: 'Restart mc-router' }));
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText(/will be disconnected/i)).toBeInTheDocument();
+      expect(mockRestart).not.toHaveBeenCalled();
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+      expect(mockRestart).not.toHaveBeenCalled();
+    });
+
+    it('restarts on confirm and reports success', async () => {
+      mockLoaded();
+      mockRestart.mockImplementation((_v, opts) => opts.onSuccess({ success: true, message: 'mc-router restarted' }));
+      renderComponent();
+      fireEvent.click(screen.getByRole('button', { name: 'Restart mc-router' }));
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Restart' }));
+      expect(mockRestart).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText('mc-router restarted')).toBeInTheDocument();
+    });
+
+    it('reports a failed restart', async () => {
+      mockLoaded();
+      mockRestart.mockImplementation((_v, opts) => opts.onError(new Error('docker restart failed')));
+      renderComponent();
+      fireEvent.click(screen.getByRole('button', { name: 'Restart mc-router' }));
+      fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Restart' }));
+      expect(await screen.findByText(/docker restart failed/)).toBeInTheDocument();
+    });
+
+    it('disables the hero action while a restart is pending', () => {
+      mockLoaded();
+      vi.mocked(useRestartRouter).mockReturnValue({ mutate: mockRestart, isPending: true } as any);
+      renderComponent();
+      expect(screen.getByRole('button', { name: 'Restart mc-router' })).toBeDisabled();
+    });
   });
 });
