@@ -171,6 +171,11 @@ describe('docker-compose.yml', () => {
     });
   });
 
+  it('quotes the router label so the v2 label readers still match it', async () => {
+    const { parseRouterHosts } = await import('../src/docker/index.js');
+    expect(parseRouterHosts(render(spec()).compose.content)).toEqual(['survival.local', 'survival.192.168.1.10.nip.io']);
+  });
+
   it('is the same bytes on every render', () => {
     expect(render(spec()).compose.content).toBe(render(spec()).compose.content);
     expect(render(spec()).config.content).toBe(render(spec()).config.content);
@@ -179,6 +184,27 @@ describe('docker-compose.yml', () => {
   it('re-rendering its own config.env output changes nothing', () => {
     const first = render(spec()).config.content;
     expect(render(spec(), ctx({ [CONFIG]: first })).config.content).toBe(first);
+  });
+
+  it('writes every $ it puts in the compose as $$, the Compose literal, so no value is interpolated', () => {
+    const doc = spec({
+      image: 'registry.example.com/mc$1:java25',
+      routing: {
+        customHostnames: [],
+        autoScale: { up: true, down: true },
+        asleepMotd: 'Price $5',
+        loadingMotd: '${HOME}',
+      },
+    });
+    const { compose } = render(doc, ctx({}, ['${HOST_IP}']));
+    const svc = (yaml.load(compose.content) as { services: Record<string, Record<string, Record<string, string>>> })
+      .services['mc-survival']!;
+    expect(svc['image']).toBe('registry.example.com/mc$$1:java25');
+    expect(svc['labels']!['mc-router.auto-scale-asleep-motd']).toBe('Price $$5');
+    expect(svc['labels']!['mc-router.auto-scale-loading-motd']).toBe('$${HOME}');
+    expect(svc['labels']!['mc-router.host']).toBe('survival.local,survival.$${HOST_IP}.nip.io');
+    // A lone $ breaks `docker compose` for every server included from servers/compose.yml.
+    expect(compose.content).not.toMatch(/(?<!\$)\$(?!\$)/);
   });
 });
 

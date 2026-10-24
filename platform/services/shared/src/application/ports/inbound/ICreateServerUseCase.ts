@@ -15,7 +15,7 @@ export interface ICreateServerUseCase {
    * Execute server creation with provided configuration
    * Used when arguments are passed via CLI
    */
-  executeWithConfig(config: CreateServerConfig): Promise<Server>;
+  executeWithConfig(config: CreateServerConfig, options?: CreateServerRunOptions): Promise<Server>;
 }
 
 /**
@@ -44,4 +44,14 @@ export interface CreateServerConfig {
   whitelistPlayers?: string[];
   playitDomain?: string;
   noPlayitDomain?: boolean;
+}
+
+/**
+ * Progress of a TypeScript provision (#675, ADR-0003 §5). The stages are the
+ * statuses of the API `server-create` SSE event; log lines become
+ * `server-create-log`.
+ */
+export interface CreateServerRunOptions {
+  onProgress?(stage: 'creating' | 'configuring' | 'starting', message: string): void;
+  onLog?(line: string): void;
 }

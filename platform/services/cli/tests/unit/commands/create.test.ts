@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createCommand, type CreateCommandOptions } from '../../../src/commands/create.js';
-import { Paths } from '@minecraft-docker/shared';
+import { Paths, Server, ServerName, ServerStartError, ServerType, McVersion, Memory, WorldOptions } from '@minecraft-docker/shared';
 import * as container from '../../../src/infrastructure/di/container.js';
 
 /**
@@ -88,7 +88,7 @@ describe('create command - MODRINTH modpack support', () => {
         modLoader: 'fabric',
         enableWhitelist: false,
         whitelistPlayers: undefined,
-      });
+      }, expect.anything());
     });
 
     it('should split --exclude-files into modpackExcludeFiles array', async () => {
@@ -127,8 +127,7 @@ describe('create command - MODRINTH modpack support', () => {
           modpackSlug: 'create-plus',
           modLoader: 'neoforge',
           modpackExcludeFiles: ['statuseffectbars', 'jei'],
-        })
-      );
+        }), expect.anything());
     });
 
     it('should pass only slug if version and loader are not provided', async () => {
@@ -171,7 +170,7 @@ describe('create command - MODRINTH modpack support', () => {
         modLoader: undefined,
         enableWhitelist: false,
         whitelistPlayers: undefined,
-      });
+      }, expect.anything());
     });
 
     it('should fail early when MODRINTH type is used without --modpack (validation)', async () => {
@@ -221,8 +220,7 @@ describe('create command - MODRINTH modpack support', () => {
         expect.objectContaining({
           type: 'PAPER',
           modpackSlug: 'cobblemon', // Passed but should be validated by use case
-        })
-      );
+        }), expect.anything());
     });
   });
 
@@ -336,8 +334,7 @@ describe('create command - MODRINTH modpack support', () => {
         expect.objectContaining({
           enableWhitelist: false,
           whitelistPlayers: undefined,
-        })
-      );
+        }), expect.anything());
     });
 
     it('should disable whitelist when --no-whitelist is provided', async () => {
@@ -368,8 +365,7 @@ describe('create command - MODRINTH modpack support', () => {
         expect.objectContaining({
           enableWhitelist: false,
           whitelistPlayers: undefined,
-        })
-      );
+        }), expect.anything());
     });
 
     it('should pass whitelist players when --whitelist is provided', async () => {
@@ -400,8 +396,7 @@ describe('create command - MODRINTH modpack support', () => {
         expect.objectContaining({
           enableWhitelist: true,
           whitelistPlayers: ['player1', 'player2'],
-        })
-      );
+        }), expect.anything());
     });
 
     it('should enable whitelist without players when --enable-whitelist is provided (#679)', async () => {
@@ -429,8 +424,7 @@ describe('create command - MODRINTH modpack support', () => {
         expect.objectContaining({
           enableWhitelist: true,
           whitelistPlayers: undefined,
-        })
-      );
+        }), expect.anything());
     });
 
     it('should display whitelist disabled in success output by default (#679)', async () => {
@@ -564,8 +558,7 @@ describe('create command - MODRINTH modpack support', () => {
           name: 'myserver',
           type: 'PAPER',
           playitDomain: 'aa.example.com',
-        })
-      );
+        }), expect.anything());
     });
 
     it('should pass noPlayitDomain when --no-playit-domain is provided', async () => {
@@ -596,8 +589,7 @@ describe('create command - MODRINTH modpack support', () => {
         expect.objectContaining({
           name: 'myserver',
           noPlayitDomain: true,
-        })
-      );
+        }), expect.anything());
     });
 
     it('should not pass playit options when neither flag is provided', async () => {
@@ -627,8 +619,26 @@ describe('create command - MODRINTH modpack support', () => {
         expect.not.objectContaining({
           playitDomain: expect.anything(),
           noPlayitDomain: expect.anything(),
-        })
-      );
+        }), expect.anything());
+    });
+  });
+
+  describe('start failure after a successful create (#675, ADR-0003 decision 1)', () => {
+    it('exits 1 with the cause and how to start the server', async () => {
+      const server = Server.create({
+        name: ServerName.create('myserver'),
+        type: ServerType.create('PAPER'),
+        version: McVersion.create('1.21.1'),
+        memory: Memory.default(),
+        worldOptions: WorldOptions.default(),
+      });
+      mockCreateServerUseCase.executeWithConfig.mockRejectedValue(new ServerStartError(server, 'port is already allocated'));
+      const errors: string[] = [];
+      vi.spyOn(console, 'error').mockImplementation((...a: unknown[]) => void errors.push(a.join(' ')));
+      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+      expect(await createCommand({ name: 'myserver' })).toBe(1);
+      expect(errors.join('\n')).toMatch(/port is already allocated.*mcctl start myserver/);
     });
   });
 });

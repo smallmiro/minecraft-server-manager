@@ -76,20 +76,24 @@ function renderConfigEnv(doc: ServerSpecDocument, base: string): string {
   return applyEnvChanges(base, { set, remove }, { raw: true });
 }
 
+/** `value` as a Compose literal: `$` starts an interpolation, `$$` is one `$` (read back by importDockerServer). */
+const composeLiteral = (value: string): string => value.replace(/\$/g, () => '$$');
+
 function renderCompose(doc: ServerSpecDocument, hostIps: string[], templateText: string): string {
   const tpl = yaml.load(templateText) as { services: Record<string, Record<string, unknown>> };
   const svc = Object.values(tpl.services)[0]!;
   const r = doc.routing;
   const labels: Record<string, unknown> = {
     ...(svc['labels'] as Record<string, unknown>),
-    'mc-router.host': routerHosts(doc, hostIps).join(','),
+    'mc-router.host': composeLiteral(routerHosts(doc, hostIps).join(',')),
     'mc-router.auto-scale-up': String(r.autoScale.up),
     'mc-router.auto-scale-down': String(r.autoScale.down),
-    ...(r.asleepMotd !== undefined && { 'mc-router.auto-scale-asleep-motd': r.asleepMotd }),
-    ...(r.loadingMotd !== undefined && { 'mc-router.auto-scale-loading-motd': r.loadingMotd }),
+    ...(r.asleepMotd !== undefined && { 'mc-router.auto-scale-asleep-motd': composeLiteral(r.asleepMotd) }),
+    ...(r.loadingMotd !== undefined && { 'mc-router.auto-scale-loading-motd': composeLiteral(r.loadingMotd) }),
   };
-  const service = { ...svc, container_name: `mc-${doc.name}`, image: doc.image, labels };
-  return yaml.dump({ ...tpl, services: { [`mc-${doc.name}`]: service } }, DUMP_OPTIONS);
+  const service = { ...svc, container_name: `mc-${doc.name}`, image: composeLiteral(doc.image), labels };
+  // Every string quoted: v2 readers match the mc-router.host label as `"..."` (parseRouterHosts, HostnameService).
+  return yaml.dump({ ...tpl, services: { [`mc-${doc.name}`]: service } }, { ...DUMP_OPTIONS, forceQuotes: true });
 }
 
 const includePaths = (e: unknown): unknown[] =>
@@ -128,4 +132,14 @@ function renderInclude(name: string, current: string | undefined): string {
   if (!Array.isArray(list)) throw unreadable("has an 'include' that is not a list");
   if (list.some((e) => includePaths(e).includes(entry))) return current;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
+}
+
+/** servers/compose.yml text without the entries naming exactly `<name>/docker-compose.yml`; unchanged when there is none. */
+export function removeIncludeEntry(current: string, name: string): string {
+  const entry = `${name}/docker-compose.yml`;
+  const parsed = yaml.load(current) as Record<string, unknown> | null;
+  const list = parsed?.['include'];
+  if (!Array.isArray(list) || !list.some((e) => includePaths(e).includes(entry))) return current;
+  const kept = list.filter((e) => !includePaths(e).includes(entry));
+  return INCLUDE_HEADER + yaml.dump({ ...parsed, include: kept }, DUMP_OPTIONS);
 }

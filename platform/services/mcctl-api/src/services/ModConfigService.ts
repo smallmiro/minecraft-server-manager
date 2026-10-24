@@ -1,7 +1,8 @@
 import { readFileSync, existsSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { ModSourceFactory } from '@minecraft-docker/shared';
-import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { assertEnvFileValue, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-spec.js';
 
 // ============================================================
 // Installed Mod Types
@@ -86,7 +87,7 @@ export class ModConfigService {
    * Add mods to a server's configuration
    * Returns the list of newly added slugs (deduplicates existing ones)
    */
-  addMods(serverName: string, slugs: string[], sourceName: string): { added: string[]; mods: string[] } {
+  async addMods(serverName: string, slugs: string[], sourceName: string): Promise<{ added: string[]; mods: string[] }> {
     const configPath = this.getConfigPath(serverName);
     const adapter = ModSourceFactory.get(sourceName);
     const envKey = adapter.getEnvKey();
@@ -105,8 +106,8 @@ export class ModConfigService {
       }
     }
 
-    const updatedContent = applyEnvChanges(content, { set: { [envKey]: existing.join(',') } }, { raw: true });
-    atomicWriteFileSync(configPath, updatedContent);
+    // Through the ServerSpec (#675): server.yaml, config.env rendered from it
+    await writeServerConfig(this.mcctlRoot, serverName, { set: { [envKey]: existing.join(',') } });
 
     return { added, mods: existing };
   }
@@ -153,11 +154,11 @@ export class ModConfigService {
    * Toggle exclude state of a single jar filename in config.env.
    * Returns the updated exclude key and full list of exclusions.
    */
-  toggleModExclude(
+  async toggleModExclude(
     serverName: string,
     filename: string,
     excluded: boolean
-  ): { excludeKey: string; excludeList: string[] } {
+  ): Promise<{ excludeKey: string; excludeList: string[] }> {
     const configPath = this.getConfigPath(serverName);
     const content = existsSync(configPath) ? readFileSync(configPath, 'utf-8') : '';
     const envMap = parseEnvDocument(content).values;
@@ -175,8 +176,7 @@ export class ModConfigService {
       updated = current.filter((f) => f !== filename);
     }
 
-    const updatedContent = applyEnvChanges(content, { set: { [excludeKey]: updated.join(',') } }, { raw: true });
-    atomicWriteFileSync(configPath, updatedContent);
+    await writeServerConfig(this.mcctlRoot, serverName, { set: { [excludeKey]: updated.join(',') } });
 
     return { excludeKey, excludeList: updated };
   }
@@ -186,12 +186,10 @@ export class ModConfigService {
    * Searches across all registered sources
    * Returns the source name if found, null if not found
    */
-  removeMod(serverName: string, slug: string): { removed: boolean; sourceName: string } {
+  async removeMod(serverName: string, slug: string): Promise<{ removed: boolean; sourceName: string }> {
     const configPath = this.getConfigPath(serverName);
     const content = readFileSync(configPath, 'utf-8');
     const envMap = parseEnvDocument(content).values;
-
-    let updatedContent = content;
 
     for (const adapter of ModSourceFactory.getAllAdapters()) {
       const envKey = adapter.getEnvKey();
@@ -202,8 +200,7 @@ export class ModConfigService {
       const index = mods.indexOf(slug);
       if (index !== -1) {
         mods.splice(index, 1);
-        updatedContent = applyEnvChanges(updatedContent, { set: { [envKey]: mods.join(',') } }, { raw: true });
-        atomicWriteFileSync(configPath, updatedContent);
+        await writeServerConfig(this.mcctlRoot, serverName, { set: { [envKey]: mods.join(',') } });
         return { removed: true, sourceName: adapter.sourceName };
       }
     }

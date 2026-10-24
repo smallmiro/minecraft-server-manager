@@ -49,8 +49,9 @@ export default function ServersPage() {
   const startServer = useStartServer();
   const stopServer = useStopServer();
   const createServer = useCreateServerSSE({
-    onSuccess: () => {
-      setCreateDialogOpen(false);
+    onSuccess: (_name, warning) => {
+      // Created but not started (#675): keep the dialog open so the cause is read
+      if (!warning) setCreateDialogOpen(false);
     },
     onError: (createError) => {
       console.error('Failed to create server:', createError);
@@ -230,6 +231,7 @@ export default function ServersPage() {
         status={createServer.status}
         progress={createServer.progress}
         message={createServer.message}
+        warning={createServer.warning}
       />
     </>
   );

@@ -1,56 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// Mock node:fs - need writeFileSync for tag update tests
-const mockExistsSync = vi.fn().mockReturnValue(false);
-const mockReaddirSync = vi.fn().mockReturnValue([]);
-const mockReadFileSync = vi.fn().mockReturnValue('');
-const mockWriteFileSync = vi.fn();
-
-vi.mock('node:fs', () => ({
-  existsSync: (...args: any[]) => mockExistsSync(...args),
-  readdirSync: (...args: any[]) => mockReaddirSync(...args),
-  readFileSync: (...args: any[]) => mockReadFileSync(...args),
-  writeFileSync: (...args: any[]) => mockWriteFileSync(...args),
-}));
-
-vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
-  atomicWriteFileSync: (...args: any[]) => mockWriteFileSync(...args),
-}));
-
-// Mock node:path (passthrough)
-vi.mock('node:path', async () => {
-  const actual = await vi.importActual<typeof import('node:path')>('node:path');
-  return {
-    ...actual,
-    join: (...args: string[]) => actual.join(...args),
-  };
-});
-
-// Mock @minecraft-docker/shared - include real McVersion so version parsing works
-vi.mock('@minecraft-docker/shared', async () => {
-  const actual = await vi.importActual<typeof import('@minecraft-docker/shared')>('@minecraft-docker/shared');
-  return {
-    ...actual,
-    log: {
-      error: vi.fn(),
-      warn: vi.fn(),
-      info: vi.fn(),
-    },
-    colors: {
-      bold: (s: string) => s,
-      cyan: (s: string) => s,
-      yellow: (s: string) => s,
-      green: (s: string) => s,
-      dim: (s: string) => s,
-      red: (s: string) => s,
-    },
-    Paths: vi.fn().mockImplementation((root?: string) => ({
-      root: root ?? '/tmp/test-root',
-      servers: (root ?? '/tmp/test-root') + '/servers',
-    })),
-  };
-});
+/**
+ * mcctl update: image tags follow VERSION and the loading MOTD label is
+ * added, through the ServerSpec (#675): server.yaml image, compose rendered.
+ * Real temp platform built from the bundled template.
+ */
 
 // Mock child_process (needed for update.ts imports)
 vi.mock('child_process', () => ({
@@ -96,356 +54,81 @@ vi.mock('../../../src/infrastructure/adapters/Pm2ServiceManagerAdapter.js', () =
 }));
 
 import { upgradeServerImageTags } from '../../../src/commands/update.js';
+import { serverSpecRepositories, updateServer } from '../../../src/lib/server-config.js';
+import { FileServerSpecRepository, Paths } from '@minecraft-docker/shared';
+
+const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template');
+let root: string;
+const servers = () => join(root, 'servers');
+const read = (...p: string[]) => readFileSync(join(servers(), ...p), 'utf-8');
+
+function server(name: string, opts: { version?: string; tag?: string; noLoadingMotd?: boolean; noCompose?: boolean; noConfig?: boolean } = {}) {
+  mkdirSync(join(servers(), name), { recursive: true });
+  if (!opts.noConfig) {
+    let config = readFileSync(join(TEMPLATE, 'config.env'), 'utf-8').replace(/^LEVEL=.*$/m, `LEVEL=${name}`);
+    config = opts.version === undefined ? config.replace(/^VERSION=.*\n/m, '') : config.replace(/^VERSION=.*$/m, `VERSION=${opts.version}`);
+    writeFileSync(join(servers(), name, 'config.env'), config);
+  }
+  if (!opts.noCompose) {
+    let compose = readFileSync(join(TEMPLATE, 'docker-compose.yml'), 'utf-8')
+      .replace(/mc-template/g, `mc-${name}`)
+      .replace('mc-router.host: "template.local"', `mc-router.host: "${name}.local"`)
+      .replace('itzg/minecraft-server:java25', `itzg/minecraft-server:${opts.tag ?? 'java25'}`);
+    if (opts.noLoadingMotd) compose = compose.replace(/^\s*mc-router\.auto-scale-loading-motd:.*\n/m, '');
+    writeFileSync(join(servers(), name, 'docker-compose.yml'), compose);
+  }
+}
+
+beforeEach(() => {
+  root = mkdtempSync(join(tmpdir(), 'mcctl-update-tags-'));
+  mkdirSync(servers());
+  writeFileSync(join(servers(), 'compose.yml'), 'include: []\n');
+  writeFileSync(join(root, '.env'), 'HOST_IPS=10.0.0.2\n');
+  serverSpecRepositories.create = (p) => new FileServerSpecRepository(p); // no runtime: no world changes here
+});
+
+afterEach(() => {
+  rmSync(root, { recursive: true, force: true });
+});
 
 describe('upgradeServerImageTags', () => {
-  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  it('returns 0 when the servers directory does not exist', async () => {
+    expect(await upgradeServerImageTags(join(root, 'nope'))).toBe(0);
   });
 
-  afterEach(() => {
-    consoleLogSpy.mockRestore();
+  it('skips _template, servers without config.env, compose or VERSION', async () => {
+    server('_template', { version: 'LATEST', tag: 'java21' });
+    server('noconfig', { noConfig: true, tag: 'java21' });
+    server('nocompose', { version: 'LATEST', noCompose: true });
+    server('noversion', { tag: 'java21' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
   });
 
-  it('should return 0 when servers directory does not exist', async () => {
-    mockExistsSync.mockReturnValue(false);
-
-    const result = await upgradeServerImageTags('/tmp/no-such-dir/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  it('moves the image tag to the recommended one through server.yaml', async () => {
+    server('alpha', { version: 'LATEST', tag: 'java21' });
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
+    expect(read('alpha', 'docker-compose.yml')).toContain('itzg/minecraft-server:java25');
   });
 
-  it('should return 0 when no server directories exist', async () => {
-    mockExistsSync.mockReturnValue(true);
-    mockReaddirSync.mockReturnValue([]);
+  it('reads the quoted image of a compose mcctl rendered (#675)', async () => {
+    server('alpha', { version: 'LATEST', tag: 'java21' });
+    await updateServer(new Paths(root), 'alpha', (doc) => doc); // renders image: "itzg/minecraft-server:java21"
+    expect(read('alpha', 'docker-compose.yml')).toContain('image: "itzg/minecraft-server:java21"');
 
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
+    expect(read('alpha', 'docker-compose.yml')).toContain('image: "itzg/minecraft-server:java25"');
   });
 
-  it('should skip _template directory', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['_template'] as any);
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
+  it('leaves a compatible server alone', async () => {
+    server('alpha', { version: 'LATEST', tag: 'java25' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
   });
 
-  it('should skip server with no config.env', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return false;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should skip server with no VERSION in config.env', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'EULA=TRUE\nMEMORY=4G\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should skip server with no docker-compose.yml', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return false;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'VERSION=LATEST\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should update image tag from java21 to java25 when VERSION=LATEST', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'EULA=TRUE\nVERSION=LATEST\nMEMORY=4G\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(1);
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/tmp/servers/myserver/docker-compose.yml',
-      'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java25\n'
-    );
-  });
-
-  it('should not update image tag when VERSION=LATEST and tag is already java25', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'VERSION=LATEST\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java25\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should update image tag based on MC version (1.21.1 -> java21)', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'VERSION=1.21.1\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java17\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(1);
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/tmp/servers/myserver/docker-compose.yml',
-      'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java21\n'
-    );
-  });
-
-  it('should not update when MC version is compatible with current tag (1.21.1 + java21)', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'VERSION=1.21.1\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should handle truly unparseable VERSION strings gracefully (e.g. "snapshot", "custom")', async () => {
-    // Note: 26.1.1 is actually parseable by McVersion (major=26, minor=1),
-    // so it returns a tag (java8 for minor < 18). When McVersion gains proper
-    // 26.x support, it will automatically return the correct tag.
-    // This test covers genuinely unparseable strings like "snapshot" or "custom".
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        // "snapshot" is not a valid semver - McVersion.create will throw
-        return 'VERSION=SNAPSHOT\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    // Should NOT write anything - version parsing failed, skip gracefully
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should skip server when image line does not match itzg/minecraft-server: pattern', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'VERSION=LATEST\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        // Custom image - not itzg/minecraft-server
-        return 'services:\n  mc-myserver:\n    image: custom/my-server:latest\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(0);
-    expect(mockWriteFileSync).not.toHaveBeenCalled();
-  });
-
-  it('should handle multiple servers and update only those that need it', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (
-        p === '/tmp/servers/server1/config.env' ||
-        p === '/tmp/servers/server1/docker-compose.yml' ||
-        p === '/tmp/servers/server2/config.env' ||
-        p === '/tmp/servers/server2/docker-compose.yml'
-      ) return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['server1', 'server2'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/server1/config.env') {
-        return 'VERSION=LATEST\n';
-      }
-      if (p === '/tmp/servers/server1/docker-compose.yml') {
-        return 'services:\n  mc-server1:\n    image: itzg/minecraft-server:java21\n';
-      }
-      if (p === '/tmp/servers/server2/config.env') {
-        return 'VERSION=1.21.1\n';
-      }
-      if (p === '/tmp/servers/server2/docker-compose.yml') {
-        return 'services:\n  mc-server2:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(1);
-    // Only server1 (VERSION=LATEST, java21 -> java25) should be updated
-    expect(mockWriteFileSync).toHaveBeenCalledTimes(1);
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/tmp/servers/server1/docker-compose.yml',
-      'services:\n  mc-server1:\n    image: itzg/minecraft-server:java25\n'
-    );
-  });
-
-  it('should return count of updated servers', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (
-        p === '/tmp/servers/server1/config.env' ||
-        p === '/tmp/servers/server1/docker-compose.yml'
-      ) return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['server1'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/server1/config.env') {
-        return 'VERSION=LATEST\n';
-      }
-      if (p === '/tmp/servers/server1/docker-compose.yml') {
-        return 'services:\n  mc-server1:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    // result is number of updated servers
-    expect(result).toBe(1);
-  });
-
-  it('should handle VERSION with surrounding quotes in config.env', async () => {
-    mockExistsSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers') return true;
-      if (p === '/tmp/servers/myserver/config.env') return true;
-      if (p === '/tmp/servers/myserver/docker-compose.yml') return true;
-      return false;
-    });
-    mockReaddirSync.mockReturnValue(['myserver'] as any);
-    mockReadFileSync.mockImplementation((p: string) => {
-      if (p === '/tmp/servers/myserver/config.env') {
-        return 'VERSION="LATEST"\n';
-      }
-      if (p === '/tmp/servers/myserver/docker-compose.yml') {
-        return 'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java21\n';
-      }
-      return '';
-    });
-
-    const result = await upgradeServerImageTags('/tmp/servers');
-
-    expect(result).toBe(1);
-    expect(mockWriteFileSync).toHaveBeenCalledWith(
-      '/tmp/servers/myserver/docker-compose.yml',
-      'services:\n  mc-myserver:\n    image: itzg/minecraft-server:java25\n'
-    );
+  it('adds the missing loading MOTD label', async () => {
+    server('alpha', { version: 'LATEST', tag: 'java25', noLoadingMotd: true });
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'docker-compose.yml')).toContain('mc-router.auto-scale-loading-motd');
   });
 });

@@ -17,7 +17,7 @@ import type {
 } from '../ports/index.js';
 import { checkConfigEnvChange, checkPlatformEnvChange, checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
-import { assertEnvFileValue } from '../../utils/env-file.js';
+import { applyEnvChanges, assertEnvFileValue } from '../../utils/env-file.js';
 import {
   ServerName,
   WORLD_NAME_PATTERN,
@@ -29,6 +29,8 @@ import {
   findDuplicates,
   planRelease,
   resolveWorldName,
+  ServerSpecError,
+  type ServerSpecErrorCode,
   type WorldAssignmentErrorCode,
   type WorldAssignmentSnapshot,
 } from '../../domain/index.js';
@@ -38,15 +40,24 @@ const NO_ASSIGNMENTS: WorldAssignmentSnapshot = { assignments: [], undetermined:
 /** Why `seed` cannot be a config.env SEED value, or null. */
 function invalidSeed(seed: string | undefined): Error | null {
   try {
-    if (seed) assertEnvFileValue('SEED', seed);
+    if (seed) {
+      assertEnvFileValue('SEED', seed);
+      applyEnvChanges('', { set: { SEED: seed } }, { raw: true }); // what the config.env writer refuses
+    }
     return null;
   } catch (error) {
     return error as Error;
   }
 }
 
-function toFailure(error: unknown): { error: string; errorCode?: WorldAssignmentErrorCode } {
+function toFailure(error: unknown): {
+  error: string;
+  errorCode?: WorldAssignmentErrorCode;
+  specErrorCode?: ServerSpecErrorCode;
+} {
   if (error instanceof WorldAssignmentError) return { error: error.message, errorCode: error.code };
+  // The assignment adapter writes LEVEL through the ServerSpec repository (#675)
+  if (error instanceof ServerSpecError) return { error: error.message, specErrorCode: error.code };
   return { error: error instanceof Error ? error.message : String(error) };
 }
 

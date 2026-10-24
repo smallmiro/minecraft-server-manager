@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { EnvValueError } from '@minecraft-docker/shared/utils';
+import { EnvValueError, applyEnvChanges } from '@minecraft-docker/shared/utils';
 import { ConfigService } from '../src/services/ConfigService.js';
+
+// Writes go through the ServerSpec (#675); the fake applies the changes to the file content
+vi.mock('../src/lib/server-spec.js', () => ({ writeServerConfig: vi.fn() }));
+import { writeServerConfig } from '../src/lib/server-spec.js';
+const mockedWriteServerConfig = vi.mocked(writeServerConfig);
 
 vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
@@ -226,28 +231,23 @@ USE_AIKAR_FLAGS=false
       mockedExistsSync.mockReturnValue(true);
     });
 
-    const setupUpdateTest = (updates: Record<string, any>) => {
+    /** config.env reads return `base` until the ServerSpec write, then the changed content. */
+    const setupUpdateTest = (base: string = initialConfigContent) => {
       let writtenContent = '';
-
-      // First two reads return initial content, third read returns written content
-      let callCount = 0;
-      mockedReadFileSync.mockImplementation(() => {
-        callCount++;
-        if (callCount <= 2) {
-          return initialConfigContent;
-        }
-        return writtenContent;
+      let written = false;
+      mockedReadFileSync.mockImplementation(() => (written ? writtenContent : base));
+      mockedWriteServerConfig.mockImplementation(async (_root, _server, changes) => {
+        writtenContent = applyEnvChanges(base, changes, { raw: true });
+        written = true;
+        return {} as never;
       });
-
-      mockedWriteFileSync.mockImplementation((path, content) => {
-        writtenContent = content as string;
-      });
+      return () => writtenContent;
     };
 
-    it('should update values and detect changed fields', () => {
-      setupUpdateTest({});
+    it('should update values through the ServerSpec and detect changed fields', async () => {
+      setupUpdateTest();
 
-      const result = configService.updateConfig('testserver', {
+      const result = await configService.updateConfig('testserver', {
         motd: 'Updated Server',
         maxPlayers: 30,
       });
@@ -255,160 +255,81 @@ USE_AIKAR_FLAGS=false
       expect(result.changedFields).toEqual(['motd', 'maxPlayers']);
       expect(result.config.motd).toBe('Updated Server');
       expect(result.config.maxPlayers).toBe(30);
-      expect(mockedWriteFileSync).toHaveBeenCalled();
+      expect(mockedWriteServerConfig).toHaveBeenCalledWith('/test/platform', 'testserver', {
+        set: { MOTD: 'Updated Server', MAX_PLAYERS: '30' },
+      });
     });
 
-    it('should set restartRequired=true for memory changes', () => {
-      setupUpdateTest({});
-
-      const result = configService.updateConfig('testserver', {
-        memory: '8G',
-      });
-
+    it('should set restartRequired=true for memory changes', async () => {
+      setupUpdateTest();
+      const result = await configService.updateConfig('testserver', { memory: '8G' });
       expect(result.restartRequired).toBe(true);
       expect(result.changedFields).toContain('memory');
     });
 
-    it('should set restartRequired=true for useAikarFlags changes', () => {
-      setupUpdateTest({});
-
-      const result = configService.updateConfig('testserver', {
-        useAikarFlags: true,
-      });
-
+    it('should set restartRequired=true for useAikarFlags changes', async () => {
+      setupUpdateTest();
+      const result = await configService.updateConfig('testserver', { useAikarFlags: true });
       expect(result.restartRequired).toBe(true);
       expect(result.changedFields).toContain('useAikarFlags');
     });
 
-    it('should set restartRequired=false for non-restart fields', () => {
-      setupUpdateTest({});
-
-      const result = configService.updateConfig('testserver', {
+    it('should set restartRequired=false for non-restart fields', async () => {
+      setupUpdateTest();
+      const result = await configService.updateConfig('testserver', {
         motd: 'New MOTD',
         maxPlayers: 25,
         difficulty: 'hard',
       });
-
       expect(result.restartRequired).toBe(false);
       expect(result.changedFields).toEqual(['motd', 'maxPlayers', 'difficulty']);
     });
 
-    it('should preserve comments and structure in config.env', () => {
-      const commentedContent = `# Important comment
-MOTD=Test
-# Another comment
-MAX_PLAYERS=20
-`;
-      let writtenContent = '';
-      let callCount = 0;
-      mockedReadFileSync.mockImplementation(() => {
-        callCount++;
-        return callCount <= 2 ? commentedContent : writtenContent;
+    it('should skip unchanged values and write nothing', async () => {
+      setupUpdateTest();
+      const result = await configService.updateConfig('testserver', {
+        motd: 'Original Server',
+        maxPlayers: 20,
       });
-      mockedWriteFileSync.mockImplementation((path, content) => {
-        writtenContent = content as string;
-      });
-
-      configService.updateConfig('testserver', {
-        motd: 'Updated',
-      });
-
-      expect(writtenContent).toContain('# Important comment');
-      expect(writtenContent).toContain('# Another comment');
-      expect(writtenContent).toContain('MOTD=Updated');
-    });
-
-    it('should add new keys not in original file', () => {
-      const minimalContent = `MOTD=Test
-MAX_PLAYERS=20
-`;
-      let writtenContent = '';
-      let callCount = 0;
-      mockedReadFileSync.mockImplementation(() => {
-        callCount++;
-        return callCount <= 2 ? minimalContent : writtenContent;
-      });
-      mockedWriteFileSync.mockImplementation((path, content) => {
-        writtenContent = content as string;
-      });
-
-      configService.updateConfig('testserver', {
-        viewDistance: 12,
-      });
-
-      expect(writtenContent).toContain('VIEW_DISTANCE=12');
-    });
-
-    it('should skip unchanged values', () => {
-      setupUpdateTest({});
-
-      const result = configService.updateConfig('testserver', {
-        motd: 'Original Server', // Same as current
-        maxPlayers: 20, // Same as current
-      });
-
       expect(result.changedFields).toEqual([]);
-      expect(mockedWriteFileSync).not.toHaveBeenCalled();
+      expect(mockedWriteServerConfig).not.toHaveBeenCalled();
     });
 
-    it('should format boolean values correctly', () => {
-      setupUpdateTest({});
-
-      configService.updateConfig('testserver', {
+    it('should format boolean and enum values', async () => {
+      setupUpdateTest();
+      await configService.updateConfig('testserver', {
         pvp: false,
         useAikarFlags: true,
-      });
-
-      const writtenContent = mockedWriteFileSync.mock.calls[0][1] as string;
-      expect(writtenContent).toContain('PVP=false');
-      expect(writtenContent).toContain('USE_AIKAR_FLAGS=true');
-    });
-
-    it('should format enum values correctly', () => {
-      setupUpdateTest({});
-
-      configService.updateConfig('testserver', {
         difficulty: 'hard',
         gameMode: 'creative',
       });
-
-      const writtenContent = mockedWriteFileSync.mock.calls[0][1] as string;
-      expect(writtenContent).toContain('DIFFICULTY=hard');
-      expect(writtenContent).toContain('GAMEMODE=creative');
+      expect(mockedWriteServerConfig).toHaveBeenCalledWith('/test/platform', 'testserver', {
+        set: { PVP: 'false', USE_AIKAR_FLAGS: 'true', DIFFICULTY: 'hard', GAMEMODE: 'creative' },
+      });
     });
 
-    it('should throw when config file does not exist', () => {
+    it('should throw when config file does not exist', async () => {
       mockedExistsSync.mockReturnValue(false);
-
-      expect(() => configService.updateConfig('nonexistent', { motd: 'Test' })).toThrow(
+      await expect(configService.updateConfig('nonexistent', { motd: 'Test' })).rejects.toThrow(
         'Server configuration not found: nonexistent'
       );
     });
 
-    it('should handle undefined values in updates', () => {
-      setupUpdateTest({});
-
-      const result = configService.updateConfig('testserver', {
-        motd: undefined,
-        maxPlayers: 25,
-      });
-
+    it('should handle undefined values in updates', async () => {
+      setupUpdateTest();
+      const result = await configService.updateConfig('testserver', { motd: undefined, maxPlayers: 25 });
       expect(result.changedFields).toEqual(['maxPlayers']);
     });
 
-    it('should detect multiple restart-required changes', () => {
-      setupUpdateTest({});
-
-      const result = configService.updateConfig('testserver', {
+    it('should detect multiple restart-required changes', async () => {
+      setupUpdateTest();
+      const result = await configService.updateConfig('testserver', {
         memory: '8G',
         useAikarFlags: true,
         motd: 'Updated',
       });
-
       expect(result.restartRequired).toBe(true);
-      expect(result.changedFields).toContain('memory');
-      expect(result.changedFields).toContain('useAikarFlags');
-      expect(result.changedFields).toContain('motd');
+      expect(result.changedFields).toEqual(expect.arrayContaining(['memory', 'useAikarFlags', 'motd']));
     });
 
     // config.env is the container's env_file: a line break would add a
@@ -423,23 +344,16 @@ MAX_PLAYERS=20
       // Compose closes the quote and reads MODS as another setting
       '"" MODS=http://evil/x.jar',
       " '' MODS=http://evil/x.jar",
-    ])(
-      'rejects %j without writing config.env',
-      (motd) => {
-        setupUpdateTest({ motd });
+    ])('rejects %j without writing config.env', async (motd) => {
+      setupUpdateTest();
+      await expect(configService.updateConfig('testserver', { motd })).rejects.toThrow(EnvValueError);
+      expect(mockedWriteServerConfig).not.toHaveBeenCalled();
+    });
 
-        expect(() => configService.updateConfig('testserver', { motd })).toThrow(EnvValueError);
-        expect(mockedWriteFileSync).not.toHaveBeenCalled();
-      }
-    );
-
-    it('writes a multi-word value with § color codes as one line', () => {
-      setupUpdateTest({});
-
-      configService.updateConfig('testserver', { motd: '§6Welcome §lto my server§r - have fun!' });
-
-      const written = String(mockedWriteFileSync.mock.calls[0]![1]);
-      expect(written).toContain('\nMOTD=§6Welcome §lto my server§r - have fun!\n');
+    it('writes a multi-word value with § color codes as one setting', async () => {
+      const written = setupUpdateTest();
+      await configService.updateConfig('testserver', { motd: '§6Welcome §lto my server§r - have fun!' });
+      expect(written()).toContain('\nMOTD=§6Welcome §lto my server§r - have fun!\n');
     });
   });
 
@@ -764,16 +678,17 @@ GID=1000
         }
         return writtenContent;
       });
-      mockedWriteFileSync.mockImplementation((path, c) => {
-        writtenContent = c as string;
+      mockedWriteServerConfig.mockImplementation(async (_root, _server, changes) => {
+        writtenContent = applyEnvChanges(content, changes, { raw: true });
+        return {} as never;
       });
       return () => writtenContent;
     };
 
-    it('should format UPPERCASE booleans as TRUE/FALSE', () => {
+    it('should format UPPERCASE booleans as TRUE/FALSE', async () => {
       const getWritten = setupUpdateTestWith(`ONLINE_MODE=FALSE\nENABLE_WHITELIST=FALSE\n`);
 
-      configService.updateConfig('testserver', {
+      await configService.updateConfig('testserver', {
         onlineMode: true,
         enableWhitelist: true,
       });
@@ -783,10 +698,10 @@ GID=1000
       expect(written).toContain('ENABLE_WHITELIST=TRUE');
     });
 
-    it('should format lowercase booleans as true/false', () => {
+    it('should format lowercase booleans as true/false', async () => {
       const getWritten = setupUpdateTestWith(`FORCE_GAMEMODE=false\nHARDCORE=false\nALLOW_FLIGHT=false\n`);
 
-      configService.updateConfig('testserver', {
+      await configService.updateConfig('testserver', {
         forceGamemode: true,
         hardcore: true,
         allowFlight: true,
@@ -798,10 +713,10 @@ GID=1000
       expect(written).toContain('ALLOW_FLIGHT=true');
     });
 
-    it('should format levelType as UPPERCASE env values', () => {
+    it('should format levelType as UPPERCASE env values', async () => {
       const getWritten = setupUpdateTestWith(`LEVEL_TYPE=DEFAULT\n`);
 
-      configService.updateConfig('testserver', {
+      await configService.updateConfig('testserver', {
         levelType: 'largeBiomes',
       });
 
@@ -809,7 +724,7 @@ GID=1000
       expect(written).toContain('LEVEL_TYPE=LARGEBIOMES');
     });
 
-    it('should format all levelType values correctly', () => {
+    it('should format all levelType values correctly', async () => {
       const testCases: [string, string, string][] = [
         ['default', 'DEFAULT', 'FLAT'],       // current=FLAT, update to default→DEFAULT
         ['flat', 'FLAT', 'DEFAULT'],           // current=DEFAULT, update to flat→FLAT
@@ -821,7 +736,7 @@ GID=1000
       for (const [apiValue, expectedEnv, currentEnv] of testCases) {
         const getWritten = setupUpdateTestWith(`LEVEL_TYPE=${currentEnv}\n`);
 
-        configService.updateConfig('testserver', {
+        await configService.updateConfig('testserver', {
           levelType: apiValue as any,
         });
 
@@ -829,7 +744,7 @@ GID=1000
       }
     });
 
-    it('should set restartRequired=true for all restart-required fields', () => {
+    it('should set restartRequired=true for all restart-required fields', async () => {
       const restartFields: [string, unknown][] = [
         ['onlineMode', true],
         ['enableWhitelist', true],
@@ -854,7 +769,7 @@ GID=1000
 
       for (const [field, value] of restartFields) {
         const getWritten = setupUpdateTestWith('');
-        const result = configService.updateConfig('testserver', {
+        const result = await configService.updateConfig('testserver', {
           [field]: value,
         });
 
@@ -863,7 +778,7 @@ GID=1000
       }
     });
 
-    it('should set restartRequired=false for non-restart fields', () => {
+    it('should set restartRequired=false for non-restart fields', async () => {
       const nonRestartFields: [string, unknown][] = [
         ['pvp', false],
         ['forceGamemode', true],
@@ -892,7 +807,7 @@ GID=1000
 
       for (const [field, value] of nonRestartFields) {
         const getWritten = setupUpdateTestWith('');
-        const result = configService.updateConfig('testserver', {
+        const result = await configService.updateConfig('testserver', {
           [field]: value,
         });
 
@@ -901,10 +816,10 @@ GID=1000
       }
     });
 
-    it('should write number fields as plain numbers', () => {
+    it('should write number fields as plain numbers', async () => {
       const getWritten = setupUpdateTestWith('');
 
-      configService.updateConfig('testserver', {
+      await configService.updateConfig('testserver', {
         simulationDistance: 10,
         maxTickTime: -1,
         rconPort: 25575,
@@ -920,10 +835,10 @@ GID=1000
       expect(written).toContain('GID=1000');
     });
 
-    it('should write string fields as-is', () => {
+    it('should write string fields as-is', async () => {
       const getWritten = setupUpdateTestWith('');
 
-      configService.updateConfig('testserver', {
+      await configService.updateConfig('testserver', {
         level: 'myworld',
         seed: 'abc123',
         tz: 'Asia/Seoul',
@@ -973,34 +888,36 @@ GID=1000
       expect(config.pauseWhenEmptySeconds).toBeUndefined();
     });
 
-    it('should write PAUSE_WHEN_EMPTY_SECONDS to env file', () => {
+    it('should write PAUSE_WHEN_EMPTY_SECONDS to env file', async () => {
       let writtenContent = '';
       let callCount = 0;
       mockedReadFileSync.mockImplementation(() => {
         callCount++;
         return callCount <= 2 ? 'MOTD=Test\n' : writtenContent;
       });
-      mockedWriteFileSync.mockImplementation((_path, content) => {
-        writtenContent = content as string;
+      mockedWriteServerConfig.mockImplementation(async (_root, _server, changes) => {
+        writtenContent = applyEnvChanges('MOTD=Test\n', changes, { raw: true });
+        return {} as never;
       });
 
-      configService.updateConfig('testserver', { pauseWhenEmptySeconds: 120 });
+      await configService.updateConfig('testserver', { pauseWhenEmptySeconds: 120 });
 
       expect(writtenContent).toContain('PAUSE_WHEN_EMPTY_SECONDS=120');
     });
 
-    it('should require restart when pauseWhenEmptySeconds changes', () => {
+    it('should require restart when pauseWhenEmptySeconds changes', async () => {
       let writtenContent = '';
       let callCount = 0;
       mockedReadFileSync.mockImplementation(() => {
         callCount++;
         return callCount <= 2 ? 'PAUSE_WHEN_EMPTY_SECONDS=60\n' : writtenContent;
       });
-      mockedWriteFileSync.mockImplementation((_path, content) => {
-        writtenContent = content as string;
+      mockedWriteServerConfig.mockImplementation(async (_root, _server, changes) => {
+        writtenContent = applyEnvChanges('PAUSE_WHEN_EMPTY_SECONDS=60\n', changes, { raw: true });
+        return {} as never;
       });
 
-      const result = configService.updateConfig('testserver', { pauseWhenEmptySeconds: 120 });
+      const result = await configService.updateConfig('testserver', { pauseWhenEmptySeconds: 120 });
 
       expect(result.restartRequired).toBe(true);
       expect(result.changedFields).toContain('pauseWhenEmptySeconds');
@@ -1052,15 +969,15 @@ MAX_PLAYERS=20
       expect(config.motd).toBe('Server with = sign in message');
     });
 
-    it('should preserve line structure when no changes are made', () => {
+    it('should preserve line structure when no changes are made', async () => {
       mockedReadFileSync.mockReturnValue(`# Header
 MOTD=Test
 MAX_PLAYERS=20
 `);
 
-      configService.updateConfig('testserver', {});
+      await configService.updateConfig('testserver', {});
 
-      expect(mockedWriteFileSync).not.toHaveBeenCalled();
+      expect(mockedWriteServerConfig).not.toHaveBeenCalled();
     });
 
     it('should handle multiple consecutive blank lines', () => {
