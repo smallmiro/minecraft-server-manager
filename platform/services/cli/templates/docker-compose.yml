@@ -8,7 +8,7 @@
 # Adding a new server (fully automated):
 #   mcctl create <server-name> [options]
 #
-#   The script automatically:
+#   mcctl create automatically:
 #     - Creates server directory and configuration
 #     - Registers hostname with avahi-daemon (mDNS)
 #     - Updates servers/compose.yml (this file is NOT modified)
