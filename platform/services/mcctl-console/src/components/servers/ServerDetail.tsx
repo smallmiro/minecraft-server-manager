@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -96,7 +97,11 @@ function parseAllocatedMemoryToMB(memStr?: string): number {
 }
 
 export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('Overview');
+  // `?tab=Options` deep-links into a tab (e.g. the Routing page links to the hostname editor).
+  const requestedTab = useSearchParams()?.get('tab');
+  const [activeTab, setActiveTab] = useState<TabType>(
+    TABS.find((tab) => tab === requestedTab) ?? 'Overview'
+  );
   const [command, setCommand] = useState('');
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [consoleOpen, setConsoleOpen] = useState(false);

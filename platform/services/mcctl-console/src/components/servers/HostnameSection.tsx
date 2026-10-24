@@ -139,7 +139,7 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
 
   return (
     <>
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
+      <Card id="hostnames" sx={{ mb: 3, borderRadius: 3, scrollMarginTop: 16 }}>
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <LanguageIcon color="primary" />
