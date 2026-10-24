@@ -13,11 +13,27 @@ import { runNpm } from '../infrastructure/npm.js';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import * as prompts from '@clack/prompts';
+import * as yaml from 'js-yaml';
 import { printTelemetryNotice } from '../lib/telemetry-notice.js';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { updateServer } from '../lib/server-config.js';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
+
+/**
+ * The service images of a compose file ([] when it does not parse). Read as
+ * YAML: mcctl renders them quoted (image: "itzg/minecraft-server:java25", #675).
+ */
+function composeImages(content: string): string[] {
+  try {
+    const services = (yaml.load(content) as { services?: Record<string, { image?: unknown } | null> } | null)?.services;
+    return Object.values(services ?? {})
+      .map((service) => service?.image)
+      .filter((image): image is string => typeof image === 'string' && image.trim() !== '');
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Scan platform/servers docker-compose.yml files and return unique Docker image names.
@@ -41,16 +57,7 @@ export function scanDockerImages(serversDir: string): string[] {
       continue;
     }
 
-    const content = readFileSync(composePath, 'utf-8');
-    const imageRegex = /^\s+image:\s+(.+)$/gm;
-    let match: RegExpExecArray | null;
-
-    while ((match = imageRegex.exec(content)) !== null) {
-      const imageName = match[1]!.trim();
-      if (imageName) {
-        images.add(imageName);
-      }
-    }
+    for (const image of composeImages(readFileSync(composePath, 'utf-8'))) images.add(image);
   }
 
   return Array.from(images);
@@ -69,13 +76,15 @@ function parseVersionFromConfig(configContent: string): string | null {
   return parseEnvDocument(configContent).values.get('VERSION') ?? null;
 }
 
+const SERVER_IMAGE = 'itzg/minecraft-server:';
+
 /**
  * Extract the image tag from a docker-compose.yml content.
- * Returns null if no itzg/minecraft-server: image line found.
+ * Returns null if no service uses an itzg/minecraft-server: image.
  */
 function extractImageTag(composeContent: string): string | null {
-  const match = composeContent.match(/image:\s+itzg\/minecraft-server:(\S+)/);
-  return match ? match[1]! : null;
+  const image = composeImages(composeContent).find((i) => i.startsWith(SERVER_IMAGE));
+  return image ? image.slice(SERVER_IMAGE.length) : null;
 }
 
 /**

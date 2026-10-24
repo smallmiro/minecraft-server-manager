@@ -54,8 +54,8 @@ vi.mock('../../../src/infrastructure/adapters/Pm2ServiceManagerAdapter.js', () =
 }));
 
 import { upgradeServerImageTags } from '../../../src/commands/update.js';
-import { serverSpecRepositories } from '../../../src/lib/server-config.js';
-import { FileServerSpecRepository } from '@minecraft-docker/shared';
+import { serverSpecRepositories, updateServer } from '../../../src/lib/server-config.js';
+import { FileServerSpecRepository, Paths } from '@minecraft-docker/shared';
 
 const TEMPLATE = join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template');
 let root: string;
@@ -109,6 +109,16 @@ describe('upgradeServerImageTags', () => {
     expect(await upgradeServerImageTags(servers())).toBe(1);
     expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
     expect(read('alpha', 'docker-compose.yml')).toContain('itzg/minecraft-server:java25');
+  });
+
+  it('reads the quoted image of a compose mcctl rendered (#675)', async () => {
+    server('alpha', { version: 'LATEST', tag: 'java21' });
+    await updateServer(new Paths(root), 'alpha', (doc) => doc); // renders image: "itzg/minecraft-server:java21"
+    expect(read('alpha', 'docker-compose.yml')).toContain('image: "itzg/minecraft-server:java21"');
+
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
+    expect(read('alpha', 'docker-compose.yml')).toContain('image: "itzg/minecraft-server:java25"');
   });
 
   it('leaves a compatible server alone', async () => {
