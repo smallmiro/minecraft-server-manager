@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
     
     
       
@@ -33,10 +33,10 @@
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -5593,12 +5593,15 @@
 <p>왼쪽의 넓은 패널에 라이브 라우팅 테이블과 함께 <strong>MC-Router Status</strong>가 표시됩니다:</p>
 <ul>
 <li>라우터 상태와 헬스 칩 (예: <code>running</code>, <code>healthy</code>)</li>
-<li><strong>Routing Table</strong>에서 서버마다 펼칠 수 있는 항목이 다음을 보여줍니다:<ul>
-<li>상태 점, 서버 이름, 서버 유형과 Minecraft 버전</li>
-<li>구성된 라우트 수</li>
-<li>모든 호스트명 매핑 (예: <code>botagent.local</code>, <code>botagent.192.168.xx.xx.nip.io</code>)</li>
+<li><strong>Routing Table</strong>은 서버마다 한 줄입니다. 접힌 줄에는 다음이 보입니다:<ul>
+<li>서버 이름, 서버 유형과 Minecraft 버전, 상태 (예: <strong>Sleeping · wakes on connect</strong>)</li>
+<li>대표 주소(nip.io, mDNS, WAN, Custom 순서로 첫 번째)와 복사 버튼, 나머지 호스트명 수</li>
+<li>호스트명 유형 (예: <code>nip.io ×2</code>, <code>mDNS</code>, <code>WAN</code>). mc-router가 모르는 호스트명이 있으면 <strong>N not routed</strong> 경고</li>
+<li><strong>Wake/Start</strong>, <strong>Edit hostnames</strong>, <strong>Open server</strong></li>
 </ul>
 </li>
+<li>줄(또는 화살표)을 클릭하면 그 서버의 모든 호스트명이 복사 버튼, 유형, 필요하면 <strong>Not routed</strong> 경고와 함께 펼쳐집니다. 여러 서버를 동시에 펼칠 수 있고, <strong>Expand all</strong> / <strong>Collapse all</strong>로 한 번에 펼치거나 접습니다.</li>
+<li>검색창은 서버 이름과 호스트명을 찾습니다. 호스트명이 일치하면 그 서버가 펼쳐지고 일치한 호스트명이 강조됩니다.</li>
 </ul>
 <h3 id="플랫폼-정보">플랫폼 정보<a class="headerlink" href="#플랫폼-정보" title="Permanent link">&para;</a></h3>
 <p><strong>Platform Information</strong> 카드에 mc-router 설정에 대한 정보가 표시됩니다:</p>
@@ -6044,10 +6047,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.c21346df.min.js"></script>
       
     
   </body>
