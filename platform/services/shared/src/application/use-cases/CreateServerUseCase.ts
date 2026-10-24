@@ -12,6 +12,7 @@ import {
   buildCreateSpec,
   MC_VERSION_INPUT_PATTERN,
   ServerSpecError,
+  assertServerSpecDocument,
   type ServerSpecDocument,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
@@ -73,7 +74,13 @@ export class ServerStartError extends Error {
  */
 export function parseCreateServerConfig(config: CreateServerConfig, options: { versionText?: boolean } = {}) {
   try {
-    return parseConfigValues(config, options.versionText ?? false);
+    const parsed = parseConfigValues(config, options.versionText ?? false);
+    // The spec it writes, under the create rules: also every value config.env must hold (#675)
+    assertServerSpecDocument(createSpecDocument(parsed.name, parsed.createOptions, parsed.versionToWrite), 'create', {
+      server: parsed.name.value,
+      file: `servers/${parsed.name.value}/server.yaml`,
+    });
+    return parsed;
   } catch (error) {
     if (error instanceof ServerSpecError) throw error;
     throw new ServerSpecError('invalid_spec', error instanceof Error ? error.message : String(error), config.name);

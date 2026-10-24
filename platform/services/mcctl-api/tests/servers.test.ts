@@ -479,6 +479,19 @@ describe('POST /api/servers - Server Creation', () => {
       }
     );
 
+    it.each(['/api/servers', '/api/servers?follow=true'])(
+      'answers %s with 400 for a seed config.env cannot hold, before any stream or write (#675)',
+      async (url) => {
+        mockedServerExists.mockReturnValue(false);
+        const response = await app.inject({ method: 'POST', url, payload: { name: 'seedy', type: 'PAPER', seed: "$x'" } });
+
+        expect(response.statusCode).toBe(400);
+        expect(response.headers['content-type']).toMatch(/application\/json/);
+        expect(response.json()).toEqual({ error: 'BadRequest', message: expect.stringContaining('env.SEED') });
+        expect(provisions).toEqual([]);
+      }
+    );
+
     it('still accepts a snapshot version the provisioning writes as given', async () => {
       mockedServerExists.mockReturnValue(false);
       const response = await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'snap', type: 'PAPER', version: '24w14a' } });

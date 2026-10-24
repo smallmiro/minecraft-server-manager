@@ -6,8 +6,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { CreateServerUseCase, ServerStartError } from '../src/application/use-cases/CreateServerUseCase.js';
-import { EnvValueError, Paths, parseEnvDocument } from '../src/utils/index.js';
+import { CreateServerUseCase, ServerStartError, parseCreateServerConfig } from '../src/application/use-cases/CreateServerUseCase.js';
+import { Paths, parseEnvDocument } from '../src/utils/index.js';
 import { McVersion, Memory, ServerName, ServerType, WorldOptions } from '../src/domain/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ConfigEnvWorldAssignmentAdapter } from '../src/infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.js';
@@ -141,13 +141,19 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
     expect(started).toEqual(['mc-beta']);
   });
 
-  it('refuses a seed config.env cannot hold and leaves nothing behind (#675)', async () => {
-    // Needs quotes for the $, and 'seed$VAR\' would not close for Compose
-    await expect(
-      useCase().executeWithConfig({ name: 'beta', version: '1.21.1', seed: 'seed$VAR\\' }, run)
-    ).rejects.toBeInstanceOf(EnvValueError);
+  it.each(['seed$VAR\\', "$x'"])('refuses seed %j, which config.env cannot hold, as invalid input (#675)', async (seed) => {
+    // Needs quotes for the $; 'seed$VAR\' would not close for Compose, and ' cannot be quoted
+    const error = await useCase().executeWithConfig({ name: 'beta', version: '1.21.1', seed }, run).catch((e: unknown) => e);
+    expect(error).toMatchObject({ name: 'ServerSpecError', code: 'invalid_spec', message: expect.stringContaining('env.SEED') });
+    expect(events).toEqual([]);
     expect(existsSync(file('beta'))).toBe(false);
     expect(existsSync(file('compose.yml'))).toBe(false);
+  });
+
+  it('parseCreateServerConfig refuses it without touching the platform', () => {
+    expect(() => parseCreateServerConfig({ name: 'beta', seed: "$x'" }, { versionText: true })).toThrow(
+      expect.objectContaining({ code: 'invalid_spec' })
+    );
   });
 
   it.each(['24w14a', '1.20.5-rc1'])('writes a snapshot or pre-release version (%s) as given', async (version) => {

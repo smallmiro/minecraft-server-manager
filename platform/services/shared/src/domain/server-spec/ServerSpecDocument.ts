@@ -2,7 +2,7 @@ import { ServerName, EXISTING_SERVER_NAME_PATTERN } from '../value-objects/Serve
 import { WORLD_NAME_PATTERN, EXISTING_WORLD_NAME_PATTERN } from '../value-objects/WorldName.js';
 import { ServerType } from '../value-objects/ServerType.js';
 import { Memory } from '../value-objects/Memory.js';
-import { ENV_KEY_RE, ENV_FILE_VALUE_RE } from '../../utils/env-file.js';
+import { ENV_KEY_RE, ENV_FILE_VALUE_RE, applyEnvChanges } from '../../utils/env-file.js';
 
 /**
  * The server definition (#675, ADR-0003 §1). Pure: no I/O.
@@ -303,7 +303,9 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
       }
       const v = str(env, key, path, true);
       if (v === undefined) continue;
-      check(path, envValueError(v));
+      // A new server's values must also be ones the config.env writer can write (#675).
+      const unwritable = () => rejects((x) => applyEnvChanges('', { set: { [key]: x } }, { raw: true }), v);
+      check(path, envValueError(v) ?? (create ? unwritable() : undefined));
       if (key === 'EXTRA_ARGS' && /(^|\s)--universe(\s|=|$)/.test(v)) {
         add(path, 'must not contain --universe; set world.storage instead');
       }
