@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { E2E_API_URL } from '../../env';
 import {
   createConfigSnapshotViaApi,
   listConfigSnapshotsViaApi,
@@ -18,7 +19,7 @@ import {
   assertScheduleStructure,
 } from '../../fixtures/config-snapshot-helpers';
 
-const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5001';
+const API_BASE_URL = E2E_API_URL;
 
 /**
  * Config Snapshot API Integration Tests

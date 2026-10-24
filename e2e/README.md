@@ -29,9 +29,9 @@ npm install -g pm2
 # Initialize console service (generates ecosystem.config.cjs)
 mcctl console init
 
-# Run tests
+# Run tests (point at a disposable test instance, never your live one)
 cd e2e
-pnpm test
+E2E_BASE_URL=http://<test-console-host>:<port> E2E_API_URL=http://<test-api-host>:<port> pnpm test
 ```
 
 ## Test Scripts
@@ -43,17 +43,21 @@ pnpm test
 | `pnpm test:headed` | Run tests in headed browser mode |
 | `pnpm test:debug` | Run tests in debug mode |
 | `pnpm test:ci` | Run tests and stop services after (for CI) |
+| `pnpm test:unit` | Unit test of the target URL guard (`env.test.ts`, no network, Node 22.7+; runs in CI) |
 | `pnpm test:skip-start` | Skip service auto-start (use existing services) |
 | `pnpm report` | View the HTML test report |
 
 ## Environment Variables
 
+> **`E2E_BASE_URL` and `E2E_API_URL` must both be set.** There is no localhost default: these tests create and delete servers, push/restore backups, restart the router and change platform settings, and on a dev host `localhost:5000/5001` is usually your live mcctl-console/mcctl-api. Without both, `global-setup.ts` fails before any request or PM2 start. The root `pnpm test` does not run e2e (it is `pnpm -r --filter '!e2e' test`, same as CI); run e2e only through `pnpm test:e2e` or from `e2e/`.
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `E2E_BASE_URL` | `http://localhost:5000` | Console URL |
-| `E2E_API_URL` | `http://localhost:5001` | API URL |
+| `E2E_BASE_URL` | none (required) | Console URL |
+| `E2E_API_URL` | none (required) | API URL |
 | `E2E_SKIP_SERVICE_START` | `false` | Skip PM2 service startup |
 | `E2E_STOP_SERVICES` | `false` | Stop services after tests |
+| `E2E_PLATFORM_ENV` | none (`platform-settings.spec.ts` skips without it) | Platform `.env` of the API under test; the spec writes it and restores it afterwards |
 
 ## Service Management
 
@@ -131,7 +135,7 @@ test('authenticated test', async ({ authenticatedPage }) => {
 ```typescript
 import { test, expect } from '@playwright/test';
 
-const API_URL = process.env.E2E_API_URL || 'http://localhost:5001';
+import { E2E_API_URL as API_URL } from '../env'; // required, no localhost default
 
 test('health check', async ({ request }) => {
   const response = await request.get(`${API_URL}/health`);

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { E2E_API_URL, E2E_BASE_URL } from '../env';
 
-const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5001';
+const API_BASE_URL = E2E_API_URL;
 
 test.describe('API Endpoints', () => {
   test.describe('Health Check', () => {
@@ -193,7 +194,7 @@ test.describe('API Endpoints', () => {
 
   test.describe('Console Health API', () => {
     test('should return 200 OK from console health endpoint', async ({ request }) => {
-      const consoleURL = process.env.E2E_BASE_URL || 'http://localhost:5000';
+      const consoleURL = E2E_BASE_URL;
       const response = await request.get(`${consoleURL}/api/health`);
 
       expect(response.status()).toBe(200);

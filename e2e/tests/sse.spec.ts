@@ -11,7 +11,7 @@ test.describe('SSE Real-time Updates', () => {
     // TODO: Implement when server console page is ready
 
     // Navigate to server console
-    await page.goto('http://localhost:5000/servers/test-server/console');
+    await page.goto('/servers/test-server/console');
 
     // Wait for SSE connection
     await page.waitForSelector('[data-testid="log-viewer"]');
@@ -47,7 +47,7 @@ test.describe('SSE Real-time Updates', () => {
     // TODO: Implement when server detail page is ready
 
     // Navigate to server detail page
-    await page.goto('http://localhost:5000/servers/test-server');
+    await page.goto('/servers/test-server');
 
     // Wait for SSE connection
     await page.waitForSelector('[data-testid="server-status"]');
@@ -75,7 +75,7 @@ test.describe('SSE Real-time Updates', () => {
     // TODO: Implement when server console page is ready
 
     // Navigate to server console
-    await page.goto('http://localhost:5000/servers/test-server/console');
+    await page.goto('/servers/test-server/console');
 
     // Wait for initial connection
     await page.waitForSelector('[data-testid="connection-status"]:has-text("Connected")');
@@ -102,7 +102,7 @@ test.describe('SSE Real-time Updates', () => {
     // TODO: Implement when server console page is ready
 
     // Navigate to server console
-    await page.goto('http://localhost:5000/servers/test-server/console');
+    await page.goto('/servers/test-server/console');
 
     // Wait for logs to load
     await page.waitForSelector('[data-testid="log-line"]');
@@ -126,7 +126,7 @@ test.describe('SSE Real-time Updates', () => {
     // TODO: Implement when server console page is ready
 
     // Navigate to server console
-    await page.goto('http://localhost:5000/servers/test-server/console');
+    await page.goto('/servers/test-server/console');
 
     // Wait for connection
     await page.waitForSelector('[data-testid="connection-status"]:has-text("Connected")');
