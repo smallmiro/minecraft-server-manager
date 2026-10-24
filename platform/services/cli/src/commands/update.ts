@@ -218,6 +218,70 @@ export async function updateDockerImages(serversDir: string, rootDir: string): P
   return hasErrors ? 1 : 0;
 }
 
+/**
+ * Recreate the stopped servers' containers so they use the freshly pulled image.
+ * mc-router auto-scale only `docker start`s existing containers, so a stopped
+ * container would otherwise keep waking up on the old image (#796). Compose
+ * recreates only when image/config changed; a changed container ID tells us.
+ * Only `exited`/`created` containers are touched: compose would stop a running
+ * one, so an unknown state (inspect failed) is skipped, not guessed.
+ * Failures are reported per server, never fatal.
+ */
+export async function recreateStoppedServers(
+  serversDir: string,
+  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>
+): Promise<void> {
+  const servers = existsSync(serversDir)
+    ? readdirSync(serversDir).filter(
+        (e) => e !== '_template' && existsSync(join(serversDir, e, 'docker-compose.yml'))
+      )
+    : [];
+  if (servers.length === 0) return;
+
+  console.log(colors.bold('Applying new images to stopped servers...'));
+  const running: string[] = [];
+
+  for (const server of servers) {
+    const container = `mc-${server}`;
+    try {
+      const before = await shell.containerState(container);
+      if (!before) {
+        console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim('(no container, or docker inspect failed)')}`);
+        continue;
+      }
+      if (before.status !== 'exited' && before.status !== 'created') {
+        running.push(`${server}: ${before.status}`);
+        continue;
+      }
+      const code = await shell.dockerCompose(['up', '--no-start', '--no-deps', container]);
+      if (code !== 0) {
+        console.log(`  ${colors.red('✗')} ${server} ${colors.dim(`(docker compose up --no-start exited ${code})`)}`);
+        continue;
+      }
+      const after = await shell.containerState(container);
+      if (!after) {
+        console.log(`  ${colors.red('✗')} ${server} ${colors.dim('(no container after docker compose up --no-start)')}`);
+        continue;
+      }
+      console.log(
+        before.id !== after.id
+          ? `  ${colors.green('✓')} ${server}: recreated`
+          : `  ${colors.green('✓')} ${server}: up to date`
+      );
+    } catch (error) {
+      console.log(`  ${colors.red('✗')} ${server} ${colors.dim(`(${error instanceof Error ? error.message : String(error)})`)}`);
+    }
+  }
+
+  for (const entry of running) {
+    console.log(`  ${colors.yellow('-')} ${entry}, keeps its current image`);
+  }
+  if (running.length > 0) {
+    console.log(colors.dim('  Apply it in a quiet moment: mcctl stop <server> && mcctl start <server>'));
+  }
+  console.log('');
+}
+
 const SERVICE_PACKAGES = {
   [PM2_SERVICE_NAMES.API]: '@minecraft-docker/mcctl-api',
   [PM2_SERVICE_NAMES.CONSOLE]: '@minecraft-docker/mcctl-console',
@@ -637,6 +701,8 @@ export async function updateServices(
     // Upgrade image tags first so the pull fetches the correct (updated) image
     await upgradeServerImageTags(paths.servers);
     const dockerResult = await updateDockerImages(paths.servers, rootDir);
+    // Pulled images do not reach existing stopped containers by themselves
+    await recreateStoppedServers(paths.servers, new ShellExecutor(paths));
     if (dockerResult !== 0) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(colors.dim(`  Completed in ${elapsed}s`));

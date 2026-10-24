@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **`mcctl console service` without a terminal** (#795) - `start`, `stop`, `restart` and `logs` no longer crash with `TTY initialization failed: uv_tty_init returned EINVAL` when both services are installed and neither `--api` nor `--console` is given. They exit 1 with `No terminal to ask which services to <action>. Pass --console (API + Console) or --api.` and choose nothing. Prompts in a terminal are unchanged.
+- **`mcctl update` now applies pulled server images to stopped servers** (#796) - mc-router auto-scale only runs `docker start` on the existing container, so a stopped server woke up on the old image. After pulling, `mcctl update` runs `docker compose up --no-start --no-deps mc-<server>` for every stopped (`exited`/`created`) server and reports `recreated`, `up to date` or the failure per server (a failure does not fail the update). Running servers, and servers whose container cannot be inspected, are not touched; restart them at a quiet time with `mcctl stop <server> && mcctl start <server>`. The update runs in the CLI that started it, so when updating from v3.0.0 run `mcctl update` a second time (or see the runbook step 5).
 
 ## [3.0.0] - 2026-10-24
 
