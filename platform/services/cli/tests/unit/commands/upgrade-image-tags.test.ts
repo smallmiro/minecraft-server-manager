@@ -89,7 +89,7 @@ beforeEach(() => {
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
-  vi.restoreAllMocks();
+  log.mockRestore();
 });
 
 let log: ReturnType<typeof vi.spyOn>;
