@@ -1,11 +1,9 @@
 'use client';
 
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Skeleton from '@mui/material/Skeleton';
+import { BentoPanel } from '@/components/bento';
 import { usePlayitStatus } from '@/hooks/usePlayit';
 import { CopyButton } from '@/components/common';
 import { parseHostnames, sortHostnames, classifyHostname, HOSTNAME_KIND_LABEL } from '@/utils/hostname';
@@ -30,7 +28,7 @@ function InfoRow({ label, value, copyText }: { label: string; value: string; cop
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <Typography
-          variant="body2"
+          variant="mono"
           sx={{
             color: copyText ? 'text.primary' : 'text.secondary',
             wordBreak: 'break-all',
@@ -49,8 +47,8 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
 
   if (isLoading) {
     return (
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent>
+      <BentoPanel aria-label="Connection" sx={{ height: '100%' }}>
+        <Box sx={{ px: 2.5, py: 2 }}>
           <Skeleton variant="text" width="40%" height={28} sx={{ mb: 1 }} />
           <Skeleton variant="rectangular" height={1} sx={{ mb: 2 }} />
           <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
@@ -61,8 +59,8 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
             <Skeleton variant="text" width="30%" />
             <Skeleton variant="text" width="40%" />
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
@@ -75,14 +73,14 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
   const hasExternalDomain = Boolean(serverInfo?.playitDomain);
 
   return (
-    <Card sx={{ borderRadius: 3 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom fontWeight={600}>
+    <BentoPanel aria-label="Connection" sx={{ height: '100%' }}>
+      <Box sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
           Connection
         </Typography>
-        <Divider sx={{ mb: 2 }} />
-
-        <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+      </Box>
+      <Box sx={{ px: 2.5, py: 1.5 }}>
+        <Typography variant="label" component="div" color="text.secondary" sx={{ py: 0.5 }}>
           Addresses
         </Typography>
         {addresses.length === 0 ? (
@@ -102,7 +100,7 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
                   <Typography variant="caption" color="text.secondary" component="div">
                     {HOSTNAME_KIND_LABEL[classifyHostname(h)]}
                   </Typography>
-                  <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                  <Typography variant="mono" component="div" sx={{ wordBreak: 'break-all' }}>
                     {text}
                   </Typography>
                 </Box>
@@ -119,7 +117,7 @@ export function ConnectionInfoCard({ serverName, hostname }: ConnectionInfoCardP
             copyText={hasExternalDomain ? externalAddress : undefined}
           />
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
