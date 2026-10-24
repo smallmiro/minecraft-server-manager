@@ -19,7 +19,9 @@ describe('recreateStoppedServers (#796)', () => {
       const st = states[c]?.length ? states[c].shift()! : null;
       return st && { imageId: `img-${st.id}`, imageRef: 'itzg/minecraft-server:java25', ...st };
     },
+    localImageId: async (ref: string) => localIds[ref] ?? null,
   });
+  let localIds: Record<string, string | null>;
   const yes = async () => true;
   const text = () => out.join('\n');
 
@@ -33,6 +35,7 @@ describe('recreateStoppedServers (#796)', () => {
     vi.spyOn(console, 'log').mockImplementation((m?: unknown) => void out.push(String(m).replace(/\u001b\[[0-9;]*m/g, '')));
     compose = vi.fn().mockResolvedValue(0);
     states = {};
+    localIds = {};
   });
   afterEach(() => {
     vi.restoreAllMocks();
@@ -182,6 +185,51 @@ describe('recreateStoppedServers (#796)', () => {
       expect(confirm).not.toHaveBeenCalled();
       expect(compose).not.toHaveBeenCalled();
       expect(text()).toContain('mcctl stop <server> && mcctl start <server>');
+    });
+  });
+
+  describe('only servers whose image changed (#810)', () => {
+    const ref = 'itzg/minecraft-server:java25';
+    const useImage = (server: string, image: string) =>
+      writeFileSync(join(dir, server, 'docker-compose.yml'), `services:\n  mc-${server}:\n    image: "${image}"\n`);
+
+    it('same image: not a candidate, no question, reported up to date', async () => {
+      useImage('a', ref);
+      localIds[ref] = 'sha256:same';
+      states = { 'mc-a': [{ id: 'a', status: 'exited', imageId: 'sha256:same' }], 'mc-b': [{ id: 'b', status: 'running' }], 'mc-c': [{ id: 'c', status: 'running' }] };
+      const confirm = vi.fn(async () => true);
+      await recreateStoppedServers(dir, shell(), confirm);
+
+      expect(confirm).not.toHaveBeenCalled();
+      expect(compose).not.toHaveBeenCalled();
+      expect(text()).toContain('a: up to date');
+      expect(text()).not.toContain('old image');
+    });
+
+    it('different image: candidate', async () => {
+      useImage('a', ref);
+      localIds[ref] = 'sha256:new';
+      states = { 'mc-a': [{ id: 'a', status: 'exited', imageId: 'sha256:old' }], 'mc-b': [{ id: 'b', status: 'running' }], 'mc-c': [{ id: 'c', status: 'running' }] };
+      const confirm = vi.fn(async () => false);
+      await recreateStoppedServers(dir, shell(), confirm);
+
+      expect(confirm).toHaveBeenCalledTimes(1);
+      expect(text()).toContain('docker compose up --no-start --no-deps mc-a');
+    });
+
+    it('unreadable local image ID or reference: candidate', async () => {
+      useImage('a', ref); // no local ID known for it
+      states = {
+        'mc-a': [{ id: 'a', status: 'exited', imageId: 'sha256:x' }],
+        'mc-b': [{ id: 'b', status: 'exited', imageId: 'sha256:x' }], // compose without image: reference unreadable
+        'mc-c': [{ id: 'c', status: 'running' }],
+      };
+      const confirm = vi.fn(async () => false);
+      await recreateStoppedServers(dir, shell(), confirm);
+
+      expect(confirm).toHaveBeenCalledTimes(1);
+      expect(text()).toContain('mc-a');
+      expect(text()).toContain('mc-b');
     });
   });
 });
