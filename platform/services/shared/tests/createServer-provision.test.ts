@@ -146,7 +146,7 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
   });
 
   it('parseCreateServerConfig refuses it without touching the platform', () => {
-    expect(() => parseCreateServerConfig({ name: 'beta', seed: "$x'" }, { versionText: true })).toThrow(
+    expect(() => parseCreateServerConfig({ name: 'beta', seed: "$x'" })).toThrow(
       expect.objectContaining({ code: 'invalid_spec' })
     );
   });

@@ -83,12 +83,10 @@ export class ServerStartError extends Error {
  * platform. Pure: the API runs it before it opens an event stream. An input
  * they refuse is ServerSpecError invalid_spec (the API answers 400), never a
  * plain Error.
- * @param options.versionText accept a snapshot or pre-release McVersion cannot
- *   model, written as given (TypeScript provisioning only, #675).
  */
-export function parseCreateServerConfig(config: CreateServerConfig, options: { versionText?: boolean } = {}) {
+export function parseCreateServerConfig(config: CreateServerConfig) {
   try {
-    const parsed = parseConfigValues(config, options.versionText ?? false);
+    const parsed = parseConfigValues(config);
     // The spec it writes, under the create rules: also every value config.env must hold (#675)
     assertServerSpecDocument(createSpecDocument(parsed.name, parsed.createOptions, parsed.versionToWrite), 'create', {
       server: parsed.name.value,
@@ -101,7 +99,7 @@ export function parseCreateServerConfig(config: CreateServerConfig, options: { v
   }
 }
 
-function parseConfigValues(config: CreateServerConfig, allowVersionText: boolean) {
+function parseConfigValues(config: CreateServerConfig) {
   const name = ServerName.create(config.name);
   const type = config.type
     ? ServerType.create(config.type)
@@ -119,7 +117,7 @@ function parseConfigValues(config: CreateServerConfig, allowVersionText: boolean
   try {
     version = config.version ? McVersion.create(config.version) : McVersion.latest();
   } catch (error) {
-    if (!allowVersionText || !MC_VERSION_INPUT_PATTERN.test(config.version!)) throw error;
+    if (!MC_VERSION_INPUT_PATTERN.test(config.version!)) throw error;
     version = McVersion.latest();
     versionText = config.version;
   }
@@ -518,7 +516,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
    */
   async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
     const { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite } =
-      parseCreateServerConfig(config, { versionText: true });
+      parseCreateServerConfig(config);
 
     // Check if server already exists
     if (await this.serverRepo.exists(name.value)) {

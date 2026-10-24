@@ -907,7 +907,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // An input the value objects refuse (memory: '256M') is a 400 for JSON and SSE alike: parsed
     // before the event stream opens. Failures once files are written stay SSE error events.
     try {
-      parseCreateServerConfig(createConfig, { versionText: true });
+      parseCreateServerConfig(createConfig);
     } catch (error) {
       const failure = serverSpecFailure(error as ServerSpecError);
       return reply.code(failure.status).send(failure.body);
