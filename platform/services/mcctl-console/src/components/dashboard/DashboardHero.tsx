@@ -1,17 +1,21 @@
 'use client';
 
+import NextLink from 'next/link';
 import {
+  Button,
   Chip,
   LinearProgress,
   Typography,
   alpha,
 } from '@mui/material';
 import {
+  AddRounded as AddIcon,
   DashboardRounded as DashboardIcon,
   SensorsRounded as LiveIcon,
   SyncRounded as ReconnectingIcon,
 } from '@mui/icons-material';
 import { PageHero } from '@/components/bento';
+import { startLoading } from '@/components/providers';
 
 interface DashboardHeroProps {
   totalServers: number;
@@ -61,15 +65,23 @@ export function DashboardHero({
           }}
         />
       }
+      actions={
+        <Button
+          component={NextLink}
+          href="/servers?create=1"
+          onClick={() => startLoading()}
+          variant="contained"
+          color="primary"
+          startIcon={<AddIcon />}
+          sx={{ width: { xs: '100%', sm: 'auto' } }}
+        >
+          Create Server
+        </Button>
+      }
       title="Dashboard"
       description="Your Minecraft infrastructure, worlds, and activity at a glance."
       sx={{
-        gridColumn: { xs: '1 / -1', md: 'span 6' },
-        gridRow: { md: 'span 2' },
-        minHeight: { xs: 280, md: 328 },
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
+        gridColumn: '1 / -1',
       }}
     >
       <Typography

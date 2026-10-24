@@ -16,6 +16,7 @@ import { AuditLogActionChip } from '@/components/audit-logs/AuditLogActionChip';
 import { AuditLogStatusChip } from '@/components/audit-logs/AuditLogStatusChip';
 import { useRecentActivity } from '@/hooks/useAuditLogs';
 import { BentoPanel, BentoPanelHeader } from '@/components/bento';
+import { getActivityDotColor } from './activityDot';
 
 export interface RecentActivityFeedProps {
   maxItems?: number;
@@ -109,24 +110,38 @@ export function RecentActivityFeed({ maxItems = 5 }: RecentActivityFeedProps) {
             {logs.map((log) => (
               <ListItem
                 key={log.id}
+                alignItems="flex-start"
                 sx={{
                   px: 0,
                   py: 1.5,
+                  gap: 1.5,
+                  minWidth: 0,
                   '&:not(:last-child)': {
                     borderBottom: '1px solid',
                     borderColor: 'divider',
                   },
                 }}
               >
+                <Box
+                  data-testid="activity-dot"
+                  data-color={getActivityDotColor(log.action, log.status)}
+                  aria-hidden="true"
+                  sx={{
+                    mt: 1,
+                    width: 8,
+                    height: 8,
+                    flexShrink: 0,
+                    borderRadius: '50%',
+                    bgcolor: getActivityDotColor(log.action, log.status),
+                  }}
+                />
                 <ListItemText
+                  sx={{ m: 0, minWidth: 0 }}
                   primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
                       <AuditLogActionChip action={log.action} size="small" />
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      <Typography variant="body2" noWrap sx={{ fontWeight: 500, minWidth: 0 }}>
                         {log.targetName}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        by {log.actor.replace('api:', '').replace('cli:', '')}
                       </Typography>
                       {log.status === 'failure' && (
                         <AuditLogStatusChip status={log.status} size="small" />
@@ -135,8 +150,8 @@ export function RecentActivityFeed({ maxItems = 5 }: RecentActivityFeedProps) {
                   }
                   secondary={
                     <Tooltip title={formatAbsoluteTime(log.timestamp)} arrow>
-                      <Typography variant="caption" component="span" color="text.disabled">
-                        {formatRelativeTime(log.timestamp)}
+                      <Typography variant="caption" component="span" color="text.disabled" noWrap sx={{ display: 'block' }}>
+                        {log.actor.replace('api:', '').replace('cli:', '')} · {formatRelativeTime(log.timestamp)}
                       </Typography>
                     </Tooltip>
                   }
