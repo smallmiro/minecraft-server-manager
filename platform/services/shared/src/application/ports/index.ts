@@ -38,6 +38,10 @@ export type {
   IPlayerManagementUseCase,
   IPlayerSessionUseCase,
   SessionHistory,
+  IGetServerSummariesUseCase,
+  ServerSummaryItem,
+  ServerSummaryTotals,
+  ServerSummariesResult,
 } from './inbound/index.js';
 export { AnalysisCancelledError } from './inbound/index.js';
 
