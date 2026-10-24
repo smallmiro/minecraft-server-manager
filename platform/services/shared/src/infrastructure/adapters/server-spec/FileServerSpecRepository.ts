@@ -369,13 +369,19 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     } catch (err) {
       // A restore failure never hides the write error: it is added to the message (as create's cleanup).
       // A file another writer changed since (e.g. while the include lock was awaited) is left as it is.
+      // server.yaml (written first, undone last) is put back only when every generated file was: a
+      // generated file left with the new content keeps the new server.yaml with it, so the next
+      // render (mcctl migrate spec) writes the new spec again instead of the earlier one.
       const failed: Array<{ file: string; reason: string }> = [];
       const changed: string[] = [];
+      let specKept: string | undefined;
       for (const { path, content, before } of written.reverse()) {
         const file = `servers/${name}/${basename(path)}`;
+        const generatedLeft = [...changed, ...failed.map((f) => f.file)].some((f) => !f.endsWith('.bak'));
         try {
           // ponytail: read-then-restore leaves a window of milliseconds; a per-server lock closes it if needed.
           if ((await readOptional(path)) !== content) changed.push(file);
+          else if (path === specPath && generatedLeft) specKept = file;
           else if (before === undefined) await rm(path, { force: true });
           else await atomicWriteFile(path, before);
         } catch (e) {
@@ -388,8 +394,9 @@ export class FileServerSpecRepository implements IServerSpecRepository {
           const list = failed.map((f) => `${f.file}: ${f.reason}`).join('; ');
           err.message += ` (restoring the earlier files failed: ${list}; check them by hand)`;
         }
-        // For the caller (unrestoredFiles): e.g. migrate worlds decides from what config.env now says.
-        const left = [...changed, ...failed.map((f) => f.file)];
+        if (specKept) err.message += ` (${specKept} keeps the new spec to match; run mcctl migrate spec ${name} once the cause is fixed)`;
+        // For the caller (unrestoredFiles): e.g. migrate worlds places the world by the spec left.
+        const left = [...changed, ...failed.map((f) => f.file), ...(specKept ? [specKept] : [])];
         if (left.length > 0) Object.assign(err, { unrestoredFiles: left });
       }
       throw err;

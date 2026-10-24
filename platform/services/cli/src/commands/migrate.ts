@@ -14,7 +14,7 @@ import { isContainerRunning, serverOfContainer } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
-import { writeServerConfig } from '../lib/server-config.js';
+import { serverSpecRepository, writeServerConfig } from '../lib/server-config.js';
 
 /**
  * Migrate command options
@@ -510,18 +510,20 @@ async function migrateServer(
     );
   } catch (error) {
     if (undo.length === 0) throw error;
-    // The spec write puts its files back; when it could not (unrestoredFiles), config.env may keep
-    // the new LEVEL and --universe. The world follows what config.env says now, so they match.
-    const config =
-      unrestoredFiles(error).length === 0 ? 'earlier' : await configNow(assignments, server.name, before, intended);
-    const where = `servers/${server.name}/config.env`;
+    // The spec write puts its files back. When it could not (unrestoredFiles) it keeps the new
+    // server.yaml with them, and mcctl migrate spec renders whatever spec is left: place the world
+    // where that spec puts it, so the world and the files match once it is run.
+    const left = unrestoredFiles(error).length > 0;
+    const spec = left ? await specNow(paths, server.name, before, intended) : 'earlier';
+    const where = `servers/${server.name}`;
+    const rerender = `run mcctl migrate spec ${server.name} before you start the server`;
     let note: string;
-    if (config === 'migrated') {
-      note = `${where} kept the new world settings, so the world stays in worlds/${server.name}; ` +
-        `fix the cause and run mcctl migrate spec ${server.name}`;
-    } else if (config === 'unknown') {
-      note = `could not tell which world ${where} now uses, so the world was left in worlds/${server.name}; ` +
-        `check LEVEL and EXTRA_ARGS in ${where} and move the world to match by hand`;
+    if (spec === 'migrated') {
+      note = `${where}/server.yaml keeps the new world settings, so the world stays in worlds/${server.name}; ` +
+        `fix the cause and ${rerender}`;
+    } else if (spec === 'unknown') {
+      note = `could not tell which world the spec of ${server.name} now uses, so the world was left in worlds/${server.name}; ` +
+        `check world in ${where}/server.yaml and LEVEL and EXTRA_ARGS in ${where}/config.env and move the world to match by hand`;
     } else {
       const failed: string[] = [];
       for (const step of undo.reverse()) {
@@ -532,8 +534,8 @@ async function migrateServer(
         }
       }
       note = failed.length > 0
-        ? `moving the world back failed: ${failed.join('; ')}; move it back to servers/${server.name}/data by hand`
-        : 'the world was moved back';
+        ? `moving the world back failed: ${failed.join('; ')}; move it back to ${where}/data by hand`
+        : `the world was moved back${left ? `; ${rerender}` : ''}`;
     }
     if (error instanceof Error) error.message += ` (${note})`;
     throw error;
@@ -541,24 +543,26 @@ async function migrateServer(
 }
 
 /**
- * Which world settings servers/<server>/config.env holds now: the migrated
- * ones, the earlier ones, or neither / unreadable ('unknown').
+ * Which world the spec mcctl migrate spec would render for `server` puts it
+ * in (load(): server.yaml with hand edits absorbed): the migrated one, the
+ * earlier one, or neither / unreadable ('unknown').
  */
-async function configNow(
-  assignments: IWorldAssignmentPort,
+async function specNow(
+  paths: Paths,
   server: string,
   before: WorldAssignmentSnapshot,
   intended: WorldAssignmentSnapshot
 ): Promise<'migrated' | 'earlier' | 'unknown'> {
-  const key = (s: WorldAssignmentSnapshot) => {
+  const assigned = (s: WorldAssignmentSnapshot) => {
     if (s.undetermined.includes(server)) return undefined;
     const a = s.assignments.find((x) => x.server === server);
     return a ? `${a.world}\0${!!a.internal}` : undefined;
   };
-  const now = await assignments.snapshot().then(key, () => undefined);
-  if (now === undefined) return 'unknown';
-  if (now === key(intended)) return 'migrated';
-  return now === key(before) ? 'earlier' : 'unknown';
+  const doc = await serverSpecRepository(paths).load(server).then((l) => l?.document, () => undefined);
+  if (!doc) return 'unknown';
+  const now = `${doc.world.level}\0${doc.world.storage === 'data'}`;
+  if (now === assigned(intended)) return 'migrated';
+  return now === assigned(before) ? 'earlier' : 'unknown';
 }
 
 /**

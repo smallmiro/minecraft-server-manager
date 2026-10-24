@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { hostname, tmpdir, uptime } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Paths } from '../src/utils/index.js';
+import { Paths, parseEnvDocument } from '../src/utils/index.js';
 import { FileServerSpecRepository, serverSpecTestHooks } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ServerSpecError, unrestoredFiles, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
 import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
@@ -259,9 +259,41 @@ describe('write is all or nothing', () => {
     const error = (await repo.write(spec()).catch((e: unknown) => e)) as Error;
 
     expect(error.message).toMatch(/^compose write failed .*servers\/survival\/config\.env: disk full/);
-    // The caller can tell config.env kept the new content (migrate worlds decides on it)
-    expect(unrestoredFiles(error)).toEqual(['servers/survival/config.env']);
-    expect(existsSync(yamlPath('survival'))).toBe(false);
+    // The caller can tell config.env kept the new content (migrate worlds decides on it); the new
+    // server.yaml stays too, so the definition matches config.env
+    expect(unrestoredFiles(error).sort()).toEqual(['servers/survival/config.env', 'servers/survival/server.yaml']);
+    expect((await repo.loadFile('survival'))!.document).toEqual(spec());
+  });
+
+  it('keeps the new server.yaml while a generated file keeps the new content, so migrate spec renders the new spec', async () => {
+    // An existing server that keeps its world in its data directory
+    serverDir('survival', 'TYPE=PAPER\n', COMPOSE('survival'));
+    const earlier = spec({ world: { level: 'world', storage: 'data' } });
+    await repo.write(earlier);
+    const earlierCompose = readFileSync(file('docker-compose.yml'), 'utf-8');
+    let configWrites = 0;
+    writeFault.fail = (path) => {
+      if (path.endsWith('docker-compose.yml')) return new Error('ENOSPC: no space left on device');
+      if (path.endsWith('config.env') && ++configWrites > 1) return new Error('ENOSPC: no space left on device');
+      return undefined;
+    };
+
+    const error = await repo.write(spec(), { allowStorageChange: true }).catch((e: unknown) => e);
+
+    // Mixed state: config.env could not be put back, so server.yaml keeps the new world too
+    expect(unrestoredFiles(error).sort()).toEqual(['servers/survival/config.env', 'servers/survival/server.yaml']);
+    expect((error as Error).message).toContain('server.yaml');
+    expect(readFileSync(file('docker-compose.yml'), 'utf-8')).toBe(earlierCompose);
+    expect((await repo.load('survival'))!.document.world).toEqual({ level: 'survival', storage: 'universe' });
+
+    // The cause fixed, mcctl migrate spec (load, write) renders the new spec, not the earlier one
+    writeFault.fail = undefined;
+    const loaded = (await repo.load('survival'))!;
+    await repo.write(loaded.document, { expectedRevision: loaded.revision });
+    const config = parseEnvDocument(readFileSync(file('config.env'), 'utf-8')).values;
+    expect(config.get('LEVEL')).toBe('survival');
+    expect(config.get('EXTRA_ARGS')).toBe('--universe /worlds/');
+    expect(readFileSync(file('docker-compose.yml'), 'utf-8')).not.toBe(earlierCompose);
   });
 });
 

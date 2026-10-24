@@ -32,6 +32,7 @@ vi.mock('../../../src/infrastructure/index.js', () => ({
 
 import { migrateCommand } from '../../../src/commands/migrate.js';
 import { serverSpecRepositories } from '../../../src/lib/server-config.js';
+import { migrateSpec } from '../../../src/commands/migrate-spec.js';
 
 const TEMPLATE_COMPOSE = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../../../templates/servers/_template/docker-compose.yml'),
@@ -142,6 +143,30 @@ describe('migrate worlds (runtime port)', () => {
       expect(existsSync(join(root, 'worlds', 'alpha', 'level.dat'))).toBe(true);
       expect(existsSync(join(alpha(), 'data', 'world'))).toBe(false);
       expect(logged()).toMatch(/world stays in worlds\/alpha.*mcctl migrate spec alpha/);
+    });
+
+    it('keeps the world in worlds/ when server.yaml keeps the new spec, though config.env was put back', async () => {
+      // alpha already has server.yaml (world in data/) and an mcctl config.env
+      const plain = new FileServerSpecRepository(new Paths(root), undefined, stopped, () => []);
+      expect(await migrateSpec(plain, { serverName: 'alpha' })).toBe(0);
+      const earlierConfig = readFileSync(join(alpha(), 'config.env'), 'utf-8');
+      // The repository rule: compose left new, config.env put back, so server.yaml keeps the new spec
+      failingWrite(['servers/alpha/docker-compose.yml', 'servers/alpha/server.yaml'], async (write, doc) => {
+        await write(doc, { allowStorageChange: true });
+        writeFileSync(join(alpha(), 'config.env'), earlierConfig);
+      });
+
+      const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+
+      expect(code).toBe(1);
+      expect(existsSync(join(root, 'worlds', 'alpha', 'level.dat'))).toBe(true);
+      expect(logged()).toMatch(/world stays in worlds\/alpha.*run mcctl migrate spec alpha before you start/);
+
+      // The guided command renders config.env from the new spec: it then names the world in worlds/
+      expect(await migrateSpec(plain, { serverName: 'alpha' })).toBe(0);
+      const config = readFileSync(join(alpha(), 'config.env'), 'utf-8');
+      expect(config).toMatch(/^LEVEL=alpha$/m);
+      expect(config).toMatch(/^EXTRA_ARGS=--universe \/worlds\/$/m);
     });
 
     it('moves the world back when config.env still has the old settings', async () => {
