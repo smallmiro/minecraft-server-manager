@@ -154,7 +154,8 @@ describe('WorldRepository assignment hydration', () => {
 });
 
 // Defense in depth behind the API's path-parameter schema (#728): a name that
-// is not one directory under worlds/ is not found.
+// is not one directory under worlds/ is not found, and a legacy name such as
+// "My World" (a LEVEL #649 still accepts) is deleted like any other world.
 describe('WorldRepository world names (#728)', () => {
   it.each(['', '..', '../servers', '.locks', 'a/b'])('does not find %j outside worlds/<one directory>', async (name) => {
     mkdirSync(join(root, 'servers'), { recursive: true });
@@ -165,5 +166,27 @@ describe('WorldRepository world names (#728)', () => {
     expect(await repo.findByName(name)).toBeNull();
     expect(await repo.exists(name)).toBe(false);
     expect(await repo.getSeed(name)).toBeNull();
+  });
+
+  it('finds and deletes a legacy name with a space, with its dimension folders', async () => {
+    for (const dir of ['My World', 'My World_nether', 'My World_the_end', 'My Worlds']) world(dir);
+
+    expect((await repo.findByName('My World'))?.name).toBe('My World');
+    expect(await repo.delete('My World')).toBe(true);
+    for (const dir of ['My World', 'My World_nether', 'My World_the_end']) {
+      expect(existsSync(join(root, 'worlds', dir)), dir).toBe(false);
+    }
+    expect(existsSync(join(root, 'worlds', 'My Worlds'))).toBe(true);
+  });
+
+  it.each(['..', '../servers', '.locks', 'a/b'])('refuses to delete %j', async (name) => {
+    mkdirSync(join(root, 'servers'), { recursive: true });
+    mkdirSync(join(root, 'worlds', '.locks'), { recursive: true });
+    mkdirSync(join(root, 'worlds', 'a', 'b'), { recursive: true });
+
+    await expect(repo.delete(name)).rejects.toThrow(/Invalid world name/);
+    expect(existsSync(join(root, 'servers'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', '.locks'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'a', 'b'))).toBe(true);
   });
 });

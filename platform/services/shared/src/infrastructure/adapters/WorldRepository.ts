@@ -43,10 +43,11 @@ import { containerNameOf } from './workloadNames.js';
  * Reject world names that could escape the worlds/ directory (defense-in-depth,
  * independent of API schema).
  * This guards the repository boundary so traversal is impossible even if a
- * future caller forgets upstream validation.
+ * future caller forgets upstream validation. New worlds need WORLD_NAME_PATTERN;
+ * an existing one only EXISTING_WORLD_DIR_PATTERN (legacy names, #728).
  */
-function assertValidWorldName(name: string): void {
-  if (!WORLD_NAME_PATTERN.test(name)) {
+function assertValidWorldName(name: string, pattern = WORLD_NAME_PATTERN): void {
+  if (!pattern.test(name)) {
     throw new Error(`Invalid world name '${name}'`);
   }
 }
@@ -348,7 +349,7 @@ export class WorldRepository implements IWorldRepository {
    * Returns true if the main world was deleted.
    */
   async delete(name: string): Promise<boolean> {
-    assertValidWorldName(name);
+    assertValidWorldName(name, EXISTING_WORLD_DIR_PATTERN);
     const worldPath = join(this.worldsDir, name);
 
     if (!existsSync(worldPath)) {
