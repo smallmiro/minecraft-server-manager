@@ -38,7 +38,9 @@ export function parseArgs(args: string[]): {
       break;
     } else if (arg.startsWith('--') && arg.includes('=')) {
       const eq = arg.indexOf('=');
-      result.flags[arg.slice(2, eq)] = arg.slice(eq + 1);
+      const key = arg.slice(2, eq);
+      const value = arg.slice(eq + 1);
+      result.flags[key] = BOOLEAN_ONLY_FLAGS.includes(key) ? value !== 'false' : value;
       i++;
     } else if (arg.startsWith('--')) {
       const key = arg.slice(2);

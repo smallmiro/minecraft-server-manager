@@ -29,6 +29,10 @@ describe('parseArgs', () => {
     expect(flags).toEqual({});
   });
 
+  it('reads --flag=true/false of a boolean-only flag as a boolean (#728)', () => {
+    expect(parseArgs(['delete', 'srv', '--force=true', '--json=false']).flags).toEqual({ force: true, json: false });
+  });
+
   it('does not take a flag as the value', () => {
     expect(parseArgs(['create', 'alpha', '-s', '--no-start']).flags).toEqual({ seed: true, 'no-start': true });
   });
