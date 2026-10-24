@@ -250,12 +250,12 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   };
 
   // One instance for the plugin's lifetime: its 10s TTL cache lives on it (#764).
-  // statsTimeoutMs 2000 bounds the whole summary call at about 2s.
+  // Default timeouts: RCON 2s, docker stats 3s (it samples twice, often ~2s).
+  const summaryPaths = new Paths(config.mcctlRoot);
   const serverSummaries = new GetServerSummariesUseCase(
-    new ServerRepository(),
-    new DockerComposeRuntimeAdapter(),
+    new ServerRepository(summaryPaths),
+    new DockerComposeRuntimeAdapter({ root: summaryPaths.root, env: () => childProcessEnv() }),
     new DockerServerConsoleAdapter(),
-    { statsTimeoutMs: 2000 },
   );
 
   /**

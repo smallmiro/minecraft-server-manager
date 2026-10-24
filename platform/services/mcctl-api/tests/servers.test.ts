@@ -55,6 +55,8 @@ vi.mock('node:child_process', async (importOriginal) => {
 const summaryMocks = vi.hoisted(() => ({
   execute: vi.fn(),
   ctorArgs: vi.fn(),
+  // Not a vi.fn: survives vi.clearAllMocks, since the use case is built once at plugin registration
+  constructed: [] as unknown[][],
 }));
 
 // Mock @minecraft-docker/shared module
@@ -63,6 +65,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   GetServerSummariesUseCase: class {
     constructor(...args: unknown[]) {
       summaryMocks.ctorArgs(...args);
+      summaryMocks.constructed.push(args);
     }
     execute(servers: unknown) {
       return summaryMocks.execute(servers);
@@ -228,6 +231,19 @@ describe('Server Routes', () => {
         expect(Object.keys(item).sort()).toEqual(['container', 'health', 'hostname', 'name', 'status']);
       }
       expect(summaryMocks.execute).not.toHaveBeenCalled();
+    });
+
+    it('builds the summary use case on the configured root and child-process env with default timeouts', async () => {
+      const { config } = await import('../src/config/index.js');
+      const { Paths } = await import('@minecraft-docker/shared');
+      const [repository, runtime, , options] = summaryMocks.constructed.at(-1)!;
+      const root = new Paths(config.mcctlRoot).root;
+
+      expect((repository as { paths: { root: string } }).paths.root).toBe(root);
+      expect((runtime as { options: { root?: string; env?: unknown } }).options).toEqual(
+        expect.objectContaining({ root, env: expect.any(Function) }),
+      );
+      expect(options).toBeUndefined();
     });
 
     it('returns summaries and totals, passing the base list to the use case', async () => {
