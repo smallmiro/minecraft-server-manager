@@ -19,15 +19,24 @@ mkdir -p "$TMP/bin"
 
 cat > "$TMP/bin/gh" <<'STUB'
 #!/bin/bash
+# REST-only stub: `gh api <path> [--jq <filter>]` answers from JSON files and applies the
+# hook's own --jq filter with jq, so the filters are tested too. Any other gh call fails,
+# which keeps the hook off the GraphQL-backed subcommands (#789).
 [[ -f "$STUB_DIR/gh_fail" ]] && exit 1
-case "$1 $2" in
-    "api repos/{owner}/{repo}/milestones/3") cat "$STUB_DIR/open_count" ;;
-    "api repos/{owner}/{repo}/milestones/99") exit 1 ;;
-    "issue view") cat "$STUB_DIR/issue_body" ;;
-    "pr list")
-        if [[ "$*" == *"--state all"* ]]; then cat "$STUB_DIR/pr_count"; else cat "$STUB_DIR/merged_count"; fi ;;
-    "issue list") cat "$STUB_DIR/open_issues" ;;
+[[ "$1" == api ]] || exit 1
+path="$2"; filter="."
+shift 2
+while [[ $# -gt 0 ]]; do [[ "$1" == --jq ]] && filter="$2"; shift; done
+case "$path" in
+    "repos/{owner}/{repo}/milestones/3") file=milestone ;;
+    "repos/{owner}/{repo}/milestones/"*) exit 1 ;;
+    "repos/{owner}/{repo}/issues?milestone=3&state=open&per_page=100") file=milestone_issues ;;
+    "repos/{owner}/{repo}/issues/7") file=issue ;;
+    "repos/{owner}/{repo}/pulls?state=all&per_page=100") file=pulls ;;
+    "repos/{owner}/{repo}/pulls?state=closed&per_page=100") file=pulls_closed ;;
+    *) exit 1 ;;
 esac
+jq -r "$filter" "$STUB_DIR/$file.json"
 STUB
 cat > "$TMP/bin/git" <<'STUB'
 #!/bin/bash
@@ -60,13 +69,23 @@ assert_file() {
         echo "  ok   - $desc"; else echo "  FAIL - $desc"; FAILED=$((FAILED + 1)); fi
 }
 
+# JSON helpers for the REST stubs
+issue_body() { jq -n --arg b "$1" '{body: $b}' > "$STUB_DIR/issue.json"; }
+# pull <title> <head-ref> <state> <merged:true|false>
+pull() { jq -n --arg t "$1" --arg r "$2" --arg s "$3" --argjson m "$4" \
+    '{title: $t, head: {ref: $r}, state: $s, merged_at: (if $m then "2026-01-01T00:00:00Z" else null end)}'; }
+set_pulls() {
+    printf '%s\n' "$@" | jq -s . > "$STUB_DIR/pulls.json"
+    jq '[.[] | select(.state == "closed")]' "$STUB_DIR/pulls.json" > "$STUB_DIR/pulls_closed.json"
+}
+
 # reset <state-file-content> : fresh stubs where everything is complete
 reset() {
     rm -rf "$STUB_DIR"; mkdir -p "$STUB_DIR"
-    printf -- '- [x] done\n' > "$STUB_DIR/issue_body"
-    echo 1 > "$STUB_DIR/merged_count"
-    : > "$STUB_DIR/open_issues"
-    echo 0 > "$STUB_DIR/open_count"
+    issue_body '- [x] done'
+    set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' closed true)"
+    echo '{"open_issues": 0}' > "$STUB_DIR/milestone.json"
+    echo '[]' > "$STUB_DIR/milestone_issues.json"
     : > "$STUB_DIR/git_status"
     printf '%b' "$1" > "$WORK_STATE_FILE"
 }
@@ -83,11 +102,11 @@ assert_contains "all conditions met allows stop" "완료 조건을 모두 충족
 assert_file "state file removed on completion" "$WORK_STATE_FILE" missing
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
-printf -- '- [x] a\n- [ ] b\n' > "$STUB_DIR/issue_body"
+issue_body $'- [x] a\n- [ ] b'
 assert_contains "unchecked box blocks" '"decision":"block"' "$(run)"
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
-echo 0 > "$STUB_DIR/merged_count"
+set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' open false)"
 assert_contains "unmerged PR blocks" "merge되지 않음" "$(run)"
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=pending\n'
@@ -100,31 +119,53 @@ reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
 echo ' M file.ts' > "$STUB_DIR/git_status"
 assert_contains "dirty tree blocks" "커밋되지 않은 변경" "$(run)"
 
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
+set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' closed false)"
+assert_contains "a closed, unmerged PR is not a merge" "merge되지 않음" "$(run)"
+
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
+set_pulls "$(pull 'feat: other' 'bugfix/7-fix' closed true)"
+assert_contains "a merged bugfix/<n>- branch counts" "완료 조건을 모두 충족" "$(run)"
+
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
+set_pulls "$(pull 'feat: x (#77)' 'feature/77-x' closed true)"
+assert_contains "issue #77's PR does not count for #7" "merge되지 않음" "$(run)"
+
 echo "contributor mode"
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
-printf -- '- [ ] b\n' > "$STUB_DIR/issue_body"
-echo 1 > "$STUB_DIR/pr_count"; echo 0 > "$STUB_DIR/merged_count"
+issue_body '- [ ] b'
+set_pulls "$(pull 'feat: x (#7)' 'contributor:feature/7-x' open false)"
 assert_contains "open PR + unchecked boxes allows stop" "완료 조건을 모두 충족" "$(run)"
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
-echo 0 > "$STUB_DIR/pr_count"
+set_pulls
 assert_contains "no PR blocks" "PR이 아직 생성되지 않음" "$(run)"
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=pending\nROLE=contributor\n'
-echo 1 > "$STUB_DIR/pr_count"
+set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' open false)"
 assert_contains "pending review still blocks" "코드 리뷰 미완료" "$(run)"
 
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
+set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' closed false)"
+assert_contains "only a closed, unmerged PR blocks" "PR이 아직 생성되지 않음" "$(run)"
+
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
-echo 1 > "$STUB_DIR/pr_count"; echo 0 > "$STUB_DIR/merged_count"
+set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' open false)"
 assert_contains "maintainer still requires merge" "merge되지 않음" "$(run)"
 
 echo "milestone mode"
 reset 'MODE=milestone\nMILESTONE=3\n'
-echo '#4, #5' > "$STUB_DIR/open_issues"; echo 2 > "$STUB_DIR/open_count"
+echo '{"open_issues": 2}' > "$STUB_DIR/milestone.json"
+echo '[{"number": 4}, {"number": 5}]' > "$STUB_DIR/milestone_issues.json"
 assert_contains "open issues block and are listed" "#4, #5" "$(run)"
 
 reset 'MODE=milestone\nMILESTONE=3\n'
 assert_contains "no open issues allows stop" "완료 조건을 모두 충족" "$(run)"
+
+reset 'MODE=milestone\nMILESTONE=3\n'
+echo '{"open_issues": 1}' > "$STUB_DIR/milestone.json"
+echo '[{"number": 6, "pull_request": {"url": "x"}}]' > "$STUB_DIR/milestone_issues.json"
+assert_contains "an open PR in the milestone is not an open issue" "완료 조건을 모두 충족" "$(run)"
 
 reset 'MODE=milestone\nMILESTONE=99\n'
 assert_contains "unknown milestone is not treated as complete" "건너뜁니다" "$(run)"

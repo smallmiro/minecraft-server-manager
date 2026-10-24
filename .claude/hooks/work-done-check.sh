@@ -41,18 +41,21 @@ missing=()
 case "$(get MODE)" in
     issue)
         n=$(get ISSUE)
-        body=$(gh issue view "$n" --json body -q .body 2>/dev/null) || allow "$GH_FAIL"
+        # REST only (gh api): GraphQL-backed subcommands such as `gh issue view` fail in
+        # sessions without GraphQL access, which used to skip the whole check (#789).
+        body=$(gh api "repos/{owner}/{repo}/issues/$n" --jq .body 2>/dev/null) || allow "$GH_FAIL"
+        match="(.title | contains(\"(#$n)\")) or (.head.ref | test(\"^(feature|bugfix)/$n-\"))"
         if [[ "$(get ROLE)" == contributor ]]; then
             # Closed-unmerged PRs don't count. Fork PRs are listed by number, not branch.
-            prs=$(gh pr list --state all --limit 100 --json title,headRefName,state \
-                --jq "[.[] | select(.state != \"CLOSED\") | select((.title | contains(\"(#$n)\")) or (.headRefName | test(\"^(feature|bugfix)/$n-\")))] | length" \
+            prs=$(gh api "repos/{owner}/{repo}/pulls?state=all&per_page=100" \
+                --jq "[.[] | select(.state == \"open\" or .merged_at != null) | select($match)] | length" \
                 2>/dev/null) || allow "$GH_FAIL"
             (( ${prs:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 생성되지 않음")
         else
             grep -qE '^[[:space:]]*- \[ \]' <<< "$body" \
                 && missing+=("이슈 #$n 본문에 미완료 체크박스가 있음")
-            merged=$(gh pr list --state merged --limit 100 --json title,headRefName \
-                --jq "[.[] | select((.title | contains(\"(#$n)\")) or (.headRefName | test(\"^(feature|bugfix)/$n-\")))] | length" \
+            merged=$(gh api "repos/{owner}/{repo}/pulls?state=closed&per_page=100" \
+                --jq "[.[] | select(.merged_at != null) | select($match)] | length" \
                 2>/dev/null) || allow "$GH_FAIL"
             (( ${merged:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 merge되지 않음")
         fi
@@ -63,13 +66,15 @@ case "$(get MODE)" in
         ;;
     milestone)
         m=$(get MILESTONE)
-        # The milestones API fails on an unknown number; `gh issue list` would not.
+        # The milestones API fails on an unknown number; the issues list would not.
         open_count=$(gh api "repos/{owner}/{repo}/milestones/$m" --jq .open_issues 2>/dev/null) \
             || allow "$GH_FAIL"
         if (( ${open_count:-0} > 0 )); then
-            open=$(gh issue list --milestone "$m" --state open --limit 200 --json number \
-                --jq '[.[].number | "#\(.)"] | join(", ")' 2>/dev/null) || open="${open_count}건"
-            missing+=("마일스톤 $m에 열린 이슈: $open")
+            # open_issues counts open PRs too; the issues endpoint marks them with pull_request.
+            open=$(gh api "repos/{owner}/{repo}/issues?milestone=$m&state=open&per_page=100" \
+                --jq '[.[] | select(.pull_request | not) | "#\(.number)"] | join(", ")' 2>/dev/null) \
+                || open="${open_count}건"
+            [[ -n "$open" ]] && missing+=("마일스톤 $m에 열린 이슈: $open")
         fi
         ;;
     *)
