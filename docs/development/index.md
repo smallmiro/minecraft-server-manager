@@ -29,7 +29,7 @@ Create issue in the original repo → Fork → Create branch → Tests first (TD
 | Docker / Docker Compose | Engine 24+, Compose 2.20+ | Server containers, E2E |
 | Git, GitHub CLI (`gh`) | Latest | Fork, issues, PRs |
 
-Supported operating systems are Linux and macOS, because the `mcctl` CLI depends on bash scripts. `better-sqlite3` (a dependency of mcctl-console) is a native module, so some environments need a build toolchain (gcc, make, python).
+Supported operating systems are Linux and macOS. `better-sqlite3` (a dependency of mcctl-console) is a native module, so some environments need a build toolchain (gcc, make, python).
 
 ## Fork and Set Up
 
@@ -79,7 +79,6 @@ node platform/services/cli/dist/index.js --version
 | `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api`: Fastify REST API (port 5001) |
 | `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console`: Next.js web UI (port 5000) |
 | `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth`: Modrinth adapter |
-| `platform/scripts/` | Bash management scripts (tests in `platform/scripts/tests/`) |
 | `platform/services/cli/templates/` | Single source of the platform templates copied by `mcctl init` (`platform/docker-compose.yml` and `platform/servers/_template` link to it) |
 | `e2e/` | Playwright E2E tests for the Management Console |
 | `docs/` | MkDocs documentation (English/Korean) |
@@ -128,8 +127,6 @@ pnpm --filter @minecraft-docker/mcctl test
 
 pnpm test:e2e                                # Management Console E2E (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
-
-pnpm test:scripts                            # bash script tests (bats, *.bats)
 ```
 
 Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console UI flows in `e2e/tests/*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.
@@ -156,8 +153,7 @@ PR checks against `develop` must pass before merge. `ci.yml` runs on every PR, w
 
 | Job | What it does |
 |-----|--------------|
-| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
-| `script tests` (ubuntu, macos) | `pnpm test:scripts` (bats) and `pnpm lint:scripts` (shellcheck) |
+| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` check (the tarball has `docker/bluemap/Dockerfile` and no `scripts/`) |
 | `docker compose config` (platform, templates) | Validates both compose files |
 
 `e2e.yml` runs daily at 03:00 KST and on manual dispatch, **not on PRs**: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run `pnpm test:e2e` locally when you change API or console behavior.

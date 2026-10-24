@@ -50,7 +50,7 @@ export interface RuntimeActionResult {
 /**
  * Per-workload runtime operations.
  * `name` is the server (#665): the adapter maps a ServerName to its workload (Docker: `mc-<server>`).
- * A string is the workload name itself (D1 form; @deprecated for servers, narrowed in #736).
+ * A string is the workload name itself (D1 form; @deprecated for servers; not narrowed in v3.0.0, see #667 and #641).
  * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
  */
 export interface IContainerRuntimePort {
@@ -172,7 +172,7 @@ export interface IServerSpecRepository {
   // v2 (D1) signatures, unchanged
   /** One `{ name }` per server directory with server.yaml or config.env. */
   list(): Promise<ServerSpec[]>;
-  /** The document, typed as the v2 ServerSpec. @deprecated Use load(). Removed in v3.0.0 (#736). */
+  /** The document, typed as the v2 ServerSpec. @deprecated Use load(). Deleted in v3.0.0 (#736): `get` → `load(name)`. */
   get(name: string): Promise<ServerSpec | null>;
   /** write(spec) after checking that `spec` is a full document; a bare { name } → 'invalid_spec' listing the missing fields. */
   save(spec: ServerSpec): Promise<void>;
@@ -194,8 +194,8 @@ Created in D1 as type-only files with the sketch from the hardening plan §9.1, 
 
 | Port | Owner | D1 signature | Why provisional |
 |------|-------|--------------|-----------------|
-| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>`, `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | **Settled by [ADR-0003](0003-server-spec.md)**, see [IServerSpecRepository (#675)](#iserverspecrepository-675) above. |
-| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>`, `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | **Superseded, final below.** |
+| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>` (deleted in v3.0.0, #736: use `load(name)`), `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | **Settled by [ADR-0003](0003-server-spec.md)**, see [IServerSpecRepository (#675)](#iserverspecrepository-675) above. |
+| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>` (deleted in v3.0.0, #736: use `snapshot()` + `holdersOf`), `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | **Superseded, final below.** |
 
 **`IWorldAssignmentPort`, final (#670, [ADR-0002](0002-world-server-assignment.md))**. Assignments are derived from each server's `LEVEL` in `config.env`; there is no separate record. It stays a port (#715: no new ports), and the rules live in pure domain functions (`shared/src/domain/services/worldAssignment.ts`) that adapters reuse.
 
@@ -204,7 +204,7 @@ interface WorldAssignment { world: string; server: string; internal?: boolean } 
 interface WorldAssignmentSnapshot { assignments: WorldAssignment[]; undetermined: string[] }
 
 export interface IWorldAssignmentPort {
-  /** @deprecated (v2) The holder of the world's folders, or null. Use snapshot() + holdersOf. */
+  /** @deprecated (v2) The holder of the world's folders, or null. Use snapshot() + holdersOf. Deleted in v3.0.0 (#736): `getAssignment` → `snapshot()` + `holdersOf`. */
   getAssignment(world: string): Promise<string | null>;
   /** v2 shape: the readable assignments. */
   listAssignments(): Promise<WorldAssignment[]>;
@@ -221,7 +221,7 @@ export interface IWorldAssignmentPort {
 }
 ```
 
-The v2 members `getAssignment` (now deprecated) and `listAssignments` (`WorldAssignment[]`) keep their shape (#715, #736); `snapshot`, `preview` and `release` were added. Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
+The v2 members `getAssignment` (deprecated here; deleted in v3.0.0, #736, in favour of `snapshot()` + `holdersOf`) and `listAssignments` (`WorldAssignment[]`) keep their shape (#715, #736); `snapshot`, `preview` and `release` were added. Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
 
 ## Adapters and the Legacy Facade
 
@@ -429,7 +429,7 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 2. **API stop semantics**: moving `executeServerAction('stop')` (`docker compose stop`) to `runtime.stop` (`docker stop`) is a small behaviour change. The two differ only for containers that are not in the compose project. Option A (recommended): accept it in D2 as a separate, labelled commit. Option B: make `stop` compose-based and change `mcctl.sh`-parity callers instead.
 3. **Owner of the composites**: none of D2, D4, or #667 names the 12 facade composites. D2's acceptance criterion "route tests with a fake container" needs them injectable. Recommendation: add "turn the composites into an application query service built from ports" to D4 (shared, core-agent), and land it before D2's route migration. **#665 did not do this**: none of its acceptance criteria needs it. It stays open for D2 (#667).
 4. **Order of signature changes**: D2, D3, and D4 run in parallel (P3), but D4 changes port parameters to `ServerName`. Option A (recommended): land D4's signature change first, then D2/D3. Option B: run them in parallel and let the compiler-driven fix-ups happen at merge. **Resolved by #665**: the parameters were widened, not replaced, so D2/D3 compile either way and can move call sites to `ServerName` at their own pace.
-5. **Scope of the error flip**: rows 8, 15, 16, and 19 (script, git, npm, and pm2 runners) are not runtime work. Confirm they belong to D2/D3/D4, or else the rule stays a warning for that package.
+5. **Scope of the error flip**: rows 8, 15, 16, and 19 (script, git, npm, and pm2 runners) are not runtime work. Confirm they belong to D2/D3/D4, or else the rule stays a warning for that package. **The script part is closed by #736** (v3.0.0): every script runner is gone (`execScript`, `execScriptInteractive`, `ShellAdapter`, `IShellPort`), so no script row is left in the table above. The git, npm and pm2 runners are not script work; the CLI's moved under `src/infrastructure/` in #668.
 
 ## Port Boundary Cleanup (#665, D4)
 
@@ -445,7 +445,7 @@ Structural change only (Tidy First). Docker argv, return values and error sentin
 | `serverHostnameOf(server: ServerName \| string)` | `<server>.local` |
 | `workloadNameOf(name: ServerName \| string)` | a ServerName → its container; a string → unchanged (the container name) |
 
-The module has no runtime imports, so `@minecraft-docker/shared/naming` stays browser-safe. `ServerName.containerName`/`hostname` and `Server.containerName`/`hostname` remain as `@deprecated` getters that delegate here; that is the only domain → infrastructure import, and it goes away with the getters in #736. The reserved-name message (`conflicts with the mc-router container`) is built the same way, so its text is unchanged.
+The module has no runtime imports, so `@minecraft-docker/shared/naming` stays browser-safe. `ServerName.containerName`/`hostname` and `Server.containerName`/`hostname` remained as `@deprecated` getters that delegate here (state at #665); that was the only domain → infrastructure import. The getters were deleted in v3.0.0 (#736); use `containerNameOf` / `serverHostnameOf`. The reserved-name message (`conflicts with the mc-router container`) is built the same way, so its text is unchanged.
 
 ### Port signature changes
 
@@ -468,7 +468,7 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 `new ServerRepository(paths?, runtime?)` and `new WorldRepository(paths?, assignments?, runtime?)`. The default is `new DockerComposeRuntimeAdapter()`, the instance the facade delegated to; the CLI `Container` passes its runtime. Neither repository imports the facade any more.
 
 - `ServerRepository.getStatus` awaits `runtime.getStatusAsync(ServerName.fromExisting(name))` and keeps the old mapping (`not_found`, the failed-query sentinel, is `STOPPED`). `getStatusAsync` was added to `IContainerRuntimePort` because the synchronous `getStatus` (`spawnSync`, no timeout) blocked the API event loop once per server in `findAll()` (#753 review). The Docker adapter runs the pre-#665 query through `execCommandAsync` (`docker inspect -f {{.State.Status}} -- <container>`; a non-zero exit is `not_found`, the state is lower-cased); the only argv change is the `--` of the #720 rule. A new method was simpler than making `getStatus` async, which is C2's change across every caller. A name that `fromExisting` rejects returns `UNKNOWN` instead of `STOPPED`; `findByName` never reaches that, because it rejects such names first.
-- `WorldRepository.findAllWithServerStatus` passes the container-name string it used before, including the pre-#670 branch that takes a holder starting with `mc-` as a container name. Changing that would be a behaviour change; #736 removes it when the port is narrowed.
+- `WorldRepository.findAllWithServerStatus` passes the container-name string it used before, including the pre-#670 branch that takes a holder starting with `mc-` as a container name. Changing that would be a behaviour change; it stays until the port is narrowed (#667, #641); v3.0.0 does not narrow it.
 
 ### Platform settings port (`CreateServerUseCase`)
 
@@ -491,11 +491,13 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 
 - The composites query service (open question 3): not needed for the acceptance criteria.
 - `PrerequisiteChecker` (direct call site row 19) and the shared lint error flip.
-- `ServerStatusUseCase` (deprecated as a whole) and the "Connect via" message in `CreateServerUseCase` still read the deprecated getters. #675 rewrites the creation path; #736 deletes both getters.
+- `ServerStatusUseCase` (deprecated as a whole) and the "Connect via" message in `CreateServerUseCase` still read the deprecated getters (state at #665). #675 rewrote the creation path, and both getters were deleted in v3.0.0 (#736).
 
 ### Deprecated in #665 (removed in v3.0.0, #736)
 
-`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, the string (container-name) form of the server parameter of the ports above, and passing `Paths` (or nothing) to `CreateServerUseCase`'s fourth parameter.
+The string (container-name) form of the server parameter of the ports above is **not** removed in v3.0.0; it stays until #667 and #641.
+
+`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, and passing `Paths` (or nothing) to `CreateServerUseCase`'s fourth parameter.
 
 ## Backup Port (#732, S3)
 

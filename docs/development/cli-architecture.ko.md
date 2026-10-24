@@ -18,8 +18,9 @@
 |------|------|
 | `index.ts` | 진입점. 자체 `parseArgs()`와 하나의 큰 `switch (command)`를 가집니다 |
 | `commands/` | 커맨드 핸들러(`create.ts`, `world.ts`, `mod.ts` 등). 하위 디렉터리 `config-snapshot/`, `console/`에 그룹 커맨드가 있습니다 |
-| `lib/` | 헬퍼: `shell.ts`(`ShellExecutor`), `rcon.ts`, `console-db.ts`, `pm2-utils.ts`, `prompts/` |
+| `lib/` | 헬퍼: `shell.ts`(`ShellExecutor` re-export), `rcon.ts`, `console-db.ts`, `pm2-utils.ts`, `prompts/` |
 | `infrastructure/adapters/` | CLI 전용 어댑터: `ClackPromptAdapter`, `OpsJsonAdapter`, `Pm2ServiceManagerAdapter` |
+| `infrastructure/ShellExecutor.ts` | compose 프로젝트 조작(pull, up/down, 전체 start/stop, router)과 `config.env` 접근만 맡습니다. 런타임 포트가 아닙니다(ADR-0001, 15행) |
 | `infrastructure/di/container.ts` | 의존성 주입 컨테이너 |
 | `domain/index.ts`, `application/index.ts` | `@minecraft-docker/shared`를 re-export할 뿐입니다 |
 
@@ -29,9 +30,9 @@
 |------|------|
 | `domain/value-objects/`, `domain/entities/`, `domain/mod/` | 도메인 모델 |
 | `application/ports/inbound/` | 유스케이스 인터페이스(`ICreateServerUseCase`, `IConfigSnapshotUseCase` 등) |
-| `application/ports/outbound/` | 인프라 인터페이스(`IShellPort`, `IServerRepository`, `IPromptPort`, `IDocProvider`, `IModSourcePort` 등) |
+| `application/ports/outbound/` | 인프라 인터페이스(`IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository`, `IServerRepository`, `IPromptPort`, `IDocProvider`, `IModSourcePort` 등) |
 | `application/use-cases/` | 유스케이스 구현 |
-| `infrastructure/adapters/` | `ShellAdapter`, `ServerRepository`, `WorldRepository`, `DocsAdapter`, `ApiPromptAdapter`, `Sqlite*Repository`, `RconCliAdapter` 등 |
+| `infrastructure/adapters/` | `DockerComposeRuntimeAdapter`, `GitWorldBackupAdapter`, `ConfigEnvWorldAssignmentAdapter`, `AvahiHostnameRegistrarAdapter`, `ServerRepository`, `WorldRepository`, `DocsAdapter`, `ApiPromptAdapter`, `Sqlite*Repository`, `RconCliAdapter` 등 |
 | `infrastructure/config/`, `infrastructure/factories/` | `Pm2EcosystemConfig`, `ModSourceFactory` |
 | `docker/`, `prerequisite/`, `types/`, `utils/` | Docker 헬퍼, 사전 요구사항 점검, 공용 타입과 유틸리티 |
 
@@ -42,20 +43,18 @@ flowchart TB
     subgraph CLI["cli package"]
         IDX["index.ts<br/>parseArgs + switch"] --> CMD["commands/*.ts"]
         CMD --> DI["Container<br/>getContainer()"]
-        CMD -.thin commands.-> SH["lib/shell.ts<br/>ShellExecutor"]
+        CMD -.compose commands.-> SH["infrastructure/ShellExecutor.ts<br/>(compose project only)"]
         CLIAD["ClackPromptAdapter<br/>OpsJsonAdapter<br/>Pm2ServiceManagerAdapter"]
     end
     subgraph SHARED["shared package"]
         UC["Use cases<br/>(application/use-cases)"] --> PORTS["Ports<br/>(inbound / outbound)"]
-        ADP["Adapters<br/>ShellAdapter, ServerRepository,<br/>Sqlite*, ..."] -.implements.-> PORTS
+        ADP["Adapters<br/>DockerComposeRuntimeAdapter,<br/>GitWorldBackupAdapter, ServerRepository,<br/>Sqlite*, ..."] -.implements.-> PORTS
         UC --> DOM["Domain<br/>entities, value objects"]
     end
     API["mcctl-api"] --> UC
     DI --> UC
     DI --> ADP
     DI --> CLIAD
-    SH --> BASH["platform/scripts/*.sh"]
-    ADP --> BASH
 ```
 
 ## 두 종류의 커맨드
@@ -63,7 +62,7 @@ flowchart TB
 코드를 읽거나 추가할 때 두 가지 방식이 공존한다는 점을 알아두어야 합니다.
 
 - **유스케이스 커맨드**는 비즈니스 로직을 가집니다. 핸들러가 컨테이너를 얻고, `shared`의 유스케이스를 호출한 뒤 결과를 출력합니다. 예: `create`, `delete`, `config-snapshot`, `backup-schedule`, `world`, `mod`.
-- **Thin 커맨드**는 단순 전달용입니다. 런타임 포트를 부르거나(`start`, `stop`, `logs`), `IServerConsolePort.getEndpoint`로 TCP RCON 세션을 열거나(`rcon`, `console <server>`), `ShellExecutor`로 docker compose를 실행하거나(`up`, `down`, `--all`, `router`), `docker exec <container> rcon-cli`로 RCON을 실행합니다(`lib/rcon.ts`, `exec`). `console init/service/user/api/remove` 하위 명령은 별개이며 아래에서 설명합니다.
+- **Thin 커맨드**는 단순 전달용입니다. 런타임 포트를 부르거나(`start`, `stop`, `logs`), `IServerConsolePort.getEndpoint`로 TCP RCON 세션을 열거나(`rcon`, `console <server>`), `ShellExecutor`로 docker compose를 실행하거나(`up`, `down`, `--all`, `router`; compose 프로젝트만), `docker exec <container> rcon-cli`로 RCON을 실행합니다(`lib/rcon.ts`, `exec`). `console init/service/user/api/remove` 하위 명령은 별개이며 아래에서 설명합니다.
 
 새로운 비즈니스 로직은 `commands/` 아래 파일이 아니라 shared 유스케이스에 두어야 합니다. 커맨드 파일은 옵션 파싱, 유스케이스 호출, 출력만 담당합니다.
 
@@ -75,7 +74,7 @@ flowchart TB
 
 | 클래스 | 규칙 |
 |--------|------|
-| `ServerName` | 2~32자, 소문자, 영문자로 시작, 하이픈 허용(연속 불가). `containerName`(`mc-<name>`)과 `hostname`을 제공합니다 |
+| `ServerName` | 2~32자, 소문자, 영문자로 시작, 하이픈 허용(연속 불가). `value`를 제공합니다. 컨테이너·호스트 이름은 `containerNameOf` / `serverHostnameOf`로 얻습니다 |
 | `ServerType` | `ServerTypeEnum`을 감쌉니다: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
 | `McVersion` | Minecraft 버전 |
 | `Memory` | `4G`, `2048M` 같은 JVM 메모리 |
@@ -92,8 +91,7 @@ flowchart TB
 | 인터페이스 | 메서드 |
 |-----------|--------|
 | `ICreateServerUseCase` | `execute()`(프롬프트) / `executeWithConfig(config)` |
-| `IDeleteServerUseCase` | `execute()`(프롬프트) / `executeWithName(name)` |
-| `IServerStatusUseCase` | `execute()` / `executeForServer(name)` |
+| `IDeleteServerUseCase` | `execute()`(프롬프트) / `executeWithName(name, { force, yes, deleteWorld })` |
 
 새로운 유스케이스(설정 스냅샷, 백업 스케줄, 플레이어 관리 등)는 대화형 모드 없이 CRUD 형태의 메서드를 사용합니다.
 
@@ -110,7 +108,7 @@ export interface IConfigSnapshotUseCase {
 }
 ```
 
-**Outbound 포트**(`application/ports/outbound/`)에는 `IPromptPort`, `IShellPort`, `IServerRepository`, `IWorldRepository`, `IDocProvider`, `IAuditLogPort`, `IRconPort`, `IModSourcePort`, `IServiceManagerPort`와 스냅샷/백업 저장소가 있습니다. `IPromptPort`와 `IDocProvider`는 outbound 포트입니다.
+**Outbound 포트**(`application/ports/outbound/`)에는 `IPromptPort`, `IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository`, `IServerRepository`, `IWorldRepository`, `IDocProvider`, `IAuditLogPort`, `IRconPort`, `IModSourcePort`, `IServiceManagerPort`와 스냅샷/백업 저장소가 있습니다. `IPromptPort`와 `IDocProvider`는 outbound 포트입니다.
 
 ## 어댑터
 
@@ -118,7 +116,10 @@ export interface IConfigSnapshotUseCase {
 |------|--------|--------|
 | `IPromptPort` | `ClackPromptAdapter`(@clack/prompts) | cli |
 | `IPromptPort` | `ApiPromptAdapter`(비대화형, `mcctl-api`에서 사용) | shared |
-| `IShellPort` | `ShellAdapter` | shared |
+| `IContainerRuntimePort` | `DockerComposeRuntimeAdapter` | shared |
+| `IServerConsolePort` | `DockerServerConsoleAdapter`(RCON) | shared |
+| `IWorldBackupPort` | `GitWorldBackupAdapter` | shared |
+| `IWorldAssignmentPort` | `ConfigEnvWorldAssignmentAdapter` | shared |
 | `IServerRepository` | `ServerRepository`(파일 시스템, `Paths` 사용) | shared |
 | `IWorldRepository` | `WorldRepository` | shared |
 | `IDocProvider` | `DocsAdapter` | shared |
@@ -135,7 +136,7 @@ const container = getContainer(options.root);   // ContainerOptions | rootDir st
 const useCase = container.configSnapshotUseCase; // created on first access
 ```
 
-사용 가능한 getter: `promptPort`, `shellPort`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase`, `configSnapshotScheduleUseCase`.
+사용 가능한 getter: `promptPort`, `runtimePort`, `containerRuntime`, `serverConsolePort`, `worldBackupPort`, `worldAssignmentPort`, `serverSpecRepository`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase`, `configSnapshotScheduleUseCase`.
 
 관련 헬퍼:
 
@@ -258,7 +259,7 @@ const spin = this.prompt.spinner();
 - `mcctl console ...`은 `Pm2ServiceManagerAdapter`와 `shared/src/infrastructure/config/Pm2EcosystemConfig.ts`를 통해 `mcctl-api`, `mcctl-console`을 PM2 프로세스로 관리합니다.
 - `mcctl console user`는 콘솔 SQLite 데이터베이스에 직접 기록합니다(`cli/src/lib/console-db.ts`).
 - SQLite 저장소(better-sqlite3), 플랫폼 루트 기준: `data/audit.db`, `backups/meta/backup-schedules.db`, `backups/meta/config-snapshots.db`.
-- bash 스크립트는 `platform/scripts/`에 있으며, 배포 시 `sync-scripts` npm 스크립트(`prepublishOnly`에서 실행)가 CLI 패키지로 복사합니다.
+- bash 스크립트는 없습니다. 모든 명령이 TypeScript이며(#715), `mcctl`은 docker, git, avahi를 포트와 어댑터로 실행합니다.
 - 일부 하위 시스템은 `mcctl-api`에서만 사용합니다: BlueMap 렌더링, 월드 분석, 플레이어 세션, RCON 어댑터(`RconCliAdapter`).
 
 ## 테스트
@@ -271,7 +272,7 @@ CLI는 **vitest**를 사용합니다. `platform/services/cli/tests/` 구조:
 | `integration/` | Mock과 연결한 유스케이스 |
 | `commands/` | 컨테이너를 mock한 커맨드 핸들러 |
 | `e2e/` | `cli-*.test.ts`가 `tests/e2e/helpers.ts`(`runCli`)로 `node dist/index.js`를 실행 |
-| `mocks/` | `MockPromptAdapter`, `MockShellAdapter`, `MockServerRepository`, `MockWorldRepository` |
+| `mocks/` | `MockPromptAdapter`, `MockServerRepository`, `MockWorldRepository`, `MockWorldAssignmentPort`, `createMockContainerRuntime` |
 
 shared 패키지 테스트는 `platform/services/shared/tests/*.test.ts`에 평면 구조로 있습니다.
 
@@ -284,13 +285,12 @@ pnpm --filter @minecraft-docker/mcctl test:e2e          # needs a build (dist/)
 
 오래된 테스트는 `node:assert`를, 새 테스트는 vitest의 `expect`와 `vi.mock()`을 사용합니다. 새 테스트에는 `expect`를 사용하세요.
 
-유스케이스 통합 테스트(Mock으로 유스케이스를 직접 생성합니다. `MockShellAdapter.wasCommandCalled()`는 명령 문자열이 정확히 일치해야 합니다):
+유스케이스 통합 테스트(Mock과 가짜 포트로 유스케이스를 직접 생성합니다. `cli/tests/integration/BackupUseCase-port.test.ts` 참고):
 
 ```typescript
 const prompt = new MockPromptAdapter({ /* scripted answers */ });
-const shell = new MockShellAdapter();
-const repo = new MockServerRepository();
-const useCase = new CreateServerUseCase(prompt, shell, repo);
+const port: IWorldBackupPort = fakeBackupPort();   // 호출을 기록하는 가짜
+const useCase = new BackupUseCase(prompt, port);
 ```
 
 컨테이너를 mock한 커맨드 테스트(`cli/tests/commands/config-snapshot.test.ts` 참고):
@@ -302,7 +302,7 @@ vi.mocked(getContainer).mockReturnValue({
 } as never);
 ```
 
-실제 `Container`가 필요하면 `Container.createWithAdapters(prompt, shell, serverRepo, worldRepo)`로 Mock 기반 컨테이너를 만들 수 있습니다. 테스트 사이에는 `resetContainer()`로 전역 컨테이너를 초기화하세요.
+실제 `Container`가 필요하면 `Container.createWithAdapters(prompt, serverRepo, worldRepo)`로 Mock 기반 컨테이너를 만들 수 있습니다. 테스트 사이에는 `resetContainer()`로 전역 컨테이너를 초기화하세요.
 
 ## 참고
 

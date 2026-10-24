@@ -152,7 +152,6 @@ For external access via playit.gg, see `mcctl playit setup`.
 ├── shared/                 # Shared resources
 │   ├── plugins/            # Shared plugins (read-only mount)
 │   └── mods/               # Shared mods (read-only mount)
-├── scripts/                # Management scripts (Bash)
 └── backups/                # Backup storage
 ```
 
@@ -261,7 +260,7 @@ After running `mcctl init`, the following directory structure is created:
             └── shared/               # Shared domain package
 ```
 
-The Bash management scripts are bundled inside the mcctl package (the location can be overridden with `MCCTL_SCRIPTS`); they are not part of the platform root.
+There are no Bash management scripts (removed in v3.0.0, #715). Every `mcctl` command is TypeScript. `MCCTL_SCRIPTS` is ignored, and `mcctl upgrade` offers to delete a leftover `<root>/scripts` folder; see the script to mcctl table in `docs/advanced/upgrade-runbook.md` (section 3-1).
 
 ### Connection Flow (LAN)
 

@@ -87,8 +87,7 @@ Use `orchestrator-agent` to launch parallel analysis agents. Each agent reads sp
 - **Also read**: `platform/.env.example`
 - **Also read**: `platform/servers/_template/config.env`
 - **Also read**: `platform/servers/_template/docker-compose.yml`
-- **Also read**: `platform/scripts/**/*.sh`
-- **Extract**: Service definitions, environment variables, volume mounts, network config, script capabilities
+- **Extract**: Service definitions, environment variables, volume mounts, network config
 
 #### 1f. Version & Changelog
 - **Path**: `platform/services/cli/package.json` (version)

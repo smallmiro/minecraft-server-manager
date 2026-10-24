@@ -78,7 +78,7 @@ orchestrator가 접수한 작업은 시작하기 전에 `/plan-work`로 계획�
 | Agent | Type | Module | Scope |
 |-------|------|--------|-------|
 | 🔧 Core | `core-agent` | shared/ | Domain entities, value objects, use cases, ports/adapters |
-| 💻 CLI | `cli-agent` | cli/, scripts/ | CLI commands, interactive prompts, bash scripts |
+| 💻 CLI | `cli-agent` | cli/ | CLI commands, interactive prompts |
 | 🖥️ Backend | `backend-agent` | mcctl-api/ | Fastify REST API, authentication, OpenAPI/Swagger |
 | 🎨 Frontend | `frontend-agent` | mcctl-console/ | Next.js Web UI, React components, hooks |
 | 🐳 DevOps | `devops-agent` | platform/, e2e/ | Docker, docker-compose, Playwright E2E tests |

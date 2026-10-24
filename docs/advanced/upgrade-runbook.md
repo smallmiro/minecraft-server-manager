@@ -77,6 +77,34 @@ mcctl upgrade --non-interactive   # apply defaults without prompting (automation
 - If `.mcctl.json` has no `installId`, it is added once (an existing value is kept). The web console uses it for anonymous usage analytics; to opt out, set `"telemetry": false` in `.mcctl.json` (see [Usage Analytics](../console/web-console.md#usage-analytics)).
 - **If the router image is the untagged `itzg/mc-router`, `mcctl upgrade` does not bump the image.** Pin `image:` in `docker-compose.yml` to the version named in the release notes, then run `docker compose config -q && docker compose up -d router`.
 
+### 3-1. Upgrading to v3.0.0: the `scripts` folder is gone (#736) {#v300-scripts}
+
+v3.0.0 removes every Bash script (#715). `mcctl` no longer reads `<root>/scripts`, and the `MCCTL_SCRIPTS` environment variable is ignored.
+
+- `mcctl upgrade` prints the path of `<root>/scripts`, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and a link to this table. In a terminal it asks `Remove <path>?` and deletes **only after you answer `y`** (default `N`). With `--non-interactive` or without a terminal (cron) it prints `rm -r <path>` as a hint and deletes nothing; `--dry-run` only says `Would ask before removing <path>.`. A symbolic link is unlinked, not followed. There is no option to skip the question. You can also delete the folder yourself; nothing else in the platform root depends on it.
+- **Before you delete it, copy any script you edited** (for example `cp -r $ROOT/scripts ~/scripts-backup`). Deleting cannot be undone.
+- If cron jobs, systemd units or your own scripts called `<root>/scripts/*.sh` directly, change them before you delete the folder. Use this table:
+
+| Old script (`<root>/scripts/`) | v3.0.0 |
+|---|---|
+| `mcctl.sh start` / `stop` / `status` / `logs` | `mcctl start` / `mcctl stop` / `mcctl status` / `mcctl logs` |
+| `mcctl.sh console` | `mcctl console <server>` (TCP RCON) |
+| RCON commands (`rcon-cli` through the script) | `mcctl exec <server> <command...>` |
+| `create-server.sh` | `mcctl create` |
+| `delete-server.sh` | `mcctl delete` |
+| `backup.sh push` / `status` / `history` / `restore` | `mcctl backup push` / `status` / `history` / `restore` |
+| `lock.sh` | `mcctl world` (`list`, `assign`, `release`; see [World Assignment Rules](../cli/commands.md#world-assignment-rules)) |
+| `player.sh lookup` / `uuid` | `mcctl player info <name> [--offline]` |
+| `logs.sh` | `mcctl logs` |
+| `init.sh` | `mcctl init` |
+| `render-map.sh` | No CLI command. Use **Render map** in the web console, or the API (BlueMap) |
+| `migrate-nip-io.sh` | No dedicated command. After the host IP changes, run `mcctl init --reconfigure` and answer yes to "Update existing servers with new IP hostnames?"; it renders every server again and the nip.io router hosts follow the new `HOST_IPS` (custom hosts stay) |
+| `lib/common.sh` | None. It was the scripts' own helper library; the name rules are in TypeScript |
+
+- Servers keep working. The first command that changes a server writes `servers/<name>/server.yaml` and rewrites `config.env` and the server's `compose.yml`; see [server.yaml](../configuration/server-yaml.md).
+
+**Gate:** `ls $ROOT/scripts` reports no such folder (or you chose to keep it), and nothing in `crontab -l` or `systemctl list-timers` still names a `.sh` file from it.
+
 ## 4. Restart API / Console (if needed)
 
 ```bash

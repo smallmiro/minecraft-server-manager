@@ -156,7 +156,6 @@ This creates the platform directory structure at `~/minecraft-servers/`:
 ├── shared/                # Shared plugins/mods
 │   ├── plugins/
 │   └── mods/
-├── scripts/               # Management scripts
 └── backups/               # Backup storage
 ```
 

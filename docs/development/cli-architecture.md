@@ -18,8 +18,9 @@ Three packages matter here:
 |------|------|
 | `index.ts` | Entry point. Own `parseArgs()` and one large `switch (command)` |
 | `commands/` | Command handlers (`create.ts`, `world.ts`, `mod.ts`, ...). Subdirectories `config-snapshot/` and `console/` hold grouped commands |
-| `lib/` | Helpers: `shell.ts` (`ShellExecutor`), `rcon.ts`, `console-db.ts`, `pm2-utils.ts`, `prompts/` |
+| `lib/` | Helpers: `shell.ts` (re-exports `ShellExecutor`), `rcon.ts`, `console-db.ts`, `pm2-utils.ts`, `prompts/` |
 | `infrastructure/adapters/` | CLI-only adapters: `ClackPromptAdapter`, `OpsJsonAdapter`, `Pm2ServiceManagerAdapter` |
+| `infrastructure/ShellExecutor.ts` | Compose-project operations only (pull, up/down, start/stop all, router) and `config.env` access. Not a runtime port (ADR-0001, row 15) |
 | `infrastructure/di/container.ts` | Dependency injection container |
 | `domain/index.ts`, `application/index.ts` | Only re-export `@minecraft-docker/shared` |
 
@@ -29,9 +30,9 @@ Three packages matter here:
 |------|------|
 | `domain/value-objects/`, `domain/entities/`, `domain/mod/` | Domain model |
 | `application/ports/inbound/` | Use case interfaces (`ICreateServerUseCase`, `IConfigSnapshotUseCase`, ...) |
-| `application/ports/outbound/` | Infrastructure interfaces (`IShellPort`, `IServerRepository`, `IPromptPort`, `IDocProvider`, `IModSourcePort`, ...) |
+| `application/ports/outbound/` | Infrastructure interfaces (`IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository`, `IServerRepository`, `IPromptPort`, `IDocProvider`, `IModSourcePort`, ...) |
 | `application/use-cases/` | Use case implementations |
-| `infrastructure/adapters/` | `ShellAdapter`, `ServerRepository`, `WorldRepository`, `DocsAdapter`, `ApiPromptAdapter`, `Sqlite*Repository`, `RconCliAdapter`, ... |
+| `infrastructure/adapters/` | `DockerComposeRuntimeAdapter`, `GitWorldBackupAdapter`, `ConfigEnvWorldAssignmentAdapter`, `AvahiHostnameRegistrarAdapter`, `ServerRepository`, `WorldRepository`, `DocsAdapter`, `ApiPromptAdapter`, `Sqlite*Repository`, `RconCliAdapter`, ... |
 | `infrastructure/config/`, `infrastructure/factories/` | `Pm2EcosystemConfig`, `ModSourceFactory` |
 | `docker/`, `prerequisite/`, `types/`, `utils/` | Docker helpers, prerequisite checks, shared types and utilities |
 
@@ -42,20 +43,18 @@ flowchart TB
     subgraph CLI["cli package"]
         IDX["index.ts<br/>parseArgs + switch"] --> CMD["commands/*.ts"]
         CMD --> DI["Container<br/>getContainer()"]
-        CMD -.thin commands.-> SH["lib/shell.ts<br/>ShellExecutor"]
+        CMD -.compose commands.-> SH["infrastructure/ShellExecutor.ts<br/>(compose project only)"]
         CLIAD["ClackPromptAdapter<br/>OpsJsonAdapter<br/>Pm2ServiceManagerAdapter"]
     end
     subgraph SHARED["shared package"]
         UC["Use cases<br/>(application/use-cases)"] --> PORTS["Ports<br/>(inbound / outbound)"]
-        ADP["Adapters<br/>ShellAdapter, ServerRepository,<br/>Sqlite*, ..."] -.implements.-> PORTS
+        ADP["Adapters<br/>DockerComposeRuntimeAdapter,<br/>GitWorldBackupAdapter, ServerRepository,<br/>Sqlite*, ..."] -.implements.-> PORTS
         UC --> DOM["Domain<br/>entities, value objects"]
     end
     API["mcctl-api"] --> UC
     DI --> UC
     DI --> ADP
     DI --> CLIAD
-    SH --> BASH["platform/scripts/*.sh"]
-    ADP --> BASH
 ```
 
 ## Two Kinds of Commands
@@ -63,7 +62,7 @@ flowchart TB
 Be aware of both styles when reading or adding code:
 
 - **Use case commands** contain business logic. The handler gets the container, calls a use case from `shared`, and formats the result. Examples: `create`, `delete`, `config-snapshot`, `backup-schedule`, `world`, `mod`.
-- **Thin commands** are pass-throughs. They call a runtime port (`start`, `stop`, `logs`), open a TCP RCON session from `IServerConsolePort.getEndpoint` (`rcon`, `console <server>`), run docker compose through `ShellExecutor` (`up`, `down`, `--all`, `router`), or run RCON through `docker exec <container> rcon-cli` (`lib/rcon.ts`, `exec`). The `console init/service/user/api/remove` subcommands are separate; see below.
+- **Thin commands** are pass-throughs. They call a runtime port (`start`, `stop`, `logs`), open a TCP RCON session from `IServerConsolePort.getEndpoint` (`rcon`, `console <server>`), run docker compose through `ShellExecutor` (`up`, `down`, `--all`, `router`; compose project only), or run RCON through `docker exec <container> rcon-cli` (`lib/rcon.ts`, `exec`). The `console init/service/user/api/remove` subcommands are separate; see below.
 
 New business logic belongs in a shared use case, not in a file under `commands/`. A command file should parse options, call the use case and print output.
 
@@ -75,7 +74,7 @@ Lives in `platform/services/shared/src/domain/`.
 
 | Class | Rule |
 |-------|------|
-| `ServerName` | 2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes `containerName` (`mc-<name>`) and `hostname` |
+| `ServerName` | 2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes `value`; the container and host names come from `containerNameOf` / `serverHostnameOf` |
 | `ServerType` | Wraps `ServerTypeEnum`: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
 | `McVersion` | Minecraft version |
 | `Memory` | JVM memory such as `4G` or `2048M` |
@@ -92,8 +91,7 @@ Other value objects cover cron expressions, snapshot diffs, roles, player data a
 | Interface | Methods |
 |-----------|---------|
 | `ICreateServerUseCase` | `execute()` (prompts) / `executeWithConfig(config)` |
-| `IDeleteServerUseCase` | `execute()` (prompts) / `executeWithName(name)` |
-| `IServerStatusUseCase` | `execute()` / `executeForServer(name)` |
+| `IDeleteServerUseCase` | `execute()` (prompts) / `executeWithName(name, { force, yes, deleteWorld })` |
 
 Newer use cases (config snapshots, backup schedules, player management, ...) have plain CRUD-style methods and no interactive mode:
 
@@ -110,7 +108,7 @@ export interface IConfigSnapshotUseCase {
 }
 ```
 
-**Outbound ports** (`application/ports/outbound/`) include `IPromptPort`, `IShellPort`, `IServerRepository`, `IWorldRepository`, `IDocProvider`, `IAuditLogPort`, `IRconPort`, `IModSourcePort`, `IServiceManagerPort` and the snapshot/backup repositories. Note that `IPromptPort` and `IDocProvider` are outbound ports.
+**Outbound ports** (`application/ports/outbound/`) include `IPromptPort`, `IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository`, `IServerRepository`, `IWorldRepository`, `IDocProvider`, `IAuditLogPort`, `IRconPort`, `IModSourcePort`, `IServiceManagerPort` and the snapshot/backup repositories. Note that `IPromptPort` and `IDocProvider` are outbound ports.
 
 ## Adapters
 
@@ -118,7 +116,10 @@ export interface IConfigSnapshotUseCase {
 |------|---------|---------|
 | `IPromptPort` | `ClackPromptAdapter` (@clack/prompts) | cli |
 | `IPromptPort` | `ApiPromptAdapter` (non-interactive, used by `mcctl-api`) | shared |
-| `IShellPort` | `ShellAdapter` | shared |
+| `IContainerRuntimePort` | `DockerComposeRuntimeAdapter` | shared |
+| `IServerConsolePort` | `DockerServerConsoleAdapter` (RCON) | shared |
+| `IWorldBackupPort` | `GitWorldBackupAdapter` | shared |
+| `IWorldAssignmentPort` | `ConfigEnvWorldAssignmentAdapter` | shared |
 | `IServerRepository` | `ServerRepository` (filesystem, via `Paths`) | shared |
 | `IWorldRepository` | `WorldRepository` | shared |
 | `IDocProvider` | `DocsAdapter` | shared |
@@ -135,7 +136,7 @@ const container = getContainer(options.root);   // ContainerOptions | rootDir st
 const useCase = container.configSnapshotUseCase; // created on first access
 ```
 
-Available getters include `promptPort`, `shellPort`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase` and `configSnapshotScheduleUseCase`.
+Available getters include `promptPort`, `runtimePort`, `containerRuntime`, `serverConsolePort`, `worldBackupPort`, `worldAssignmentPort`, `serverSpecRepository`, `serverRepository`, `worldRepository`, `docProvider`, `auditLogPort`, `modSourcePort`, `createServerUseCase`, `deleteServerUseCase`, `worldManagementUseCase`, `backupUseCase`, `backupScheduleUseCase`, `configSnapshotUseCase` and `configSnapshotScheduleUseCase`.
 
 Related helpers:
 
@@ -258,7 +259,7 @@ To add a source: create a package that implements `IModSourcePort`, call `ModSou
 - `mcctl console ...` manages `mcctl-api` and `mcctl-console` as PM2 processes through `Pm2ServiceManagerAdapter` and `shared/src/infrastructure/config/Pm2EcosystemConfig.ts`.
 - `mcctl console user` writes the console SQLite database directly (`cli/src/lib/console-db.ts`).
 - SQLite stores (better-sqlite3), relative to the platform root: `data/audit.db`, `backups/meta/backup-schedules.db`, `backups/meta/config-snapshots.db`.
-- Bash scripts live in `platform/scripts/` and are copied into the CLI package at publish time by the `sync-scripts` npm script (run from `prepublishOnly`).
+- There are no bash scripts. Every command is TypeScript (#715); `mcctl` runs docker, git and avahi through ports and adapters.
 - Some subsystems are only used by `mcctl-api`: BlueMap rendering, world analysis, player sessions and the RCON adapter (`RconCliAdapter`).
 
 ## Testing
@@ -271,7 +272,7 @@ The CLI uses **vitest**. Layout under `platform/services/cli/tests/`:
 | `integration/` | Use cases wired with mocks |
 | `commands/` | Command handlers with a mocked container |
 | `e2e/` | `cli-*.test.ts` spawn `node dist/index.js` via `tests/e2e/helpers.ts` (`runCli`) |
-| `mocks/` | `MockPromptAdapter`, `MockShellAdapter`, `MockServerRepository`, `MockWorldRepository` |
+| `mocks/` | `MockPromptAdapter`, `MockServerRepository`, `MockWorldRepository`, `MockWorldAssignmentPort`, `createMockContainerRuntime` |
 
 Shared package tests are flat files in `platform/services/shared/tests/*.test.ts`.
 
@@ -284,13 +285,12 @@ pnpm --filter @minecraft-docker/mcctl test:e2e          # needs a build (dist/)
 
 Older tests use `node:assert`; newer ones use vitest `expect` and `vi.mock()`. Use `expect` in new tests.
 
-Use case integration test (construct the use case directly with mocks; `MockShellAdapter.wasCommandCalled()` matches the exact command string):
+Use case integration test (construct the use case directly with mocks and a fake port; see `cli/tests/integration/BackupUseCase-port.test.ts`):
 
 ```typescript
 const prompt = new MockPromptAdapter({ /* scripted answers */ });
-const shell = new MockShellAdapter();
-const repo = new MockServerRepository();
-const useCase = new CreateServerUseCase(prompt, shell, repo);
+const port: IWorldBackupPort = fakeBackupPort();   // a fake that records calls
+const useCase = new BackupUseCase(prompt, port);
 ```
 
 Command test with a mocked container (see `cli/tests/commands/config-snapshot.test.ts`):
@@ -302,7 +302,7 @@ vi.mocked(getContainer).mockReturnValue({
 } as never);
 ```
 
-`Container.createWithAdapters(prompt, shell, serverRepo, worldRepo)` builds a container from mocks when you need a real `Container`. Reset any global container between tests with `resetContainer()`.
+`Container.createWithAdapters(prompt, serverRepo, worldRepo)` builds a container from mocks when you need a real `Container`. Reset any global container between tests with `resetContainer()`.
 
 ## See Also
 

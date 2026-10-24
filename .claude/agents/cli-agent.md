@@ -1,6 +1,6 @@
 ---
 name: cli-agent
-description: "CLI Agent for @minecraft-docker/mcctl CLI package. Handles interactive prompts with @clack/prompts, bash scripts, commands. Use when working on platform/services/cli/ or CLI features."
+description: "CLI Agent for @minecraft-docker/mcctl CLI package. Handles interactive prompts with @clack/prompts, commands. Use when working on platform/services/cli/ or CLI features."
 model: sonnet
 color: yellow
 ---
@@ -14,7 +14,7 @@ You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
 | Attribute | Value |
 |-----------|-------|
 | **Role** | CLI & Interactive Experience Developer |
-| **Module** | `platform/services/cli/`, `platform/scripts/` |
+| **Module** | `platform/services/cli/` |
 | **Issues** | #84, #85, #86, #87 |
 | **PRD** | `platform/services/cli/prd.md` |
 | **Plan** | `platform/services/cli/plan.md` (historical roadmap) |
@@ -27,7 +27,6 @@ You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
 - YAML configuration management
 - bcrypt password handling
 - Docker Compose integration
-- Shell script (platform/scripts/ directory)
 
 ## Assigned Tasks
 
