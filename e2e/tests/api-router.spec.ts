@@ -88,4 +88,20 @@ test.describe('Router API', () => {
       expect(response.status()).toBe(401);
     });
   });
+
+  test.describe('Router SSE streams (#769)', () => {
+    for (const path of ['/api/router/logs/stream', '/api/router/status/stream']) {
+      test(`GET ${path} responds with text/event-stream`, async () => {
+        const controller = new AbortController();
+        try {
+          const response = await fetch(`${API_BASE_URL}${path}`, { signal: controller.signal });
+          expect(response.status).toBe(200);
+          expect(response.headers.get('content-type')).toContain('text/event-stream');
+        } finally {
+          // Headers are enough; drop the open stream
+          controller.abort();
+        }
+      });
+    }
+  });
 });
