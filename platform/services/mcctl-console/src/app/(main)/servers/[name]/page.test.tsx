@@ -15,6 +15,7 @@ vi.mock('@/hooks/useAppRouter', () => ({
 
 vi.mock('@/hooks/useMcctl', () => ({
   useServer: vi.fn(),
+  useServers: vi.fn(),
   useStartServer: vi.fn(),
   useStopServer: vi.fn(),
   useRestartServer: vi.fn(),
@@ -25,14 +26,22 @@ vi.mock('@/hooks/useServerStatus', () => ({
   useServerStatus: vi.fn(),
 }));
 
+const detailProps = vi.hoisted(() => ({
+  current: null as null | { onSendCommand?: (command: string) => Promise<void> },
+}));
+
 vi.mock('@/components/servers/ServerDetail', () => ({
-  ServerDetail: () => <div aria-label="Server detail tabs">Detail content</div>,
+  ServerDetail: (props: { onSendCommand?: (command: string) => Promise<void> }) => {
+    detailProps.current = props;
+    return <div aria-label="Server detail tabs">Detail content</div>;
+  },
 }));
 
 import {
   useDeleteServer,
   useRestartServer,
   useServer,
+  useServers,
   useStartServer,
   useStopServer,
 } from '@/hooks/useMcctl';
@@ -87,6 +96,10 @@ describe('ServerDetailPage', () => {
     vi.mocked(useStopServer).mockReturnValue({ ...asyncMutation } as never);
     vi.mocked(useRestartServer).mockReturnValue({ ...asyncMutation } as never);
     vi.mocked(useDeleteServer).mockReturnValue({ ...deleteMutation } as never);
+    vi.mocked(useServers).mockReturnValue({
+      data: { servers: [server, { ...server, name: 'other', status: 'stopped' }], total: 2 },
+      isLoading: false,
+    } as never);
   });
 
   it('renders one server h1 with explicit status and health text', () => {
@@ -232,6 +245,85 @@ describe('ServerDetailPage', () => {
       } as never);
       renderPage();
       expect(screen.getByText(/already exists\. Nothing was deleted\./)).toBeInTheDocument();
+    });
+  });
+
+  describe('hero (#770, #771)', () => {
+    it('lets the hostname be copied', () => {
+      renderPage();
+
+      const hero = screen.getByRole('region', { name: 'Server overview' });
+      expect(hero).toHaveTextContent('test-server.local');
+      expect(screen.getByRole('button', { name: 'Copy to clipboard' })).toBeInTheDocument();
+    });
+
+    it('shows type and version as chips instead of a sentence, without emoji', () => {
+      renderPage();
+
+      const hero = screen.getByRole('region', { name: 'Server overview' });
+      expect(screen.getByText('PAPER').closest('.MuiChip-root')).not.toBeNull();
+      expect(screen.getByText('1.21.1').closest('.MuiChip-root')).not.toBeNull();
+      expect(hero).not.toHaveTextContent('Minecraft 1.21.1 · PAPER');
+      expect(hero.textContent).not.toMatch(/🔌|🔧|🎮/);
+    });
+
+    it('formats uptime with a day unit', () => {
+      vi.mocked(useServer).mockReturnValue({
+        data: { server: { ...server, uptimeSeconds: 4 * 86400 + 18 * 3600 + 42 * 60 } },
+        isLoading: false,
+        error: null,
+      } as never);
+
+      renderPage();
+
+      expect(screen.getByText('4d 18h 42m')).toBeInTheDocument();
+    });
+
+    it('gives Stop and Restart the same secondary weight', () => {
+      renderPage();
+
+      expect(screen.getByRole('button', { name: 'Stop' })).toHaveClass('MuiButton-outlined');
+      expect(screen.getByRole('button', { name: 'Restart' })).toHaveClass('MuiButton-outlined');
+    });
+
+    it('offers a server switcher beside the title', () => {
+      renderPage();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Switch server' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: /other/ }));
+
+      expect(push).toHaveBeenCalledWith('/servers/other');
+      expect(screen.getByRole('heading', { level: 1, name: 'test-server' })).toBeInTheDocument();
+    });
+  });
+
+  describe('sending commands', () => {
+    it('rejects with the API message when the command fails', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 503,
+          json: async () => ({ error: 'ServiceUnavailable', message: 'RCON is not ready' }),
+        }),
+      );
+      renderPage();
+
+      await expect(detailProps.current?.onSendCommand?.('list')).rejects.toThrow(
+        'RCON is not ready',
+      );
+      vi.unstubAllGlobals();
+    });
+
+    it('resolves when the command succeeds', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue({ ok: true, json: async () => ({ success: true, output: '' }) }),
+      );
+      renderPage();
+
+      await expect(detailProps.current?.onSendCommand?.('list')).resolves.toBeUndefined();
+      vi.unstubAllGlobals();
     });
   });
 });
