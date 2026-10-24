@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Routing Table grouped by server** (#799) - The console Routing page shows one row per server instead of one per hostname. A row shows the primary address (with copy), how many more hostnames there are, the hostname types and an **N not routed** warning; **Wake/Start** and the links appear once per server. Click a row to list all its hostnames; **Expand all** / **Collapse all** toggles every server. Searching a hostname opens its server and highlights the match. The page header counts servers and hostnames.
+
 ## [3.0.0] - 2026-10-24
 
 > **Upgrade notes (v3.0.0, BREAKING).** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts). All Bash scripts are gone (#715, #736).

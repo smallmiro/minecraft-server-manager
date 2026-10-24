@@ -787,10 +787,13 @@ The Routing page gives you full visibility and control over your network routing
 The wide panel on the left shows the **MC-Router Status** with a live routing table:
 
 - Router status and health chips (e.g., `running`, `healthy`)
-- For each server, an expandable entry in the **Routing Table** shows:
-    - A status dot, the server name, and its type and Minecraft version
-    - Number of configured routes
-    - All hostname mappings (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+- The **Routing Table** has one row per server. A collapsed row shows:
+    - The server name, its type and Minecraft version, and its status (e.g. **Sleeping · wakes on connect**)
+    - The primary address (nip.io first, then mDNS, WAN, Custom) with a copy button, and how many more hostnames there are
+    - The hostname types (e.g. `nip.io ×2`, `mDNS`, `WAN`) and an **N not routed** warning when mc-router does not know some of them
+    - **Wake/Start**, **Edit hostnames** and **Open server**
+- Click a row (or its arrow) to list all of that server's hostnames, each with a copy button, its type and a **Not routed** warning if needed. Several servers can be open at once; **Expand all** / **Collapse all** opens or closes every server.
+- The search box matches server names and hostnames. When a hostname matches, its server opens and the matching hostname is highlighted.
 
 ### Platform Information
 
