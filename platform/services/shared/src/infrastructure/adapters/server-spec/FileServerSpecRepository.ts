@@ -206,8 +206,8 @@ export class FileServerSpecRepository implements IServerSpecRepository {
   /**
    * Remove a server (#735, delete-server.sh steps 2-4): plan its worlds
    * (#652), move the world inside the server to worlds/ unless deleteWorld,
-   * then drop its servers/compose.yml entry and servers/<n> under the
-   * servers/compose.yml lock. Every refusal comes before the first change.
+   * then drop its servers/compose.yml entry under the servers/compose.yml
+   * lock, then remove servers/<n>. Every refusal comes before the first change.
    */
   async delete(name: string, options: DeleteServerSpecOptions = {}): Promise<ServerSpecDeleteResult> {
     if (!EXISTING_SERVER_NAME_PATTERN.test(name)) {
@@ -235,8 +235,18 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       const current = readOptionalSync(includePath);
       const next = this.includeWithout(name, current);
       if (next !== current) await atomicWriteFile(includePath, next!);
-      await rm(dir, { recursive: true, force: true });
     });
+    try {
+      await rm(dir, { recursive: true, force: true });
+    } catch (err) {
+      // e.g. EACCES on files the container wrote as root
+      throw new ServerSpecError(
+        'conflict',
+        `servers/${name}/ was removed from servers/compose.yml but could not be fully deleted ` +
+          `(${(err as Error).message}); remove what is left with: sudo rm -rf '${dir}'.${alreadyMoved(name, moved)}`,
+        name
+      );
+    }
     return result;
   }
 
