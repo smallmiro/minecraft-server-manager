@@ -19,6 +19,7 @@ import { useTheme } from '@mui/material/styles';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RouterIcon from '@mui/icons-material/Router';
 import SearchIcon from '@mui/icons-material/Search';
+import { BentoPanelHeader } from '@/components/bento';
 import { CopyButton } from '@/components/common';
 import type { RouteInfo } from '@/ports/api/IMcctlApiClient';
 import {
@@ -68,14 +69,7 @@ const visuallyHiddenSx = {
 } as const;
 
 function TypeBadge({ type }: { type: HostnameType }) {
-  return (
-    <Chip
-      label={HOSTNAME_TYPE_LABEL[type]}
-      size="small"
-      color={TYPE_COLOR[type]}
-      variant="outlined"
-    />
-  );
+  return <Chip label={HOSTNAME_TYPE_LABEL[type]} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
 }
 
 function StatusBadge({ route }: { route: RouteInfo }) {
@@ -85,7 +79,10 @@ function StatusBadge({ route }: { route: RouteInfo }) {
       label={label}
       size="small"
       color={color}
-      sx={{ height: 'auto', '& .MuiChip-label': { whiteSpace: 'normal', py: 0.25 } }}
+      sx={{
+        height: 'auto',
+        '& .MuiChip-label': { whiteSpace: 'normal', py: 0.25 },
+      }}
     />
   );
 }
@@ -155,7 +152,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
         type: classifyRouteHostname(route.hostname, playitDomains),
         route,
       })),
-    [routes, playitDomains]
+    [routes, playitDomains],
   );
 
   const needle = query.trim().toLowerCase();
@@ -164,17 +161,13 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
     : rows;
 
   return (
-    <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1.5}
-        alignItems={{ sm: 'center' }}
-        justifyContent="space-between"
-        sx={{ mb: 2 }}
-      >
-        <Typography variant="h6" component="h2">
-          Routing Table
-        </Typography>
+    <>
+      <BentoPanelHeader
+        title="Routing Table"
+        subtitle={`${rows.length} ${rows.length === 1 ? 'hostname' : 'hostnames'}`}
+        icon={<RouterIcon fontSize="small" />}
+      />
+      <Box sx={{ px: 2.5, pb: 2.5 }}>
         <TextField
           size="small"
           placeholder="Search hostname or server"
@@ -188,74 +181,80 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
               </InputAdornment>
             ),
           }}
-          sx={{ minWidth: { sm: 260 } }}
+          sx={{ mb: 2, width: { xs: '100%', sm: 320 } }}
         />
-      </Stack>
 
-      {visible.length === 0 ? (
-        <EmptyState message={rows.length === 0 ? 'No routes configured' : `No routes match "${query.trim()}"`} />
-      ) : isXs ? (
-        <Stack component="ul" aria-label="Routes" spacing={1.5} sx={{ listStyle: 'none', m: 0, p: 0 }}>
-          {visible.map((row) => (
-            <Box
-              component="li"
-              key={row.key}
-              sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.5, minWidth: 0 }}
-            >
-              <HostnameCell hostname={row.hostname} />
-              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-                <TypeBadge type={row.type} />
-                <StatusBadge route={row.route} />
-              </Stack>
-              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1 }}>
-                <Box sx={{ minWidth: 0 }}>
-                  <TargetCell row={row} />
-                </Box>
-                <ServerLink serverName={row.serverName} />
-              </Stack>
-            </Box>
-          ))}
-        </Stack>
-      ) : (
-        <Table size="small" sx={{ width: '100%', tableLayout: 'auto' }}>
-          <TableHead>
-            <TableRow>
-              <TableCell>Hostname</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Target</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right" sx={{ width: 48 }}>
-                <Box component="span" sx={visuallyHiddenSx}>
-                  Actions
-                </Box>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
+        {visible.length === 0 ? (
+          <EmptyState message={rows.length === 0 ? 'No routes configured' : `No routes match "${query.trim()}"`} />
+        ) : isXs ? (
+          <Stack component="ul" aria-label="Routes" spacing={1.5} sx={{ listStyle: 'none', m: 0, p: 0 }}>
             {visible.map((row) => (
-              <TableRow key={row.key} hover>
-                <TableCell sx={wrapSx}>
-                  <HostnameCell hostname={row.hostname} />
-                </TableCell>
-                <TableCell>
+              <Box
+                component="li"
+                key={row.key}
+                sx={{
+                  border: 1,
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  p: 1.5,
+                  minWidth: 0,
+                }}
+              >
+                <HostnameCell hostname={row.hostname} />
+                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
                   <TypeBadge type={row.type} />
-                </TableCell>
-                <TableCell sx={wrapSx}>
-                  <Stack>
-                    <TargetCell row={row} />
-                  </Stack>
-                </TableCell>
-                <TableCell>
                   <StatusBadge route={row.route} />
-                </TableCell>
-                <TableCell align="right">
+                </Stack>
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1 }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <TargetCell row={row} />
+                  </Box>
                   <ServerLink serverName={row.serverName} />
+                </Stack>
+              </Box>
+            ))}
+          </Stack>
+        ) : (
+          <Table size="small" sx={{ width: '100%', tableLayout: 'auto' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell>Hostname</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Target</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align="right" sx={{ width: 48 }}>
+                  <Box component="span" sx={visuallyHiddenSx}>
+                    Actions
+                  </Box>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </Box>
+            </TableHead>
+            <TableBody>
+              {visible.map((row) => (
+                <TableRow key={row.key} hover>
+                  <TableCell sx={wrapSx}>
+                    <HostnameCell hostname={row.hostname} />
+                  </TableCell>
+                  <TableCell>
+                    <TypeBadge type={row.type} />
+                  </TableCell>
+                  <TableCell sx={wrapSx}>
+                    <Stack>
+                      <TargetCell row={row} />
+                    </Stack>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge route={row.route} />
+                  </TableCell>
+                  <TableCell align="right">
+                    <ServerLink serverName={row.serverName} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </Box>
+    </>
   );
 }
