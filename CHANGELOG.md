@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Console: sudo password when deleting a server** (#761) - The server delete dialog has the same optional **Sudo Password** field as the create dialog. When filled in, it is sent in the `DELETE /api/servers/:name` body so the API can remove the server's `<name>.local` entry from `/etc/avahi/hosts` on hosts without passwordless sudo; left empty, no body is sent and the API tries `sudo -n`. If the hostname could not be removed, the dialog shows the API's warning before going back to the server list. The password is kept only in the dialog and cleared when it closes.
+
 ### Fixed
 - **`mcctl update` replaced a pinned image tag** (#798) - `mcctl update` moved every `itzg/minecraft-server` tag to the one recommended for the server's `VERSION`, so a server held on a release tag such as `2026.10.0-java21` went back to `java21` on the next update. A tag that starts with a release version, or a digest (`java21@sha256:…`), is now kept (`pinned tag, keeping`). The tag is read from `server.yaml` (with hand edits absorbed), so a pin there counts before it is rendered. If the pinned Java is older than `VERSION` needs, it warns and still keeps it. The loading MOTD label is still added. Use it to keep a NeoForge server with `MODRINTH_PROJECTS` on `2026.10.0-java21` while the upstream image resolves Modrinth mods with the Forge loader ([itzg/docker-minecraft-server#4357](https://github.com/itzg/docker-minecraft-server/issues/4357)), and set it back to `java21` once the fix ships.
 

@@ -101,6 +101,8 @@ export interface DeleteServerResponse {
   success: boolean;
   server: string;
   message: string;
+  /** Non-fatal problem, e.g. the mDNS hostname was not removed */
+  warning?: string;
 }
 
 export interface ActionResponse {
@@ -1058,7 +1060,7 @@ export interface IMcctlApiClient {
   getServers(options?: { include?: 'summary' }): Promise<ServerListResponse>;
   getServer(name: string): Promise<ServerDetailResponse>;
   createServer(request: CreateServerRequest): Promise<CreateServerResponse>;
-  deleteServer(name: string, force?: boolean, deleteWorld?: boolean): Promise<DeleteServerResponse>;
+  deleteServer(name: string, force?: boolean, deleteWorld?: boolean, sudoPassword?: string): Promise<DeleteServerResponse>;
   startServer(name: string): Promise<ActionResponse>;
   stopServer(name: string): Promise<ActionResponse>;
   restartServer(name: string): Promise<ActionResponse>;

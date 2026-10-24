@@ -48,12 +48,37 @@ describe('DELETE /api/servers/:name (#652)', () => {
 
   it('forwards force and deleteWorld=true', async () => {
     await DELETE(req('?force=true&deleteWorld=true'), ctx);
-    expect(mockDeleteServer).toHaveBeenCalledWith('srv', true, true);
+    expect(mockDeleteServer).toHaveBeenCalledWith('srv', true, true, undefined);
   });
 
   it('defaults deleteWorld to false', async () => {
     await DELETE(req('?force=true'), ctx);
-    expect(mockDeleteServer).toHaveBeenCalledWith('srv', true, false);
+    expect(mockDeleteServer).toHaveBeenCalledWith('srv', true, false, undefined);
+  });
+
+  it('forwards the sudoPassword from the JSON body (#761)', async () => {
+    const withBody = new NextRequest('http://localhost/api/servers/srv?force=true', {
+      method: 'DELETE',
+      body: JSON.stringify({ sudoPassword: 'pw' }),
+    });
+    await DELETE(withBody, ctx);
+    expect(mockDeleteServer).toHaveBeenCalledWith('srv', true, false, 'pw');
+  });
+
+  it('passes no sudoPassword when the body is empty (#761)', async () => {
+    await DELETE(req('?force=true'), ctx);
+    expect(mockDeleteServer.mock.calls[0][3]).toBeUndefined();
+  });
+
+  it('does not log the sudoPassword when the API fails (#761)', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockDeleteServer.mockRejectedValue(new Error('boom'));
+    await DELETE(
+      new NextRequest('http://localhost/api/servers/srv', { method: 'DELETE', body: JSON.stringify({ sudoPassword: 'secret-pw' }) }),
+      ctx,
+    );
+    expect(JSON.stringify(spy.mock.calls)).not.toContain('secret-pw');
+    spy.mockRestore();
   });
 
   it('passes through the API 500 message', async () => {

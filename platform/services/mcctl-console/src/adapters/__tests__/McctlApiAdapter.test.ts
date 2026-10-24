@@ -246,6 +246,25 @@ describe('McctlApiAdapter', () => {
       );
     });
 
+    it('deleteServer sends sudoPassword in the JSON body (#761)', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+      await adapter.deleteServer('test', true, false, 'pw');
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers/test?force=true',
+        expect.objectContaining({ method: 'DELETE', body: JSON.stringify({ sudoPassword: 'pw' }) })
+      );
+    });
+
+    it('deleteServer sends no body without sudoPassword (#761)', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+
+      await adapter.deleteServer('test', true);
+
+      expect(mockFetch.mock.calls[0][1].body).toBeUndefined();
+    });
+
     it('startServer should POST to start endpoint', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,

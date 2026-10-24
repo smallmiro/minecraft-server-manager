@@ -68,8 +68,13 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     const deleteWorld = searchParams.get('deleteWorld') === 'true';
 
+    // Optional body: { sudoPassword } for avahi hostname removal. Never logged.
+    const body = await request.json().catch(() => null);
+    const sudoPassword =
+      typeof body?.sudoPassword === 'string' && body.sudoPassword ? body.sudoPassword : undefined;
+
     const client = createMcctlApiClient(getUserContext(session));
-    const data = await client.deleteServer(name, force, deleteWorld);
+    const data = await client.deleteServer(name, force, deleteWorld, sudoPassword);
 
     return NextResponse.json(data);
   } catch (error) {
