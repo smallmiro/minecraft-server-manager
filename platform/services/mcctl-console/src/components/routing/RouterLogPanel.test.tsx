@@ -71,6 +71,28 @@ describe('RouterLogPanel', () => {
     expect(rows[1]).toHaveAttribute('data-kind', 'wake');
   });
 
+  it('labels each line with its kind in text, so wake-ups stand out without relying on colour', () => {
+    mockStream([
+      entry(1, { kind: 'connect', hostname: 'a.local', target: 'mc-a:25565', raw: 'c' }),
+      entry(2, { kind: 'wake', hostname: 'b.local', raw: 'w' }),
+      entry(3, { kind: 'error', raw: 'e' }),
+    ]);
+    renderPanel();
+    const rows = screen.getAllByTestId('router-log-row');
+    expect(rows[0]).toHaveTextContent('CONNECT');
+    expect(rows[1]).toHaveTextContent('WAKE');
+    expect(rows[2]).toHaveTextContent('ERROR');
+  });
+
+  it('shows only the hostname for a scale-up line that has no target yet', () => {
+    mockStream([entry(1, { kind: 'wake', hostname: 'creative.local', raw: 'scaling up' })]);
+    renderPanel();
+    const row = screen.getByTestId('router-log-row');
+    expect(row).toHaveTextContent('creative.local');
+    expect(row).not.toHaveTextContent('?');
+    expect(row).not.toHaveTextContent('→');
+  });
+
   it('shows raw for info and error events', () => {
     mockStream([entry(1, { kind: 'info', raw: 'Listening on 25565' }), entry(2, { kind: 'error', raw: 'boom' })]);
     renderPanel();

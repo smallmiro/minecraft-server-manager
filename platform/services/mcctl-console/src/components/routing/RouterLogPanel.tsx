@@ -40,9 +40,18 @@ function formatTime(ts?: string): string {
   return match ? match[1] : ts;
 }
 
+const KIND_LABEL: Record<RouterLogEntry['kind'], string> = {
+  connect: 'CONNECT',
+  wake: 'WAKE',
+  error: 'ERROR',
+  info: 'INFO',
+};
+
 function describeEvent(event: RouterLogEntry): string {
-  if ((event.kind === 'connect' || event.kind === 'wake') && (event.hostname || event.target)) {
-    return `${event.hostname ?? '?'} → ${event.target ?? '?'}`;
+  if (event.kind === 'connect' || event.kind === 'wake') {
+    // "Scaling up" lines name only the hostname; the target arrives with "Woke up"
+    if (event.hostname && event.target) return `${event.hostname} → ${event.target}`;
+    if (event.hostname || event.target) return (event.hostname ?? event.target)!;
   }
   return event.raw;
 }
@@ -130,6 +139,9 @@ export function RouterLogPanel() {
                   {formatTime(event.ts)}
                 </Box>
               )}
+              <Box component="span" sx={{ flexShrink: 0, minWidth: '7ch', fontWeight: 700 }}>
+                {KIND_LABEL[event.kind]}
+              </Box>
               <Box component="span" sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                 {describeEvent(event)}
                 {event.player && (
