@@ -96,6 +96,8 @@ export type {
   ServerSpec,
   LoadedServerSpec,
   WriteServerSpecOptions,
+  DeleteServerSpecOptions,
+  ServerSpecDeleteResult,
 } from './IServerSpecRepository.js';
 export type { IWorldAssignmentPort, WorldAssignment, WorldAssignmentSnapshot } from './IWorldAssignmentPort.js';
 

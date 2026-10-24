@@ -51,6 +51,12 @@ export interface IContainerRuntimePort {
   start(name: ServerName | string): Promise<RuntimeActionResult>;
   stop(name: ServerName | string): Promise<RuntimeActionResult>;
   restart(name: ServerName | string): Promise<RuntimeActionResult>;
+  /**
+   * #735 (server delete): stop the workload and remove it. An absent workload
+   * is success; a runtime that cannot be queried is a failure, not "absent".
+   * Server data is not the runtime's: the ServerSpec repository deletes it.
+   */
+  remove(name: ServerName | string): Promise<RuntimeActionResult>;
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
   readLogs(name: ServerName | string, options: { since: string; tail: number }): Promise<string[]>;

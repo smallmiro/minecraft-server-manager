@@ -112,6 +112,8 @@ export type {
   ServerSpec,
   LoadedServerSpec,
   WriteServerSpecOptions,
+  DeleteServerSpecOptions,
+  ServerSpecDeleteResult,
   IWorldAssignmentPort,
   WorldAssignment,
   IWorldBackupPort,

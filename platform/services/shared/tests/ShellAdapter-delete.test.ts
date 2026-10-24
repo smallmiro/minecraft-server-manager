@@ -1,4 +1,8 @@
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+/**
+ * delete-server.sh was removed in #735. The v2 signature stays (#736): the
+ * shell path fails with a clear message instead of ENOENT, and runs nothing.
+ */
+import { describe, test, expect, vi } from 'vitest';
 
 vi.mock('../src/docker/index.js', () => ({
   execScript: vi.fn(async () => ({ code: 0, stdout: '', stderr: '' })),
@@ -9,19 +13,11 @@ import { execScript } from '../src/docker/index.js';
 import { ShellAdapter } from '../src/infrastructure/adapters/ShellAdapter.js';
 import { ServerName } from '../src/domain/index.js';
 
-/** ShellAdapter.deleteServer arguments (#652): worlds are kept unless asked. */
-describe('ShellAdapter.deleteServer - args', () => {
-  const lastArgs = () => vi.mocked(execScript).mock.calls.at(-1)![1] as string[];
-
-  beforeEach(() => vi.mocked(execScript).mockClear());
-
-  test('keeps the world by default', async () => {
-    await new ShellAdapter().deleteServer(ServerName.create('alpha'), true);
-    expect(lastArgs()).toEqual(['alpha', '--force']);
-  });
-
-  test('passes --delete-world only when asked', async () => {
-    await new ShellAdapter().deleteServer(ServerName.create('alpha'), true, true);
-    expect(lastArgs()).toEqual(['alpha', '--force', '--delete-world']);
+describe('ShellAdapter.deleteServer (#735)', () => {
+  test('rejects with the removal message and runs no script', async () => {
+    await expect(new ShellAdapter().deleteServer(ServerName.create('alpha'), true, true)).rejects.toThrow(
+      /delete-server\.sh was removed in #735; use DeleteServerUseCase with ServerSpec deprovision/
+    );
+    expect(execScript).not.toHaveBeenCalled();
   });
 });

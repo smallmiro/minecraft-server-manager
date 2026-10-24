@@ -1,5 +1,9 @@
 export { CreateServerUseCase, ServerStartError, parseCreateServerConfig, type ServerProvisionDeps } from './CreateServerUseCase.js';
-export { DeleteServerUseCase } from './DeleteServerUseCase.js';
+export {
+  DeleteServerUseCase,
+  type ServerDeprovisionDeps,
+  type ServerDeprovisionResult,
+} from './DeleteServerUseCase.js';
 export { ServerStatusUseCase } from './ServerStatusUseCase.js';
 export { WorldManagementUseCase } from './WorldManagementUseCase.js';
 export { BackupUseCase } from './BackupUseCase.js';

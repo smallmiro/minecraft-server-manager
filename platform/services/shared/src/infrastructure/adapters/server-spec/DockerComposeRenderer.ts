@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import yaml from 'js-yaml';
 import { applyEnvChanges, parseEnvDocument } from '../../../utils/env-file.js';
 import { ServerSpecError, routerHosts, type ServerSpecDocument } from '../../../domain/server-spec/ServerSpecDocument.js';
@@ -115,10 +115,29 @@ export function hasIncludeEntry(text: string | undefined, name: string): boolean
   return includeEntries(text).includes(`${name}/docker-compose.yml`);
 }
 
-/** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
-function renderInclude(name: string, current: string | undefined): string {
-  const entry = `${name}/docker-compose.yml`;
-  if (current === undefined) return INCLUDE_HEADER + yaml.dump({ include: [entry] }, DUMP_OPTIONS);
+/** Whether an include path is inside servers/<name>/: `alpha/x.yml`, `./alpha//x.yml`, `alpha/`; not `alphabet/x.yml`. */
+function insideServer(path: unknown, name: string): boolean {
+  if (typeof path !== 'string') return false;
+  const p = posix.normalize(path);
+  return p === name || p.startsWith(`${name}/`);
+}
+
+const namesServer = (e: unknown, name: string): boolean => includePaths(e).some((p) => insideServer(p, name));
+
+/**
+ * The include entries pointing inside servers/<name>/ that mcctl did not
+ * write: all of them unless they are one string `<name>/docker-compose.yml`
+ * (#735). Throws when the text does not parse.
+ */
+export function handWrittenIncludeEntries(current: string, name: string): unknown[] {
+  const list = (yaml.load(current) as { include?: unknown } | null)?.include;
+  const own = Array.isArray(list) ? list.filter((e) => namesServer(e, name)) : [];
+  return own.length === 1 && own[0] === `${name}/docker-compose.yml` ? [] : own;
+}
+
+/** servers/compose.yml text parsed for adding entries; 'conflict' when it cannot be rewritten safely. */
+function readInclude(current: string | undefined, name: string): { parsed: Record<string, unknown>; list: unknown[] } {
+  if (current === undefined) return { parsed: {}, list: [] };
   const unreadable = (why: string) =>
     new ServerSpecError('conflict', `servers/compose.yml ${why}; fix it first (nothing was written)`, name);
   let parsed: unknown;
@@ -130,16 +149,29 @@ function renderInclude(name: string, current: string | undefined): string {
   if (!isMapping(parsed)) throw unreadable('is not a mapping');
   const list = parsed['include'] ?? [];
   if (!Array.isArray(list)) throw unreadable("has an 'include' that is not a list");
-  if (list.some((e) => includePaths(e).includes(entry))) return current;
+  return { parsed, list };
+}
+
+/** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
+export function renderInclude(name: string, current: string | undefined): string {
+  const entry = `${name}/docker-compose.yml`;
+  const { parsed, list } = readInclude(current, name);
+  if (list.some((e) => includePaths(e).includes(entry))) return current!;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
 }
 
-/** servers/compose.yml text without the entries naming exactly `<name>/docker-compose.yml`; unchanged when there is none. */
+/**
+ * servers/compose.yml text without the entry mcctl writes for the server, the
+ * string `<name>/docker-compose.yml`; unchanged without one. Every other entry
+ * stays as written (delete refuses hand-written ones for the server first, #735).
+ */
 export function removeIncludeEntry(current: string, name: string): string {
   const entry = `${name}/docker-compose.yml`;
   const parsed = yaml.load(current) as Record<string, unknown> | null;
   const list = parsed?.['include'];
-  if (!Array.isArray(list) || !list.some((e) => includePaths(e).includes(entry))) return current;
-  const kept = list.filter((e) => !includePaths(e).includes(entry));
-  return INCLUDE_HEADER + yaml.dump({ ...parsed, include: kept }, DUMP_OPTIONS);
+  if (!Array.isArray(list) || !list.includes(entry)) return current;
+  const doc: Record<string, unknown> = { ...parsed, include: list.filter((e) => e !== entry) };
+  // No entry left: no include: key, like a fresh servers/compose.yml (#660)
+  if ((doc['include'] as unknown[]).length === 0) delete doc['include'];
+  return INCLUDE_HEADER + (Object.keys(doc).length > 0 ? yaml.dump(doc, DUMP_OPTIONS) : '');
 }

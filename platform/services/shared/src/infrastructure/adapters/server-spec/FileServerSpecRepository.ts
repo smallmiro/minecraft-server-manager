@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
+import { cp, lstat, mkdir, readdir, readFile, rename, rm, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import yaml from 'js-yaml';
 import { Paths } from '../../../utils/index.js';
@@ -15,20 +15,25 @@ import {
   type ServerSpecDocument,
 } from '../../../domain/server-spec/ServerSpecDocument.js';
 import type {
+  DeleteServerSpecOptions,
   IServerSpecRepository,
   LoadedServerSpec,
+  ServerSpecDeleteResult,
   WriteServerSpecOptions,
 } from '../../../application/ports/outbound/IServerSpecRepository.js';
 import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImport } from './importDockerServer.js';
 import {
   DockerComposeRenderer,
+  handWrittenIncludeEntries,
   includeEntries,
   removeIncludeEntry,
+  renderInclude,
   type RenderContext,
   type RenderedFile,
   type ServerSpecRenderer,
 } from './DockerComposeRenderer.js';
 import { composeOutsideEdits } from './composeEdits.js';
+import { planServerWorlds } from './serverWorldPlan.js';
 import { readWorldAssignmentSnapshot } from '../effectiveExtraArgs.js';
 import { acquireFileLock } from '../../backup/lock.js';
 import { checkProposed, type WorldAssignmentSnapshot } from '../../../domain/services/worldAssignment.js';
@@ -113,7 +118,47 @@ export const serverSpecTestHooks = {
   beforeIncludeWrite: async (): Promise<void> => {},
   /** How long to wait for another process holding servers/compose.yml. */
   includeLockWaitMs: 10_000,
+  /** Before delete moves servers/<n>/data/<world> to worlds/ (#735). */
+  beforeWorldMove: async (_world: string): Promise<void> => {},
 };
+
+/**
+ * Rename, or copy when worlds/ is on another filesystem (what mv did).
+ * 'copied' leaves `from` for the caller to remove. The copy claims `to` with a
+ * non-recursive mkdir first (EEXIST when another process created it since the
+ * check), so it never merges into, and its rollback never removes, a folder
+ * that is not ours.
+ */
+async function renameOrCopy(from: string, to: string): Promise<'renamed' | 'copied'> {
+  try {
+    await rename(from, to);
+    return 'renamed';
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EXDEV') throw err;
+  }
+  await mkdir(to);
+  try {
+    // Entry by entry into the claimed folder: newer Node 22 cp() refuses an
+    // existing destination directory when errorOnExist is set
+    for (const entry of await readdir(from)) {
+      await cp(join(from, entry), join(to, entry), {
+        recursive: true,
+        errorOnExist: true,
+        force: false,
+        preserveTimestamps: true,
+        verbatimSymlinks: true,
+      });
+    }
+  } catch (copyErr) {
+    await rm(to, { recursive: true, force: true }); // the folder we claimed; the original is untouched
+    throw copyErr;
+  }
+  return 'copied';
+}
+
+/** What a delete that stopped part-way had already moved. */
+const alreadyMoved = (name: string, moved: string[]) =>
+  moved.map((w) => ` Already moved: servers/${name}/data/${w} -> worlds/${w}`).join('');
 
 const editConflict = (name: string) =>
   new ServerSpecError(
@@ -170,12 +215,179 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     await this.write(spec as ServerSpecDocument);
   }
 
-  async delete(name: string): Promise<void> {
-    throw new ServerSpecError(
-      'conflict',
-      `Removing server '${name}' through the ServerSpec repository arrives with #735; use mcctl delete ${name}`,
-      name
-    );
+  /**
+   * Remove a server (#735, delete-server.sh steps 2-4): plan its worlds
+   * (#652), drop its servers/compose.yml entry under the servers/compose.yml
+   * lock, move the world inside the server to worlds/ unless deleteWorld
+   * (a failed move puts the entry back), then remove servers/<n> (what rm
+   * leaves is a warning). Every refusal comes before the first change.
+   * A second delete of the server, from any process, is 'locked' meanwhile.
+   */
+  async delete(name: string, options: DeleteServerSpecOptions = {}): Promise<ServerSpecDeleteResult> {
+    if (!EXISTING_SERVER_NAME_PATTERN.test(name)) {
+      throw new ServerSpecError('not_found', `Invalid server name '${name}'`, name);
+    }
+    const dir = this.paths.serverDir(name);
+    if (!(await isDirectory(dir))) {
+      throw new ServerSpecError('not_found', `Server '${name}' not found (no servers/${name} directory)`, name);
+    }
+    // One delete of a server at a time across processes (CLI and API): a second one could remove
+    // what the first one may still put back. The lock lives beside servers/<n>, which goes.
+    const lock = await acquireFileLock(join(this.paths.servers, `.${name}.delete.lock`), 'server-delete');
+    if (!lock.ok) {
+      const who = lock.holder ? ` by pid ${lock.holder.pid} since ${lock.holder.startedAt}` : '';
+      throw new ServerSpecError(
+        'locked',
+        `servers/${name} is already being deleted${who} (another mcctl delete); retry when it is done`,
+        name
+      );
+    }
+    try {
+      return await this.deleteServer(name, dir, options);
+    } finally {
+      await lock.release();
+    }
+  }
+
+  /** delete() once the server directory is known to exist. */
+  private async deleteServer(name: string, dir: string, options: DeleteServerSpecOptions): Promise<ServerSpecDeleteResult> {
+    const includePath = join(this.paths.servers, 'compose.yml');
+    // An unreadable file or a hand-written entry for the server refuses before any change.
+    this.includeWithout(name, readOptionalSync(includePath));
+    const deleteWorld = options.deleteWorld === true;
+    const plan = await planServerWorlds(this.paths, name, deleteWorld);
+    const result: ServerSpecDeleteResult = {
+      level: plan.level,
+      movedWorlds: deleteWorld ? [] : plan.internal,
+      deletedWorlds: deleteWorld ? plan.internal : [],
+      keptWorld: plan.keptWorld,
+    };
+    if (options.dryRun) return result;
+
+    // Out of servers/compose.yml before the worlds move, as delete-server.sh did:
+    // `docker compose up -d mc-<n>` (mcctl start, POST .../start) then finds no
+    // service and cannot recreate the server while its world is copied.
+    const removed = await this.withIncludeLock(name, async () => {
+      const current = readOptionalSync(includePath);
+      const next = this.includeWithout(name, current);
+      if (next === current) return undefined;
+      await atomicWriteFile(includePath, next!);
+      return { before: current!, after: next! };
+    });
+    const moved: string[] = [];
+    try {
+      // Outside the lock: a long cross-device copy would make other writers give up with 'locked'.
+      await this.moveWorlds(name, result.movedWorlds, moved);
+    } catch (err) {
+      const note = removed ? await this.restoreInclude(name, removed) : '';
+      if (!note) throw err;
+      throw new ServerSpecError(err instanceof ServerSpecError ? err.code : 'conflict', `${(err as Error).message}${note}`, name);
+    }
+    try {
+      await rm(dir, { recursive: true, force: true });
+    } catch (err) {
+      // e.g. EACCES on files the container wrote as root. Out of the include, the server is deleted in effect.
+      result.warning =
+        `servers/${name}/ was removed from servers/compose.yml but could not be fully deleted ` +
+        `(${(err as Error).message}); remove what is left with: sudo rm -rf '${dir}'`;
+    }
+    return result;
+  }
+
+  /**
+   * Put the server's servers/compose.yml entry back after a failed move: the
+   * text delete replaced when nobody changed the file since, else the entry
+   * added unless one names it; not when servers/<n>/docker-compose.yml is gone.
+   * '' when done, else what happened or how to add it by hand.
+   */
+  private async restoreInclude(name: string, removed: { before: string; after: string }): Promise<string> {
+    const includePath = join(this.paths.servers, 'compose.yml');
+    try {
+      return await this.withIncludeLock(name, async () => {
+        // An entry for a file that is gone would break every compose call.
+        if (!existsSync(join(this.paths.serverDir(name), 'docker-compose.yml'))) {
+          return ` servers/${name}/docker-compose.yml no longer exists, so its servers/compose.yml entry was not put back`;
+        }
+        const current = readOptionalSync(includePath);
+        const text = current === removed.after ? removed.before : renderInclude(name, current);
+        if (text !== current) await atomicWriteFile(includePath, text);
+        return '';
+      });
+    } catch (err) {
+      return (
+        ` servers/compose.yml no longer includes ${name}/docker-compose.yml and putting it back failed ` +
+        `(${(err as Error).message}); add "- ${name}/docker-compose.yml" under include: in servers/compose.yml ` +
+        'to start the server again'
+      );
+    }
+  }
+
+  /**
+   * servers/compose.yml text without the server's generated entry; 'conflict'
+   * when it does not parse or has a hand-written entry for the server (#735).
+   */
+  private includeWithout(name: string, current: string | undefined): string | undefined {
+    if (current === undefined) return undefined;
+    let handWritten: unknown[];
+    try {
+      handWritten = handWrittenIncludeEntries(current, name);
+    } catch (e) {
+      throw new ServerSpecError(
+        'conflict',
+        `servers/compose.yml does not parse: ${(e as Error).message.split('\n')[0]}; fix it first (nothing was deleted)`,
+        name
+      );
+    }
+    if (handWritten.length > 0) {
+      throw new ServerSpecError(
+        'conflict',
+        `servers/compose.yml has a hand-written include entry for ${name} (${handWritten.map((e) => JSON.stringify(e)).join(', ')}); ` +
+          `remove it by hand, then run mcctl delete ${name} again (nothing was deleted)`,
+        name
+      );
+    }
+    return removeIncludeEntry(current, name);
+  }
+
+  /** Move servers/<n>/data/<world> to worlds/<world>, adding each to `moved`; on failure report what already moved. */
+  private async moveWorlds(name: string, worlds: string[], moved: string[]): Promise<void> {
+    if (worlds.length === 0) return;
+    const failed = (reason: string) =>
+      new ServerSpecError('conflict', `${reason}. servers/${name}/ was kept.${alreadyMoved(name, moved)}`, name);
+    await mkdir(this.paths.worlds, { recursive: true });
+    for (const world of worlds) {
+      await serverSpecTestHooks.beforeWorldMove(world);
+      const appeared = failed(`worlds/${world} appeared before data/${world} could be moved`);
+      // ponytail: check-then-rename is not atomic; rename onto a folder created in between
+      // fails (not empty) or replaces an empty one, and the copy claims it first, so no data is lost.
+      try {
+        await lstat(join(this.paths.worlds, world));
+        throw appeared;
+      } catch (err) {
+        if (err instanceof ServerSpecError) throw err;
+        if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw failed(`cannot check worlds/${world}`);
+      }
+      const from = join(this.paths.serverDir(name), 'data', world);
+      let how: 'renamed' | 'copied';
+      try {
+        how = await renameOrCopy(from, join(this.paths.worlds, world));
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === 'EEXIST' || code === 'ENOTEMPTY') throw appeared;
+        throw failed(`failed to move data/${world} to worlds/: ${(err as Error).message}`);
+      }
+      if (how === 'copied') {
+        try {
+          await rm(from, { recursive: true, force: true });
+        } catch (err) {
+          throw failed(
+            `worlds/${world} is a complete copy of data/${world}, but servers/${name}/data/${world} could not be fully ` +
+              `removed (${(err as Error).message}); remove what is left of it by hand: sudo rm -rf '${from}'`
+          );
+        }
+      }
+      moved.push(world);
+    }
   }
 
   /**
@@ -588,7 +800,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     );
   }
 
-  /** Remove the server's servers/compose.yml entry (exact name) under the lock. */
+  /** Remove the server's generated servers/compose.yml entry under the lock. */
   private async removeInclude(name: string): Promise<void> {
     await this.withIncludeLock(name, async () => {
       const path = join(this.paths.servers, 'compose.yml');

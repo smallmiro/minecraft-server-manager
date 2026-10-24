@@ -618,11 +618,13 @@ mcctl delete [name] [options]
 
 Without `--delete-world`, the delete also stops before removing anything when the world cannot be kept with certainty:
 
-- `config.env` has a `LEVEL` line other than one plain `LEVEL=<name>` (letters, digits, `-`, `_`): for example a comment, quotes, spaces around `=`, a path, or two `LEVEL` lines. Without any `LEVEL` line the world is `world`.
+- The server's world cannot be determined from `config.env`. `LEVEL` is read the way Docker Compose reads the file (quotes, a trailing comment and spaces around `=` are fine; the last `LEVEL` line wins), and the delete stops when the value is not a world name (letters, digits, `-`, `_`), uses `$` interpolation, or `EXTRA_ARGS` puts `--universe` somewhere mcctl does not support. These are the rules of [World Assignment Rules](#world-assignment-rules). Without any `LEVEL` line the world is `world`.
 - `servers/<name>/` or its `data/` is a symlink, or only `<LEVEL>_nether`/`<LEVEL>_the_end` exist without `data/<LEVEL>`.
 - Another world folder (one with `level.dat`, `level.dat_old`, `region/` or `*.mca` files, such as an old world from a previous `LEVEL`) would be deleted, or a symlink inside the server points to something inside the server. The message lists them.
 
 If `worlds/` resolves to a folder inside the server (for example a symlink into `servers/<name>/`), the delete stops even with `--delete-world`. If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, `mcctl delete <name>` refuses unless you pass `--force`.
+
+No backup runs before the delete: the world is kept in `worlds/` (unless `--delete-world`). Only one delete of a server runs at a time: a second `mcctl delete` (or API delete) of the same server fails while the first one runs. Delete handles only the `servers/compose.yml` entry mcctl writes (`<name>/docker-compose.yml`); if you wrote another include entry for the server by hand (long form, extra compose files), the delete stops before changing anything and asks you to remove that entry first. The mDNS hostname `<name>.local` is removed from `/etc/avahi/hosts` after the server files are gone, with `sudo sed -i … /etc/avahi/hosts`, the command the README's sudoers `NOPASSWD` lines allow. The sudo password comes from `--sudo-password`, [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password) or the prompt. If the removal fails (no password and no `NOPASSWD` rule, for example), the server is still deleted and `mcctl delete` prints a warning; remove the `<name>.local` line by hand. Files `mcctl delete` cannot remove from `servers/<name>/` (files the container wrote as root, for example) are a warning too, after the server is out of `servers/compose.yml`; remove them with the printed `sudo rm -rf` command.
 
 **Examples:**
 
