@@ -413,16 +413,24 @@ Delete a Minecraft server.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `force` | boolean | false | Force delete even if running |
+| `force` | boolean | false | Accepted for compatibility; a running server is always stopped and deleted |
 | `deleteWorld` | boolean | false | Delete the world inside the server (`servers/<name>/data/<LEVEL>`) instead of moving it to `worlds/`. Worlds in `worlds/` are never deleted |
 
-By default the world inside the server is moved to `worlds/<LEVEL>`. If `worlds/` already has that name, the world inside the server cannot be located with certainty (see [`mcctl delete`](../cli/commands.md#mcctl-delete)), Docker cannot be queried, or the container cannot be stopped, the request fails with `500` and nothing is deleted.
+**Request Body (optional):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sudoPassword` | string | Sudo password for removing the mDNS hostname `<name>.local` from `/etc/avahi/hosts` (write-only, never logged). Not needed with the sudoers `NOPASSWD` rule |
+
+By default the world inside the server is moved to `worlds/<LEVEL>`. If `worlds/` already has that name, the world inside the server cannot be located with certainty (see [`mcctl delete`](../cli/commands.md#mcctl-delete)), Docker cannot be queried, or the container cannot be stopped, the request fails with `500` and nothing is deleted. No backup runs before the delete.
 
 **Example:**
 
 ```bash
-curl -X DELETE "http://localhost:5001/api/servers/myserver?force=true" \
-  -H "X-API-Key: mctk_xxx"
+curl -X DELETE "http://localhost:5001/api/servers/myserver" \
+  -H "X-API-Key: mctk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"sudoPassword": "your-sudo-password"}'
 ```
 
 **Response:**
@@ -434,6 +442,8 @@ curl -X DELETE "http://localhost:5001/api/servers/myserver?force=true" \
   "message": "Server deleted successfully"
 }
 ```
+
+When the server was deleted but its mDNS hostname could not be removed, the response adds `warning` (for example `"mDNS hostname myserver.local was not removed: sudo authentication failed; check the sudo password"`).
 
 !!! note "World Data Preserved"
     Deleting a server does NOT delete the world data. Worlds are stored in the shared `/worlds/` directory.

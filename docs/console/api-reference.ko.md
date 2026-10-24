@@ -413,16 +413,24 @@ Minecraft 서버를 삭제합니다.
 
 | 매개변수 | 타입 | 기본값 | 설명 |
 |----------|------|--------|------|
-| `force` | boolean | false | 실행 중이어도 강제 삭제 |
+| `force` | boolean | false | 호환용으로 받음. 실행 중인 서버는 항상 정지한 뒤 삭제 |
 | `deleteWorld` | boolean | false | 서버 안의 월드(`servers/<name>/data/<LEVEL>`)를 `worlds/`로 옮기지 않고 삭제. `worlds/`의 월드는 지우지 않음 |
 
-기본 동작은 서버 안의 월드를 `worlds/<LEVEL>`로 옮기는 것입니다. `worlds/`에 같은 이름이 이미 있거나, 서버 안의 월드 위치를 확정할 수 없거나([`mcctl delete`](../cli/commands.ko.md#mcctl-delete) 참고), Docker 조회나 컨테이너 정지에 실패하면 `500`으로 실패하고 아무것도 지우지 않습니다.
+**요청 본문(선택):**
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `sudoPassword` | string | `/etc/avahi/hosts`에서 mDNS 호스트명 `<name>.local`을 지울 때 쓰는 sudo 비밀번호(쓰기 전용, 로그에 남지 않음). sudoers `NOPASSWD` 규칙이 있으면 필요 없음 |
+
+기본 동작은 서버 안의 월드를 `worlds/<LEVEL>`로 옮기는 것입니다. `worlds/`에 같은 이름이 이미 있거나, 서버 안의 월드 위치를 확정할 수 없거나([`mcctl delete`](../cli/commands.ko.md#mcctl-delete) 참고), Docker 조회나 컨테이너 정지에 실패하면 `500`으로 실패하고 아무것도 지우지 않습니다. 삭제 전에 백업은 하지 않습니다.
 
 **예제:**
 
 ```bash
-curl -X DELETE "http://localhost:5001/api/servers/myserver?force=true" \
-  -H "X-API-Key: mctk_xxx"
+curl -X DELETE "http://localhost:5001/api/servers/myserver" \
+  -H "X-API-Key: mctk_xxx" \
+  -H "Content-Type: application/json" \
+  -d '{"sudoPassword": "your-sudo-password"}'
 ```
 
 **응답:**
@@ -434,6 +442,8 @@ curl -X DELETE "http://localhost:5001/api/servers/myserver?force=true" \
   "message": "Server deleted successfully"
 }
 ```
+
+서버는 삭제했지만 mDNS 호스트명을 지우지 못하면 응답에 `warning`이 붙습니다(예: `"mDNS hostname myserver.local was not removed: sudo authentication failed; check the sudo password"`).
 
 !!! note "월드 데이터 보존"
     서버를 삭제해도 월드 데이터는 삭제되지 않습니다. 월드는 공유 `/worlds/` 디렉터리에 저장됩니다.
