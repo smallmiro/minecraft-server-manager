@@ -6,6 +6,61 @@
     - `mcctl update`는 패키지(CLI/API/Console/shared)만 올립니다. **`mcctl upgrade`(.env, `servers/_template`, 루트 compose의 router)는 자동 실행되지 않으므로 반드시 별도로 실행**합니다.
     - 모든 명령은 **PM2가 사용하는 Node 버전의 셸**에서 실행합니다(아래 0단계). 셸 Node와 PM2 Node가 다르면 `better-sqlite3` ABI 불일치로 Console이 500을 반환할 수 있습니다.
 
+## v3.0.0 업그레이드 스크립트 {#v300-upgrade-script}
+
+v2.x에서 v3.0.0으로 올릴 때는 `scripts/upgrade-v3.sh`가 아래 단계를 차례로 안내하고, 바꾸기 전에 묻습니다. 먼저 점검만 해 보고 실행하세요.
+
+```bash
+# 1. 드라이런: 점검과 계획만 보여 주고 아무것도 바꾸지 않음
+curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run
+# 2. 실행 (바꾸는 단계마다 물음)
+curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash
+```
+
+실행 전에 스크립트를 읽어 보려면:
+
+```bash
+curl -fsSLO https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh
+less upgrade-v3.sh
+bash upgrade-v3.sh --dry-run
+```
+
+`bash`로 파이프해도 안전합니다. 질문은 터미널에서 읽고, 스크립트가 띄우는 모든 명령은 빈 입력을 받으며, 다운로드가 중간에 끊기면 아무것도 실행하지 않습니다. Linux와 macOS(bash 3.2)를 지원합니다. 터미널이 없고 `--yes`도 없으면 바꾸는 단계는 건너뜁니다. 출력 전체는 `upgrade.log`에도 남습니다(백업 폴더, 드라이런이면 임시 폴더).
+
+| 옵션 | 의미 |
+|---|---|
+| `--root <dir>` | 플랫폼 루트(기본 `$MCCTL_ROOT`, 없으면 `~/minecraft-servers`) |
+| `--yes` | 묻지 않고 각 질문의 기본 답을 사용 |
+| `--dry-run` | 점검과 계획만 보여 주고 아무것도 바꾸지 않음 |
+| `--skip-update` | `mcctl update`를 하지 않음(CLI를 이미 올렸거나 로컬 빌드) |
+| `--remove-scripts` | 백업한 뒤 `<root>/scripts`를 묻지 않고 삭제 |
+| `--help` | 옵션 보기 |
+
+첫 단계 전에 `mcctl --version`과 `npm view @minecraft-docker/mcctl version`을 읽습니다. CLI가 이미 3.x면 업데이트를 건너뜁니다. npm `latest`가 3.x가 아니면 멈춥니다(v3 빌드가 있으면 `--skip-update`).
+
+| 단계 | 하는 일 | 종류(기본 답) |
+|---|---|---|
+| 0 사전 점검 | 루트 파일, `which -a mcctl`, PM2와 셸의 Node 메이저, 백업용 git 2.31, `scripts/*.sh`·`player lookup\|uuid`를 부르는 cron·타이머, macOS의 `mcctl console` 안내 | 자동(읽기 전용) |
+| 1 백업 | [1단계](#1-백업)의 파일과 `<root>/scripts`를 `<root>/backups/upgrade-v3-<시각>/`에 복사. 선택: `mcctl backup push` | 선택(예, push는 아니요) |
+| 2 업데이트 | `mcctl update --yes` 후 버전이 3.x인지 확인 | 선택(예) |
+| 3 업그레이드 | `mcctl upgrade --dry-run`을 보여 주고 `mcctl upgrade --non-interactive` 실행 | 선택(예) |
+| 4 `<root>/scripts` | 폴더 유지 또는 삭제(백업한 뒤에만, 링크면 링크만 제거) | 선택(유지) |
+| 5 `ecosystem.config.cjs` | v2.32.0 미만이면 옛 `AUTH_MODE` 값 수정([4-1](#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633)), mcctl-api에 `kill_timeout` 추가([4-2](#pm2-kill-timeout)), 이어서 `mcctl console service restart --force` | 선택(AUTH_MODE 아니요, kill_timeout은 `BACKUP_AUTO_ON_STOP=true`면 예, 재시작 예) |
+| 6 ServerSpec | `mcctl migrate spec --all --dry-run`을 보여 주고 선택 시 실행 | 선택(아니요) |
+| 7 월드 | `mcctl world list`를 보여 주고 중복·경고 줄을 강조 | 자동 |
+| 8 검증 | `mcctl --version`, `docker compose config -q`, PM2 상태, API `/health` | 자동 |
+| 9 요약 | 단계별 결과, 남은 일, 롤백, 로그 위치 | 자동 |
+
+백업, 업데이트, 업그레이드가 실패하면 그 결과에 기대는 이후 단계를 하지 않고 멈춥니다.
+
+**스크립트가 하지 않는 일**(요약에도 다시 나옵니다):
+
+- **실행 중인 서버 재시작.** 한가한 때 `mcctl stop <server> && mcctl start <server>`로 하세요.
+- **cron·타이머·직접 만든 스크립트 교체.** `<root>/scripts/*.sh`를 부르는 곳은 경고만 합니다. [3-1의 대응표](#v300-scripts)로 바꾸세요.
+- **롤백.** 요약이 `npm install -g @minecraft-docker/mcctl@<이전 버전> && mcctl console service restart --force`와 파일을 되돌릴 백업 폴더를 알려 줍니다([8단계](#8-롤백)).
+
+테스트용 환경 변수: `MCCTL_UPGRADE_TTY`는 `/dev/tty`를 대신합니다(읽을 수 있는 파일이면 그 내용이 답, 열 수 없는 경로면 "터미널 없음").
+
 ## 0. 사전 점검
 
 ```bash
