@@ -38,6 +38,7 @@ beforeEach(() => {
   mkdirSync(at('servers', 'alpha', 'data', 'alpha', 'region'), { recursive: true });
   mkdirSync(at('worlds'));
   writeFileSync(at('servers', 'alpha', 'config.env'), 'LEVEL=alpha\n');
+  writeFileSync(at('servers', 'alpha', 'docker-compose.yml'), '');
   writeFileSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'), 'level');
   writeFileSync(at('servers', 'alpha', 'data', 'alpha', 'region', 'r.0.0.mca'), 'chunks');
   writeFileSync(at('servers', 'compose.yml'), 'include:\n  - alpha/docker-compose.yml\n');

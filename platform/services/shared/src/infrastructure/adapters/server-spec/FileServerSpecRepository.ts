@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { cp, lstat, mkdir, readdir, readFile, rename, rm, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import yaml from 'js-yaml';
@@ -286,17 +286,22 @@ export class FileServerSpecRepository implements IServerSpecRepository {
   /**
    * Put the server's servers/compose.yml entry back after a failed move: the
    * text delete replaced when nobody changed the file since, else the entry
-   * added. '' when done (or already back), else how to add it by hand.
+   * added; not when servers/<n>/docker-compose.yml is gone. '' when done (or
+   * already back), else what happened or how to add it by hand.
    */
   private async restoreInclude(name: string, removed: { before: string; after: string }): Promise<string> {
     const includePath = join(this.paths.servers, 'compose.yml');
     try {
-      await this.withIncludeLock(name, async () => {
+      return await this.withIncludeLock(name, async () => {
+        // An entry for a file that is gone would break every compose call.
+        if (!existsSync(join(this.paths.serverDir(name), 'docker-compose.yml'))) {
+          return ` servers/${name}/docker-compose.yml no longer exists, so its servers/compose.yml entry was not put back`;
+        }
         const current = readOptionalSync(includePath);
-        if (hasIncludeEntry(current, name)) return;
+        if (hasIncludeEntry(current, name)) return '';
         await atomicWriteFile(includePath, current === removed.after ? removed.before : renderInclude(name, current));
+        return '';
       });
-      return '';
     } catch (err) {
       return (
         ` servers/compose.yml no longer includes ${name}/docker-compose.yml and putting it back failed ` +
