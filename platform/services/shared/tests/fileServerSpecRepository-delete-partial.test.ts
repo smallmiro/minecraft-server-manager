@@ -47,38 +47,102 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-describe('delete: a failure after the world moved says what moved', () => {
-  it('servers/compose.yml locked by another process: names the moved world, keeps servers/alpha/', async () => {
-    const holder = {
-      pid: process.pid,
-      hostname: hostname(),
-      bootTime: Math.round(Date.now() - uptime() * 1000),
-      nonce: 'someone-else',
-      op: 'compose-include',
-      startedAt: new Date().toISOString(),
-    };
-    writeFileSync(at('servers', '.compose.yml.lock'), JSON.stringify(holder));
-    serverSpecTestHooks.includeLockWaitMs = 50;
+/** Another live mcctl process holds servers/compose.yml. */
+function holdIncludeLock(): void {
+  const holder = {
+    pid: process.pid,
+    hostname: hostname(),
+    bootTime: Math.round(Date.now() - uptime() * 1000),
+    nonce: 'someone-else',
+    op: 'compose-include',
+    startedAt: new Date().toISOString(),
+  };
+  writeFileSync(at('servers', '.compose.yml.lock'), JSON.stringify(holder));
+  serverSpecTestHooks.includeLockWaitMs = 50;
+}
 
+/** A second world folder, so a move can fail after the first one moved. */
+function addNether(): void {
+  mkdirSync(at('servers', 'alpha', 'data', 'alpha_nether'), { recursive: true });
+  writeFileSync(at('servers', 'alpha', 'data', 'alpha_nether', 'level.dat'), 'nether');
+}
+
+describe('delete: the include entry goes before the world moves (#735 review)', () => {
+  it('is already gone from servers/compose.yml when the move starts, so compose up cannot recreate the server', async () => {
+    const atMove: string[][] = [];
+    serverSpecTestHooks.beforeWorldMove = async () => {
+      atMove.push(includeEntries(compose()));
+    };
+    await repo.delete('alpha');
+    expect(atMove).toEqual([['beta/docker-compose.yml']]);
+  });
+
+  it('a lock held by another process fails before anything moves, with its code', async () => {
+    holdIncludeLock();
     const error = await rejection(repo.delete('alpha'));
     expect(error.code).toBe('locked');
     expect(error.message).toMatch(/servers\/compose.yml is locked/);
-    expect(error.message).toContain('servers/alpha/ was kept.');
-    expect(error.message).toContain(MOVED);
-    expect(readFileSync(at('worlds', 'alpha', 'level.dat'), 'utf-8')).toBe('level');
-    expect(existsSync(at('servers', 'alpha', 'config.env'))).toBe(true);
+    expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
+    expect(existsSync(at('worlds', 'alpha'))).toBe(false);
     expect(includeEntries(compose())).toContain('alpha/docker-compose.yml');
   });
+});
 
-  it('servers/compose.yml broken while the world moved: names the moved world, keeps servers/alpha/', async () => {
-    serverSpecTestHooks.beforeWorldMove = async () => writeFileSync(at('servers', 'compose.yml'), 'include: [alpha\n');
+describe('delete: a failed move puts the include entry back (#735 review)', () => {
+  it('restores servers/compose.yml exactly when nobody changed it meanwhile', async () => {
+    addNether();
+    const original =
+      '# hand-written\ninclude:\n  - path: [alpha/docker-compose.yml, beta/docker-compose.yml]\n    project_directory: .\n';
+    writeFileSync(at('servers', 'compose.yml'), original);
+    serverSpecTestHooks.beforeWorldMove = async (world) => {
+      if (world === 'alpha_nether') mkdirSync(at('worlds', 'alpha_nether')); // another process takes the name
+    };
 
     const error = await rejection(repo.delete('alpha'));
     expect(error.code).toBe('conflict');
-    expect(error.message).toMatch(/servers\/compose.yml does not parse/);
+    expect(error.message).toMatch(/worlds\/alpha_nether appeared/);
     expect(error.message).toContain(MOVED);
-    expect(existsSync(at('worlds', 'alpha', 'level.dat'))).toBe(true);
-    expect(existsSync(at('servers', 'alpha', 'config.env'))).toBe(true);
+    expect(error.message).not.toMatch(/add it back/);
+    expect(compose()).toBe(original);
+  });
+
+  it('adds the entry back when another process changed servers/compose.yml meanwhile', async () => {
+    serverSpecTestHooks.beforeWorldMove = async () => {
+      writeFileSync(at('servers', 'compose.yml'), `${compose()}  - gamma/docker-compose.yml\n`);
+      mkdirSync(at('worlds', 'alpha'));
+    };
+
+    await expect(repo.delete('alpha')).rejects.toThrow(/worlds\/alpha appeared/);
+    expect(includeEntries(compose()).sort()).toEqual(['alpha/docker-compose.yml', 'beta/docker-compose.yml', 'gamma/docker-compose.yml']);
+  });
+
+  it('leaves an entry another process already put back alone', async () => {
+    serverSpecTestHooks.beforeWorldMove = async () => {
+      writeFileSync(at('servers', 'compose.yml'), 'include:\n  - alpha/docker-compose.yml\n');
+      mkdirSync(at('worlds', 'alpha'));
+    };
+    await expect(repo.delete('alpha')).rejects.toThrow(/worlds\/alpha appeared/);
+    expect(compose()).toBe('include:\n  - alpha/docker-compose.yml\n');
+  });
+
+  it.each([
+    ['servers/compose.yml stopped parsing', () => writeFileSync(at('servers', 'compose.yml'), 'include: [alpha\n')],
+    ['the lock is held by another process', holdIncludeLock],
+  ])('a restore that fails (%s) says how to add the entry back, keeping the move error', async (_, breakRestore) => {
+    addNether();
+    serverSpecTestHooks.beforeWorldMove = async (world) => {
+      if (world !== 'alpha_nether') return;
+      breakRestore();
+      mkdirSync(at('worlds', 'alpha_nether'));
+    };
+
+    const error = await rejection(repo.delete('alpha'));
+    expect(error.code).toBe('conflict');
+    expect(error.message).toMatch(/^worlds\/alpha_nether appeared before data\/alpha_nether could be moved\. servers\/alpha\/ was kept\./);
+    expect(error.message).toContain(MOVED);
+    expect(error.message).toMatch(
+      /servers\/compose.yml no longer includes alpha\/docker-compose.yml and putting it back failed \(.+\); add "- alpha\/docker-compose.yml" under include: in servers\/compose.yml to start the server again/
+    );
   });
 });
 
