@@ -144,6 +144,10 @@ async function renameOrCopy(from: string, to: string): Promise<'renamed' | 'copi
   return 'copied';
 }
 
+/** What a delete that stopped part-way had already moved. */
+const alreadyMoved = (name: string, moved: string[]) =>
+  moved.map((w) => ` Already moved: servers/${name}/data/${w} -> worlds/${w}`).join('');
+
 const editConflict = (name: string) =>
   new ServerSpecError(
     'edit_conflict',
@@ -225,7 +229,8 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     };
     if (options.dryRun) return result;
 
-    await this.moveWorlds(name, result.movedWorlds);
+    const moved: string[] = [];
+    await this.moveWorlds(name, result.movedWorlds, moved);
     await this.withIncludeLock(name, async () => {
       const current = readOptionalSync(includePath);
       const next = this.includeWithout(name, current);
@@ -249,17 +254,11 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     }
   }
 
-  /** Move servers/<n>/data/<world> to worlds/<world>; on failure report what already moved. */
-  private async moveWorlds(name: string, worlds: string[]): Promise<void> {
+  /** Move servers/<n>/data/<world> to worlds/<world>, adding each to `moved`; on failure report what already moved. */
+  private async moveWorlds(name: string, worlds: string[], moved: string[]): Promise<void> {
     if (worlds.length === 0) return;
-    const moved: string[] = [];
     const failed = (reason: string) =>
-      new ServerSpecError(
-        'conflict',
-        `${reason}. servers/${name}/ was kept.` +
-          moved.map((w) => ` Already moved: servers/${name}/data/${w} -> worlds/${w}`).join(''),
-        name
-      );
+      new ServerSpecError('conflict', `${reason}. servers/${name}/ was kept.${alreadyMoved(name, moved)}`, name);
     await mkdir(this.paths.worlds, { recursive: true });
     for (const world of worlds) {
       await serverSpecTestHooks.beforeWorldMove(world);
