@@ -443,7 +443,7 @@ curl -X DELETE "http://localhost:5001/api/servers/myserver" \
 }
 ```
 
-서버는 삭제했지만 mDNS 호스트명을 지우지 못하면 응답에 `warning`이 붙습니다(예: `"mDNS hostname myserver.local was not removed: sudo authentication failed; check the sudo password"`).
+서버는 삭제했지만 mDNS 호스트명을 지우지 못하면 응답에 `warning`이 붙습니다(예: `"mDNS hostname myserver.local was not removed: sudo authentication failed; check the sudo password"`). `servers/compose.yml`에서 빠진 뒤 `servers/<name>/`에 파일이 남은 경우(예: 컨테이너가 root로 만든 파일)도 같습니다. 서버는 삭제된 것으로 보고 `warning`이 `sudo rm -rf`로 지우라고 알려 줍니다. 두 경고가 함께 있으면 `; `로 이어 붙입니다.
 
 !!! note "월드 데이터 보존"
     서버를 삭제해도 월드 데이터는 삭제되지 않습니다. 월드는 공유 `/worlds/` 디렉터리에 저장됩니다.

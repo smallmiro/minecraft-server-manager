@@ -443,7 +443,7 @@ curl -X DELETE "http://localhost:5001/api/servers/myserver" \
 }
 ```
 
-When the server was deleted but its mDNS hostname could not be removed, the response adds `warning` (for example `"mDNS hostname myserver.local was not removed: sudo authentication failed; check the sudo password"`).
+When the server was deleted but its mDNS hostname could not be removed, the response adds `warning` (for example `"mDNS hostname myserver.local was not removed: sudo authentication failed; check the sudo password"`). The same goes for files left in `servers/<name>/` after it is out of `servers/compose.yml` (for example files the container wrote as root): the server counts as deleted and `warning` says to remove them with `sudo rm -rf`. Both warnings are joined with `; `.
 
 !!! note "World Data Preserved"
     Deleting a server does NOT delete the world data. Worlds are stored in the shared `/worlds/` directory.
