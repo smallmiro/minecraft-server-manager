@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, lstatSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync, lstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -33,6 +33,29 @@ function makeScripts(): string {
 }
 
 describe('handleLegacyScripts (#736)', () => {
+  it('lists what is inside before asking (#777 review)', async () => {
+    const dir = makeScripts();
+    writeFileSync(join(dir, 'my-cron.sh'), '# mine');
+    mockConfirm.mockResolvedValue(false);
+    await handleLegacyScripts(root, { interactive: true });
+    expect(said()).toContain('lib/');
+    expect(said()).toContain('my-cron.sh');
+  });
+
+  // root ignores the read-only folder that makes the removal fail
+  it.skipIf(process.getuid?.() === 0)('warns and returns instead of failing the upgrade when the removal fails (#777 review)', async () => {
+    const dir = makeScripts();
+    mockConfirm.mockResolvedValue(true);
+    chmodSync(join(dir, 'lib'), 0o500); // lib/common.sh cannot be removed
+    try {
+      await expect(handleLegacyScripts(root, { interactive: true })).resolves.toBeUndefined();
+      expect(said()).toContain('Could not remove');
+      expect(said()).toContain(`rm -r ${dir}`);
+    } finally {
+      chmodSync(join(dir, 'lib'), 0o700);
+    }
+  });
+
   it('does nothing when <root>/scripts is absent', async () => {
     await handleLegacyScripts(root, { interactive: true });
     expect(mockConfirm).not.toHaveBeenCalled();

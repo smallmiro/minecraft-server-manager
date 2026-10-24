@@ -1,4 +1,4 @@
-import { lstat, rm, unlink } from 'node:fs/promises';
+import { lstat, readdir, rm, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
 
@@ -36,12 +36,28 @@ export async function handleLegacyScripts(
     prompts.log.info(`Not removed (non-interactive). Delete it yourself when ready: rm -r ${dir}`);
     return;
   }
+  if (!isLink) prompts.log.info(`Contains: ${await describeEntries(dir)}`);
   const ok = await prompts.confirm({ message: `Remove ${dir}?`, initialValue: false });
   if (prompts.isCancel(ok) || !ok) {
     prompts.log.info('Kept scripts/.');
     return;
   }
-  if (isLink) await unlink(dir);
-  else await rm(dir, { recursive: true });
+  try {
+    if (isLink) await unlink(dir);
+    else await rm(dir, { recursive: true });
+  } catch (err) {
+    // The rest of the upgrade (templateVersion, summary) must still run
+    prompts.log.warn(`Could not remove ${dir}: ${(err as Error).message}. Delete it yourself: rm -r ${dir}`);
+    return;
+  }
   prompts.log.success(`Removed ${dir}.`);
+}
+
+/** The top-level entries (folders end with /), at most 10, so the user sees what y deletes. */
+async function describeEntries(dir: string): Promise<string> {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  if (entries.length === 0) return '(empty)';
+  const names = entries.map((e) => (e.isDirectory() ? `${e.name}/` : e.name)).sort();
+  const more = names.length > 10 ? `, … (${names.length - 10} more)` : '';
+  return names.slice(0, 10).join(', ') + more;
 }
