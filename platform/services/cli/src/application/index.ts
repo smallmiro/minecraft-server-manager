@@ -11,7 +11,6 @@ export {
   type IServerRepository,
   type ServerConfigData,
   type IWorldRepository,
-  type WorldLockData,
   type IDocProvider,
   type DocServerTypeInfo,
   type DocEnvVarInfo,

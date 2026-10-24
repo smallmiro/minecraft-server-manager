@@ -53,7 +53,6 @@ export type {
   IServerRepository,
   ServerConfigData,
   IWorldRepository,
-  WorldLockData,
   WorldWithServerStatus,
   ServerStatus,
   WorldAvailabilityCategory,

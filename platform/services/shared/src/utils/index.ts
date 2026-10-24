@@ -133,16 +133,6 @@ export class Paths {
     return join(this.dataDir, 'worlds');
   }
 
-  /**
-   * Locks directory
-   *
-   * @deprecated worlds/.locks is no longer read or written by mcctl (#670).
-   * Removed in v3.0.0 (#736).
-   */
-  get locks(): string {
-    return join(this.dataDir, 'worlds', '.locks');
-  }
-
   /** Shared plugins directory */
   get plugins(): string {
     return join(this.dataDir, 'shared', 'plugins');
@@ -196,16 +186,6 @@ export class Paths {
   /** Get world directory */
   worldDir(name: string): string {
     return join(this.worlds, name);
-  }
-
-  /**
-   * Get lock file path
-   *
-   * @deprecated worlds/.locks is no longer read or written by mcctl (#670).
-   * Removed in v3.0.0 (#736).
-   */
-  lockFile(world: string): string {
-    return join(this.locks, `${world}.lock`);
   }
 }
 

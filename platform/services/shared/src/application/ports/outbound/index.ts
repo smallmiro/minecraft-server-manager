@@ -23,7 +23,6 @@ export type {
 
 export type {
   IWorldRepository,
-  WorldLockData,
   WorldWithServerStatus,
   ServerStatus,
   WorldAvailabilityCategory,

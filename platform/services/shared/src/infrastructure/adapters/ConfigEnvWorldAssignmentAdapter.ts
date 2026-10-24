@@ -3,8 +3,6 @@ import { assertEnvFileValue } from '../../utils/env-file.js';
 import {
   WorldAssignmentError,
   checkAssign,
-  checkRemoval,
-  holdersOf,
   planRelease,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
@@ -36,16 +34,6 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     private readonly paths: Paths = new Paths(),
     private readonly specRepo?: IServerSpecRepository
   ) {}
-
-  /** @deprecated Use snapshot() with holdersOf. Removed in v3.0.0 (#736). */
-  async getAssignment(world: string): Promise<string | null> {
-    const snapshot = await this.read();
-    const holder = holdersOf(snapshot, world)[0];
-    if (holder) return holder;
-    const undetermined = checkRemoval(snapshot, world);
-    if (undetermined) throw undetermined;
-    return null;
-  }
 
   async listAssignments(): Promise<WorldAssignment[]> {
     return (await this.read()).assignments;

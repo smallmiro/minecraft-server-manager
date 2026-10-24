@@ -111,18 +111,6 @@ describe('WorldRepository assignment hydration', () => {
     expect((await repo.findAll()).map((w) => w.isLocked)).toEqual([false]);
   });
 
-  it('getLockStatus is derived from the assignment (no pid)', async () => {
-    world('shared');
-    server('alpha', 'shared');
-
-    expect(await repo.getLockStatus('shared')).toMatchObject({
-      worldName: 'shared',
-      serverName: 'alpha',
-      pid: undefined,
-    });
-    expect(await repo.getLockStatus('free')).toBeNull();
-  });
-
   it('findUnlocked/findLocked follow the assignments', async () => {
     world('free');
     world('held');

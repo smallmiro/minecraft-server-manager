@@ -1,5 +1,5 @@
 import type { IWorldAssignmentPort, WorldAssignment, WorldAssignmentSnapshot } from '@minecraft-docker/shared';
-import { WorldAssignmentError, checkAssign, holdersOf, planRelease } from '@minecraft-docker/shared';
+import { WorldAssignmentError, checkAssign, planRelease } from '@minecraft-docker/shared';
 
 /**
  * In-memory IWorldAssignmentPort: server -> LEVEL, enforcing the shared domain rules.
@@ -15,10 +15,6 @@ export class MockWorldAssignmentPort implements IWorldAssignmentPort {
 
   constructor(levels: Record<string, string> = {}) {
     this.levels = new Map(Object.entries(levels));
-  }
-
-  async getAssignment(world: string): Promise<string | null> {
-    return holdersOf(await this.snapshot(), world)[0] ?? null;
   }
 
   async listAssignments(): Promise<WorldAssignment[]> {
