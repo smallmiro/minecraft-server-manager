@@ -153,40 +153,54 @@ describe('WorldRepository assignment hydration', () => {
   });
 });
 
-// Defense in depth behind the API's path-parameter schema (#728): a name that
-// is not one directory under worlds/ is not found, and a legacy name such as
-// "My World" (a LEVEL #649 still accepts) is deleted like any other world.
+// Defense in depth behind the API's path-parameter schema (#728): the
+// repository only sees an existing directory right under worlds/. Legacy names
+// a LEVEL may hold ("My World", ".old") work; files and other paths do not.
 describe('WorldRepository world names (#728)', () => {
-  it.each(['', '..', '../servers', '.locks', 'a/b'])('does not find %j outside worlds/<one directory>', async (name) => {
+  it('does not find, or delete, anything but one directory right under worlds/', async () => {
     mkdirSync(join(root, 'servers'), { recursive: true });
     writeFileSync(join(root, '.meta'), JSON.stringify({ seed: 'outside' }));
-    mkdirSync(join(root, 'worlds', '.locks'), { recursive: true });
     mkdirSync(join(root, 'worlds', 'a', 'b'), { recursive: true });
+
+    for (const name of ['', '.', '..', '../servers', 'a/b', 'a/', 'b/../a', join(root, 'servers')]) {
+      expect(await repo.findByName(name), name).toBeNull();
+      expect(await repo.exists(name), name).toBe(false);
+      expect(await repo.getSeed(name), name).toBeNull();
+      expect(await repo.delete(name), name).toBe(false);
+    }
+    expect(existsSync(join(root, 'servers'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'a', 'b'))).toBe(true);
+  });
+
+  it.each(['notes.txt', 'mapbackup.zip'])('treats the plain file worlds/%s as no world', async (name) => {
+    mkdirSync(join(root, 'worlds'), { recursive: true });
+    writeFileSync(join(root, 'worlds', name), 'not a world');
+    world(`${name}_nether`);
 
     expect(await repo.findByName(name)).toBeNull();
     expect(await repo.exists(name)).toBe(false);
-    expect(await repo.getSeed(name)).toBeNull();
+    expect(await repo.delete(name)).toBe(false);
+    expect(existsSync(join(root, 'worlds', name))).toBe(true);
+    expect(existsSync(join(root, 'worlds', `${name}_nether`))).toBe(true);
   });
 
-  it('finds and deletes a legacy name with a space, with its dimension folders', async () => {
-    for (const dir of ['My World', 'My World_nether', 'My World_the_end', 'My Worlds']) world(dir);
+  it.each(['My World', '.old'])('finds and deletes the legacy name %j, with its dimension folders', async (name) => {
+    for (const dir of [name, `${name}_nether`, `${name}_the_end`, `${name}s`]) world(dir);
 
-    expect((await repo.findByName('My World'))?.name).toBe('My World');
-    expect(await repo.delete('My World')).toBe(true);
-    for (const dir of ['My World', 'My World_nether', 'My World_the_end']) {
+    expect((await repo.findByName(name))?.name).toBe(name);
+    expect(await repo.exists(name)).toBe(true);
+    expect(await repo.delete(name)).toBe(true);
+    for (const dir of [name, `${name}_nether`, `${name}_the_end`]) {
       expect(existsSync(join(root, 'worlds', dir)), dir).toBe(false);
     }
-    expect(existsSync(join(root, 'worlds', 'My Worlds'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', `${name}s`))).toBe(true);
   });
 
-  it.each(['..', '../servers', '.locks', 'a/b'])('refuses to delete %j', async (name) => {
-    mkdirSync(join(root, 'servers'), { recursive: true });
-    mkdirSync(join(root, 'worlds', '.locks'), { recursive: true });
-    mkdirSync(join(root, 'worlds', 'a', 'b'), { recursive: true });
+  it('deletes only satellites that are directories', async () => {
+    world('w');
+    writeFileSync(join(root, 'worlds', 'w_nether'), 'a file, not a dimension');
 
-    await expect(repo.delete(name)).rejects.toThrow(/Invalid world name/);
-    expect(existsSync(join(root, 'servers'))).toBe(true);
-    expect(existsSync(join(root, 'worlds', '.locks'))).toBe(true);
-    expect(existsSync(join(root, 'worlds', 'a', 'b'))).toBe(true);
+    expect(await repo.delete('w')).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'w_nether'))).toBe(true);
   });
 });

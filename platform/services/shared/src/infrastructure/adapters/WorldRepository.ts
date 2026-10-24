@@ -15,13 +15,7 @@ import { randomUUID } from 'node:crypto';
 import * as unzipper from 'unzipper';
 import { createReadStream, createWriteStream } from 'node:fs';
 import { Paths } from '../../utils/index.js';
-import {
-  World,
-  WORLD_NAME_PATTERN,
-  EXISTING_WORLD_DIR_PATTERN,
-  holdersOf,
-  type WorldAssignmentSnapshot,
-} from '../../domain/index.js';
+import { World, WORLD_NAME_PATTERN, holdersOf, type WorldAssignmentSnapshot } from '../../domain/index.js';
 import type {
   IWorldRepository,
   WorldWithServerStatus,
@@ -43,11 +37,10 @@ import { containerNameOf } from './workloadNames.js';
  * Reject world names that could escape the worlds/ directory (defense-in-depth,
  * independent of API schema).
  * This guards the repository boundary so traversal is impossible even if a
- * future caller forgets upstream validation. New worlds need WORLD_NAME_PATTERN;
- * an existing one only EXISTING_WORLD_DIR_PATTERN (legacy names, #728).
+ * future caller forgets upstream validation.
  */
-function assertValidWorldName(name: string, pattern = WORLD_NAME_PATTERN): void {
-  if (!pattern.test(name)) {
+function assertValidWorldName(name: string): void {
+  if (!WORLD_NAME_PATTERN.test(name)) {
     throw new Error(`Invalid world name '${name}'`);
   }
 }
@@ -188,9 +181,22 @@ export class WorldRepository implements IWorldRepository {
    * Find world by name
    */
   async findByName(name: string): Promise<World | null> {
-    // Lookups answer "not found" for a name that is not one directory under worlds/ (#728)
-    if (!EXISTING_WORLD_DIR_PATTERN.test(name)) return null;
     return this.load(name, await this.snapshot());
+  }
+
+  /**
+   * worlds/<name> when it is an existing directory right under worlds/, else
+   * null (#728): '', '.', '..', 'a/b', 'a/', absolute paths and plain files
+   * are no world. Legacy names a LEVEL may hold ('My World', '.old') are.
+   */
+  private async worldDir(name: string): Promise<string | null> {
+    const dir = resolve(this.worldsDir, name);
+    if (dirname(dir) !== resolve(this.worldsDir) || basename(dir) !== name) return null;
+    try {
+      return (await stat(dir)).isDirectory() ? dir : null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -206,9 +212,9 @@ export class WorldRepository implements IWorldRepository {
   }
 
   private async load(name: string, snapshot: WorldAssignmentSnapshot): Promise<World | null> {
-    const worldPath = join(this.worldsDir, name);
+    const worldPath = await this.worldDir(name);
 
-    if (!existsSync(worldPath)) {
+    if (!worldPath) {
       return null;
     }
 
@@ -236,7 +242,7 @@ export class WorldRepository implements IWorldRepository {
    * Check if world exists
    */
   async exists(name: string): Promise<boolean> {
-    return EXISTING_WORLD_DIR_PATTERN.test(name) && existsSync(join(this.worldsDir, name));
+    return (await this.worldDir(name)) !== null;
   }
 
   /**
@@ -349,10 +355,9 @@ export class WorldRepository implements IWorldRepository {
    * Returns true if the main world was deleted.
    */
   async delete(name: string): Promise<boolean> {
-    assertValidWorldName(name, EXISTING_WORLD_DIR_PATTERN);
-    const worldPath = join(this.worldsDir, name);
+    const worldPath = await this.worldDir(name);
 
-    if (!existsSync(worldPath)) {
+    if (!worldPath) {
       return false;
     }
 
@@ -362,8 +367,8 @@ export class WorldRepository implements IWorldRepository {
 
       // Cascade-delete split-dimension satellites
       for (const suffix of ['_nether', '_the_end']) {
-        const satellitePath = join(this.worldsDir, `${name}${suffix}`);
-        if (existsSync(satellitePath)) {
+        const satellitePath = await this.worldDir(`${name}${suffix}`);
+        if (satellitePath) {
           await rm(satellitePath, { recursive: true, force: true });
         }
       }
@@ -416,8 +421,9 @@ export class WorldRepository implements IWorldRepository {
    * Get seed for a world from .meta file
    */
   async getSeed(name: string): Promise<string | null> {
-    if (!EXISTING_WORLD_DIR_PATTERN.test(name)) return null;
-    const metaPath = join(this.worldsDir, name, '.meta');
+    const worldPath = await this.worldDir(name);
+    if (!worldPath) return null;
+    const metaPath = join(worldPath, '.meta');
 
     if (!existsSync(metaPath)) {
       return null;

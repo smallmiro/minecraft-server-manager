@@ -241,6 +241,16 @@ describe('World routes - assignment rules (#670)', () => {
       }
     });
 
+    it('returns 404 for a plain file under worlds/ and leaves it alone (#728)', async () => {
+      writeFileSync(join(TEST_PLATFORM_PATH, 'worlds', 'notes.txt'), 'not a world');
+
+      expect((await app.inject({ method: 'GET', url: '/api/worlds/notes.txt' })).statusCode).toBe(404);
+      const response = await app.inject({ method: 'DELETE', url: '/api/worlds/notes.txt?force=true' });
+
+      expect(response.statusCode).toBe(404);
+      expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'notes.txt'))).toBe(true);
+    });
+
     it('returns 409 for a legacy name with a space that a server uses, even with force', async () => {
       world('My World');
       server('alpha', `LEVEL=My World\n${UNIVERSE}`);
