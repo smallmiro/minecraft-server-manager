@@ -1061,7 +1061,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       body: DeleteServerRequestSchema,
       response: {
         200: DeleteServerResponseSchema,
+        400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -1116,6 +1118,12 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         errorMessage,
       });
 
+      // A refusal after the container was removed comes wrapped with that news (DeleteServerUseCase.deprovision).
+      const specError = error instanceof ServerSpecError ? error : (error as Error | undefined)?.cause;
+      if (specError instanceof ServerSpecError) {
+        const failure = serverSpecFailure(specError, errorMessage);
+        return reply.code(failure.status).send(failure.body);
+      }
       return reply.code(500).send({
         error: 'InternalServerError',
         message: errorMessage,

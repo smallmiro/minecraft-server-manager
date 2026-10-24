@@ -186,7 +186,7 @@ describe('DELETE /api/servers/:name (#735)', () => {
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
       error: 'Conflict',
-      message: expect.stringMatching(/^Container mc-alpha was stopped and removed\. worlds\/alpha appeared/),
+      message: expect.stringMatching(/^Container mc-alpha was stopped and removed\. worlds\/alpha already exists/),
     });
     expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
   });
