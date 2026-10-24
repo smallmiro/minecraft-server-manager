@@ -59,10 +59,13 @@ import type {
  * Hook to fetch all servers
  * Note: Polling is reduced since SSE provides real-time updates
  */
-export function useServers() {
+export function useServers(options?: { include?: 'summary' }) {
+  const summary = options?.include === 'summary';
   return useQuery<ServerListResponse, Error>({
-    queryKey: ['servers'],
-    queryFn: () => apiFetch<ServerListResponse>('/api/servers'),
+    // Object segment keeps it under the ['servers'] prefix (mutations invalidate it)
+    // without colliding with the ['servers', name] single-server keys.
+    queryKey: summary ? ['servers', { include: 'summary' }] : ['servers'],
+    queryFn: () => apiFetch<ServerListResponse>(summary ? '/api/servers?include=summary' : '/api/servers'),
     refetchInterval: 60000, // Reduced to 60 seconds (SSE provides real-time updates)
   });
 }

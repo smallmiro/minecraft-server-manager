@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -375,6 +375,129 @@ describe('DashboardPage', () => {
     expect(card).toHaveTextContent('Player data unavailable');
     expect(within(card).queryByText('0')).not.toBeInTheDocument();
     expect(card).toHaveAttribute('data-accent', 'info');
+  });
+
+  describe('Online Players KPI with summary totals (#764)', () => {
+    const mockWorlds = () =>
+      vi.mocked(useWorlds).mockReturnValue({ data: { worlds: [], total: 0 }, isLoading: false, error: null } as any);
+    const running = (name: string, players: unknown) => ({
+      name, status: 'running', health: 'healthy', container: `mc-${name}`, hostname: `${name}.local`, players,
+    });
+
+    it('requests the summary include', () => {
+      vi.mocked(useServers).mockClear();
+      vi.mocked(useServers).mockReturnValue({ data: { servers: [], total: 0 }, isLoading: false, error: null } as any);
+      mockWorlds();
+
+      renderWithProviders(<DashboardPage />);
+
+      expect(useServers).toHaveBeenCalledWith({ include: 'summary' });
+    });
+
+    it('shows online players, max and running count from totals', () => {
+      vi.mocked(useServers).mockReturnValue({
+        data: {
+          servers: [
+            running('a', { online: 3, max: 20, players: [] }),
+            running('b', { online: 5, max: 10, players: [] }),
+          ],
+          total: 2,
+          totals: { playersOnline: 8, playersMax: 30, running: 2 },
+        },
+        isLoading: false,
+        error: null,
+      } as any);
+      mockWorlds();
+
+      renderWithProviders(<DashboardPage />);
+
+      const card = screen.getByText('Online Players').closest('article')!;
+      expect(card).toHaveTextContent('8');
+      expect(card).toHaveTextContent('/ 30');
+      expect(card).toHaveTextContent('Across 2 running servers');
+      expect(card).not.toHaveTextContent('not responding');
+    });
+
+    it('shows zero players honestly when totals exist', () => {
+      vi.mocked(useServers).mockReturnValue({
+        data: {
+          servers: [running('a', { online: 0, max: 20, players: [] })],
+          total: 1,
+          totals: { playersOnline: 0, playersMax: 20, running: 1 },
+        },
+        isLoading: false,
+        error: null,
+      } as any);
+      mockWorlds();
+
+      renderWithProviders(<DashboardPage />);
+
+      const card = screen.getByText('Online Players').closest('article')!;
+      expect(card).toHaveTextContent('0');
+      expect(card).toHaveTextContent('Across 1 running server');
+      expect(card).not.toHaveTextContent('unavailable');
+    });
+
+    it('notes servers that did not answer', () => {
+      vi.mocked(useServers).mockReturnValue({
+        data: {
+          servers: [running('a', { online: 3, max: 20, players: [] }), running('b', null)],
+          total: 2,
+          totals: { playersOnline: 3, playersMax: 20, running: 2 },
+        },
+        isLoading: false,
+        error: null,
+      } as any);
+      mockWorlds();
+
+      renderWithProviders(<DashboardPage />);
+
+      const card = screen.getByText('Online Players').closest('article')!;
+      expect(card).toHaveTextContent('3');
+      expect(card).toHaveTextContent('1 server not responding');
+    });
+  });
+
+  describe('Online Players KPI follows live SSE status (#764)', () => {
+    const running = (name: string, players: unknown) => ({
+      name, status: 'running', health: 'healthy', container: `mc-${name}`, hostname: `${name}.local`, players,
+    });
+
+    afterEach(() => {
+      vi.mocked(useServersSSE).mockReturnValue({ statusMap: {}, isConnected: false } as any);
+    });
+
+    it('drops a server SSE reports stopped from players, running count and not-responding', () => {
+      vi.mocked(useServers).mockReturnValue({
+        data: {
+          servers: [
+            running('a', { online: 3, max: 20, players: [] }),
+            running('b', { online: 5, max: 10, players: [] }),
+            running('c', null),
+          ],
+          total: 3,
+          totals: { playersOnline: 8, playersMax: 30, running: 3 },
+        },
+        isLoading: false,
+        error: null,
+      } as any);
+      vi.mocked(useWorlds).mockReturnValue({ data: { worlds: [], total: 0 }, isLoading: false, error: null } as any);
+      vi.mocked(useServersSSE).mockReturnValue({
+        statusMap: {
+          b: { status: 'exited', health: 'none', timestamp: '2026-10-24T00:00:00.000Z' },
+          c: { status: 'exited', health: 'none', timestamp: '2026-10-24T00:00:00.000Z' },
+        },
+        isConnected: true,
+      } as any);
+
+      renderWithProviders(<DashboardPage />);
+
+      const card = screen.getByText('Online Players').closest('article')!;
+      expect(card).toHaveTextContent('3');
+      expect(card).toHaveTextContent('/ 20');
+      expect(card).toHaveTextContent('Across 1 running server');
+      expect(card).not.toHaveTextContent('not responding');
+    });
   });
 
   describe('layout', () => {

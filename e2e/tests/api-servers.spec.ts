@@ -33,6 +33,51 @@ test.describe('Servers API', () => {
       const contentType = response.headers()['content-type'];
       expect(contentType).toContain('application/json');
     });
+
+    test('should not add summary fields without include (#764)', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/api/servers`);
+      const body = await response.json();
+
+      expect(body).not.toHaveProperty('totals');
+      for (const server of body.servers) {
+        expect(server).not.toHaveProperty('players');
+        expect(server).not.toHaveProperty('stats');
+      }
+    });
+
+    test('should return summaries and totals with include=summary (#764)', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/api/servers?include=summary`);
+
+      expect(response.status()).toBe(200);
+
+      const body = await response.json();
+      expect(body.total).toBe(body.servers.length);
+      expect(typeof body.totals.playersOnline).toBe('number');
+      expect(typeof body.totals.playersMax).toBe('number');
+      expect(typeof body.totals.running).toBe('number');
+
+      for (const server of body.servers) {
+        // base fields are kept
+        expect(server).toHaveProperty('name');
+        expect(server).toHaveProperty('container');
+        expect(server).toHaveProperty('status');
+        expect(server).toHaveProperty('health');
+        expect(server).toHaveProperty('hostname');
+        // players is {online,max,players?} or null (RCON failed), and only for running servers
+        if (server.status !== 'running') {
+          expect(server.players ?? null).toBeNull();
+        } else if (server.players !== null && server.players !== undefined) {
+          expect(typeof server.players.online).toBe('number');
+          expect(typeof server.players.max).toBe('number');
+        }
+      }
+    });
+
+    test('should reject an unknown include value with 400 (#764)', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/api/servers?include=bogus`);
+
+      expect(response.status()).toBe(400);
+    });
   });
 
   test.describe('GET /api/servers/:name - Server Details', () => {

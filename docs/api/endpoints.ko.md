@@ -27,6 +27,12 @@ API 서버 상태를 확인합니다.
 
 전체 Minecraft 서버 목록을 조회합니다.
 
+**쿼리 파라미터:**
+
+| 파라미터 | 타입 | 설명 |
+|----------|------|------|
+| `include` | string | 선택 사항입니다. `summary`를 지정하면 서버별 `type`, `version`, `memory`, `players`, `stats`와 최상위 `totals`가 추가됩니다. 다른 값은 `400`을 반환합니다. |
+
 **응답:**
 
 ```json
@@ -43,6 +49,49 @@ API 서버 상태를 확인합니다.
   "total": 1
 }
 ```
+
+**`include=summary` 응답:**
+
+`include`를 생략하면 위의 기본 응답은 바뀌지 않습니다.
+
+```json
+{
+  "servers": [
+    {
+      "name": "survival",
+      "container": "mc-survival",
+      "status": "running",
+      "health": "healthy",
+      "hostname": "survival.192.168.1.100.nip.io",
+      "type": "PAPER",
+      "version": "1.21.1",
+      "memory": "4G",
+      "players": {
+        "online": 3,
+        "max": 20,
+        "players": ["Player1", "Player2", "Player3"]
+      },
+      "stats": {
+        "memoryUsage": 2254857830,
+        "memoryLimit": 4294967296
+      }
+    }
+  ],
+  "total": 1,
+  "totals": {
+    "playersOnline": 3,
+    "playersMax": 20,
+    "running": 1
+  }
+}
+```
+
+!!! note "summary 동작"
+    - `type`, `version`, `memory`는 서버의 `config.env`에서 가져옵니다.
+    - `players`와 `stats`는 실행 중인 서버에만 포함됩니다. RCON 조회가 실패하거나 시간 초과되면 `players`는 `null`입니다. `stats`(`memoryUsage`, `memoryLimit`, 바이트 단위)는 `docker stats`가 제때 응답하지 않으면 빠집니다.
+    - 실행 중인 서버마다 RCON과 stats를 병렬로 조회하며 RCON 약 2초, stats 약 3초 타임아웃을 적용하므로, 느린 서버 하나는 `players: null`(또는 `stats` 없음)만 받습니다.
+    - 결과는 서버별로 약 10초 동안 캐시됩니다.
+    - `totals.playersOnline`과 `totals.playersMax`는 플레이어 수를 알 수 있는 서버만 합산합니다. `totals.running`은 실행 중인 서버 수입니다.
 
 **상태 값:**
 

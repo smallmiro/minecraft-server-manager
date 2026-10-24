@@ -52,9 +52,25 @@ vi.mock('node:child_process', async (importOriginal) => {
   };
 });
 
+const summaryMocks = vi.hoisted(() => ({
+  execute: vi.fn(),
+  ctorArgs: vi.fn(),
+  // Not a vi.fn: survives vi.clearAllMocks, since the use case is built once at plugin registration
+  constructed: [] as unknown[][],
+}));
+
 // Mock @minecraft-docker/shared module
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
+  GetServerSummariesUseCase: class {
+    constructor(...args: unknown[]) {
+      summaryMocks.ctorArgs(...args);
+      summaryMocks.constructed.push(args);
+    }
+    execute(servers: unknown) {
+      return summaryMocks.execute(servers);
+    }
+  },
   getAllServers: vi.fn(),
   getServerInfoFromConfig: vi.fn(),
   getServerDetailedInfo: vi.fn(),
@@ -188,6 +204,90 @@ describe('Server Routes', () => {
       expect(response.statusCode).toBe(500);
       const body = JSON.parse(response.body);
       expect(body.error).toBe('InternalServerError');
+    });
+  });
+
+  describe('GET /api/servers?include=summary (#764)', () => {
+    const base = (name: string) => ({
+      name,
+      container: `mc-${name}`,
+      status: 'running' as const,
+      health: 'healthy' as const,
+      hostname: `${name}.local`,
+    });
+
+    beforeEach(() => {
+      mockedGetAllServers.mockReturnValue(['survival', 'creative']);
+      mockedGetServerInfoFromConfig.mockImplementation(base);
+    });
+
+    it('keeps the default response unchanged without include', async () => {
+      const response = await app.inject({ method: 'GET', url: '/api/servers' });
+
+      expect(response.statusCode).toBe(200);
+      const body = JSON.parse(response.body);
+      expect(Object.keys(body).sort()).toEqual(['servers', 'total']);
+      for (const item of body.servers) {
+        expect(Object.keys(item).sort()).toEqual(['container', 'health', 'hostname', 'name', 'status']);
+      }
+      expect(summaryMocks.execute).not.toHaveBeenCalled();
+    });
+
+    it('builds the summary use case on the configured root and child-process env with default timeouts', async () => {
+      const { config } = await import('../src/config/index.js');
+      const { Paths } = await import('@minecraft-docker/shared');
+      const [repository, runtime, , options] = summaryMocks.constructed.at(-1)!;
+      const root = new Paths(config.mcctlRoot).root;
+
+      expect((repository as { paths: { root: string } }).paths.root).toBe(root);
+      expect((runtime as { options: { root?: string; env?: unknown } }).options).toEqual(
+        expect.objectContaining({ root, env: expect.any(Function) }),
+      );
+      expect(options).toBeUndefined();
+    });
+
+    it('returns summaries and totals, passing the base list to the use case', async () => {
+      summaryMocks.execute.mockImplementation(async (servers: ReturnType<typeof base>[]) => ({
+        servers: [
+          { ...servers[0], type: 'PAPER', version: '1.21.1', memory: '4G', players: { online: 2, max: 20, players: ['a', 'b'] }, stats: { memoryUsage: 100, memoryLimit: 200 } },
+          { ...servers[1], status: 'exited', type: 'FORGE', players: null },
+        ],
+        totals: { playersOnline: 2, playersMax: 20, running: 1 },
+      }));
+
+      const response = await app.inject({ method: 'GET', url: '/api/servers?include=summary' });
+
+      expect(response.statusCode).toBe(200);
+      expect(summaryMocks.execute).toHaveBeenCalledWith([base('survival'), base('creative')]);
+      const body = JSON.parse(response.body);
+      expect(body.total).toBe(2);
+      expect(body.totals).toEqual({ playersOnline: 2, playersMax: 20, running: 1 });
+      expect(body.servers[0]).toMatchObject({
+        name: 'survival', type: 'PAPER', version: '1.21.1', memory: '4G',
+        players: { online: 2, max: 20, players: ['a', 'b'] },
+        stats: { memoryUsage: 100, memoryLimit: 200 },
+      });
+      expect(body.servers[1].players).toBeNull();
+      expect(body.servers[1]).not.toHaveProperty('stats');
+    });
+
+    it('rejects an unknown include value with 400', async () => {
+      const response = await app.inject({ method: 'GET', url: '/api/servers?include=bogus' });
+
+      expect(response.statusCode).toBe(400);
+      expect(summaryMocks.execute).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 with the error shape when the use case fails', async () => {
+      summaryMocks.execute.mockRejectedValue(new Error('boom'));
+
+      const response = await app.inject({ method: 'GET', url: '/api/servers?include=summary' });
+
+      expect(response.statusCode).toBe(500);
+      expect(JSON.parse(response.body)).toEqual({
+        error: 'InternalServerError',
+        message: 'Failed to list servers',
+      });
     });
   });
 

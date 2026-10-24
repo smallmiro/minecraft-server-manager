@@ -190,6 +190,32 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
     expect(runtime.getStats('mc-a')).toBeNull();
   });
 
+  it('getStatsAsync runs docker stats without blocking and parses it like getStats (#764)', async () => {
+    execFileCalls({ stdout: '2GiB / 4GiB,15.23%\n' });
+    expect(await runtime.getStatsAsync(ServerName.create('ab'))).toEqual({
+      memoryUsage: 2 * 1024 ** 3,
+      memoryLimit: 4 * 1024 ** 3,
+      memoryPercent: 50,
+      cpuPercent: 15.23,
+    });
+    expect(execFile).toHaveBeenCalledWith(
+      'docker',
+      ['stats', '--no-stream', '--format', '{{.MemUsage}},{{.CPUPerc}}', '--', 'mc-ab'],
+      expect.objectContaining({ timeout: 5000 }),
+      expect.any(Function)
+    );
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it('getStatsAsync returns null on failure, timeout or unparseable output (#764)', async () => {
+    execFileCalls(new Error('No such container'));
+    expect(await runtime.getStatsAsync('mc-a')).toBeNull();
+    execFileCalls(Object.assign(new Error('killed'), { killed: true, signal: 'SIGTERM' }));
+    expect(await runtime.getStatsAsync('mc-a')).toBeNull();
+    execFileCalls({ stdout: 'garbage' });
+    expect(await runtime.getStatsAsync('mc-a')).toBeNull();
+  });
+
   describe('getUptime', () => {
     beforeEach(() => {
       vi.useFakeTimers({ toFake: ['Date'] });
@@ -566,18 +592,28 @@ describe('DockerServerConsoleAdapter.getEndpoint', () => {
 describe('DockerServerConsoleAdapter.listPlayers', () => {
   const console_ = new DockerServerConsoleAdapter();
 
-  it('parses rcon-cli list output', async () => {
-    vi.mocked(execFileSync).mockReturnValue('There are 1 of a max of 20 players online: Steve\n');
+  it('parses rcon-cli list output without blocking the event loop (#764)', async () => {
+    execFileCalls({ stdout: 'There are 1 of a max of 20 players online: Steve\n' });
     expect(await console_.listPlayers('mc-a')).toEqual({ online: 1, max: 20, players: ['Steve'] });
-    expect(execFileSync).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'list'], {
-      encoding: 'utf-8',
-      timeout: 5000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    expect(execFile).toHaveBeenCalledWith(
+      'docker',
+      ['exec', '--', 'mc-a', 'rcon-cli', 'list'],
+      { encoding: 'utf-8', timeout: 5000 },
+      expect.any(Function)
+    );
+    expect(execFileSync).not.toHaveBeenCalled();
   });
 
-  it('returns null when rcon-cli fails', async () => {
-    vi.mocked(execFileSync).mockImplementation(throws);
+  it('maps a ServerName to its container', async () => {
+    execFileCalls({ stdout: 'There are 0 of a max of 20 players online:\n' });
+    expect(await console_.listPlayers(ServerName.create('ab'))).toEqual({ online: 0, max: 20, players: [] });
+    expect(vi.mocked(execFile).mock.calls[0]?.[1]).toEqual(['exec', '--', 'mc-ab', 'rcon-cli', 'list']);
+  });
+
+  it('returns null when rcon-cli fails or the output is unparseable', async () => {
+    execFileCalls(new Error('exit 1'));
+    expect(await console_.listPlayers('mc-a')).toBeNull();
+    execFileCalls({ stdout: 'garbage' });
     expect(await console_.listPlayers('mc-a')).toBeNull();
   });
 });

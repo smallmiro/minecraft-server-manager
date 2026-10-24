@@ -22,6 +22,8 @@ import type { IPlayitAgentPort } from '../../application/ports/outbound/IPlayitA
 import type { IRuntimeEnvironmentPort, ToolVersion } from '../../application/ports/outbound/IRuntimeEnvironmentPort.js';
 
 const execFilePromise = promisify(execFile);
+/** `docker stats --no-stream` samples twice (~2 s); past this the child is killed. */
+const STATS_TIMEOUT_MS = 5000;
 
 /**
  * Get container status
@@ -71,6 +73,58 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
   }
 
   return { online, max, players };
+}
+
+/**
+ * Parse `docker stats --no-stream --format '{{.MemUsage}},{{.CPUPerc}}'` output
+ * (e.g. "2.1GiB / 4GiB,15.23%"). null when empty or unparseable.
+ */
+function parseDockerStats(result: string): ContainerStats | null {
+  if (!result) return null;
+
+  try {
+    const [memUsage, cpuPerc] = result.split(',');
+    if (!memUsage || !cpuPerc) return null;
+
+    // Parse memory: "2.1GiB / 4GiB" or "512MiB / 4GiB"
+    const memParts = memUsage.split('/').map((s) => s.trim());
+    if (memParts.length !== 2) return null;
+
+    const parseMemory = (mem: string): number => {
+      const match = mem.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)?$/i);
+      if (!match || !match[1]) return 0;
+      const value = parseFloat(match[1]);
+      const unit = (match[2] ?? 'B').toUpperCase();
+      const multipliers: Record<string, number> = {
+        B: 1,
+        KIB: 1024,
+        MIB: 1024 ** 2,
+        GIB: 1024 ** 3,
+        TIB: 1024 ** 4,
+        KB: 1000,
+        MB: 1000 ** 2,
+        GB: 1000 ** 3,
+        TB: 1000 ** 4,
+      };
+      return value * (multipliers[unit] || 1);
+    };
+
+    const memoryUsage = parseMemory(memParts[0]!);
+    const memoryLimit = parseMemory(memParts[1]!);
+    const memoryPercent = memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
+
+    // Parse CPU: "15.23%" or "0.00%"
+    const cpuPercent = parseFloat(cpuPerc.replace('%', '')) || 0;
+
+    return {
+      memoryUsage,
+      memoryLimit,
+      memoryPercent,
+      cpuPercent,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -182,48 +236,19 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
       container,
     ]);
 
-    if (!result) return null;
+    return parseDockerStats(result);
+  }
 
+  /** getStats through an awaited `docker stats` (#764). Non-zero exit or unparseable → null. */
+  async getStatsAsync(name: ServerName | string): Promise<ContainerStats | null> {
     try {
-      const [memUsage, cpuPerc] = result.split(',');
-      if (!memUsage || !cpuPerc) return null;
-
-      // Parse memory: "2.1GiB / 4GiB" or "512MiB / 4GiB"
-      const memParts = memUsage.split('/').map((s) => s.trim());
-      if (memParts.length !== 2) return null;
-
-      const parseMemory = (mem: string): number => {
-        const match = mem.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)?$/i);
-        if (!match || !match[1]) return 0;
-        const value = parseFloat(match[1]);
-        const unit = (match[2] ?? 'B').toUpperCase();
-        const multipliers: Record<string, number> = {
-          B: 1,
-          KIB: 1024,
-          MIB: 1024 ** 2,
-          GIB: 1024 ** 3,
-          TIB: 1024 ** 4,
-          KB: 1000,
-          MB: 1000 ** 2,
-          GB: 1000 ** 3,
-          TB: 1000 ** 4,
-        };
-        return value * (multipliers[unit] || 1);
-      };
-
-      const memoryUsage = parseMemory(memParts[0]!);
-      const memoryLimit = parseMemory(memParts[1]!);
-      const memoryPercent = memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
-
-      // Parse CPU: "15.23%" or "0.00%"
-      const cpuPercent = parseFloat(cpuPerc.replace('%', '')) || 0;
-
-      return {
-        memoryUsage,
-        memoryLimit,
-        memoryPercent,
-        cpuPercent,
-      };
+      // The timeout kills a hung `docker stats`; callers that stop waiting earlier do not leave it running
+      const { stdout } = await execFilePromise(
+        'docker',
+        ['stats', '--no-stream', '--format', '{{.MemUsage}},{{.CPUPerc}}', '--', workloadNameOf(name)],
+        { encoding: 'utf-8', timeout: STATS_TIMEOUT_MS, env: this.env() }
+      );
+      return parseDockerStats(String(stdout).trim());
     } catch {
       return null;
     }
@@ -435,17 +460,17 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
  */
 export class DockerServerConsoleAdapter implements IServerConsolePort {
   /**
-   * Get online players via RCON
+   * Get online players via RCON. Runs `docker exec` as an awaited child process
+   * (#764) so callers can probe several servers in parallel; 5 s timeout as before.
    */
   async listPlayers(name: ServerName | string): Promise<PlayerListResult | null> {
     const container = workloadNameOf(name);
     try {
-      const rawResult = execFileSync('docker', ['exec', '--', container, 'rcon-cli', 'list'], {
+      const { stdout } = await execFilePromise('docker', ['exec', '--', container, 'rcon-cli', 'list'], {
         encoding: 'utf-8',
         timeout: 5000,
-        stdio: ['pipe', 'pipe', 'pipe'],
       });
-      return parseRconPlayerList(rawResult);
+      return parseRconPlayerList(stdout);
     } catch {
       return null;
     }
