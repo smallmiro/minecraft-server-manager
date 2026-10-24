@@ -154,15 +154,17 @@ describe('WorldRepository assignment hydration', () => {
 });
 
 // Defense in depth behind the API's path-parameter schema (#728): the
-// repository only sees an existing directory right under worlds/. Legacy names
-// a LEVEL may hold ("My World", ".old") work; files and other paths do not.
+// repository only sees an existing, non-hidden directory right under worlds/.
+// Legacy names such as "My World" work; files, hidden dirs and other paths do not.
 describe('WorldRepository world names (#728)', () => {
   it('does not find, or delete, anything but one directory right under worlds/', async () => {
     mkdirSync(join(root, 'servers'), { recursive: true });
     writeFileSync(join(root, '.meta'), JSON.stringify({ seed: 'outside' }));
     mkdirSync(join(root, 'worlds', 'a', 'b'), { recursive: true });
+    world('.locks');
+    world('.old');
 
-    for (const name of ['', '.', '..', '../servers', 'a/b', 'a/', 'b/../a', join(root, 'servers')]) {
+    for (const name of ['', '.', '..', '../servers', 'a/b', 'a/', 'b/../a', join(root, 'servers'), '.locks', '.old']) {
       expect(await repo.findByName(name), name).toBeNull();
       expect(await repo.exists(name), name).toBe(false);
       expect(await repo.getSeed(name), name).toBeNull();
@@ -170,6 +172,8 @@ describe('WorldRepository world names (#728)', () => {
     }
     expect(existsSync(join(root, 'servers'))).toBe(true);
     expect(existsSync(join(root, 'worlds', 'a', 'b'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', '.locks'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', '.old'))).toBe(true);
   });
 
   it.each(['notes.txt', 'mapbackup.zip'])('treats the plain file worlds/%s as no world', async (name) => {
@@ -184,7 +188,7 @@ describe('WorldRepository world names (#728)', () => {
     expect(existsSync(join(root, 'worlds', `${name}_nether`))).toBe(true);
   });
 
-  it.each(['My World', '.old'])('finds and deletes the legacy name %j, with its dimension folders', async (name) => {
+  it.each(['My World'])('finds and deletes the legacy name %j, with its dimension folders', async (name) => {
     for (const dir of [name, `${name}_nether`, `${name}_the_end`, `${name}s`]) world(dir);
 
     expect((await repo.findByName(name))?.name).toBe(name);

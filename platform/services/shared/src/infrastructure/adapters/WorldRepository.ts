@@ -186,12 +186,12 @@ export class WorldRepository implements IWorldRepository {
 
   /**
    * worlds/<name> when it is an existing directory right under worlds/, else
-   * null (#728): '', '.', '..', 'a/b', 'a/', absolute paths and plain files
-   * are no world. Legacy names a LEVEL may hold ('My World', '.old') are.
+   * null (#728): '', '..', 'a/b', 'a/', absolute paths, plain files and hidden
+   * dirs ('.locks', like listNames) are no world. Legacy names ('My World') are.
    */
   private async worldDir(name: string): Promise<string | null> {
     const dir = resolve(this.worldsDir, name);
-    if (dirname(dir) !== resolve(this.worldsDir) || basename(dir) !== name) return null;
+    if (name.startsWith('.') || dirname(dir) !== resolve(this.worldsDir) || basename(dir) !== name) return null;
     try {
       return (await stat(dir)).isDirectory() ? dir : null;
     } catch {
