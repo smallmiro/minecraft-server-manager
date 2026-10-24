@@ -52,6 +52,19 @@ const TYPE_COLOR: Record<HostnameType, 'info' | 'secondary' | 'primary' | 'defau
 
 const wrapSx = { wordBreak: 'break-word', overflowWrap: 'anywhere' } as const;
 
+// Pixel strings on purpose: sx reads width/height <= 1 as a percentage.
+const visuallyHiddenSx = {
+  position: 'absolute',
+  width: '1px',
+  height: '1px',
+  m: '-1px',
+  p: 0,
+  border: 0,
+  overflow: 'hidden',
+  clip: 'rect(0 0 0 0)',
+  whiteSpace: 'nowrap',
+} as const;
+
 function TypeBadge({ type }: { type: HostnameType }) {
   return (
     <Chip
@@ -208,7 +221,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
               <TableCell>Target</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="right" sx={{ width: 48 }}>
-                <Box component="span" sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+                <Box component="span" sx={visuallyHiddenSx}>
                   Actions
                 </Box>
               </TableCell>

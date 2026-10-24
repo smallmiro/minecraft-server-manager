@@ -119,4 +119,12 @@ describe('RoutingTable', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(routes.length);
     expect(within(list).getAllByLabelText('Copy to clipboard')).toHaveLength(routes.length);
   });
+
+  it('keeps the hidden Actions header label 1px wide so it cannot widen the page', () => {
+    renderTable();
+    // sx treats width: 1 as 100%, which made this absolutely positioned label page-wide.
+    const label = screen.getByText('Actions');
+    expect(getComputedStyle(label).width).toBe('1px');
+    expect(getComputedStyle(label).height).toBe('1px');
+  });
 });
