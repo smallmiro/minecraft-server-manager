@@ -110,7 +110,7 @@ node platform/services/cli/dist/index.js --version
 | `pnpm build` | 모든 패키지를 의존성 순서대로 빌드 |
 | `pnpm dev` | 각 패키지의 `dev` 스크립트를 병렬 실행 (shared/cli는 `tsc --watch`, mcctl-api는 `tsx watch`, mcctl-console은 `next dev -p 5000`) |
 | `pnpm lint` | 모든 패키지 린트 |
-| `pnpm test` | 모든 단위 테스트 실행 |
+| `pnpm test` | 모든 단위 테스트 실행 (CI와 같이 `e2e` 제외) |
 | `pnpm clean` | 빌드 결과물 삭제 |
 | `pnpm test:e2e` | Management Console E2E 실행 (Playwright, mcctl-api + mcctl-console) |
 | `pnpm test:e2e:ui` | 같은 테스트를 Playwright UI 모드로 실행 |
@@ -119,13 +119,13 @@ node platform/services/cli/dist/index.js --version
 
 ```bash
 pnpm build                                   # 전체 빌드
-pnpm test                                    # 전체 단위 테스트
+pnpm test                                    # 전체 단위 테스트 (e2e 제외)
 pnpm lint                                    # 전체 린트
 
 pnpm --filter @minecraft-docker/shared test  # 특정 패키지만
 pnpm --filter @minecraft-docker/mcctl test
 
-pnpm test:e2e                                # Management Console E2E (Playwright)
+E2E_BASE_URL=<console> E2E_API_URL=<api> pnpm test:e2e   # Management Console E2E (Playwright); 두 URL 모두 필수, 운영 호스트 말고 테스트용 인스턴스에만
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 ```
 

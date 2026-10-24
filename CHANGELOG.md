@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Developer: root `pnpm test` no longer runs e2e, and e2e needs explicit targets** (#797) - `pnpm test` is now `pnpm -r --filter '!e2e' test` (same as CI). The e2e suite no longer defaults to `localhost:5000/5001` (often a live mcctl-api on a dev host); set both `E2E_BASE_URL` and `E2E_API_URL` or it fails before sending any request. `.github/workflows/e2e.yml` now sets `E2E_BASE_URL`.
+
 ## [3.0.0] - 2026-10-24
 
 > **Upgrade notes (v3.0.0, BREAKING).** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts). All Bash scripts are gone (#715, #736).
