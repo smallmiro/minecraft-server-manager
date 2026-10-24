@@ -43,7 +43,6 @@ mcctl --root /opt/minecraft init
 ├── shared/
 │   ├── plugins/
 │   └── mods/
-├── scripts/
 └── backups/
 ```
 
@@ -446,6 +445,7 @@ mcctl upgrade [options]
 3. 루트 `docker-compose.yml`의 `router` 서비스를 패치합니다 (아래 참조)
 4. `servers/_template/` 파일을 갱신하고 `.mcctl.json`에 `templateVersion`을 기록합니다
 5. `.mcctl.json`에 `installId`가 없으면 추가합니다 (기존 값은 유지)
+6. (v3.0.0 이상) `<root>/scripts`가 있으면 경로, v3.0.0부터 쓰지 않으며 직접 고친 파일이 있을 수 있다는 경고, [스크립트 → mcctl 대응표](../advanced/upgrade-runbook.ko.md#v300-scripts) 링크를 출력합니다. 터미널에서는 `Remove <path>?`(기본값 `N`)를 묻고 `y`일 때만 삭제합니다. `--non-interactive`이거나 터미널이 없으면 힌트(`rm -r <path>`)만 출력하고 아무것도 지우지 않습니다. `--dry-run`이면 `Would ask before removing <path>.`만 출력합니다. 심볼릭 링크는 링크만 지우고 따라가지 않습니다. 확인을 건너뛰는 옵션은 없습니다.
 
 **docker-compose.yml router 패치:** `router` 서비스의 `image` 태그와 `group_add` 항목만 번들 템플릿에 맞춥니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.
 

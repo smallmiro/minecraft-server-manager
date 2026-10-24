@@ -49,7 +49,7 @@
 | `IPlayitAgentPort` | `start()`, `stop()` | 비동기 |
 | `IHostnameRegistrarPort` | `getStatus()` (`getAvahiStatus`) | 동기 |
 | | `register(hostname, ip)`(#675), `unregister(hostname)`(#735) → `HostnameChangeResult { status: 'changed' \| 'unchanged' \| 'skipped'; reason? }`. 정확히 일치하는 이름만 다룬다(#660). `unregister`는 README sudoers 모양(#751)인 `sudo -n sed -i <expr> /etc/avahi/hosts`를 셸 없이 argv로 실행한다. `<expr>`은 검증된 호스트명을 정규식 이스케이프하고 필드 경계로 앵커를 건다. 비밀번호가 있으면 먼저 `sudo -S -p '' -v` | 비동기, reject하지 않음 |
-| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete(name, { deleteWorld?, dryRun? })`(#735, [S7](#스크립트-제거-s7-delete-serversh735); v2 호출 `delete(name)`도 컴파일됨). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
+| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용. v3.0.0(#736)에서 삭제), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete(name, { deleteWorld?, dryRun? })`(#735, [S7](#스크립트-제거-s7-delete-serversh735); v2 호출 `delete(name)`도 컴파일됨). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
 | `IRuntimeEnvironmentPort` | `isAvailable()`, `getEngineVersion()`, `getComposeVersion()` | 동기 |
 
 **수명주기 구현**:
@@ -71,7 +71,7 @@
 
 | 메서드 | 동작 |
 |--------|------|
-| `getAssignment(world): Promise<string \| null>` | v2, deprecated. 월드 폴더를 가진 서버 또는 null. 판단 불가 서버가 있으면 null 대신 reject한다 |
+| `getAssignment(world): Promise<string \| null>` | v2, deprecated(v3.0.0 #736에서 `snapshot()` + `holdersOf`로 대체하고 삭제). 월드 폴더를 가진 서버 또는 null. 판단 불가 서버가 있으면 null 대신 reject한다 |
 | `listAssignments(): Promise<WorldAssignment[]>` | v2 형태. 읽을 수 있는 서버의 배정(`internal`은 선택 필드) |
 | `snapshot(): Promise<WorldAssignmentSnapshot>` | `{ assignments, undetermined }`. `servers/`를 읽지 못할 때만 reject한다 |
 | `preview(server, configEnv): Promise<WorldAssignmentSnapshot>` | 한 서버의 `config.env`를 바꿨을 때의 스냅숏(스냅숏 복원, migrate). 아무것도 쓰지 않는다 |
@@ -79,7 +79,7 @@
 | `assign(world, server): Promise<void>` | `LEVEL=<world>`를 쓴다. 위반하거나 판단할 수 없으면 `WorldAssignmentError`로 reject한다(R7) |
 | `release(world): Promise<{ server, fallback }>` | 배정 해제(#715). 가진 서버의 `LEVEL`을 그 서버의 기본 월드 `<서버이름>`으로 바꾼다 |
 
-v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유지하고(#715, #736), `snapshot`, `preview`, `release`를 추가했다. 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
+v2 멤버인 `getAssignment`(deprecated, v3.0.0 #736에서 `snapshot()` + `holdersOf`로 대체하고 삭제)와 `listAssignments`는 형태를 유지하고(#715, #736), `snapshot`, `preview`, `release`를 추가했다. 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
 
 ## 48개 함수 분류
 
@@ -156,7 +156,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 2. **API stop 의미**: `executeServerAction('stop')`(compose stop)을 `runtime.stop`(`docker stop`)으로 옮기면 동작이 조금 바뀐다(compose 프로젝트 밖의 컨테이너에서만 다르다). D2에서 별도 커밋으로 받아들이는 안을 권장한다.
 3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다. **#665에서는 하지 않았다.** 완료 조건에 필요하지 않기 때문이다. D2(#667)의 쟁점으로 남는다.
 4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다. **#665로 해결됐다.** 인자를 바꾸지 않고 넓혔으므로 D2·D3은 어느 쪽이든 컴파일되고, 호출처를 `ServerName`으로 옮기는 시점을 스스로 정할 수 있다.
-5. **error 전환 범위**: 스크립트·git·npm·pm2 실행 위치를 옮기는 일이 D2·D3·D4 범위인지 확인이 필요하다.
+5. **error 전환 범위**: 스크립트·git·npm·pm2 실행 위치를 옮기는 일이 D2·D3·D4 범위인지 확인이 필요하다. **스크립트 부분은 #736(v3.0.0)으로 닫혔다.** 스크립트 실행기(`execScript`, `execScriptInteractive`, `ShellAdapter`, `IShellPort`)가 모두 없어져서 위 표에 스크립트 행이 남지 않는다. git·npm·pm2 실행기는 스크립트 작업이 아니다. CLI의 것은 #668에서 `src/infrastructure/` 아래로 옮겼다.
 
 ## 포트 경계 정리(#665, D4)
 
@@ -172,7 +172,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 | `serverHostnameOf(server: ServerName \| string)` | `<server>.local` |
 | `workloadNameOf(name: ServerName \| string)` | ServerName이면 그 컨테이너, 문자열이면 그대로(컨테이너 이름) |
 
-이 모듈은 런타임 import가 없어서 `@minecraft-docker/shared/naming`이 브라우저에서도 안전하다. `ServerName.containerName`/`hostname`과 `Server.containerName`/`hostname`은 `@deprecated` getter로 남기고 이 함수에 위임한다. 도메인이 인프라를 import하는 곳은 이것 하나이고, #736에서 getter와 함께 사라진다. 예약 이름 오류 메시지(`conflicts with the mc-router container`)도 같은 함수로 만들어 문구가 그대로다.
+이 모듈은 런타임 import가 없어서 `@minecraft-docker/shared/naming`이 브라우저에서도 안전하다. `ServerName.containerName`/`hostname`과 `Server.containerName`/`hostname`은 `@deprecated` getter로 남기고 이 함수에 위임했다(#665 당시). 도메인이 인프라를 import하는 곳은 이것 하나였고, getter는 v3.0.0(#736)에서 삭제했다. `containerNameOf` / `serverHostnameOf`를 쓴다. 예약 이름 오류 메시지(`conflicts with the mc-router container`)도 같은 함수로 만들어 문구가 그대로다.
 
 ### 포트 시그니처 변경
 
@@ -195,7 +195,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 `new ServerRepository(paths?, runtime?)`, `new WorldRepository(paths?, assignments?, runtime?)`. 기본값은 퍼사드가 위임하던 것과 같은 `new DockerComposeRuntimeAdapter()`이고, CLI `Container`는 자기 런타임을 넘긴다. 두 저장소 모두 퍼사드를 import하지 않는다.
 
 - `ServerRepository.getStatus`는 `runtime.getStatusAsync(ServerName.fromExisting(name))`을 기다리고, 이전 매핑을 그대로 쓴다(조회 실패 sentinel인 `not_found`는 `STOPPED`). 동기 `getStatus`(`spawnSync`, 타임아웃 없음)를 쓰면 API의 `findAll()`이 서버마다 이벤트 루프를 막아서(#753 리뷰) `IContainerRuntimePort`에 `getStatusAsync`를 추가했다. Docker 어댑터는 #665 이전 조회를 `execCommandAsync`로 그대로 실행한다(`docker inspect -f {{.State.Status}} -- <container>`, 0이 아닌 종료 코드는 `not_found`, 상태는 소문자로). argv에서 바뀐 것은 #720 규칙의 `--`뿐이다. `getStatus` 자체를 비동기로 바꾸는 일은 모든 호출처를 함께 고치는 C2의 몫이라, 메서드를 추가하는 쪽이 더 단순했다. `fromExisting`이 거부하는 이름이면 `STOPPED` 대신 `UNKNOWN`이다. `findByName`은 그런 이름을 먼저 거르므로 이 경로에 오지 않는다.
-- `WorldRepository.findAllWithServerStatus`는 이전과 같은 컨테이너 이름 문자열을 넘긴다. `mc-`로 시작하는 배정 서버를 컨테이너 이름으로 보는 #670 이전 분기도 그대로다. 바꾸면 동작이 바뀐다. 포트를 좁히는 #736에서 지운다.
+- `WorldRepository.findAllWithServerStatus`는 이전과 같은 컨테이너 이름 문자열을 넘긴다. `mc-`로 시작하는 배정 서버를 컨테이너 이름으로 보는 #670 이전 분기도 그대로다. 바꾸면 동작이 바뀐다. 포트를 좁힐 때까지(#667, #641) 남는다. v3.0.0에서는 좁히지 않는다.
 
 ### 플랫폼 설정 포트(`CreateServerUseCase`)
 
@@ -218,11 +218,13 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 
 - 합성 함수 query service(쟁점 3): 완료 조건에 필요하지 않다.
 - `PrerequisiteChecker`(직접 호출 지점 19행)와 shared lint의 error 전환.
-- `ServerStatusUseCase`(클래스 전체가 deprecated)와 `CreateServerUseCase`의 "Connect via" 메시지는 아직 deprecated getter를 읽는다. 생성 경로는 #675가 다시 쓰고, getter는 #736이 지운다.
+- `ServerStatusUseCase`(클래스 전체가 deprecated)와 `CreateServerUseCase`의 "Connect via" 메시지는 아직 deprecated getter를 읽었다(#665 당시). 생성 경로는 #675가 다시 썼고, getter는 v3.0.0(#736)에서 삭제했다.
 
 ### #665에서 deprecated한 것(v3.0.0, #736에서 삭제)
 
-`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, 위 포트들의 서버 인자에 문자열(컨테이너 이름)을 넘기는 형태, `CreateServerUseCase` 네 번째 인자에 `Paths`를 넘기거나 비우는 형태.
+위 포트들의 서버 인자에 문자열(컨테이너 이름)을 넘기는 형태는 v3.0.0에서 **지우지 않는다**. #667과 #641까지 남는다.
+
+`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, `CreateServerUseCase` 네 번째 인자에 `Paths`를 넘기거나 비우는 형태.
 
 ## 백업 포트(#732, S3)
 

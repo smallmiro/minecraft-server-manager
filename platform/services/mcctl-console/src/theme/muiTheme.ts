@@ -1,6 +1,28 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { createTheme } from '@mui/material/styles';
+
+declare module '@mui/material/styles' {
+  interface TypographyVariants {
+    mono: CSSProperties;
+    label: CSSProperties;
+  }
+  interface TypographyVariantsOptions {
+    mono?: CSSProperties;
+    label?: CSSProperties;
+  }
+}
+
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    mono: true;
+    label: true;
+  }
+}
+
+const monoFontFamily =
+  'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
 
 // Modrinth-style color palette
 const colors = {
@@ -60,8 +82,30 @@ export const darkTheme = createTheme({
       selected: colors.bgSurface,
     },
   },
-  typography: {},
+  typography: {
+    // Technical values (container, host, version, metrics): fixed-width digits
+    // so live updates do not shift the layout.
+    mono: {
+      fontFamily: monoFontFamily,
+      fontVariantNumeric: 'tabular-nums',
+      fontSize: '0.8125rem',
+      lineHeight: 1.5,
+    },
+    // Small-caps style field label
+    label: {
+      fontSize: '0.6875rem',
+      fontWeight: 600,
+      lineHeight: 1.4,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+    },
+  },
   components: {
+    MuiTypography: {
+      defaultProps: {
+        variantMapping: { mono: 'span', label: 'span' },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {

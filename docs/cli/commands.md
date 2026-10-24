@@ -43,7 +43,6 @@ mcctl --root /opt/minecraft init
 ├── shared/
 │   ├── plugins/
 │   └── mods/
-├── scripts/
 └── backups/
 ```
 
@@ -446,6 +445,7 @@ mcctl upgrade [options]
 3. Patches the `router` service in the root `docker-compose.yml` (see below)
 4. Updates `servers/_template/` files and records `templateVersion` in `.mcctl.json`
 5. Adds `installId` to `.mcctl.json` if it is missing (an existing value is kept)
+6. (v3.0.0+) If `<root>/scripts` exists, prints its path, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and the link to the [script to mcctl table](../advanced/upgrade-runbook.md#v300-scripts). In a terminal it asks `Remove <path>?` (default `N`) and deletes only on `y`. With `--non-interactive` or without a terminal it prints a hint (`rm -r <path>`) and deletes nothing. With `--dry-run` it only prints `Would ask before removing <path>.`. A symbolic link is unlinked, never followed. There is no option to skip the question.
 
 **docker-compose.yml router patch:** only the `router` service's `image` tag and `group_add` entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.
 

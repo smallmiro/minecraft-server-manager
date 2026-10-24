@@ -30,32 +30,8 @@ jobs:
       - run: pnpm typecheck
       # e2e needs live api/console; it runs in e2e.yml
       - run: pnpm -r --filter '!e2e' test
-      # drift check between platform/scripts and the cli package (#648)
+      # the cli tarball ships docker/bluemap/Dockerfile and no scripts/ (#648, #736)
       - run: pnpm --filter @minecraft-docker/mcctl run --if-present verify:package
-
-  scripts:
-    name: script tests (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-      - name: Install shellcheck
-        run: |
-          if ! command -v shellcheck >/dev/null; then
-            if [ "$RUNNER_OS" = "macOS" ]; then brew install shellcheck; else sudo apt-get install -y shellcheck; fi
-          fi
-      - run: pnpm install --frozen-lockfile
-      # test:scripts / lint:scripts are added by #647
-      - run: pnpm run --if-present test:scripts
-      - run: pnpm run --if-present lint:scripts
 
   compose:
     name: docker compose config

@@ -38,4 +38,12 @@ describe('BentoMetricCard', () => {
     expect(screen.getByText('Across the cluster')).toBeInTheDocument();
     expect(screen.queryByTestId('bento-metric-progress-fill')).not.toBeInTheDocument();
   });
+
+  it('renders values with tabular figures so live updates keep their width', () => {
+    renderMetric();
+
+    expect(screen.getByTestId('bento-metric-value')).toHaveStyle({
+      fontVariantNumeric: 'tabular-nums',
+    });
+  });
 });

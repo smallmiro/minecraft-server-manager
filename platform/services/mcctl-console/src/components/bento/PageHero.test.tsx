@@ -41,4 +41,17 @@ describe('PageHero', () => {
     expect(screen.getByText('Manage Minecraft servers')).toBeInTheDocument();
     expect(screen.getByText('3 running')).toBeInTheDocument();
   });
+
+  it('renders a title action beside the heading without changing its name', () => {
+    render(
+      <ThemeProvider>
+        <PageHero title="alpha" titleAction={<button type="button">Switch server</button>} />
+      </ThemeProvider>,
+    );
+
+    const heading = screen.getByRole('heading', { level: 1, name: 'alpha' });
+    const action = screen.getByRole('button', { name: 'Switch server' });
+    expect(heading).not.toContainElement(action);
+    expect(heading.compareDocumentPosition(action) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });

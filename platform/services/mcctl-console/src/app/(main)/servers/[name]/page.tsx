@@ -26,7 +26,10 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DnsOutlinedIcon from '@mui/icons-material/DnsOutlined';
+import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
@@ -34,6 +37,7 @@ import StopCircleOutlinedIcon from '@mui/icons-material/StopCircleOutlined';
 import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
 import { HostnameDisplay } from '@/components/common';
 import { ServerDetail } from '@/components/servers/ServerDetail';
+import { ServerSwitcher } from '@/components/servers/ServerSwitcher';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import {
   useDeleteServer,
@@ -43,26 +47,27 @@ import {
   useStopServer,
 } from '@/hooks/useMcctl';
 import { useServerStatus } from '@/hooks/useServerStatus';
+import { formatUptime } from '@/utils/format';
 
-function formatUptime(seconds?: number): string {
-  if (!seconds || seconds < 0) return '0s';
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
-  return `${remainingSeconds}s`;
-}
-
-function getServerTypeIcon(type?: string): string {
+function getServerTypeIcon(type?: string) {
   const normalizedType = type?.toUpperCase();
   if (normalizedType && ['PAPER', 'SPIGOT', 'BUKKIT', 'PURPUR'].includes(normalizedType)) {
-    return '🔌';
+    return <ExtensionOutlinedIcon fontSize="small" />;
   }
   if (normalizedType && ['FORGE', 'NEOFORGE', 'FABRIC', 'QUILT'].includes(normalizedType)) {
-    return '🔧';
+    return <BuildOutlinedIcon fontSize="small" />;
   }
-  return '🎮';
+  return <DnsOutlinedIcon fontSize="small" />;
+}
+
+function StatusDot({ color }: { color: string }) {
+  return (
+    <Box
+      component="span"
+      aria-hidden
+      sx={{ width: 8, height: 8, ml: 1, borderRadius: '50%', bgcolor: color, flexShrink: 0 }}
+    />
+  );
 }
 
 function formatState(value?: string) {
@@ -124,15 +129,21 @@ export default function ServerDetailPage() {
     }
   };
 
+  // Rejects on failure so the console can show it
   const handleSendCommand = async (command: string) => {
-    try {
-      await fetch(`/api/servers/${encodeURIComponent(serverName)}/exec`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ command }),
-      });
-    } catch (commandError) {
-      console.error('Failed to send command:', commandError);
+    const response = await fetch(`/api/servers/${encodeURIComponent(serverName)}/exec`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command }),
+    });
+    const body = (await response.json().catch(() => null)) as
+      | { message?: string; success?: boolean; output?: string }
+      | null;
+    if (!response.ok) {
+      throw new Error(body?.message || `Request failed (${response.status})`);
+    }
+    if (body?.success === false) {
+      throw new Error(body.output || 'Command failed');
     }
   };
 
@@ -153,7 +164,6 @@ export default function ServerDetailPage() {
       {isStopped && (
         <Button
           variant="contained"
-          color="success"
           startIcon={isActionPending ? <CircularProgress size={16} color="inherit" /> : <PlayArrowIcon />}
           onClick={handleStartServer}
           disabled={isActionPending}
@@ -172,8 +182,8 @@ export default function ServerDetailPage() {
             Stop
           </Button>
           <Button
-            variant="contained"
-            startIcon={isActionPending ? <CircularProgress size={16} color="inherit" /> : <RestartAltIcon />}
+            variant="outlined"
+            startIcon={isActionPending ? <CircularProgress size={16} /> : <RestartAltIcon />}
             onClick={handleRestartServer}
             disabled={isActionPending}
           >
@@ -229,14 +239,8 @@ export default function ServerDetailPage() {
           aria-label="Server overview"
           aria-busy={isLoading ? 'true' : undefined}
           title={serverName}
+          titleAction={<ServerSwitcher currentServer={serverName} />}
           eyebrow="Server operations"
-          description={
-            server
-              ? [server.version && `Minecraft ${server.version}`, server.type]
-                  .filter(Boolean)
-                  .join(' · ')
-              : 'Minecraft server details'
-          }
           icon={server ? getServerTypeIcon(server.type) : <Skeleton variant="rounded" width={24} height={24} />}
           status={
             isLoading ? (
@@ -245,7 +249,13 @@ export default function ServerDetailPage() {
               <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                 <Chip
                   size="small"
+                  icon={
+                    <StatusDot
+                      color={isRunning ? 'success.main' : isStopped ? 'error.main' : 'text.disabled'}
+                    />
+                  }
                   label={formatState(currentStatus)}
+                  variant="outlined"
                   color={isRunning ? 'success' : isStopped ? 'error' : 'default'}
                 />
                 <Chip
@@ -260,6 +270,15 @@ export default function ServerDetailPage() {
                   }
                   variant="outlined"
                 />
+                {server?.type && <Chip size="small" label={server.type} variant="outlined" />}
+                {server?.version && (
+                  <Chip
+                    size="small"
+                    label={server.version}
+                    variant="outlined"
+                    sx={{ typography: 'mono', fontSize: '0.75rem' }}
+                  />
+                )}
                 {!isConnected && (
                   <Chip size="small" label="Reconnecting" color="warning" variant="outlined" />
                 )}
@@ -278,13 +297,18 @@ export default function ServerDetailPage() {
               sx={{ color: 'text.secondary', minWidth: 0 }}
             >
               {server.hostname && (
-                <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
-                  <HostnameDisplay hostname={server.hostname} fontSize={13} />
+                <Box sx={{ minWidth: 0, overflow: 'hidden', typography: 'mono' }}>
+                  <HostnameDisplay hostname={server.hostname} fontSize={13} showCopyButton />
                 </Box>
               )}
-              <Typography variant="body2">
-                Uptime {server.uptime || formatUptime(server.uptimeSeconds)}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75 }}>
+                <Typography variant="label">Uptime</Typography>
+                <Typography variant="mono" color="text.primary">
+                  {server.uptimeSeconds !== undefined
+                    ? formatUptime(server.uptimeSeconds)
+                    : server.uptime || '—'}
+                </Typography>
+              </Box>
             </Stack>
           ) : (
             <Skeleton variant="text" width="55%" />

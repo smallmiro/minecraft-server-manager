@@ -11,7 +11,7 @@
 #   - Container name: mc-<server-name>
 #   - Hostname: <server-name>.local
 #
-# Manual setup (if not using script):
+# Manual setup (if not using mcctl):
 #   1. Copy this directory: cp -r servers/_template servers/<server-name>
 #   2. Replace all 'template' with '<server-name>' in this file
 #   3. Edit config.env with your server settings

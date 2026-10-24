@@ -15,6 +15,15 @@ vi.mock('@/hooks/useServerLogs', () => ({
   useServerLogs: () => ({ logs: [], isConnected: true, clearLogs: vi.fn(), reconnect: vi.fn(), retryCount: 0 }),
 }));
 
+// The Bento server detail (#770) streams players over SSE on the Overview tab.
+vi.mock('@/hooks/useServerPlayers', () => ({
+  useServerPlayers: () => ({ roster: [], online: 0, max: 0, running: true, isConnected: true, reconnect: vi.fn(), retryCount: 0 }),
+}));
+
+vi.mock('@/hooks/usePlayit', () => ({
+  usePlayitStatus: () => ({ data: undefined, isLoading: false }),
+}));
+
 vi.mock('./ServerOptionsTab', () => ({
   ServerOptionsTab: () => <div>Options Tab Content</div>,
 }));

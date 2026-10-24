@@ -10,6 +10,7 @@ import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
 import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
 import { serverSpecReport } from '../lib/server-config.js';
+import { handleLegacyScripts } from '../lib/legacy-scripts.js';
 import * as prompts from '@clack/prompts';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
@@ -126,6 +127,12 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
 
   // --- Step 2d: ServerSpec status (#675): report only, import is lazy or `mcctl migrate spec` ---
   await reportServerSpecs(paths);
+
+  // --- Step 2e: <root>/scripts is unused since v3.0.0 (#736): inform, delete only after y/N ---
+  await handleLegacyScripts(paths.root, {
+    interactive: !options.nonInteractive && !!process.stdin.isTTY && !!process.stdout.isTTY,
+    dryRun: options.dryRun,
+  });
 
   // --- Step 3: Update templateVersion in config (and backfill installId) ---
   const addInstallId = !mcctlConfig?.installId;

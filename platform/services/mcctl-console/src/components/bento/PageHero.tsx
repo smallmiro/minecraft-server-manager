@@ -10,6 +10,8 @@ import { BentoPanel } from './BentoPanel';
 
 export interface PageHeroProps extends Omit<PaperProps, 'title'> {
   title: ReactNode;
+  /** Rendered beside the heading, outside it (e.g. a switcher button). */
+  titleAction?: ReactNode;
   description?: ReactNode;
   eyebrow?: ReactNode;
   icon?: ReactNode;
@@ -21,6 +23,7 @@ export interface PageHeroProps extends Omit<PaperProps, 'title'> {
 
 export function PageHero({
   title,
+  titleAction,
   description,
   eyebrow,
   icon,
@@ -90,20 +93,24 @@ export function PageHero({
             </Stack>
           )}
 
-          <Typography
-            component="h1"
-            sx={{
-              fontSize: compact
-                ? { xs: '1.6rem', sm: '2rem' }
-                : { xs: '2rem', sm: '2.65rem' },
-              lineHeight: 1.08,
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              overflowWrap: 'anywhere',
-            }}
-          >
-            {title}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <Typography
+              component="h1"
+              sx={{
+                fontSize: compact
+                  ? { xs: '1.6rem', sm: '2rem' }
+                  : { xs: '2rem', sm: '2.65rem' },
+                lineHeight: 1.08,
+                fontWeight: 800,
+                letterSpacing: '-0.04em',
+                overflowWrap: 'anywhere',
+                minWidth: 0,
+              }}
+            >
+              {title}
+            </Typography>
+            {titleAction}
+          </Box>
 
           {description && (
             <Typography color="text.secondary" sx={{ mt: 1, maxWidth: 680 }}>

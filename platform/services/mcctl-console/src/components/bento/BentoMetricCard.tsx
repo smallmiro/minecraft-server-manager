@@ -72,7 +72,9 @@ export function BentoMetricCard({
         <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, minWidth: 0 }}>
           <Typography
             component="div"
+            data-testid="bento-metric-value"
             sx={{
+              fontVariantNumeric: 'tabular-nums',
               fontWeight: 800,
               fontSize: '2.15rem',
               lineHeight: 1,

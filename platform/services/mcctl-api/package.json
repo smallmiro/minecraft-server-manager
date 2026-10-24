@@ -10,7 +10,6 @@
   },
   "files": [
     "dist",
-    "scripts",
     "docker"
   ],
   "publishConfig": {
@@ -29,8 +28,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "test:watch": "vitest",
-    "sync-scripts": "rm -rf scripts docker && cp -r ../../scripts scripts && rm -rf scripts/tests scripts/.gitkeep && cp -r ../../docker docker",
-    "prepack": "npm run sync-scripts"
+    "sync-docker": "rm -rf docker && cp -r ../../docker docker",
+    "prepack": "npm run sync-docker"
   },
   "keywords": [
     "minecraft",
