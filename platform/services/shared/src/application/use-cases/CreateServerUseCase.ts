@@ -393,11 +393,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     }
   }
 
-  /**
-   * Execute server creation with provided configuration
-   */
-  async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
-    // Parse configuration
+  /** The create input as value objects, before anything is checked against the platform. */
+  private parseConfig(config: CreateServerConfig) {
     const name = ServerName.create(config.name);
     const type = config.type
       ? ServerType.create(config.type)
@@ -442,11 +439,6 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     const enableWhitelist =
       config.enableWhitelist ?? (config.whitelistPlayers?.length ?? 0) > 0;
 
-    // Check if server already exists
-    if (await this.serverRepo.exists(name.value)) {
-      throw new Error(`Server '${name.value}' already exists`);
-    }
-
     // Build modpack options if this is a modpack server
     const modpackOptions =
       type.isModpack && config.modpackSlug
@@ -466,6 +458,20 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       worldOptions,
       modpackOptions,
     });
+    return { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server };
+  }
+
+  /**
+   * Execute server creation with provided configuration
+   */
+  async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
+    const { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server } =
+      this.parseConfig(config);
+
+    // Check if server already exists
+    if (await this.serverRepo.exists(name.value)) {
+      throw new Error(`Server '${name.value}' already exists`);
+    }
 
     await this.assertWorldAssignable(worldOptions, name);
 
