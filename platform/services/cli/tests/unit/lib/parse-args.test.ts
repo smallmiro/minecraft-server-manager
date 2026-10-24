@@ -33,6 +33,10 @@ describe('parseArgs', () => {
     expect(parseArgs(['delete', 'srv', '--force=true', '--json=false']).flags).toEqual({ force: true, json: false });
   });
 
+  it('keeps any other --flag=value as a string, so it never turns an on/off flag on (#728)', () => {
+    expect(parseArgs(['create', 'alpha', '--version=1.21.1', '--force=0']).flags).toEqual({ version: '1.21.1', force: '0' });
+  });
+
   it('does not take a flag as the value', () => {
     expect(parseArgs(['create', 'alpha', '-s', '--no-start']).flags).toEqual({ seed: true, 'no-start': true });
   });

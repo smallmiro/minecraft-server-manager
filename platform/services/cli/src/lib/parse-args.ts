@@ -40,7 +40,8 @@ export function parseArgs(args: string[]): {
       const eq = arg.indexOf('=');
       const key = arg.slice(2, eq);
       const value = arg.slice(eq + 1);
-      result.flags[key] = BOOLEAN_ONLY_FLAGS.includes(key) ? value !== 'false' : value;
+      // Only true/false become booleans: --version=1.21.1 stays a value, --force=0 never forces
+      result.flags[key] = BOOLEAN_ONLY_FLAGS.includes(key) && (value === 'true' || value === 'false') ? value === 'true' : value;
       i++;
     } else if (arg.startsWith('--')) {
       const key = arg.slice(2);
