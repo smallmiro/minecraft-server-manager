@@ -157,7 +157,7 @@ CI checks on PRs against `develop` must pass before merge. `ci.yml` runs on ever
 
 | Job | What it does |
 |-----|--------------|
-| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
+| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` check (the tarball has `docker/bluemap/Dockerfile` and no `scripts/`) |
 | `docker compose config` (platform, cli templates) | Validates both compose files |
 | `template drift check` | `pnpm --filter @minecraft-docker/mcctl check:templates` (plus its `node --test` self-test): one template source, agreed default values read structurally |
 

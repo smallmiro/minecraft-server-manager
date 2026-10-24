@@ -153,7 +153,7 @@ PR checks against `develop` must pass before merge. `ci.yml` runs on every PR, w
 
 | Job | What it does |
 |-----|--------------|
-| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
+| `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` check (the tarball has `docker/bluemap/Dockerfile` and no `scripts/`) |
 | `docker compose config` (platform, templates) | Validates both compose files |
 
 `e2e.yml` runs daily at 03:00 KST and on manual dispatch, **not on PRs**: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run `pnpm test:e2e` locally when you change API or console behavior.

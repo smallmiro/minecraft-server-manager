@@ -153,7 +153,7 @@ gh pr create --repo smallmiro/minecraft-server-manager --base develop \
 
 | 잡 | 내용 |
 |----|------|
-| `lint, typecheck, test` | 모든 패키지를 빌드하고 `pnpm lint`, `pnpm typecheck`, `e2e`를 제외한 전 패키지 테스트, cli `verify:package` 드리프트 검사를 실행 |
+| `lint, typecheck, test` | 모든 패키지를 빌드하고 `pnpm lint`, `pnpm typecheck`, `e2e`를 제외한 전 패키지 테스트, cli `verify:package` 검사(tarball에 `docker/bluemap/Dockerfile`이 있고 `scripts/`가 없는지)를 실행 |
 | `docker compose config` (platform, templates) | 두 compose 파일 검증 |
 
 `e2e.yml`은 매일 03:00 KST와 수동 실행 시에만 돌고 **PR에서는 실행되지 않습니다**. mcctl-api와 mcctl-console을 띄우고 Playwright 테스트를 실행합니다. API나 콘솔 동작을 바꿨다면 로컬에서 `pnpm test:e2e`를 실행하세요.

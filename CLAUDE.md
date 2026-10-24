@@ -10,7 +10,7 @@ This project is a DevOps project for building and operating multiple Minecraft J
 |-----------|-------------|
 | `platform/` | Docker platform runtime (docker-compose, .env, servers/, worlds/, shared/) |
 | `platform/services/shared/` | `@minecraft-docker/shared` - Domain entities, value objects, use cases, ports/adapters |
-| `platform/services/cli/` | `@minecraft-docker/mcctl` - npm CLI (Hexagonal Architecture) |
+| `platform/services/cli/` | `@minecraft-docker/mcctl` - npm CLI (Hexagonal Architecture). `prepack` runs `sync-docker`, which copies `docker/bluemap` into the package; there is no `scripts/` |
 | `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api` - Fastify REST API (:5001) |
 | `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console` - Next.js Web UI (:5000) |
 | `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth` - Modrinth adapter |
