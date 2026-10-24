@@ -115,10 +115,9 @@ export function hasIncludeEntry(text: string | undefined, name: string): boolean
   return includeEntries(text).includes(`${name}/docker-compose.yml`);
 }
 
-/** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
-export function renderInclude(name: string, current: string | undefined): string {
-  const entry = `${name}/docker-compose.yml`;
-  if (current === undefined) return INCLUDE_HEADER + yaml.dump({ include: [entry] }, DUMP_OPTIONS);
+/** servers/compose.yml text parsed for adding entries; 'conflict' when it cannot be rewritten safely. */
+function readInclude(current: string | undefined, name: string): { parsed: Record<string, unknown>; list: unknown[] } {
+  if (current === undefined) return { parsed: {}, list: [] };
   const unreadable = (why: string) =>
     new ServerSpecError('conflict', `servers/compose.yml ${why}; fix it first (nothing was written)`, name);
   let parsed: unknown;
@@ -130,7 +129,14 @@ export function renderInclude(name: string, current: string | undefined): string
   if (!isMapping(parsed)) throw unreadable('is not a mapping');
   const list = parsed['include'] ?? [];
   if (!Array.isArray(list)) throw unreadable("has an 'include' that is not a list");
-  if (list.some((e) => includePaths(e).includes(entry))) return current;
+  return { parsed, list };
+}
+
+/** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
+export function renderInclude(name: string, current: string | undefined): string {
+  const entry = `${name}/docker-compose.yml`;
+  const { parsed, list } = readInclude(current, name);
+  if (list.some((e) => includePaths(e).includes(entry))) return current!;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
 }
 
