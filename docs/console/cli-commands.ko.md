@@ -570,6 +570,9 @@ mcctl console api whitelist remove 192.168.1.100
 
 PM2를 통해 Management Console 수명주기를 관리합니다.
 
+!!! note "터미널이 없을 때"
+    API와 Console이 모두 설치되어 있으면 `start`, `stop`, `restart`, `logs`는 대상 서비스를 물어봅니다. 터미널이 없는 환경(cron, CI, 파이프)에서는 물어볼 수 없으므로 `--console`(API + Console) 또는 `--api`를 지정하지 않으면 종료 코드 1로 끝납니다. 대상을 임의로 고르지 않습니다.
+
 ### 하위 명령어
 
 | 하위 명령어 | 설명 |

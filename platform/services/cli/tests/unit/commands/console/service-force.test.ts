@@ -73,6 +73,8 @@ import { consoleServiceCommand } from '../../../../src/commands/console/service.
 
 describe('consoleServiceCommand --force', () => {
   beforeEach(() => {
+    // these tests exercise the interactive select (mocked), which needs a TTY
+    Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
     vi.clearAllMocks();
     mockIsInitialized.mockReturnValue(true);
   });
