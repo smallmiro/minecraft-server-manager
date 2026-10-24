@@ -369,7 +369,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     } catch (err) {
       // A restore failure never hides the write error: it is added to the message (as create's cleanup).
       // A file another writer changed since (e.g. while the include lock was awaited) is left as it is.
-      const failed: string[] = [];
+      const failed: Array<{ file: string; reason: string }> = [];
       const changed: string[] = [];
       for (const { path, content, before } of written.reverse()) {
         const file = `servers/${name}/${basename(path)}`;
@@ -379,12 +379,18 @@ export class FileServerSpecRepository implements IServerSpecRepository {
           else if (before === undefined) await rm(path, { force: true });
           else await atomicWriteFile(path, before);
         } catch (e) {
-          failed.push(`${file}: ${(e as Error).message}`);
+          failed.push({ file, reason: (e as Error).message });
         }
       }
       if (err instanceof Error) {
         if (changed.length > 0) err.message += ` (${changed.join(', ')} changed since this write and were left as they are)`;
-        if (failed.length > 0) err.message += ` (restoring the earlier files failed: ${failed.join('; ')}; check them by hand)`;
+        if (failed.length > 0) {
+          const list = failed.map((f) => `${f.file}: ${f.reason}`).join('; ');
+          err.message += ` (restoring the earlier files failed: ${list}; check them by hand)`;
+        }
+        // For the caller (unrestoredFiles): e.g. migrate worlds decides from what config.env now says.
+        const left = [...changed, ...failed.map((f) => f.file)];
+        if (left.length > 0) Object.assign(err, { unrestoredFiles: left });
       }
       throw err;
     }

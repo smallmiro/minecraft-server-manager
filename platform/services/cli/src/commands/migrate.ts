@@ -3,8 +3,10 @@ import {
   log,
   colors,
   checkProposed,
+  unrestoredFiles,
   type IContainerRuntimePort,
   type IWorldAssignmentPort,
+  type WorldAssignmentSnapshot,
 } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 import { migrateSpec } from './migrate-spec.js';
@@ -435,10 +437,12 @@ async function migrateServer(
       ? server.name
       : findExistingWorldName(worldsDir, server.levelValue, server.name);
   const newConfig = proposeConfig(fs.readFileSync(configPath, 'utf-8'), newLevelValue);
-  const refused = checkProposed(await assignments.preview(server.name, newConfig), server.name);
+  const intended = await assignments.preview(server.name, newConfig);
+  const refused = checkProposed(intended, server.name);
   if (refused) {
     throw refused;
   }
+  const before = await assignments.snapshot();
 
   // Ensure worlds directory exists
   if (!fs.existsSync(worldsDir)) {
@@ -505,21 +509,56 @@ async function migrateServer(
       { allowStorageChange: true }
     );
   } catch (error) {
-    const failed: string[] = [];
-    for (const step of undo.reverse()) {
-      try {
-        step();
-      } catch (e) {
-        failed.push((e as Error).message);
+    if (undo.length === 0) throw error;
+    // The spec write puts its files back; when it could not (unrestoredFiles), config.env may keep
+    // the new LEVEL and --universe. The world follows what config.env says now, so they match.
+    const config =
+      unrestoredFiles(error).length === 0 ? 'earlier' : await configNow(assignments, server.name, before, intended);
+    const where = `servers/${server.name}/config.env`;
+    let note: string;
+    if (config === 'migrated') {
+      note = `${where} kept the new world settings, so the world stays in worlds/${server.name}; ` +
+        `fix the cause and run mcctl migrate spec ${server.name}`;
+    } else if (config === 'unknown') {
+      note = `could not tell which world ${where} now uses, so the world was left in worlds/${server.name}; ` +
+        `check LEVEL and EXTRA_ARGS in ${where} and move the world to match by hand`;
+    } else {
+      const failed: string[] = [];
+      for (const step of undo.reverse()) {
+        try {
+          step();
+        } catch (e) {
+          failed.push((e as Error).message);
+        }
       }
+      note = failed.length > 0
+        ? `moving the world back failed: ${failed.join('; ')}; move it back to servers/${server.name}/data by hand`
+        : 'the world was moved back';
     }
-    if (undo.length > 0 && error instanceof Error) {
-      error.message += failed.length > 0
-        ? ` (moving the world back failed: ${failed.join('; ')}; move it back to servers/${server.name}/data by hand)`
-        : ' (the world was moved back)';
-    }
+    if (error instanceof Error) error.message += ` (${note})`;
     throw error;
   }
+}
+
+/**
+ * Which world settings servers/<server>/config.env holds now: the migrated
+ * ones, the earlier ones, or neither / unreadable ('unknown').
+ */
+async function configNow(
+  assignments: IWorldAssignmentPort,
+  server: string,
+  before: WorldAssignmentSnapshot,
+  intended: WorldAssignmentSnapshot
+): Promise<'migrated' | 'earlier' | 'unknown'> {
+  const key = (s: WorldAssignmentSnapshot) => {
+    if (s.undetermined.includes(server)) return undefined;
+    const a = s.assignments.find((x) => x.server === server);
+    return a ? `${a.world}\0${!!a.internal}` : undefined;
+  };
+  const now = await assignments.snapshot().then(key, () => undefined);
+  if (now === undefined) return 'unknown';
+  if (now === key(intended)) return 'migrated';
+  return now === key(before) ? 'earlier' : 'unknown';
 }
 
 /**

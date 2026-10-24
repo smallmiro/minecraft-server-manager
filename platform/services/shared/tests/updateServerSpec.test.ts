@@ -42,6 +42,15 @@ describe('updateServerSpec', () => {
     expect(other.load).toHaveBeenCalledTimes(1);
   });
 
+  it('does not retry a conflict that left files it could not put back', async () => {
+    const left = Object.assign(new ServerSpecError('conflict', 'lost entries', 'alpha'), {
+      unrestoredFiles: ['servers/alpha/config.env'],
+    });
+    const r = repo([left, undefined]);
+    await expect(updateServerSpec(r as never, 'alpha', (d) => d)).rejects.toBe(left);
+    expect(r.write).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects 'not_found' for an unknown server", async () => {
     const r = { load: vi.fn(async () => null), write: vi.fn() };
     await expect(updateServerSpec(r as never, 'ghost', (d) => d)).rejects.toMatchObject({ code: 'not_found' });

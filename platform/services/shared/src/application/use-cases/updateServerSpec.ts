@@ -1,4 +1,4 @@
-import { ServerSpecError, type ServerSpecDocument } from '../../domain/server-spec/ServerSpecDocument.js';
+import { ServerSpecError, unrestoredFiles, type ServerSpecDocument } from '../../domain/server-spec/ServerSpecDocument.js';
 import type {
   IServerSpecRepository,
   WriteServerSpecOptions,
@@ -25,7 +25,10 @@ export async function updateServerSpec(
       await repo.write(next, { ...options, expectedRevision: loaded.revision });
       return next;
     } catch (error) {
-      if (attempt === 0 && error instanceof ServerSpecError && error.code === 'conflict') continue;
+      // A write that left files behind is not retried: the caller decides on what is on disk.
+      if (attempt === 0 && error instanceof ServerSpecError && error.code === 'conflict' && unrestoredFiles(error).length === 0) {
+        continue;
+      }
       throw error;
     }
   }

@@ -13,6 +13,7 @@ import {
   Paths,
   ServerName,
   type IContainerRuntimePort,
+  type ServerSpecDocument,
 } from '@minecraft-docker/shared';
 
 const runtime = {
@@ -105,6 +106,64 @@ describe('migrate worlds (runtime port)', () => {
     expect(readFileSync(join(alpha, 'config.env'), 'utf-8')).toBe('TYPE=PAPER\n');
     expect(existsSync(join(alpha, 'server.yaml'))).toBe(false);
     expect(readFileSync(join(alpha, 'docker-compose.yml'), 'utf-8')).toBe(compose);
+  });
+
+  describe('when the spec write left files it could not put back (unrestoredFiles)', () => {
+    const alpha = () => join(root, 'servers', 'alpha');
+    const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+    type Write = FileServerSpecRepository['write'];
+    /** A repository whose write runs `before`, then fails like a write whose undo was incomplete. */
+    function failingWrite(left: string[], before: (write: Write, doc: ServerSpecDocument) => Promise<void>) {
+      serverSpecRepositories.create = (p) => {
+        const repo = new FileServerSpecRepository(p, undefined, stopped, () => []);
+        const write = repo.write.bind(repo);
+        repo.write = async (doc) => {
+          await before(write, doc);
+          throw Object.assign(new Error('ENOSPC: no space left on device'), { unrestoredFiles: left });
+        };
+        return repo;
+      };
+    }
+
+    const logged = () => vi.mocked(console.log).mock.calls.map((c) => String(c[0])).join('\n');
+
+    beforeEach(() => runtime.getStatusAsync.mockResolvedValue('exited'));
+
+    it('keeps the world in worlds/ when config.env kept the new LEVEL and --universe', async () => {
+      failingWrite(['servers/alpha/config.env'], (write, doc) => write(doc, { allowStorageChange: true }));
+
+      const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+
+      expect(code).toBe(1);
+      const config = readFileSync(join(alpha(), 'config.env'), 'utf-8');
+      expect(config).toMatch(/^LEVEL=alpha$/m);
+      expect(config).toMatch(/^EXTRA_ARGS=--universe \/worlds\/$/m);
+      // The world is where the config says the server finds it
+      expect(existsSync(join(root, 'worlds', 'alpha', 'level.dat'))).toBe(true);
+      expect(existsSync(join(alpha(), 'data', 'world'))).toBe(false);
+      expect(logged()).toMatch(/world stays in worlds\/alpha.*mcctl migrate spec alpha/);
+    });
+
+    it('moves the world back when config.env still has the old settings', async () => {
+      failingWrite(['servers/alpha/docker-compose.yml'], async () => undefined);
+
+      const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+
+      expect(code).toBe(1);
+      expect(readFileSync(join(alpha(), 'config.env'), 'utf-8')).toBe('TYPE=PAPER\n');
+      expect(existsSync(join(alpha(), 'data', 'world', 'level.dat'))).toBe(true);
+      expect(existsSync(join(root, 'worlds', 'alpha'))).toBe(false);
+    });
+
+    it('leaves the world where it is and says so when config.env cannot be read', async () => {
+      failingWrite(['servers/alpha/config.env'], async () => writeFileSync(join(alpha(), 'config.env'), 'TYPE=PAPER\nLEVEL=${WHERE}\n'));
+
+      const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+
+      expect(code).toBe(1);
+      expect(existsSync(join(root, 'worlds', 'alpha', 'level.dat'))).toBe(true);
+      expect(logged()).toMatch(/left in worlds\/alpha.*LEVEL and EXTRA_ARGS/);
+    });
   });
 
   it('fails without migrating when the stop fails', async () => {

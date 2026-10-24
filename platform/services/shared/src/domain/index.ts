@@ -99,6 +99,7 @@ export {
 // ServerSpec (#675, ADR-0003)
 export {
   ServerSpecError,
+  unrestoredFiles,
   SERVER_SPEC_VERSION,
   SERVER_SPEC_MANAGED_ENV_KEYS,
   validateServerSpecDocument,

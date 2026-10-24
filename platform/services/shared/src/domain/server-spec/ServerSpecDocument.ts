@@ -91,6 +91,17 @@ export class ServerSpecError extends Error {
   }
 }
 
+/**
+ * The files (`servers/<n>/...`) a failed ServerSpec write could not put back:
+ * their restore failed (they keep the new content) or another writer changed
+ * them since. [] when the write left nothing behind. Read from the error the
+ * write rejected with (IServerSpecRepository.write).
+ */
+export function unrestoredFiles(error: unknown): string[] {
+  const files = (error as { unrestoredFiles?: unknown } | null | undefined)?.unrestoredFiles;
+  return Array.isArray(files) ? files.filter((f): f is string => typeof f === 'string') : [];
+}
+
 /** `create`: the strict rules for a new server. `existing`: what works today (imported servers). */
 export type ServerSpecRules = 'create' | 'existing';
 

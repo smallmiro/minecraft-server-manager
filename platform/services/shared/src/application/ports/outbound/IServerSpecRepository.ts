@@ -44,6 +44,10 @@ export interface IServerSpecRepository {
   delete(name: string): Promise<void>;
   /** Imports in memory when server.yaml is missing ('undetermined' when refused); absorbs hand edits. No writes. */
   load(name: string): Promise<LoadedServerSpec | null>;
-  /** Writes server.yaml and renders the generated files ('not_found' when the server directory does not exist). */
+  /**
+   * Writes server.yaml and renders the generated files ('not_found' when the server directory does not exist).
+   * All or nothing per file: on failure the files it changed are put back; the ones it could not put back
+   * are on the error (unrestoredFiles).
+   */
   write(doc: ServerSpecDocument, options?: WriteServerSpecOptions): Promise<void>;
 }

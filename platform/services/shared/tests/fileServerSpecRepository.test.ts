@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Paths } from '../src/utils/index.js';
 import { FileServerSpecRepository, serverSpecTestHooks } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
-import { ServerSpecError, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
+import { ServerSpecError, unrestoredFiles, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
 import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 
 // Lets a test fail chosen atomic writes (a restore that fails too); passes through otherwise.
@@ -217,6 +217,7 @@ describe('write is all or nothing', () => {
     expect(readFileSync(file('docker-compose.yml'), 'utf-8')).toBe(COMPOSE('survival'));
     expect(error.message).toMatch(/servers\/survival\/server\.yaml.*servers\/survival\/config\.env|config\.env.*server\.yaml/);
     expect(error.message).toContain('changed since this write');
+    expect(unrestoredFiles(error).sort()).toEqual(['servers/survival/config.env', 'servers/survival/server.yaml']);
   });
 
   it('removes the new server.yaml and puts config.env back when the compose cannot be written', async () => {
@@ -226,6 +227,7 @@ describe('write is all or nothing', () => {
     const error = await repo.write(spec()).catch((e: unknown) => e);
 
     expect((error as NodeJS.ErrnoException).code).toBe('EACCES');
+    expect(unrestoredFiles(error)).toEqual([]);
     expect(existsSync(yamlPath('survival'))).toBe(false);
     expect(readFileSync(file('config.env'), 'utf-8')).toBe(VALID);
     expect(readFileSync(file('docker-compose.yml'), 'utf-8')).toBe(COMPOSE('survival'));
@@ -257,6 +259,8 @@ describe('write is all or nothing', () => {
     const error = (await repo.write(spec()).catch((e: unknown) => e)) as Error;
 
     expect(error.message).toMatch(/^compose write failed .*servers\/survival\/config\.env: disk full/);
+    // The caller can tell config.env kept the new content (migrate worlds decides on it)
+    expect(unrestoredFiles(error)).toEqual(['servers/survival/config.env']);
     expect(existsSync(yamlPath('survival'))).toBe(false);
   });
 });
