@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Stopped servers already on the current image were offered for recreation** (#810) - `mcctl update` and step 7b of `upgrade-v3.sh` listed every stopped server as "still using the old image" and asked to recreate it, even when its container already ran the local image its compose service names. They now compare the container's image with that local image and report a match as `up to date` without asking; only servers whose image differs are offered. If the image cannot be looked up, the server is still offered.
+
 ## [3.0.1] - 2026-10-24
 
 > **Upgrade notes (v3.0.1).**
