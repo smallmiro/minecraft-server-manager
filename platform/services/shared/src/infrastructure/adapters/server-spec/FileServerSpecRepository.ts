@@ -347,10 +347,10 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       }
     }
 
-    const written: Array<{ path: string; before: string | undefined }> = [];
+    const written: Array<{ path: string; content: string; before: string | undefined }> = [];
     const put = async (path: string, content: string, before: string | undefined, opts: AtomicWriteOptions = {}) => {
       await atomicWriteFile(path, content, opts);
-      written.push({ path, before });
+      written.push({ path, content, before });
     };
     try {
       if (currentYaml !== nextYaml) {
@@ -368,14 +368,23 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       if (include) await this.writeInclude(name, doc, ctx);
     } catch (err) {
       // A restore failure never hides the write error: it is added to the message (as create's cleanup).
+      // A file another writer changed since (e.g. while the include lock was awaited) is left as it is.
       const failed: string[] = [];
-      for (const { path, before } of written.reverse()) {
-        await (before === undefined ? rm(path, { force: true }) : atomicWriteFile(path, before)).catch(
-          (e: unknown) => void failed.push(`servers/${name}/${basename(path)}: ${(e as Error).message}`)
-        );
+      const changed: string[] = [];
+      for (const { path, content, before } of written.reverse()) {
+        const file = `servers/${name}/${basename(path)}`;
+        try {
+          // ponytail: read-then-restore leaves a window of milliseconds; a per-server lock closes it if needed.
+          if ((await readOptional(path)) !== content) changed.push(file);
+          else if (before === undefined) await rm(path, { force: true });
+          else await atomicWriteFile(path, before);
+        } catch (e) {
+          failed.push(`${file}: ${(e as Error).message}`);
+        }
       }
-      if (failed.length > 0 && err instanceof Error) {
-        err.message += ` (restoring the earlier files failed: ${failed.join('; ')}; check them by hand)`;
+      if (err instanceof Error) {
+        if (changed.length > 0) err.message += ` (${changed.join(', ')} changed since this write and were left as they are)`;
+        if (failed.length > 0) err.message += ` (restoring the earlier files failed: ${failed.join('; ')}; check them by hand)`;
       }
       throw err;
     }
