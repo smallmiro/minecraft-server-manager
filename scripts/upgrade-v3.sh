@@ -23,6 +23,9 @@ set -euo pipefail
 DOCS_URL="https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts"
 PKG="@minecraft-docker/mcctl"
 KILL_TIMEOUT_MS=130000
+# --console restarts mcctl-api and the console without asking which (#794)
+RESTART_CMD="mcctl console service restart --console --force"
+ESC=$(printf '\033')
 
 ROOT=""
 YES=0
@@ -35,14 +38,20 @@ LOG=""
 LOG_DIR=""
 BACKUP_DIR=""
 SCRIPTS_BACKED=0
+BACKED=""
 RESULTS=""
 WARNINGS=""
 RC=0
 STOPPED=0
+PAST_PREFLIGHT=0
 CUR_OLD=""
 CUR_NOW=""
+MCCTL_INSTALLS=""
 UPDATE_ACTION=""
 ECO_BAK=""
+NEED_RESTART=0
+IMAGE_UNDO=""
+RECREATE_TODO=""
 TS=""
 BOLD=""
 YEL=""
@@ -80,7 +89,14 @@ init_output() {
   fi
 }
 
-log() { printf '%s\n' "$*" >>"$LOG"; }
+# strip_esc: drop escape sequences (colours, spinners) on the way to the log
+strip_esc() { LC_ALL=C sed "s/$ESC\[[0-9;?]*[A-Za-z]//g" | LC_ALL=C tr -d '\033'; }
+log() {
+  case "$*" in
+    *"$ESC"*) printf '%s\n' "$*" | strip_esc >>"$LOG" ;;
+    *) printf '%s\n' "$*" >>"$LOG" ;;
+  esac
+}
 say() {
   printf '%s\n' "$*"
   log "$*"
@@ -93,9 +109,13 @@ err() {
   printf '%sx %s%s\n' "$RED" "$*" "$RST"
   log "x $*"
 }
+# add_warning <message> [detail lines]: details are shown indented, here and in the summary
 add_warning() {
-  WARNINGS="${WARNINGS}  - $*"$'\n'
-  warn "$*"
+  local d=""
+  if [ -n "${2:-}" ]; then d=$(printf '%s\n' "$2" | sed 's/^/      /'); fi
+  WARNINGS="${WARNINGS}  - $1"$'\n'"${d:+$d$'\n'}"
+  warn "$1"
+  if [ -n "$d" ]; then say "$d"; fi
 }
 step() {
   printf '\n%s== Step %s: %s ==%s\n' "$BOLD" "$1" "$2" "$RST"
@@ -110,13 +130,16 @@ record() {
 
 # ---------------------------------------------------------------- helpers
 
-# Run a command with stdin closed; show and log its output; return its status.
+# Run a command with stdin closed; show its output as is and log it without
+# escape sequences; return its status.
 run() {
   local rc
   set +e
-  "$@" </dev/null 3<&- 2>&1 | tee -a "$LOG"
+  "$@" </dev/null 3<&- 2>&1 | tee "$LOG.part"
   rc=${PIPESTATUS[0]}
   set -e
+  strip_esc <"$LOG.part" >>"$LOG"
+  rm -f "$LOG.part"
   return "$rc"
 }
 
@@ -209,7 +232,7 @@ backup_ecosystem_once() {
   fi
 }
 
-# pm2_apps: "<name> <status> <node version>" per PM2 app
+# pm2_apps: "<name> <status> <node version> <kill_timeout or ->" per PM2 app
 pm2_apps() {
   command -v pm2 >/dev/null 2>&1 || return 0
   command -v node >/dev/null 2>&1 || return 0
@@ -220,11 +243,12 @@ pm2_apps() {
       if (i < 0) return;
       let a;
       try { a = JSON.parse(s.slice(i)); } catch (e) { return; }
-      a.forEach((p) => { const e = p.pm2_env || {}; console.log(p.name + " " + (e.status || "?") + " " + (e.node_version || "?")); });
+      a.forEach((p) => { const e = p.pm2_env || {}; console.log(p.name + " " + (e.status || "?") + " " + (e.node_version || "?") + " " + (e.kill_timeout !== undefined ? e.kill_timeout : "-")); });
     });' || true
 }
 
 finish() {
+  local others
   say ""
   printf '%s== Step 9: Summary ==%s\n' "$BOLD" "$RST"
   log "== Step 9: Summary =="
@@ -239,18 +263,93 @@ finish() {
     say "Dry run: nothing was changed."
   else
     say "Still to do by hand:"
+    if [ "$NEED_RESTART" = 1 ]; then
+      say "  - Restart mcctl-api and the console so PM2 reads ecosystem.config.cjs again:"
+      say "      $RESTART_CMD"
+    fi
+    if [ -n "$RECREATE_TODO" ]; then
+      say "  - Stopped servers keep their old image: until their containers are recreated, auto-scale wakes them on the old image. When you are ready, run in $ROOT:"
+      say "$(printf '%s' "$RECREATE_TODO")"
+    fi
+    others=$(other_installs)
+    if [ -n "$others" ]; then
+      say "  - Other mcctl installs on PATH are not $CUR_NOW (another shell, cron or PATH order runs them); update each:"
+      say "$others"
+    fi
     say "  - Restart running servers so they pick up new images and settings:"
     say "      mcctl stop <server> && mcctl start <server>"
     say "  - If cron jobs, timers or your own scripts called <root>/scripts/*.sh, switch them to mcctl:"
     say "      $DOCS_URL"
   fi
-  say "Rollback (the old version was ${CUR_OLD:-unknown}):"
-  say "  npm install -g $PKG@${CUR_OLD:-<previous>} && mcctl console service restart --force"
-  if [ -n "$BACKUP_DIR" ]; then
-    say "  config backup: $BACKUP_DIR (copy files back as in the runbook, step 8)"
-  fi
+  # a dry run or a stop in pre-flight changed nothing, so there is nothing to undo
+  if [ "$DRY" = 0 ] && [ "$PAST_PREFLIGHT" = 1 ]; then rollback_hint; fi
   say "Log: $LOG"
   exit "$RC"
+}
+
+# The same order as runbook step 8: files, CLI, api/console/shared, restart
+rollback_hint() {
+  local old=${CUR_OLD:-<previous>} svc=$ROOT pkgs="" p
+  say "Rollback (the old version was ${CUR_OLD:-unknown}; runbook step 8):"
+  if [ -n "$BACKED" ]; then
+    say "  Copy these back from $BACKUP_DIR to the same paths under $ROOT, then run 'docker compose up -d router':"
+    say "$(printf '%s' "$BACKED" | sed 's/^/      /')"
+  elif [ -n "$ECO_BAK" ]; then
+    # no backup folder (step 1 declined): only the copy step 5 made before editing
+    say "  Copy $ECO_BAK back to $ROOT/ecosystem.config.cjs"
+  fi
+  say "  npm install -g $PKG@$old"
+  # where mcctl update installs them: .services/ when it exists, else the root
+  if [ -d "$ROOT/.services" ]; then svc=$ROOT/.services; fi
+  for p in mcctl-api mcctl-console shared; do
+    if [ -d "$svc/node_modules/@minecraft-docker/$p" ]; then pkgs="$pkgs @minecraft-docker/$p@$old"; fi
+  done
+  if [ -n "$pkgs" ]; then
+    say "  cd $svc && npm install$pkgs"
+    say "  $RESTART_CMD"
+  fi
+  if [ -n "$IMAGE_UNDO" ]; then
+    say "  A recreated server that fails on its new image goes back to the old one with"
+    say "  (this moves the tag for every server using it, until the next pull):"
+    say "$(printf '%s' "$IMAGE_UNDO")"
+  fi
+}
+
+# other_installs: an update command for each mcctl after the first on PATH
+# whose version is not CUR_NOW
+other_installs() {
+  local f v
+  printf '%s\n' "$MCCTL_INSTALLS" | sed 1d | while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    v=$(capture "$f" --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)
+    if [ "$v" != "$CUR_NOW" ]; then
+      printf '      npm install -g --prefix %s %s@%s   # %s is %s\n' "$(prefix_of "$f")" "$PKG" "$CUR_NOW" "$f" "${v:-unknown}"
+    fi
+  done
+}
+
+# prefix_of <bin path>: the npm prefix of <prefix>/bin/<command>
+prefix_of() { (cd "$(dirname "$1")/.." 2>/dev/null && pwd -P); }
+
+# 'mcctl update' runs 'npm install -g', which installs into npm's global
+# prefix. If the first mcctl on PATH lives elsewhere, the update lands in
+# another install and this one stays old.
+# check_npm_prefix [PM2 Node major]
+check_npm_prefix() {
+  local first np interp hint
+  first=$(printf '%s\n' "$MCCTL_INSTALLS" | head -n 1)
+  np=$(capture npm prefix -g | tail -n 1)
+  if [ -z "$np" ] || [ ! -d "$np" ]; then return 0; fi
+  np=$(cd "$np" && pwd -P)
+  if [ "$(prefix_of "$first")" = "$np" ]; then return 0; fi
+  if [ -f "$ROOT/ecosystem.config.cjs" ] && command -v node >/dev/null 2>&1; then
+    interp=$(state_get "$(eco_state "$ROOT/ecosystem.config.cjs")" interp)
+  fi
+  case "${interp:-}" in
+    /*) hint="export PATH=\"$(dirname "$interp"):\$PATH\"" ;;
+    *) hint="nvm use ${1:-<the Node major PM2 runs>}" ;;
+  esac
+  stop_with "the first mcctl on PATH ($first) is not under npm's global prefix ($np): 'mcctl update' would update another install and leave this one at $CUR_OLD. Nothing was changed. Put the bin directory of PM2's Node first on PATH ($hint), check that 'command -v mcctl' is under 'npm prefix -g', then run this script again. If you update the CLI yourself, use --skip-update."
 }
 
 stop_with() {
@@ -264,7 +363,7 @@ stop_with() {
 
 step0_precheck() {
   step 0 "Pre-flight checks (read only)"
-  local f hits u t gitv major_shell n units
+  local f hits u t gitv major_shell pm2_major="" n units
   if [ ! -f "$ROOT/docker-compose.yml" ] && [ ! -f "$ROOT/.env" ]; then
     stop_with "$ROOT is not a platform root (no docker-compose.yml and no .env). Check --root."
   fi
@@ -280,9 +379,9 @@ step0_precheck() {
   if [ "$n" -eq 0 ]; then
     stop_with "mcctl is not installed or not on PATH"
   elif [ "$n" -gt 1 ]; then
-    add_warning "several mcctl installs found (the first one runs):"
-    say "$(printf '%s\n' "$u" | sed 's/^/      /')"
+    add_warning "several mcctl installs found (the first one runs):" "$u"
   fi
+  MCCTL_INSTALLS=$u
   CUR_OLD=$(cur_version)
   CUR_NOW=$CUR_OLD
   if [ -z "$CUR_OLD" ]; then
@@ -294,8 +393,9 @@ step0_precheck() {
     major_shell=$(capture node -p 'process.versions.node.split(".")[0]')
     t=$(pm2_apps)
     if [ -n "$t" ]; then
-      say "PM2 apps (name status node):"
+      say "PM2 apps (name status node kill_timeout):"
       say "$(printf '%s\n' "$t" | sed 's/^/      /')"
+      pm2_major=$(printf '%s\n' "$t" | awk '$3 != "?" { split($3, a, "."); print a[1]; exit }')
       n=$(printf '%s\n' "$t" | awk -v m="$major_shell" '$3 != "?" { split($3, a, "."); if (a[1] != m) { print $3; exit } }')
       if [ -n "$n" ]; then
         add_warning "PM2 runs Node $n but this shell has Node $(capture node --version): switch with 'nvm use <major>' before continuing (native better-sqlite3 ABI)"
@@ -337,8 +437,7 @@ EOF
   fi
   hits=$(printf '%s\n' "$hits" | grep -v '^$' || true)
   if [ -n "$hits" ]; then
-    add_warning "cron/timers call scripts/*.sh or 'player lookup|uuid' (removed in v3; see $DOCS_URL):"
-    say "$(printf '%s\n' "$hits" | sed 's/^/      /')"
+    add_warning "cron/timers call scripts/*.sh or 'player lookup|uuid' (removed in v3; see $DOCS_URL):" "$hits"
   fi
 
   if [ "$(uname -s)" = Darwin ]; then
@@ -346,6 +445,7 @@ EOF
   fi
 
   decide_update
+  if [ "$UPDATE_ACTION" = run ]; then check_npm_prefix "$pm2_major"; fi
   if [ -n "$WARNINGS" ]; then
     record 0 "Pre-flight" ok "with warnings"
   else
@@ -438,10 +538,11 @@ copy_into() {
     # dangling link: keep the link itself
     cp -RP "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
     log "  copied dangling link $rel"
-    return 0
+  else
+    cp -RpL "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
+    log "  copied $rel"
   fi
-  cp -RpL "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
-  log "  copied $rel"
+  BACKED="${BACKED}$rel"$'\n'
 }
 
 step2_update() {
@@ -452,11 +553,11 @@ step2_update() {
     return 0
   fi
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would run: mcctl update --yes, then check that mcctl --version is 3.x"
+    say "[dry-run] would run: mcctl update --yes (also pulls server images), then check that mcctl --version is 3.x"
     record 2 "Update" skipped "dry-run"
     return 0
   fi
-  if ! confirm "Run 'mcctl update --yes' (CLI, API and console packages; restarts PM2 apps)?" y; then
+  if ! confirm "Run 'mcctl update --yes' (CLI, API and console packages, pulls server images; restarts PM2 apps)?" y; then
     record 2 "Update" skipped "not run"
     stop_with "the update was not run, so the next steps (which need the v3 CLI) were not started. Re-run in a terminal or with --yes."
   fi
@@ -552,6 +653,7 @@ eco_state() {
     console.log("kill=" + (a && a.kill_timeout !== undefined ? a.kill_timeout : ""));
     console.log("auth=" + (env.AUTH_MODE !== undefined ? env.AUTH_MODE : ""));
     console.log("wl=" + (env.AUTH_IP_WHITELIST !== undefined ? env.AUTH_IP_WHITELIST : ""));
+    console.log("interp=" + (a && a.interpreter !== undefined ? a.interpreter : ""));
     console.log("others=" + apps.filter((x) => x !== a).map((x) => JSON.stringify(x)).join(";"));
   ' "$1"
 }
@@ -685,19 +787,22 @@ step5_ecosystem() {
     return 0
   fi
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would run: mcctl console service restart --force"
+    say "[dry-run] would run: $RESTART_CMD"
     record 5 "ecosystem" skipped "dry-run"
     return 0
   fi
-  if confirm "Restart mcctl-api and the console now (mcctl console service restart --force)?" y; then
-    if run mcctl console service restart --force; then
+  if confirm "Restart mcctl-api and the console now ($RESTART_CMD)?" y; then
+    # shellcheck disable=SC2086 # RESTART_CMD is split into words on purpose
+    if run $RESTART_CMD; then
       record 5 "ecosystem" ok "restarted${changed:+ (file edited)}"
     else
-      add_warning "mcctl console service restart --force failed"
+      add_warning "$RESTART_CMD failed"
       record 5 "ecosystem" failed "restart failed"
+      NEED_RESTART=1
     fi
   else
     record 5 "ecosystem" skipped "not restarted${changed:+ (file edited: restart to apply)}"
+    if [ -n "$changed" ]; then NEED_RESTART=1; fi
   fi
 }
 
@@ -752,19 +857,92 @@ step7_worlds() {
   fi
   out=$(printf '%s\n' "$out" | grep -iE 'duplicate|warn|conflict|more than one|used by [2-9]|is assigned to|Cannot read the world assignment' || true)
   if [ -n "$out" ]; then
-    add_warning "world list shows warnings (one world used by several servers?):"
-    say "$(printf '%s\n' "$out" | sed 's/^/      /')"
+    add_warning "world list shows warnings (one world used by several servers?):" "$out"
     record 7 "Worlds" warn "warnings shown"
   else
     record 7 "Worlds" ok "no warnings"
   fi
 }
 
+# mc-router starts a stopped server with 'docker start', which keeps the image
+# the container was created from; recreating it picks up the pulled image.
+step7b_images() {
+  step 7b "Stopped servers and new images"
+  local d name st stopped="" running="" s old failed="" made="" started=""
+  if ! command -v docker >/dev/null 2>&1; then
+    say "docker not found: skipped"
+    record 7b "Server images" skipped "no docker"
+    return 0
+  fi
+  for d in "$ROOT"/servers/*/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    [ "$name" = _template ] && continue
+    st=$(capture docker inspect --format '{{.State.Status}}' "mc-$name")
+    case "$st" in
+      exited | created) stopped="$stopped $name" ;;
+      running | restarting | paused) running="$running $name" ;;
+    esac
+  done
+  if [ -n "$running" ]; then
+    say "Running:$running (restart each at a quiet time: mcctl stop <server> && mcctl start <server>)"
+  fi
+  if [ -z "$stopped" ]; then
+    say "No stopped server containers."
+    record 7b "Server images" skipped "no stopped servers"
+    return 0
+  fi
+  say "Stopped:$stopped"
+  say "An auto-scale start reuses the old container and its image. Recreating the container (it stays stopped; worlds and config are kept) makes the next start use the image the update pulled, so a broken new image shows at once."
+  if [ "$DRY" = 1 ]; then
+    say "[dry-run] would ask (default: no), then run for each: docker compose up --no-start --no-deps mc-<server>"
+    record 7b "Server images" skipped "dry-run"
+    return 0
+  fi
+  if ! confirm "Recreate the stopped server containers with the new images?" n; then
+    for s in $stopped; do
+      RECREATE_TODO="${RECREATE_TODO}      docker compose up --no-start --no-deps mc-$s"$'\n'
+    done
+    record 7b "Server images" skipped "not chosen (commands in the summary)"
+    return 0
+  fi
+  for s in $stopped; do
+    # auto-scale may have started it while the question waited; compose would
+    # stop a running server to recreate it, so look again right before
+    st=$(capture docker inspect --format '{{.State.Status}}' "mc-$s")
+    case "$st" in
+      exited | created) ;;
+      *)
+        say "$s: started meanwhile, skipped (restart it later to pick up the new image)"
+        started="$started $s"
+        continue
+        ;;
+    esac
+    old=$(capture docker inspect --format '{{.Image}}' "mc-$s")
+    if run docker compose up --no-start --no-deps "mc-$s"; then
+      made="$made $s"
+      if [ -n "$old" ] && [ "$(capture docker inspect --format '{{.Image}}' "mc-$s")" != "$old" ]; then
+        # the reference after recreating: step 2 may have moved the tag (java21 -> java25)
+        IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $(capture docker inspect --format '{{.Config.Image}}' "mc-$s") && docker compose up --no-start --no-deps mc-$s"$'\n'
+      fi
+    else
+      failed="$failed $s"
+      RECREATE_TODO="${RECREATE_TODO}      docker compose up --no-start --no-deps mc-$s"$'\n'
+    fi
+  done
+  if [ -n "$failed" ]; then
+    add_warning "recreating failed for:$failed (see the docker output above)"
+    record 7b "Server images" failed "failed for:$failed"
+  else
+    record 7b "Server images" ok "recreated:${made:- none}${started:+; started meanwhile, skipped:$started}"
+  fi
+}
+
 step8_verify() {
   step 8 "Verification"
-  local bad=0 v out port apps line tries
+  local bad=0 v out port apps line tries want have
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would run: mcctl --version, docker compose config -q, PM2 status, API /health"
+    say "[dry-run] would run: mcctl --version, docker compose config -q, PM2 status and kill_timeout, API /health"
     record 8 "Verify" skipped "dry-run"
     return 0
   fi
@@ -786,9 +964,9 @@ step8_verify() {
       case "$line" in
         mcctl-*)
           case "$line" in
-            *" online "*) say "PM2 $line (ok)" ;;
+            *" online "*) say "PM2 ${line% *} (ok)" ;;
             *)
-              say "PM2 $line (not online)"
+              say "PM2 ${line% *} (not online)"
               bad=1
               ;;
           esac
@@ -797,6 +975,18 @@ step8_verify() {
     done <<EOF
 $apps
 EOF
+    # PM2 keeps the kill_timeout it registered; the file counts only after a restart
+    if [ -f "$ROOT/ecosystem.config.cjs" ]; then
+      want=$(state_get "$(eco_state "$ROOT/ecosystem.config.cjs")" kill)
+      have=$(printf '%s\n' "$apps" | awk '$1 == "mcctl-api" { print $4; exit }')
+      if [ -n "$want" ] && [ -n "$have" ]; then
+        if [ "$have" = "$want" ]; then say "PM2 mcctl-api kill_timeout: $have (ok)"; else
+          say "PM2 mcctl-api kill_timeout: $have, but ecosystem.config.cjs has $want (restart with: $RESTART_CMD)"
+          NEED_RESTART=1
+          bad=1
+        fi
+      fi
+    fi
   else
     say "PM2: no apps to check"
   fi
@@ -903,6 +1093,7 @@ main() {
   fi
 
   step0_precheck
+  PAST_PREFLIGHT=1
   step1_backup
   step2_update
   step3_upgrade
@@ -910,6 +1101,7 @@ main() {
   step5_ecosystem
   step6_spec
   step7_worlds
+  step7b_images
   step8_verify
   finish
 }
