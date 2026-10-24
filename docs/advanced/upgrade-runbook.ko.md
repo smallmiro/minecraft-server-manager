@@ -78,6 +78,31 @@ mcctl upgrade --non-interactive   # 프롬프트 없이 기본값 적용(자동�
 - `.mcctl.json`에 `installId`가 없으면 한 번 추가합니다 (기존 값은 유지). 웹 콘솔이 익명 사용 통계에 사용하며, 끄려면 `.mcctl.json`에 `"telemetry": false`를 설정합니다 ([사용 통계](../console/web-console.ko.md) 참고).
 - **router 이미지가 태그 없는 `itzg/mc-router`이면 `mcctl upgrade`가 image를 올리지 않습니다.** `docker-compose.yml`의 `image:`를 릴리즈 노트가 지정한 버전으로 직접 고정한 뒤 `docker compose config -q && docker compose up -d router`를 실행합니다.
 
+### 3-1. v3.0.0으로 올릴 때: `scripts` 폴더가 없어집니다 (#736) {#v300-scripts}
+
+v3.0.0은 Bash 스크립트를 모두 없앱니다(#715). `mcctl`은 더 이상 `<root>/scripts`를 읽지 않고, 환경 변수 `MCCTL_SCRIPTS`는 무시됩니다.
+
+- `mcctl upgrade`는 `<root>/scripts`를 보여 주고, **`y`로 답했을 때만**(기본값 `N`) 삭제합니다. 터미널이 없으면(`--non-interactive`, cron) 안내만 출력하고 아무것도 지우지 않습니다. 폴더를 직접 지워도 됩니다. 플랫폼 루트의 다른 파일은 이 폴더에 의존하지 않습니다.
+- cron, systemd 유닛, 직접 만든 스크립트에서 `<root>/scripts/*.sh`를 바로 부르고 있었다면 폴더를 지우기 전에 바꾸세요. 대응표는 다음과 같습니다.
+
+| 예전 스크립트 (`<root>/scripts/`) | v3.0.0 |
+|---|---|
+| `mcctl.sh start` / `stop` / `status` / `logs` | `mcctl start` / `mcctl stop` / `mcctl status` / `mcctl logs` |
+| `mcctl.sh console` | `mcctl console <server>` (TCP RCON) |
+| RCON 명령 (스크립트를 거친 `rcon-cli`) | `mcctl exec <server> <command...>` |
+| `create-server.sh` | `mcctl create` |
+| `delete-server.sh` | `mcctl delete` |
+| `backup.sh push` / `status` / `history` / `restore` | `mcctl backup push` / `status` / `history` / `restore` |
+| `lock.sh` | `mcctl world` (`list`, `assign`, `release`, [월드 배정 규칙](../cli/commands.md#world-assignment-rules) 참고) |
+| `player.sh lookup` / `uuid` | `mcctl player info <name> [--offline]` |
+| `logs.sh` | `mcctl logs` |
+| `init.sh` | `mcctl init` |
+| `render-map.sh` | CLI 명령 없음. 웹 콘솔의 **Render map**이나 API를 사용합니다 (BlueMap) |
+
+- 서버는 그대로 동작합니다. 서버를 바꾸는 첫 명령이 `servers/<name>/server.yaml`을 만들고 `config.env`와 서버의 `compose.yml`을 다시 씁니다. 자세한 내용은 [server.yaml](../configuration/server-yaml.md)을 보세요.
+
+**확인 기준:** `ls $ROOT/scripts`가 폴더 없음을 보고하고(또는 남기기로 선택했고), `crontab -l`과 `systemctl list-timers`에 그 폴더의 `.sh` 파일이 남아 있지 않습니다.
+
 ## 4. API / Console 재시작 (필요 시)
 
 ```bash

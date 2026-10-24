@@ -43,7 +43,6 @@ mcctl --root /opt/minecraft init
 ├── shared/
 │   ├── plugins/
 │   └── mods/
-├── scripts/
 └── backups/
 ```
 
@@ -446,6 +445,7 @@ mcctl upgrade [options]
 3. Patches the `router` service in the root `docker-compose.yml` (see below)
 4. Updates `servers/_template/` files and records `templateVersion` in `.mcctl.json`
 5. Adds `installId` to `.mcctl.json` if it is missing (an existing value is kept)
+6. (v3.0.0+) If `<root>/scripts` exists, lists it and deletes it only after you answer `y` (default `N`). Without a terminal (`--non-interactive`, cron) it only prints a notice and deletes nothing. The notice links to the [script to mcctl table](../advanced/upgrade-runbook.md#v300-scripts).
 
 **docker-compose.yml router patch:** only the `router` service's `image` tag and `group_add` entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.
 

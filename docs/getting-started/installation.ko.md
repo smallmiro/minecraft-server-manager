@@ -156,7 +156,6 @@ mcctl init
 ├── shared/                # 공유 플러그인/모드
 │   ├── plugins/
 │   └── mods/
-├── scripts/               # 관리 스크립트
 └── backups/               # 백업 저장소
 ```
 
