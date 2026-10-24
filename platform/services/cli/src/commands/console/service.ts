@@ -84,6 +84,9 @@ function ensurePm2Installed(): boolean {
 
 type ServiceAction = 'start' | 'stop' | 'restart' | 'logs';
 
+/** Returned by getServiceNames when a prompt is needed but there is no terminal */
+const NO_TERMINAL = Symbol('no-terminal');
+
 /**
  * Get service names based on options, action, and availability
  *
@@ -101,7 +104,7 @@ async function getServiceNames(
   options: ConsoleServiceOptions,
   rootDir: string,
   action: ServiceAction = 'start'
-): Promise<string[] | null> {
+): Promise<string[] | null | typeof NO_TERMINAL> {
   const availableServices = getAvailableServices(rootDir);
   const hasApi = availableServices.includes(PM2_SERVICE_NAMES.API);
   const hasConsole = availableServices.includes(PM2_SERVICE_NAMES.CONSOLE);
@@ -131,6 +134,14 @@ async function getServiceNames(
 
   // No explicit flag: interactive prompt if both services available
   if (hasApi && hasConsole) {
+    // Never guess a target without a terminal (a wrong default could stop the wrong services)
+    if (!process.stdin.isTTY) {
+      log.error(
+        `No terminal to ask which services to ${action}. Pass --console (API + Console) or --api.`
+      );
+      return NO_TERMINAL;
+    }
+
     if (isStop) {
       const choice = await select({
         message: 'Which services to stop?',
@@ -372,6 +383,10 @@ async function startServices(
 
   const services = await getServiceNames(options, paths.root, 'start');
 
+  if (services === NO_TERMINAL) {
+    return 1;
+  }
+
   if (services === null) {
     return 0; // User cancelled
   }
@@ -430,6 +445,10 @@ async function stopServices(
 ): Promise<number> {
   const services = await getServiceNames(options, paths.root, 'stop');
 
+  if (services === NO_TERMINAL) {
+    return 1;
+  }
+
   if (services === null) {
     return 0; // User cancelled
   }
@@ -484,6 +503,10 @@ async function restartServices(
   consolePort: number
 ): Promise<number> {
   const services = await getServiceNames(options, paths.root, 'restart');
+
+  if (services === NO_TERMINAL) {
+    return 1;
+  }
 
   if (services === null) {
     return 0; // User cancelled
@@ -574,6 +597,10 @@ async function showLogs(
   options: ConsoleServiceOptions
 ): Promise<number> {
   const services = await getServiceNames(options, paths.root, 'logs');
+
+  if (services === NO_TERMINAL) {
+    return 1;
+  }
 
   if (services === null) {
     return 0; // User cancelled
