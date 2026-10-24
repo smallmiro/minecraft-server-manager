@@ -48,7 +48,7 @@ bash upgrade-v3.sh --dry-run
 | 5 `ecosystem.config.cjs` | v2.32.0 미만이면 옛 `AUTH_MODE` 값 수정([4-1](#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633)), mcctl-api에 `kill_timeout` 추가([4-2](#pm2-kill-timeout)), 이어서 `mcctl console service restart --force` | 선택(AUTH_MODE 아니요, kill_timeout은 `BACKUP_AUTO_ON_STOP=true`면 예, 재시작 예) |
 | 6 ServerSpec | `mcctl migrate spec --all --dry-run`을 보여 주고 선택 시 실행 | 선택(아니요) |
 | 7 월드 | `mcctl world list`를 보여 주고 중복·경고 줄을 강조 | 자동 |
-| 8 검증 | `mcctl --version`, `docker compose config -q`, PM2 상태, API `/health` | 자동 |
+| 8 검증 | `mcctl --version`, `docker compose config -q`, PM2 상태, API `/health`(`ecosystem.config.cjs`가 있을 때만) | 자동 |
 | 9 요약 | 단계별 결과, 남은 일, 롤백, 로그 위치 | 자동 |
 
 백업, 업데이트, 업그레이드가 실패하면 그 결과에 기대는 이후 단계를 하지 않고 멈춥니다.

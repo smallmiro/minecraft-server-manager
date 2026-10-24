@@ -398,6 +398,24 @@ describe('upgrade-v3.sh', () => {
     expect(r.out).toContain('mcctl exec');
   });
 
+  it('passes verification without probing the API when the web console is not set up', () => {
+    rmSync(join(ctx.root, 'ecosystem.config.cjs'));
+    put(join(ctx.fake, 'bin', 'pm2'), FAKE_LOGGER('[ "$1" = jlist ] && echo "[]"'), 0o755);
+    const r = run({ args: ['--yes'] });
+    expect(r.out).toContain('API: not set up here (no ecosystem.config.cjs)');
+    expect(calls()).not.toContain('curl');
+    expect(r.out).toMatch(/\[ok\] Step 8 Verify/);
+    expect(r.code).toBe(0);
+  });
+
+  it('does not warn about several installs when PATH lists the same mcctl twice', () => {
+    const bin = join(ctx.fake, 'bin');
+    // Only system dirs besides the fake bin, so a real mcctl on the host does not count
+    const r = run({ args: ['--dry-run'], env: { PATH: `${bin}:${bin}:/usr/bin:/bin` } });
+    expect(r.out).toContain('mcctl version: 2.33.0');
+    expect(r.out).not.toContain('several mcctl installs');
+  });
+
   it('highlights duplicate world warnings', () => {
     const r = run({ args: ['--yes'] });
     expect(r.out).toContain('WARNING: world survival is used by 2 servers');

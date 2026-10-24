@@ -48,7 +48,7 @@ Before the first step the script reads `mcctl --version` and `npm view @minecraf
 | 5 `ecosystem.config.cjs` | Before v2.32.0, rewrites old `AUTH_MODE` values ([4-1](#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633)); adds `kill_timeout` to mcctl-api ([4-2](#pm2-kill-timeout)); then `mcctl console service restart --force` | optional (AUTH_MODE: no; kill_timeout: yes if `BACKUP_AUTO_ON_STOP=true`; restart: yes) |
 | 6 ServerSpec | Shows `mcctl migrate spec --all --dry-run`, optionally runs it | optional (no) |
 | 7 Worlds | Shows `mcctl world list`, highlights duplicate or warning lines | automatic |
-| 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, API `/health` | automatic |
+| 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
 | 9 Summary | Result of each step, what is left, rollback, log path | automatic |
 
 If the update, the upgrade or the backup fails, the script stops and does not run the steps that depend on it.

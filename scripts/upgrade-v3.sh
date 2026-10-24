@@ -266,12 +266,14 @@ step0_precheck() {
     fi
   done
 
-  n=$(type -ap mcctl 2>/dev/null | wc -l | tr -d ' ')
+  # The same directory twice on PATH is one install, not several
+  u=$(type -ap mcctl 2>/dev/null | awk '!seen[$0]++' || true)
+  n=$(printf '%s' "$u" | grep -c . || true)
   if [ "$n" -eq 0 ]; then
     stop_with "mcctl is not installed or not on PATH"
   elif [ "$n" -gt 1 ]; then
     add_warning "several mcctl installs found (the first one runs):"
-    type -ap mcctl | while IFS= read -r u; do say "      $u"; done
+    say "$(printf '%s\n' "$u" | sed 's/^/      /')"
   fi
   CUR_OLD=$(cur_version)
   CUR_NOW=$CUR_OLD
@@ -703,13 +705,18 @@ EOF
   else
     say "PM2: no apps to check"
   fi
-  port=${API_PORT:-$(env_get API_PORT)}
-  port=${port:-5001}
-  if out=$(capture curl -fsS --max-time 5 "http://127.0.0.1:$port/health") && [ -n "$out" ]; then
-    say "API /health on :$port: $out"
+  # CLI-only installs have no API to probe
+  if [ ! -f "$ROOT/ecosystem.config.cjs" ]; then
+    say "API: not set up here (no ecosystem.config.cjs)"
   else
-    say "API /health on :$port: no answer (is mcctl-api running?)"
-    bad=1
+    port=${API_PORT:-$(env_get API_PORT)}
+    port=${port:-5001}
+    if out=$(capture curl -fsS --max-time 5 "http://127.0.0.1:$port/health") && [ -n "$out" ]; then
+      say "API /health on :$port: $out"
+    else
+      say "API /health on :$port: no answer (is mcctl-api running?)"
+      bad=1
+    fi
   fi
   if [ "$bad" = 0 ]; then
     record 8 "Verify" ok
