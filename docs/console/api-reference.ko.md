@@ -422,7 +422,7 @@ Minecraft 서버를 삭제합니다.
 |------|------|------|
 | `sudoPassword` | string | `/etc/avahi/hosts`에서 mDNS 호스트명 `<name>.local`을 지울 때 쓰는 sudo 비밀번호(쓰기 전용, 로그에 남지 않음). sudoers `NOPASSWD` 규칙이 있으면 필요 없음 |
 
-기본 동작은 서버 안의 월드를 `worlds/<LEVEL>`로 옮기는 것입니다. `worlds/`에 같은 이름이 이미 있거나, 서버 안의 월드 위치를 확정할 수 없거나([`mcctl delete`](../cli/commands.ko.md#mcctl-delete) 참고), Docker 조회나 컨테이너 정지에 실패하면 `500`으로 실패하고 아무것도 지우지 않습니다. 삭제 전에 백업은 하지 않습니다.
+기본 동작은 서버 안의 월드를 `worlds/<LEVEL>`로 옮기는 것입니다. `worlds/`에 같은 이름이 이미 있거나, 서버 안의 월드 위치를 확정할 수 없으면([`mcctl delete`](../cli/commands.ko.md#mcctl-delete) 참고) `409`로 실패하고 아무것도 지우지 않습니다. Docker 조회나 컨테이너 정지에 실패하면 `500`으로 실패하고 아무것도 지우지 않습니다. 컨테이너를 지운 뒤의 `409`(예: 다른 mcctl 프로세스가 `servers/compose.yml`을 잠금)는 그 사실과 이미 `worlds/`로 옮긴 월드, 남은 정리 작업을 알려 줍니다. 삭제 전에 백업은 하지 않습니다.
 
 **예제:**
 

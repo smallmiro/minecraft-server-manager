@@ -422,7 +422,7 @@ Delete a Minecraft server.
 |-------|------|-------------|
 | `sudoPassword` | string | Sudo password for removing the mDNS hostname `<name>.local` from `/etc/avahi/hosts` (write-only, never logged). Not needed with the sudoers `NOPASSWD` rule |
 
-By default the world inside the server is moved to `worlds/<LEVEL>`. If `worlds/` already has that name, the world inside the server cannot be located with certainty (see [`mcctl delete`](../cli/commands.md#mcctl-delete)), Docker cannot be queried, or the container cannot be stopped, the request fails with `500` and nothing is deleted. No backup runs before the delete.
+By default the world inside the server is moved to `worlds/<LEVEL>`. If `worlds/` already has that name or the world inside the server cannot be located with certainty (see [`mcctl delete`](../cli/commands.md#mcctl-delete)), the request fails with `409` and nothing is deleted; if Docker cannot be queried or the container cannot be stopped, it fails with `500` and nothing is deleted. A `409` after the container was removed (for example `servers/compose.yml` locked by another mcctl process) says so, names the worlds already moved to `worlds/`, and what is left to clean up. No backup runs before the delete.
 
 **Example:**
 
