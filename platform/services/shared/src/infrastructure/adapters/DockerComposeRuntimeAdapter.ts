@@ -479,11 +479,14 @@ export class DockerServerConsoleAdapter implements IServerConsolePort {
     }
   }
 
-  /** Copied from mcctl-api execRcon / cli execRconWithOutput */
+  /**
+   * Copied from mcctl-api execRcon / cli execRconWithOutput. rcon-cli parses
+   * flags anywhere in its argv, so its own `--` keeps `tp @s -100 64 200` a command (#728).
+   */
   command(name: ServerName | string, args: string[], options?: { signal?: AbortSignal }): Promise<ConsoleCommandResult> {
     const container = workloadNameOf(name);
     return new Promise((resolve) => {
-      const child = spawn('docker', ['exec', '--', container, 'rcon-cli', ...args], {
+      const child = spawn('docker', ['exec', '--', container, 'rcon-cli', '--', ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
         ...(options?.signal ? { signal: options.signal } : {}),
       });

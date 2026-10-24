@@ -73,8 +73,9 @@ export function parseDimension(output: string): Dimension | undefined {
 export class RconCliAdapter implements IRconPort {
   constructor(private readonly run: CommandRunner = defaultRunner) {}
 
+  /** `--` twice: docker never reads the container, nor rcon-cli the player, as a flag (#728). */
   private rconArgs(container: string, player: string, path: string): string[] {
-    return ['exec', container, 'rcon-cli', 'data', 'get', 'entity', player, path];
+    return ['exec', '--', container, 'rcon-cli', '--', 'data', 'get', 'entity', player, path];
   }
 
   async getEntityPosition(

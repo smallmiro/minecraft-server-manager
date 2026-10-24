@@ -530,9 +530,17 @@ describe('DockerServerConsoleAdapter.command', () => {
       stdout: 'Saved the game\n',
       stderr: '',
     });
-    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'save-all', 'flush'], {
+    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', '--', 'save-all', 'flush'], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
+  });
+
+  // rcon-cli parses flags anywhere in its argv: without its own '--',
+  // `tp @s -100 64 200` fails with "unknown shorthand flag: '1'" (#728).
+  it('passes args starting with - to the server, not to rcon-cli as flags', async () => {
+    vi.mocked(spawn).mockImplementation(() => fakeChild(0));
+    await rcon.command('mc-a', ['tp', '@s', '-100', '64', '200']);
+    expect(vi.mocked(spawn).mock.calls[0]?.[1]).toEqual(['exec', '--', 'mc-a', 'rcon-cli', '--', 'tp', '@s', '-100', '64', '200']);
   });
 
   it('keeps the exit code and stderr of a failed command', async () => {
@@ -546,7 +554,7 @@ describe('DockerServerConsoleAdapter.command', () => {
     vi.mocked(spawn).mockImplementation(() => fakeChild(0));
     const signal = new AbortController().signal;
     await rcon.command('mc-a', ['save-off'], { signal });
-    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'save-off'], {
+    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', '--', 'save-off'], {
       stdio: ['pipe', 'pipe', 'pipe'],
       signal,
     });
@@ -817,7 +825,7 @@ describe('ServerName arguments (#665)', () => {
   it('console and router adapters resolve a ServerName the same way', async () => {
     vi.mocked(spawn).mockReturnValue(fakeChild(0, 'ok'));
     await new DockerServerConsoleAdapter().command(server, ['list']);
-    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', 'list'], expect.anything());
+    expect(spawn).toHaveBeenCalledWith('docker', ['exec', '--', 'mc-a', 'rcon-cli', '--', 'list'], expect.anything());
 
     vi.mocked(spawnSync).mockReturnValue(exited(0, 'a.local\n'));
     expect(new DockerRouterStatusAdapter().getHostnames(server)).toBe('a.local');
