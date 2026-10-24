@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { ServerName } from '../src/domain/index.js';
-import { Server, ServerType, McVersion, Memory, WorldOptions } from '../src/domain/index.js';
 import {
   containerNameOf,
   serverHostnameOf,
@@ -21,18 +20,7 @@ describe('workload naming rules (#665)', () => {
     expect(workloadNameOf('mc-router')).toBe('mc-router');
   });
 
-  it('keeps the deprecated domain getters unchanged', () => {
-    expect(name.containerName).toBe('mc-myserver');
-    expect(name.hostname).toBe('myserver.local');
-    const server = Server.create({
-      name,
-      type: ServerType.create('PAPER'),
-      version: McVersion.create('1.21.1'),
-      memory: Memory.default(),
-      worldOptions: WorldOptions.default(),
-    });
-    expect(server.containerName).toBe('mc-myserver');
-    expect(server.hostname).toBe('myserver.local');
+  it('builds the reserved-name message from the container rule', () => {
     expect(ServerName.validate('router')).toBe("Server name 'router' is reserved (conflicts with the mc-router container)");
   });
 });

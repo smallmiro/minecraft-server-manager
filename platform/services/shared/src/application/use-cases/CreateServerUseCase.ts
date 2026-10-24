@@ -497,7 +497,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
           ? `Whitelist: enabled (${whitelistPlayers.join(', ')})`
           : 'Whitelist: enabled';
       this.prompt.note(
-        `Connect via: ${name.hostname}:25565\n${whitelistInfo}`,
+        `Connect via: ${name.value}.local:25565\n${whitelistInfo}`,
         'Connection Info'
       );
 

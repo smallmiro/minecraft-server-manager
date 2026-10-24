@@ -17,7 +17,7 @@ import type {
   PlayerListResult, RuntimeActionResult,
 } from '../src/index.js';
 import {
-  ServerName, Server, Paths, ServerRepository, WorldRepository,
+  Paths, ServerRepository, WorldRepository,
   DockerComposeRuntimeAdapter, DockerServerConsoleAdapter, RconCliAdapter, ConfigEnvWorldAssignmentAdapter,
 } from '../src/index.js';
 
@@ -32,22 +32,20 @@ export class V2Rcon implements IRconPort {
 // v2 callers: container-name strings, deprecated getters and members, old constructors
 export async function use(
   runtime: IContainerRuntimePort, console: IServerConsolePort, router: IRouterStatusPort,
-  rcon: IRconPort, server: Server
+  rcon: IRconPort
 ): Promise<void> {
   const status: ContainerStatus = runtime.getStatus('mc-a');
   const started: RuntimeActionResult = await runtime.start('mc-a');
   const players: PlayerListResult | null = await console.listPlayers('mc-a');
   const hosts: string = router.getHostnames('mc-a');
   const pos = await rcon.getEntityPosition('mc-a', 'Steve');
-  const name = ServerName.create('a');
-  const names: string[] = [name.containerName, name.hostname, server.containerName, server.hostname];
   const paths = new Paths('/srv/mc');
   new ServerRepository(paths);
   new WorldRepository(paths, new ConfigEnvWorldAssignmentAdapter(paths));
   new DockerComposeRuntimeAdapter().getStatus('mc-a');
   await new DockerServerConsoleAdapter().command('mc-a', ['list']);
   await new RconCliAdapter().getEntityPosition('mc-a', 'Steve');
-  void status; void started; void players; void hosts; void pos; void names;
+  void status; void started; void players; void hosts; void pos;
 }
 `;
 
