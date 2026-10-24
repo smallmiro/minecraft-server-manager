@@ -14,8 +14,62 @@ import {
   RouterRestartResponseSchema,
   ErrorResponseSchema,
   type RouterDetail,
+  type RouterStatusResponse,
 } from '../schemas/router.js';
 import { type PlayitSummary } from '../schemas/playit.js';
+
+/**
+ * Build the `{ router, avahi, playit }` payload shared by GET /api/router/status
+ * and the status SSE stream, so both produce the identical shape.
+ */
+export async function buildRouterStatusPayload(log: { warn: (obj: unknown, msg?: string) => void }): Promise<RouterStatusResponse> {
+    const info = await getRouterDetailInfoAsync();
+
+    const router: RouterDetail = {
+      name: info.name,
+      status: info.status,
+      health: info.health,
+      port: info.port,
+      uptime: info.uptime,
+      uptimeSeconds: info.uptimeSeconds,
+      mode: info.mode,
+      routes: info.routes.map((route) => ({
+        hostname: route.hostname,
+        target: route.target,
+        serverStatus: route.serverStatus,
+        serverType: route.serverType,
+        serverVersion: route.serverVersion,
+        autoScaleUp: route.autoScaleUp,
+        autoScaleDown: route.autoScaleDown,
+        discoveredByRouter: route.discoveredByRouter,
+      })),
+      image: info.image,
+      autoScale: info.autoScale,
+      resolver: info.resolver,
+    };
+
+    const avahi = {
+      name: 'avahi-daemon',
+      status: getAvahiStatus(),
+      type: 'system',
+    };
+
+    // Get playit status summary
+    let playit: PlayitSummary | undefined;
+    try {
+      const playitStatus = await getPlayitAgentStatus();
+      playit = {
+        enabled: playitStatus.enabled,
+        agentRunning: playitStatus.agentRunning,
+        secretKeyConfigured: playitStatus.secretKeyConfigured,
+      };
+    } catch (error) {
+      // If playit status fails, omit it from response
+      log.warn(error, 'Failed to get playit status for router endpoint');
+    }
+
+  return { router, avahi, playit };
+}
 
 /**
  * Router routes plugin
@@ -37,52 +91,7 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (_request, reply) => {
     try {
-      const info = await getRouterDetailInfoAsync();
-
-      const router: RouterDetail = {
-        name: info.name,
-        status: info.status,
-        health: info.health,
-        port: info.port,
-        uptime: info.uptime,
-        uptimeSeconds: info.uptimeSeconds,
-        mode: info.mode,
-        routes: info.routes.map((route) => ({
-          hostname: route.hostname,
-          target: route.target,
-          serverStatus: route.serverStatus,
-          serverType: route.serverType,
-          serverVersion: route.serverVersion,
-          autoScaleUp: route.autoScaleUp,
-          autoScaleDown: route.autoScaleDown,
-          discoveredByRouter: route.discoveredByRouter,
-        })),
-        image: info.image,
-        autoScale: info.autoScale,
-        resolver: info.resolver,
-      };
-
-      const avahi = {
-        name: 'avahi-daemon',
-        status: getAvahiStatus(),
-        type: 'system',
-      };
-
-      // Get playit status summary
-      let playit: PlayitSummary | undefined;
-      try {
-        const playitStatus = await getPlayitAgentStatus();
-        playit = {
-          enabled: playitStatus.enabled,
-          agentRunning: playitStatus.agentRunning,
-          secretKeyConfigured: playitStatus.secretKeyConfigured,
-        };
-      } catch (error) {
-        // If playit status fails, omit it from response
-        fastify.log.warn(error, 'Failed to get playit status for router endpoint');
-      }
-
-      return reply.send({ router, avahi, playit });
+      return reply.send(await buildRouterStatusPayload(fastify.log));
     } catch (error) {
       fastify.log.error(error, 'Failed to get router status');
       return reply.code(500).send({
