@@ -58,8 +58,20 @@ describe('RouterGatewayCard', () => {
     expect(screen.getByText('-')).toBeInTheDocument();
   });
 
-  it('renders a stopped router as a warning, not an error', () => {
+  it('renders a stopped router as an error: mc-router never wakes on connect', () => {
     renderCard({ ...router, status: 'exited' });
-    expect(screen.getByLabelText('Router container status')).toHaveClass('MuiChip-colorWarning');
+    expect(screen.getByLabelText('Router container status')).toHaveClass('MuiChip-colorError');
+  });
+
+  it('shows the router container name', () => {
+    renderCard({ ...router, name: 'custom-router' });
+    expect(screen.getByText('custom-router')).toBeInTheDocument();
+  });
+
+  it('lets the metric tiles stack instead of squeezing the port value', () => {
+    renderCard();
+    const grid = screen.getByLabelText('Port').closest('[data-testid="gateway-metrics"]');
+    expect(grid).not.toBeNull();
+    expect(getComputedStyle(grid as Element).gridTemplateColumns).toContain('auto-fit');
   });
 });

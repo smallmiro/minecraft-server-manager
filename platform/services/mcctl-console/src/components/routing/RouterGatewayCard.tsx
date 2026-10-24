@@ -7,8 +7,8 @@ import Typography from '@mui/material/Typography';
 import LanIcon from '@mui/icons-material/Lan';
 import RouterIcon from '@mui/icons-material/Router';
 import { BentoMetricCard } from '@/components/bento';
-import type { HealthStatus, RouterDetail } from '@/ports/api/IMcctlApiClient';
-import { routeStatusDisplay, type StatusColor } from './hostnameType';
+import type { ContainerStatus, HealthStatus, RouterDetail } from '@/ports/api/IMcctlApiClient';
+import type { StatusColor } from './hostnameType';
 
 interface RouterGatewayCardProps {
   router: RouterDetail;
@@ -24,6 +24,19 @@ function getHealthColor(health: HealthStatus): StatusColor {
       return 'warning';
     default:
       return 'default';
+  }
+}
+
+// Unlike game servers, a stopped mc-router is an outage: nothing wakes it on connect.
+function getRouterStatusColor(status: ContainerStatus): StatusColor {
+  switch (status) {
+    case 'running':
+      return 'success';
+    case 'restarting':
+    case 'paused':
+      return 'warning';
+    default:
+      return 'error';
   }
 }
 
@@ -50,8 +63,7 @@ function Metric({ label, children }: { label: string; children: React.ReactNode 
 export function RouterGatewayCard({ router }: RouterGatewayCardProps) {
   const activeRoutes = router.routes.filter((r) => r.serverStatus === 'running').length;
   const totalRoutes = router.routes.length;
-  // Container status uses the same palette mapping as route rows.
-  const statusColor = routeStatusDisplay(router.status).color;
+  const statusColor = getRouterStatusColor(router.status);
 
   return (
     <Box sx={{ p: { xs: 2, sm: 2.5 } }}>
@@ -71,7 +83,7 @@ export function RouterGatewayCard({ router }: RouterGatewayCardProps) {
           variant="outlined"
         />
       </Stack>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 1.5 }}>
+      <Box data-testid="gateway-metrics" sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 1.5 }}>
         <BentoMetricCard title="Port" value={router.port} accent="info" icon={<LanIcon fontSize="small" />} />
         <BentoMetricCard
           title="Active routes"
@@ -81,6 +93,7 @@ export function RouterGatewayCard({ router }: RouterGatewayCardProps) {
         />
       </Box>
       <Stack direction="row" spacing={3} flexWrap="wrap" useFlexGap sx={{ mt: 2 }}>
+        <Metric label="Container">{router.name}</Metric>
         <Metric label="Mode">{getModeLabel(router.mode)}</Metric>
         <Metric label="Uptime">{router.uptime || '-'}</Metric>
       </Stack>
