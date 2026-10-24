@@ -1,17 +1,21 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Box,
   Typography,
   CircularProgress,
-  Chip,
+  Snackbar,
+  Alert,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import NextLink from 'next/link';
 import { startLoading } from '@/components/providers';
 import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import type { ServerStatusMap } from '@/hooks/useServersSSE';
-import { HostnameDisplay } from '@/components/common';
+import { ServerOverviewRow } from './ServerOverviewRow';
 import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 
 export interface ServerOverviewProps {
@@ -23,6 +27,14 @@ export interface ServerOverviewProps {
   onServerClick?: (serverName: string) => void;
 }
 
+type StatusFilter = 'all' | 'running' | 'stopped';
+
+const FILTER_LABELS: Record<StatusFilter, string> = {
+  all: 'All',
+  running: 'Running',
+  stopped: 'Stopped',
+};
+
 export function ServerOverview({
   servers,
   statusMap = {},
@@ -33,40 +45,37 @@ export function ServerOverview({
 }: ServerOverviewProps) {
   const router = useAppRouter();
 
-  const displayedServers = maxItems ? servers.slice(0, maxItems) : servers;
+  const [filter, setFilter] = useState<StatusFilter>('all');
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  // Overlay live SSE status on top of the fetched snapshot
+  const resolved = servers.map((server) => {
+    const sseStatus = statusMap[server.name];
+    return {
+      server,
+      status: sseStatus?.status || server.status,
+      health: sseStatus?.health || server.health,
+    };
+  });
+  // 'unknown' (SSE maps restarting there) is neither running nor stopped; it only shows under All
+  const isStopped = (status: string) => status !== 'running' && status !== 'unknown';
+  const counts: Record<StatusFilter, number> = {
+    all: resolved.length,
+    running: resolved.filter((item) => item.status === 'running').length,
+    stopped: resolved.filter((item) => isStopped(item.status)).length,
+  };
+  const filtered = resolved.filter((item) => {
+    if (filter === 'running') return item.status === 'running';
+    if (filter === 'stopped') return isStopped(item.status);
+    return true;
+  });
+  const displayedServers = maxItems ? filtered.slice(0, maxItems) : filtered;
 
   const handleServerClick = (serverName: string) => {
     if (onServerClick) {
       onServerClick(serverName);
     } else {
       router.push(`/servers/${serverName}`);
-    }
-  };
-
-  const getStatusColor = (status: string): 'success' | 'error' | 'default' | 'warning' => {
-    switch (status) {
-      case 'running':
-        return 'success';
-      case 'stopped':
-      case 'exited':
-        return 'error';
-      case 'created':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-  const getHealthColor = (health: string): 'success' | 'error' | 'warning' | 'default' => {
-    switch (health) {
-      case 'healthy':
-        return 'success';
-      case 'unhealthy':
-        return 'error';
-      case 'starting':
-        return 'warning';
-      default:
-        return 'default';
     }
   };
 
@@ -101,71 +110,64 @@ export function ServerOverview({
       <BentoPanelHeader
         title="Servers"
         action={
-          showViewAll && servers.length > (maxItems || 0) ? (
-            <NextLink
-              href="/servers"
-              onClick={() => startLoading()}
-              style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.875rem' }}
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 1.5 }}>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={filter}
+              onChange={(_, next: StatusFilter | null) => {
+                if (next) setFilter(next);
+              }}
+              aria-label="Filter servers by status"
             >
-              View All ({servers.length})
-            </NextLink>
-          ) : null
+              {(Object.keys(FILTER_LABELS) as StatusFilter[]).map((key) => (
+                <ToggleButton key={key} value={key} sx={{ px: 1.25, py: 0.25, textTransform: 'none' }}>
+                  {FILTER_LABELS[key]} {counts[key]}
+                </ToggleButton>
+              ))}
+            </ToggleButtonGroup>
+            {showViewAll && servers.length > (maxItems || 0) && (
+              <NextLink
+                href="/servers"
+                onClick={() => startLoading()}
+                style={{ textDecoration: 'none', color: 'inherit', fontSize: '0.875rem' }}
+              >
+                View All ({servers.length})
+              </NextLink>
+            )}
+          </Box>
         }
       />
       <Box sx={{ px: 2.5, pb: 2.5 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {displayedServers.map((server) => {
-            // Use SSE status if available
-            const sseStatus = statusMap[server.name];
-            const currentStatus = sseStatus?.status || server.status;
-            const currentHealth = sseStatus?.health || server.health;
-
-            return (
-              <Box
+        {displayedServers.length === 0 ? (
+          <Typography color="text.secondary" align="center" sx={{ py: 2 }}>
+            No {filter} servers
+          </Typography>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {displayedServers.map(({ server, status, health }) => (
+              <ServerOverviewRow
                 key={server.name}
-                role="button"
-                onClick={() => handleServerClick(server.name)}
-                sx={{
-                  p: 2,
-                  borderRadius: 1,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    backgroundColor: 'action.hover',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography variant="subtitle1" fontWeight={600} noWrap>
-                      {server.name}
-                    </Typography>
-                    <HostnameDisplay hostname={server.hostname} fontSize={12} />
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
-                    <Chip
-                      label={currentStatus}
-                      color={getStatusColor(currentStatus)}
-                      size="small"
-                    />
-                    {currentHealth !== 'none' && (
-                      <Chip
-                        label={currentHealth}
-                        color={getHealthColor(currentHealth)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-            );
-          })}
-        </Box>
+                server={server}
+                status={status}
+                health={health}
+                onClick={handleServerClick}
+                onActionError={setActionError}
+              />
+            ))}
+          </Box>
+        )}
       </Box>
+      <Snackbar
+        open={actionError !== null}
+        autoHideDuration={6000}
+        onClose={() => setActionError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setActionError(null)} severity="error" sx={{ width: '100%' }}>
+          {actionError}
+        </Alert>
+      </Snackbar>
     </BentoPanel>
   );
 }

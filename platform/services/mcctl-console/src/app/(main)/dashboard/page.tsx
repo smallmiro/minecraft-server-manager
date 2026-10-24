@@ -9,10 +9,10 @@ import {
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 import { useServersSSE } from '@/hooks/useServersSSE';
-import { BentoGrid, BentoPanel, BentoPanelHeader, PageHero } from '@/components/bento';
+import { BentoGrid, BentoMetricCard, BentoPanel, BentoPanelHeader, PageHero } from '@/components/bento';
 import {
   DashboardHero,
-  StatCard,
+  RouterMetricCard,
   ServerOverview,
   ChangelogFeed,
   RecentActivityFeed,
@@ -68,8 +68,9 @@ export default function DashboardPage() {
 
   const totalWorlds = worldsData?.total || 0;
 
-  // TODO: Calculate total players from server details (requires player data)
-  const totalPlayers = 0;
+  // Player counts are not exposed by the list endpoint yet (see #764). Keep null so the
+  // card renders "—" instead of a misleading 0; #764 only has to supply a number here.
+  const totalPlayers: number | null = null;
 
   // Derived metrics for the compact stat cards (computed values only — no history)
   const stoppedServers = totalServers - onlineServers;
@@ -92,14 +93,8 @@ export default function DashboardPage() {
           title="Dashboard"
           description={<Skeleton variant="text" width="72%" />}
           status={<Skeleton variant="rounded" width={72} height={24} sx={{ borderRadius: 4 }} />}
-          sx={{
-            gridColumn: { xs: '1 / -1', md: 'span 6' },
-            gridRow: { md: 'span 2' },
-            minHeight: { xs: 280, md: 328 },
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          }}
+          actions={<Skeleton variant="rounded" width={140} height={36} />}
+          sx={{ gridColumn: '1 / -1' }}
         >
           <Skeleton variant="text" width="45%" height={48} />
           <Skeleton variant="rounded" width="100%" height={7} sx={{ mt: 1 }} />
@@ -111,19 +106,26 @@ export default function DashboardPage() {
           </Box>
         ))}
 
-        <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 390 }}>
-            <BentoPanel sx={{ height: '100%' }}>
-              <BentoPanelHeader title={<Skeleton variant="text" width="30%" />} />
-              <Box sx={{ px: 2.5, pb: 2.5 }}>
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                    <Skeleton variant="circular" width={10} height={10} />
-                    <Skeleton variant="text" width="25%" />
-                    <Skeleton variant="rounded" width={60} height={24} sx={{ ml: 'auto' }} />
-                  </Box>
-                ))}
-              </Box>
-            </BentoPanel>
+        <Box
+          sx={{
+            ...cardItemSx,
+            gridColumn: { xs: '1 / -1', md: 'span 7' },
+            gridRow: { md: 'span 3' },
+            minHeight: 390,
+          }}
+        >
+          <BentoPanel sx={{ height: '100%' }}>
+            <BentoPanelHeader title={<Skeleton variant="text" width="30%" />} />
+            <Box sx={{ px: 2.5, pb: 2.5 }}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <Skeleton variant="circular" width={10} height={10} />
+                  <Skeleton variant="text" width="25%" />
+                  <Skeleton variant="rounded" width={60} height={24} sx={{ ml: 'auto' }} />
+                </Box>
+              ))}
+            </Box>
+          </BentoPanel>
         </Box>
 
         {[0, 1, 2].map((i) => (
@@ -131,10 +133,7 @@ export default function DashboardPage() {
             key={i}
             sx={{
               ...cardItemSx,
-              gridColumn: {
-                xs: '1 / -1',
-                md: i === 0 ? 'span 4' : i === 1 ? 'span 7' : 'span 5',
-              },
+              gridColumn: { xs: '1 / -1', md: 'span 5' },
               minHeight: i === 0 ? 210 : 300,
             }}
           >
@@ -181,47 +180,39 @@ export default function DashboardPage() {
       )}
 
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Total Servers"
-            value={serversUnavailable ? 'Unavailable' : totalServers}
-            icon={<ServerIcon fontSize="small" />}
-            color="primary"
-            progress={!serversUnavailable && totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
-            description={serversUnavailable ? 'Server data unavailable' : `${onlineServers} running · ${stoppedServers} stopped`}
-          />
+        <BentoMetricCard
+          title="Total Servers"
+          value={serversUnavailable ? 'Unavailable' : totalServers}
+          icon={<ServerIcon fontSize="small" />}
+          accent="primary"
+          progress={!serversUnavailable && totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
+          description={serversUnavailable ? 'Server data unavailable' : `${onlineServers} running · ${stoppedServers} stopped`}
+        />
       </Box>
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Online Servers"
-            value={serversUnavailable ? 'Unavailable' : onlineServers}
-            unit={!serversUnavailable && totalServers > 0 ? `/ ${totalServers}` : undefined}
-            icon={<OnlineIcon fontSize="small" />}
-            color="success"
-            progress={!serversUnavailable && totalServers > 0 ? onlinePercent : undefined}
-            description={serversUnavailable ? 'Server data unavailable' : `${onlinePercent}% running`}
-          />
+        <BentoMetricCard
+          title="Online Players"
+          value={totalPlayers ?? '—'}
+          icon={<PlayersIcon fontSize="small" />}
+          accent="info"
+          description={totalPlayers === null ? 'Player data unavailable' : 'Across all servers'}
+        />
       </Box>
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Total Players"
-            value={totalPlayers}
-            icon={<PlayersIcon fontSize="small" />}
-            color="info"
-            description="Across all servers"
-          />
+        <BentoMetricCard
+          title="Worlds"
+          value={worldsUnavailable ? 'Unavailable' : totalWorlds}
+          icon={<WorldIcon fontSize="small" />}
+          accent="secondary"
+          progress={!worldsUnavailable && totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
+          description={worldsUnavailable ? 'World data unavailable' : `${assignedWorlds} assigned · ${freeWorlds} free`}
+        />
       </Box>
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Total Worlds"
-            value={worldsUnavailable ? 'Unavailable' : totalWorlds}
-            icon={<WorldIcon fontSize="small" />}
-            color="secondary"
-            progress={!worldsUnavailable && totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
-            description={worldsUnavailable ? 'World data unavailable' : `${assignedWorlds} assigned · ${freeWorlds} free`}
-          />
+        <RouterMetricCard />
       </Box>
 
-      <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' } }}>
+      <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 7' }, gridRow: { md: 'span 3' } }}>
           {serversUnavailable ? (
             <BentoPanel sx={{ height: '100%' }}>
               <BentoPanelHeader title="Servers" />
@@ -239,10 +230,10 @@ export default function DashboardPage() {
             />
           )}
       </Box>
-      <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 4' } }}>
+      <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 5' } }}>
         <PlayitSummaryCard />
       </Box>
-      <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 7' } }}>
+      <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 5' } }}>
         <RecentActivityFeed maxItems={5} />
       </Box>
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 5' } }}>

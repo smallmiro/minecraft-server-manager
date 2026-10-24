@@ -28,6 +28,8 @@ export function BentoPanelHeader({
       alignItems="center"
       justifyContent="space-between"
       spacing={2}
+      useFlexGap
+      flexWrap="wrap"
       sx={{ px: 2.5, pt: 2.5, pb: 1.5, minWidth: 0 }}
     >
       <Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
