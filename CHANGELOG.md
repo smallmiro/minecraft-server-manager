@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-10-24
+
+> **Upgrade notes (v3.0.1).**
+> - **From v2.x:** use the fixed `upgrade-v3.sh` (served from `main`, see the [upgrade script](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-upgrade-script)).
+> - **From v3.0.0:** `mcctl update` runs to the end in the CLI that started it (3.0.0), so the offer to recreate stopped servers appears only when you run `mcctl update` once more in a terminal, or use the manual command in runbook step 5.
+> - Router image, `.env` variables and map rendering are unchanged.
+
 ### Changed
 - **Routing Table grouped by server** (#799) - The console Routing page shows one row per server instead of one per hostname. A row shows the primary address (with copy), how many more hostnames there are, the hostname types and an **N not routed** warning; **Wake/Start** and the links appear once per server. Click a row to list all its hostnames; **Expand all** / **Collapse all** toggles every server. Searching a hostname opens its server and highlights the match. The page header counts servers and hostnames.
 - **Developer: root `pnpm test` no longer runs e2e, and e2e needs explicit targets** (#797) - `pnpm test` is now `pnpm -r --filter '!e2e' test` (same as CI). The e2e suite no longer defaults to `localhost:5000/5001` (often a live mcctl-api on a dev host); set both `E2E_BASE_URL` and `E2E_API_URL` or it fails before sending any request. `platform-settings.spec.ts` skips unless `E2E_PLATFORM_ENV` is set (it no longer falls back to the host's platform `.env`). `.github/workflows/e2e.yml` now sets `E2E_BASE_URL`.

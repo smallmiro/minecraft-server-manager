@@ -1016,6 +1016,14 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [3.0.1] - 2026-10-24
+
+**Upgrade:** from v2.x use the fixed `upgrade-v3.sh`; from v3.0.0 run `mcctl update` twice (the stopped-server offer needs the new CLI).
+
+**Fixed:** `upgrade-v3.sh` restart and rollback output (#794); `mcctl console service` without a terminal (#795); `mcctl update` offers to recreate stopped servers (#796).
+
+**Changed:** console Routing Table grouped by server (#799); root `pnpm test` skips e2e and e2e needs explicit targets (#797). See [CHANGELOG.md](CHANGELOG.md).
+
 ### [3.0.0] - 2026-10-24
 
 **BREAKING:** all Bash scripts are removed (#715). Run the [upgrade script](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-upgrade-script) (`curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run` first), or follow the [runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts).

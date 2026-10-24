@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 3.0.0
+> **Version**: 3.0.1
 > **Last Updated**: 2026-10-24
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -2873,6 +2873,14 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 3.0.1 (2026-10-24) - Upgrade Fixes
+
+Upgrade: from v2.x use the fixed `upgrade-v3.sh`; from v3.0.0 run `mcctl update` twice (the first run is still the 3.0.0 CLI).
+
+**Fixed:** `upgrade-v3.sh` (restart with `--console --force`, `kill_timeout` check, rollback summary, recreate stopped servers) (#794); `mcctl console service` without a terminal (#795); `mcctl update` offers to recreate stopped servers, default No (#796).
+
+**Changed:** console Routing Table grouped by server (#799); root `pnpm test` excludes e2e and e2e requires `E2E_BASE_URL` and `E2E_API_URL` (#797).
 
 ### Version 3.0.0 (2026-10-24) - Scripts Removed (BREAKING)
 

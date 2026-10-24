@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v3.0.1 (2026-10-24)
+- **fix(scripts)**: `upgrade-v3.sh` restarts with `--console --force`, checks `kill_timeout`, offers to recreate stopped servers and prints a correct rollback (#794)
+- **fix(cli)**: `mcctl console service` no longer crashes without a terminal (#795); `mcctl update` offers to recreate stopped servers, default No (#796)
+- **feat(console)**: Routing Table grouped by server (#799)
+
 ### v3.0.0 (2026-10-24)
 - **BREAKING**: all Bash scripts are removed (#715); everything runs through `mcctl`. `@minecraft-docker/shared` drops the script-based exports. Upgrade a v2.x host with `curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run`, then without `--dry-run` ([runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-upgrade-script))
 - **feat(cli)**: `server.yaml` (ServerSpec) and `mcctl migrate spec`; `mcctl delete` keeps the world unless `--delete-world`; backups, create and delete run in TypeScript (#675, #652, #732)
