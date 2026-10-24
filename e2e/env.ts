@@ -14,7 +14,7 @@ export function resolveTargets(env: Record<string, string | undefined>): {
       `[E2E] ${missing.join(' and ')} not set. The E2E tests create/delete servers and change settings, ` +
         'so they never default to localhost (that may be your live mcctl-api/console).\n' +
         'Point both at a disposable test instance, e.g.:\n' +
-        '  E2E_BASE_URL=http://localhost:5000 E2E_API_URL=http://localhost:5001 pnpm test:e2e'
+        '  E2E_BASE_URL=http://<test-console-host>:<port> E2E_API_URL=http://<test-api-host>:<port> pnpm test:e2e'
     );
   }
   return { baseURL, apiURL };
