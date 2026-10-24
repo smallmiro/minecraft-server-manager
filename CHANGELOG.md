@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Arguments starting with `-` were read as options** (#728) - `rcon-cli` reads `-x` anywhere in its arguments as an option, so `mcctl exec <server> tp Steve -100 64 200`, the console command box and the API exec route failed with `unknown shorthand flag`, and a value such as `--port 1` changed the RCON connection. mcctl now runs `docker exec -- <container> rcon-cli -- <command>`. The CLI also keeps negative numbers: `mcctl create <name> -s -123` (seed `-123`) and `mcctl exec <server> tp Steve -1 64 -5` no longer treat `-123`, `-1` or `-5` as flags. `--seed=<value>` takes any value, and everything after `--` is passed as is (`mcctl exec <server> -- say -h`).
+- **Worlds with legacy names could not be deleted** (#728) - A world such as `My World` (allowed as an existing `LEVEL`) was listed but `DELETE /api/worlds/:name` answered `Invalid world name`. It is now deleted with its `_nether` / `_the_end` folders; a world a server uses is still refused (409). World lookups by name also treat names outside `worlds/<one directory>` (`..`, `a/b`, `.locks`) as not found.
+
 ## [3.0.2] - 2026-10-24
 
 > **Upgrade notes (v3.0.2).** From v3.0.x run `mcctl update`; from v2.x use `upgrade-v3.sh` (served from `main`).
