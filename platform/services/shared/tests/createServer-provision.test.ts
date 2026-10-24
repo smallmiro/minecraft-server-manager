@@ -155,6 +155,18 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
     expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.get('VERSION')).toBe(version);
   });
 
+  it.each([
+    [{ name: 'beta', memory: '256M' }, /at least 512M/],
+    [{ name: 'beta', type: 'CRAFTBUKKIT2' }, /CRAFTBUKKIT2/],
+    [{ name: 'beta', type: 'MODRINTH' }, /Modpack slug is required/],
+    [{ name: 'Bad Name' }, /./],
+  ])('refuses invalid input %j as invalid_spec before writing anything', async (config, message) => {
+    const error = await useCase().executeWithConfig(config, run).catch((e: unknown) => e);
+    expect(error).toMatchObject({ name: 'ServerSpecError', code: 'invalid_spec', message: expect.stringMatching(message) });
+    expect(events).toEqual([]);
+    expect(existsSync(file('beta'))).toBe(false);
+  });
+
   it('creates a server whose name contains "error" (#658)', async () => {
     await useCase().executeWithConfig({ name: 'error-test', version: '1.21.1' }, run);
     expect(existsSync(file('error-test', 'server.yaml'))).toBe(true);

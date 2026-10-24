@@ -464,6 +464,36 @@ describe('POST /api/servers - Server Creation', () => {
       expect(response.json().message).toContain(`spec ${code}`);
     });
 
+    it('answers 400 for an input the create use case refuses, before anything is written (#675)', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const { CreateServerUseCase } = await import('@minecraft-docker/shared');
+      const { serverProvision } = await import('../src/routes/servers.js');
+      const exists = vi.fn(async () => false);
+      // The real use case without provision deps: it gets no further than the input
+      serverProvision.createUseCase = () =>
+        new CreateServerUseCase({} as never, {} as never, { exists } as never, { load: () => null } as never);
+      const payload = { name: 'lowmem', type: 'PAPER', memory: '256M' }; // passes the schema pattern
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers', payload });
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toEqual({ error: 'BadRequest', message: expect.stringContaining('at least 512M') });
+
+      const streamed = await app.inject({ method: 'POST', url: '/api/servers?follow=true', payload });
+      expect(sseEvents(streamed.body).at(-1)!.data).toMatchObject({ status: 'error', message: expect.stringContaining('at least 512M') });
+      expect(exists).not.toHaveBeenCalled();
+    });
+
+    it('answers 400 for a value config.env cannot hold (#675)', async () => {
+      mockedServerExists.mockReturnValue(false);
+      const { EnvValueError } = await import('@minecraft-docker/shared/utils');
+      fakeProvision(async () => {
+        throw new EnvValueError('SEED', 'SEED cannot be written');
+      });
+      const response = await app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'seedy', type: 'PAPER' } });
+      expect(response.statusCode).toBe(400);
+      expect(response.json().message).toContain('SEED cannot be written');
+    });
+
     it('maps a world conflict found while provisioning to 409', async () => {
       mockedServerExists.mockReturnValue(false);
       const { WorldAssignmentError } = await import('@minecraft-docker/shared');

@@ -11,6 +11,7 @@ import {
   checkAssign,
   buildCreateSpec,
   MC_VERSION_INPUT_PATTERN,
+  ServerSpecError,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import { Config, type Paths } from '../../utils/index.js';
@@ -393,8 +394,21 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     }
   }
 
-  /** The create input as value objects, before anything is checked against the platform. */
+  /**
+   * The create input as value objects, before anything is checked against the
+   * platform. An input they refuse is ServerSpecError invalid_spec (the API
+   * answers 400), never a plain Error.
+   */
   private parseConfig(config: CreateServerConfig) {
+    try {
+      return this.parseConfigValues(config);
+    } catch (error) {
+      if (error instanceof ServerSpecError) throw error;
+      throw new ServerSpecError('invalid_spec', error instanceof Error ? error.message : String(error), config.name);
+    }
+  }
+
+  private parseConfigValues(config: CreateServerConfig) {
     const name = ServerName.create(config.name);
     const type = config.type
       ? ServerType.create(config.type)

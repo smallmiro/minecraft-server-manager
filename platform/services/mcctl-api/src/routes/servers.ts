@@ -38,6 +38,7 @@ import {
   type ICreateServerUseCase,
 } from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
+import { EnvValueError } from '@minecraft-docker/shared/utils';
 import {
   ServerListResponseSchema,
   ServerDetailResponseSchema,
@@ -1004,6 +1005,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       if (error instanceof ServerSpecError) {
         const failure = serverSpecFailure(error, errorMessage);
         return reply.code(failure.status).send(failure.body);
+      }
+      if (error instanceof EnvValueError) {
+        return reply.code(400).send({ error: 'BadRequest', message: errorMessage });
       }
       return reply.code(500).send({ error: 'InternalServerError', message: errorMessage });
     }
