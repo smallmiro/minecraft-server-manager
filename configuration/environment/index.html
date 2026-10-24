@@ -14,7 +14,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../server-types/">
+        <link rel="next" href="../server-yaml/">
       
       
         
@@ -1038,6 +1038,8 @@
       
         
       
+        
+      
     
     
     
@@ -1480,6 +1482,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2918,7 +2948,7 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </tr>
 <tr>
 <td><code>EXTRA_ARGS</code></td>
-<td>Extra arguments for all servers. A server's <code>config.env</code> overrides it, and new servers set <code>EXTRA_ARGS=--universe /worlds/</code> there</td>
+<td>Extra arguments for all servers. A server's <code>config.env</code> overrides it, and new servers set <code>EXTRA_ARGS=--universe /worlds/</code> there. Saving it in the console is refused (409, with the servers) when it would move the world of a running server that inherits it, or put an inheriting server on a world another server uses</td>
 <td>-</td>
 <td>Manual</td>
 </tr>
@@ -3062,8 +3092,8 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 <tbody>
 <tr>
 <td><code>HOST_IP</code>, <code>HOST_IPS</code></td>
-<td><code>create-server.sh</code>, <code>migrate-nip-io.sh</code></td>
-<td><code>next-create</code>: used by the next <code>mcctl create</code>. Existing servers' hostnames do not change</td>
+<td><code>mcctl create</code>, <code>mcctl init --reconfigure</code></td>
+<td><code>next-create</code>: used by the next <code>mcctl create</code>. <code>mcctl init --reconfigure</code> re-renders existing servers so their nip.io hostnames follow</td>
 </tr>
 <tr>
 <td><code>DOCKER_GID</code></td>
@@ -3082,13 +3112,13 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </tr>
 <tr>
 <td><code>BACKUP_GITHUB_TOKEN</code> (secret), <code>BACKUP_GITHUB_REPO</code>, <code>BACKUP_GITHUB_BRANCH</code></td>
-<td><code>backup.sh</code> (re-reads <code>.env</code> every run), mcctl-api backup routes (<code>process.env</code>)</td>
-<td><code>api</code>: <code>mcctl console service restart --api</code>. The CLI picks changes up immediately</td>
+<td>CLI and mcctl-api backups (<code>GitWorldBackupAdapter</code> re-reads <code>.env</code> on every operation)</td>
+<td><code>none</code>: the next backup operation</td>
 </tr>
 <tr>
 <td><code>BACKUP_AUTO_ON_STOP</code></td>
-<td><code>mcctl stop</code> path</td>
-<td><code>none</code>: next <code>mcctl stop</code></td>
+<td><code>mcctl stop &lt;server&gt;</code>, API/console stop</td>
+<td><code>none</code>: next stop</td>
 </tr>
 <tr>
 <td><code>PLAYIT_SECRET_KEY</code> (secret)</td>
@@ -3663,8 +3693,8 @@ See <strong><a href="../../advanced/networking/#vpn-mesh-networks">VPN Mesh Netw
 </tr>
 <tr>
 <td><code>DOCKER_TIMEOUT</code></td>
-<td>Server startup timeout (sec)</td>
-<td><code>120</code></td>
+<td>Server startup timeout (Go duration, e.g. <code>120s</code>)</td>
+<td><code>120s</code></td>
 <td>Manual</td>
 </tr>
 <tr>

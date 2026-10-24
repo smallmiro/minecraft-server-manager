@@ -1039,6 +1039,8 @@
       
         
       
+        
+      
     
     
     
@@ -1110,6 +1112,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2495,14 +2525,6 @@
 <td><code>mcctl player online</code></td>
 <td>Show online players</td>
 </tr>
-<tr>
-<td><code>mcctl player lookup</code></td>
-<td>Look up player information</td>
-</tr>
-<tr>
-<td><code>mcctl player uuid</code></td>
-<td>Get player UUID</td>
-</tr>
 </tbody>
 </table>
 <h3 id="world-management">World Management<a class="headerlink" href="#world-management" title="Permanent link">&para;</a></h3>
@@ -2516,15 +2538,15 @@
 <tbody>
 <tr>
 <td><code>mcctl world list</code></td>
-<td>List all worlds with lock status</td>
+<td>List all worlds with the servers they are assigned to</td>
 </tr>
 <tr>
 <td><code>mcctl world assign</code></td>
-<td>Lock a world to a server</td>
+<td>Assign a world to a stopped server (one world, one server)</td>
 </tr>
 <tr>
 <td><code>mcctl world release</code></td>
-<td>Release a world lock</td>
+<td>Switch a world's server back to its own default world</td>
 </tr>
 </tbody>
 </table>

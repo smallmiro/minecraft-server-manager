@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2604,11 +2634,15 @@
 </tr>
 <tr>
 <td><code>lib/</code></td>
-<td>Helpers: <code>shell.ts</code> (<code>ShellExecutor</code>), <code>rcon.ts</code>, <code>console-db.ts</code>, <code>pm2-utils.ts</code>, <code>prompts/</code></td>
+<td>Helpers: <code>shell.ts</code> (re-exports <code>ShellExecutor</code>), <code>rcon.ts</code>, <code>console-db.ts</code>, <code>pm2-utils.ts</code>, <code>prompts/</code></td>
 </tr>
 <tr>
 <td><code>infrastructure/adapters/</code></td>
 <td>CLI-only adapters: <code>ClackPromptAdapter</code>, <code>OpsJsonAdapter</code>, <code>Pm2ServiceManagerAdapter</code></td>
+</tr>
+<tr>
+<td><code>infrastructure/ShellExecutor.ts</code></td>
+<td>Compose-project operations only (pull, up/down, start/stop all, router) and <code>config.env</code> access. Not a runtime port (ADR-0001, row 15)</td>
 </tr>
 <tr>
 <td><code>infrastructure/di/container.ts</code></td>
@@ -2639,7 +2673,7 @@
 </tr>
 <tr>
 <td><code>application/ports/outbound/</code></td>
-<td>Infrastructure interfaces (<code>IShellPort</code>, <code>IServerRepository</code>, <code>IPromptPort</code>, <code>IDocProvider</code>, <code>IModSourcePort</code>, ...)</td>
+<td>Infrastructure interfaces (<code>IContainerRuntimePort</code>, <code>IServerConsolePort</code>, <code>IWorldBackupPort</code>, <code>IWorldAssignmentPort</code>, <code>IServerSpecRepository</code>, <code>IServerRepository</code>, <code>IPromptPort</code>, <code>IDocProvider</code>, <code>IModSourcePort</code>, ...)</td>
 </tr>
 <tr>
 <td><code>application/use-cases/</code></td>
@@ -2647,7 +2681,7 @@
 </tr>
 <tr>
 <td><code>infrastructure/adapters/</code></td>
-<td><code>ShellAdapter</code>, <code>ServerRepository</code>, <code>WorldRepository</code>, <code>DocsAdapter</code>, <code>ApiPromptAdapter</code>, <code>Sqlite*Repository</code>, <code>RconCliAdapter</code>, ...</td>
+<td><code>DockerComposeRuntimeAdapter</code>, <code>GitWorldBackupAdapter</code>, <code>ConfigEnvWorldAssignmentAdapter</code>, <code>AvahiHostnameRegistrarAdapter</code>, <code>ServerRepository</code>, <code>WorldRepository</code>, <code>DocsAdapter</code>, <code>ApiPromptAdapter</code>, <code>Sqlite*Repository</code>, <code>RconCliAdapter</code>, ...</td>
 </tr>
 <tr>
 <td><code>infrastructure/config/</code>, <code>infrastructure/factories/</code></td>
@@ -2664,25 +2698,23 @@
     subgraph CLI["cli package"]
         IDX["index.ts&lt;br/&gt;parseArgs + switch"] --&gt; CMD["commands/*.ts"]
         CMD --&gt; DI["Container&lt;br/&gt;getContainer()"]
-        CMD -.thin commands.-&gt; SH["lib/shell.ts&lt;br/&gt;ShellExecutor"]
+        CMD -.compose commands.-&gt; SH["infrastructure/ShellExecutor.ts&lt;br/&gt;(compose project only)"]
         CLIAD["ClackPromptAdapter&lt;br/&gt;OpsJsonAdapter&lt;br/&gt;Pm2ServiceManagerAdapter"]
     end
     subgraph SHARED["shared package"]
         UC["Use cases&lt;br/&gt;(application/use-cases)"] --&gt; PORTS["Ports&lt;br/&gt;(inbound / outbound)"]
-        ADP["Adapters&lt;br/&gt;ShellAdapter, ServerRepository,&lt;br/&gt;Sqlite*, ..."] -.implements.-&gt; PORTS
+        ADP["Adapters&lt;br/&gt;DockerComposeRuntimeAdapter,&lt;br/&gt;GitWorldBackupAdapter, ServerRepository,&lt;br/&gt;Sqlite*, ..."] -.implements.-&gt; PORTS
         UC --&gt; DOM["Domain&lt;br/&gt;entities, value objects"]
     end
     API["mcctl-api"] --&gt; UC
     DI --&gt; UC
     DI --&gt; ADP
-    DI --&gt; CLIAD
-    SH --&gt; BASH["platform/scripts/*.sh"]
-    ADP --&gt; BASH</code></pre>
+    DI --&gt; CLIAD</code></pre>
 <h2 id="two-kinds-of-commands">Two Kinds of Commands<a class="headerlink" href="#two-kinds-of-commands" title="Permanent link">&para;</a></h2>
 <p>Be aware of both styles when reading or adding code:</p>
 <ul>
 <li><strong>Use case commands</strong> contain business logic. The handler gets the container, calls a use case from <code>shared</code>, and formats the result. Examples: <code>create</code>, <code>delete</code>, <code>config-snapshot</code>, <code>backup-schedule</code>, <code>world</code>, <code>mod</code>.</li>
-<li><strong>Thin commands</strong> are pass-throughs. They call bash scripts (<code>mcctl.sh</code> and friends) through <code>ShellExecutor</code>, or run RCON through <code>docker exec &lt;container&gt; rcon-cli</code> (<code>lib/rcon.ts</code>). Examples: <code>start</code>, <code>stop</code>, <code>logs</code>, <code>console &lt;server&gt;</code> (RCON console), <code>router</code>, <code>exec</code>. The <code>console init/service/user/api/remove</code> subcommands are separate; see below.</li>
+<li><strong>Thin commands</strong> are pass-throughs. They call a runtime port (<code>start</code>, <code>stop</code>, <code>logs</code>), open a TCP RCON session from <code>IServerConsolePort.getEndpoint</code> (<code>rcon</code>, <code>console &lt;server&gt;</code>), run docker compose through <code>ShellExecutor</code> (<code>up</code>, <code>down</code>, <code>--all</code>, <code>router</code>; compose project only), or run RCON through <code>docker exec &lt;container&gt; rcon-cli</code> (<code>lib/rcon.ts</code>, <code>exec</code>). The <code>console init/service/user/api/remove</code> subcommands are separate; see below.</li>
 </ul>
 <p>New business logic belongs in a shared use case, not in a file under <code>commands/</code>. A command file should parse options, call the use case and print output.</p>
 <h2 id="domain-layer">Domain Layer<a class="headerlink" href="#domain-layer" title="Permanent link">&para;</a></h2>
@@ -2698,7 +2730,7 @@
 <tbody>
 <tr>
 <td><code>ServerName</code></td>
-<td>2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes <code>containerName</code> (<code>mc-&lt;name&gt;</code>) and <code>hostname</code></td>
+<td>2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes <code>value</code>; the container and host names come from <code>containerNameOf</code> / <code>serverHostnameOf</code></td>
 </tr>
 <tr>
 <td><code>ServerType</code></td>
@@ -2736,11 +2768,7 @@
 </tr>
 <tr>
 <td><code>IDeleteServerUseCase</code></td>
-<td><code>execute()</code> (prompts) / <code>executeWithName(name)</code></td>
-</tr>
-<tr>
-<td><code>IServerStatusUseCase</code></td>
-<td><code>execute()</code> / <code>executeForServer(name)</code></td>
+<td><code>execute()</code> (prompts) / <code>executeWithName(name, { force, yes, deleteWorld })</code></td>
 </tr>
 </tbody>
 </table>
@@ -2756,7 +2784,7 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="ow">delete</span><span class="p">(</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="p">;</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">}</span>
 </code></pre></div>
-<p><strong>Outbound ports</strong> (<code>application/ports/outbound/</code>) include <code>IPromptPort</code>, <code>IShellPort</code>, <code>IServerRepository</code>, <code>IWorldRepository</code>, <code>IDocProvider</code>, <code>IAuditLogPort</code>, <code>IRconPort</code>, <code>IModSourcePort</code>, <code>IServiceManagerPort</code> and the snapshot/backup repositories. Note that <code>IPromptPort</code> and <code>IDocProvider</code> are outbound ports.</p>
+<p><strong>Outbound ports</strong> (<code>application/ports/outbound/</code>) include <code>IPromptPort</code>, <code>IContainerRuntimePort</code>, <code>IServerConsolePort</code>, <code>IWorldBackupPort</code>, <code>IWorldAssignmentPort</code>, <code>IServerSpecRepository</code>, <code>IServerRepository</code>, <code>IWorldRepository</code>, <code>IDocProvider</code>, <code>IAuditLogPort</code>, <code>IRconPort</code>, <code>IModSourcePort</code>, <code>IServiceManagerPort</code> and the snapshot/backup repositories. Note that <code>IPromptPort</code> and <code>IDocProvider</code> are outbound ports.</p>
 <h2 id="adapters">Adapters<a class="headerlink" href="#adapters" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2778,8 +2806,23 @@
 <td>shared</td>
 </tr>
 <tr>
-<td><code>IShellPort</code></td>
-<td><code>ShellAdapter</code></td>
+<td><code>IContainerRuntimePort</code></td>
+<td><code>DockerComposeRuntimeAdapter</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IServerConsolePort</code></td>
+<td><code>DockerServerConsoleAdapter</code> (RCON)</td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IWorldBackupPort</code></td>
+<td><code>GitWorldBackupAdapter</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IWorldAssignmentPort</code></td>
+<td><code>ConfigEnvWorldAssignmentAdapter</code></td>
 <td>shared</td>
 </tr>
 <tr>
@@ -2819,7 +2862,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getContainer</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">root</span><span class="p">);</span><span class="w">   </span><span class="c1">// ContainerOptions | rootDir string</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">container</span><span class="p">.</span><span class="nx">configSnapshotUseCase</span><span class="p">;</span><span class="w"> </span><span class="c1">// created on first access</span>
 </code></pre></div>
-<p>Available getters include <code>promptPort</code>, <code>shellPort</code>, <code>serverRepository</code>, <code>worldRepository</code>, <code>docProvider</code>, <code>auditLogPort</code>, <code>modSourcePort</code>, <code>createServerUseCase</code>, <code>deleteServerUseCase</code>, <code>serverStatusUseCase</code>, <code>worldManagementUseCase</code>, <code>backupUseCase</code>, <code>playerLookupUseCase</code>, <code>backupScheduleUseCase</code>, <code>configSnapshotUseCase</code> and <code>configSnapshotScheduleUseCase</code>.</p>
+<p>Available getters include <code>promptPort</code>, <code>runtimePort</code>, <code>containerRuntime</code>, <code>serverConsolePort</code>, <code>worldBackupPort</code>, <code>worldAssignmentPort</code>, <code>serverSpecRepository</code>, <code>serverRepository</code>, <code>worldRepository</code>, <code>docProvider</code>, <code>auditLogPort</code>, <code>modSourcePort</code>, <code>createServerUseCase</code>, <code>deleteServerUseCase</code>, <code>worldManagementUseCase</code>, <code>backupUseCase</code>, <code>backupScheduleUseCase</code>, <code>configSnapshotUseCase</code> and <code>configSnapshotScheduleUseCase</code>.</p>
 <p>Related helpers:</p>
 <ul>
 <li><code>getContainer(options?)</code> returns a process-wide <code>Container</code>.</li>
@@ -2943,7 +2986,7 @@
 <li><code>mcctl console ...</code> manages <code>mcctl-api</code> and <code>mcctl-console</code> as PM2 processes through <code>Pm2ServiceManagerAdapter</code> and <code>shared/src/infrastructure/config/Pm2EcosystemConfig.ts</code>.</li>
 <li><code>mcctl console user</code> writes the console SQLite database directly (<code>cli/src/lib/console-db.ts</code>).</li>
 <li>SQLite stores (better-sqlite3), relative to the platform root: <code>data/audit.db</code>, <code>backups/meta/backup-schedules.db</code>, <code>backups/meta/config-snapshots.db</code>.</li>
-<li>Bash scripts live in <code>platform/scripts/</code> and are copied into the CLI package at publish time by the <code>sync-scripts</code> npm script (run from <code>prepublishOnly</code>).</li>
+<li>There are no bash scripts. Every command is TypeScript (#715); <code>mcctl</code> runs docker, git and avahi through ports and adapters.</li>
 <li>Some subsystems are only used by <code>mcctl-api</code>: BlueMap rendering, world analysis, player sessions and the RCON adapter (<code>RconCliAdapter</code>).</li>
 </ul>
 <h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
@@ -2974,7 +3017,7 @@
 </tr>
 <tr>
 <td><code>mocks/</code></td>
-<td><code>MockPromptAdapter</code>, <code>MockShellAdapter</code>, <code>MockServerRepository</code>, <code>MockWorldRepository</code></td>
+<td><code>MockPromptAdapter</code>, <code>MockServerRepository</code>, <code>MockWorldRepository</code>, <code>MockWorldAssignmentPort</code>, <code>createMockContainerRuntime</code></td>
 </tr>
 </tbody>
 </table>
@@ -2985,11 +3028,10 @@
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>test:e2e<span class="w">          </span><span class="c1"># needs a build (dist/)</span>
 </code></pre></div>
 <p>Older tests use <code>node:assert</code>; newer ones use vitest <code>expect</code> and <code>vi.mock()</code>. Use <code>expect</code> in new tests.</p>
-<p>Use case integration test (construct the use case directly with mocks; <code>MockShellAdapter.wasCommandCalled()</code> matches the exact command string):</p>
+<p>Use case integration test (construct the use case directly with mocks and a fake port; see <code>cli/tests/integration/BackupUseCase-port.test.ts</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">prompt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockPromptAdapter</span><span class="p">({</span><span class="w"> </span><span class="cm">/* scripted answers */</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">shell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockShellAdapter</span><span class="p">();</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">repo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockServerRepository</span><span class="p">();</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">CreateServerUseCase</span><span class="p">(</span><span class="nx">prompt</span><span class="p">,</span><span class="w"> </span><span class="nx">shell</span><span class="p">,</span><span class="w"> </span><span class="nx">repo</span><span class="p">);</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">port</span><span class="o">:</span><span class="w"> </span><span class="kt">IWorldBackupPort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fakeBackupPort</span><span class="p">();</span><span class="w">   </span><span class="c1">// a fake that records calls</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">BackupUseCase</span><span class="p">(</span><span class="nx">prompt</span><span class="p">,</span><span class="w"> </span><span class="nx">port</span><span class="p">);</span>
 </code></pre></div>
 <p>Command test with a mocked container (see <code>cli/tests/commands/config-snapshot.test.ts</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nx">vi</span><span class="p">.</span><span class="nx">mock</span><span class="p">(</span><span class="s1">'../../src/infrastructure/di/container.js'</span><span class="p">);</span>
@@ -2997,7 +3039,7 @@
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nx">configSnapshotUseCase</span><span class="o">:</span><span class="w"> </span><span class="kt">mockUseCase</span><span class="p">,</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">}</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">never</span><span class="p">);</span>
 </code></pre></div>
-<p><code>Container.createWithAdapters(prompt, shell, serverRepo, worldRepo)</code> builds a container from mocks when you need a real <code>Container</code>. Reset any global container between tests with <code>resetContainer()</code>.</p>
+<p><code>Container.createWithAdapters(prompt, serverRepo, worldRepo)</code> builds a container from mocks when you need a real <code>Container</code>. Reset any global container between tests with <code>resetContainer()</code>.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../">Development Index</a></li>

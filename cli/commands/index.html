@@ -1281,6 +1281,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#world-assignment-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Assignment Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mcctl-world-new" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1457,28 +1468,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#mcctl-player-lookup-legacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player lookup (Legacy)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcctl-player-uuid-legacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player uuid (Legacy)
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1512,6 +1501,17 @@
     <span class="md-ellipsis">
       
         mcctl migrate worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate spec
       
     </span>
   </a>
@@ -1823,6 +1823,8 @@
       
         
       
+        
+      
     
     
     
@@ -1894,6 +1896,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -3230,6 +3260,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#world-assignment-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Assignment Rules
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mcctl-world-new" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3406,28 +3447,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#mcctl-player-lookup-legacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player lookup (Legacy)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcctl-player-uuid-legacy" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player uuid (Legacy)
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3461,6 +3480,17 @@
     <span class="md-ellipsis">
       
         mcctl migrate worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate spec
       
     </span>
   </a>
@@ -3701,8 +3731,7 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── shared/
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   ├── plugins/
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   └── mods/
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>├── scripts/
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>└── backups/
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└── backups/
 </code></pre></div>
 <hr />
 <h3 id="mcctl-up">mcctl up<a class="headerlink" href="#mcctl-up" title="Permanent link">&para;</a></h3>
@@ -4114,6 +4143,7 @@ to update just the CLI binary.</p>
 <li>Patches the <code>router</code> service in the root <code>docker-compose.yml</code> (see below)</li>
 <li>Updates <code>servers/_template/</code> files and records <code>templateVersion</code> in <code>.mcctl.json</code></li>
 <li>Adds <code>installId</code> to <code>.mcctl.json</code> if it is missing (an existing value is kept)</li>
+<li>(v3.0.0+) If <code>&lt;root&gt;/scripts</code> exists, prints its path, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and the link to the <a href="../../advanced/upgrade-runbook/#v300-scripts">script to mcctl table</a>. In a terminal it asks <code>Remove &lt;path&gt;?</code> (default <code>N</code>) and deletes only on <code>y</code>. With <code>--non-interactive</code> or without a terminal it prints a hint (<code>rm -r &lt;path&gt;</code>) and deletes nothing. With <code>--dry-run</code> it only prints <code>Would ask before removing &lt;path&gt;.</code>. A symbolic link is unlinked, never followed. There is no option to skip the question.</li>
 </ol>
 <p><strong>docker-compose.yml router patch:</strong> only the <code>router</code> service's <code>image</code> tag and <code>group_add</code> entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.</p>
 <ul>
@@ -4215,6 +4245,14 @@ to update just the CLI binary.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition info">
+<p class="admonition-title">One world, one server</p>
+<p><code>--world</code> (and the default world <code>&lt;name&gt;</code> of a new server) is refused when another server already uses that world. See <a href="#world-assignment-rules">World Assignment Rules</a>.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">What create writes</p>
+<p><code>mcctl create</code> writes <code>servers/&lt;name&gt;/server.yaml</code> and renders <code>config.env</code>, <code>docker-compose.yml</code> and the <code>servers/compose.yml</code> entry from it (<a href="../../configuration/server-yaml/">Server Definition</a>). If anything fails before the server exists, nothing is left behind, so the same command can be run again. If the server is created but does not start, it stays created and the command exits 1 with the cause; start it with <code>mcctl start &lt;name&gt;</code>.</p>
+</div>
 <div class="admonition note">
 <p class="admonition-title">Whitelist is off by default</p>
 <p>Servers created without a whitelist option have the whitelist <strong>disabled</strong>, so anyone with a premium (online-mode) account can join. Use <code>--whitelist</code> or <code>--enable-whitelist</code> to restrict access, or turn it on later with <code>mcctl whitelist &lt;server&gt; on</code>. In interactive mode you are asked "Enable whitelist?" (default No) and only asked for players when you answer Yes. Servers created from the Web Console are also created with the whitelist off.</p>
@@ -4386,9 +4424,19 @@ to update just the CLI binary.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>--force</code></td>
+<td><code>--yes</code></td>
 <td><code>-y</code></td>
 <td>Skip confirmation</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td></td>
+<td>Delete even if players are online (implies <code>--yes</code>)</td>
+</tr>
+<tr>
+<td><code>--delete-world</code></td>
+<td></td>
+<td>Delete the world inside the server instead of moving it to <code>worlds/</code></td>
 </tr>
 <tr>
 <td><code>--sudo-password</code></td>
@@ -4397,10 +4445,24 @@ to update just the CLI binary.</p>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">World Data Preserved</p>
-<p><code>mcctl delete</code> removes the server configuration but preserves world data in the <code>worlds/</code> directory.</p>
+<p><code>mcctl delete</code> asks for confirmation. Without a terminal (scripts, CI) it refuses to delete unless you pass <code>--yes</code> or <code>--force</code>.</p>
+<div class="admonition info">
+<p class="admonition-title">Worlds outlive their server</p>
+<ul>
+<li>A world in <code>worlds/</code> is kept. It is only no longer assigned to the deleted server.</li>
+<li>A world inside the server (<code>servers/&lt;name&gt;/data/&lt;LEVEL&gt;</code>, plus <code>&lt;LEVEL&gt;_nether</code> and <code>&lt;LEVEL&gt;_the_end</code>) is moved to <code>worlds/&lt;LEVEL&gt;</code> before the server directory is removed. You can assign it to another server afterwards.</li>
+<li>If <code>worlds/</code> already has a folder with the same name, the delete stops and nothing is removed. Rename the folder in <code>worlds/</code>, or pass <code>--delete-world</code>.</li>
+<li><code>--delete-world</code> deletes the world inside the server. It never deletes worlds in <code>worlds/</code>; use <a href="#mcctl-world-delete"><code>mcctl world delete</code></a> for those.</li>
+</ul>
 </div>
+<p>Without <code>--delete-world</code>, the delete also stops before removing anything when the world cannot be kept with certainty:</p>
+<ul>
+<li>The server's world cannot be determined from <code>config.env</code>. <code>LEVEL</code> is read the way Docker Compose reads the file (quotes, a trailing comment and spaces around <code>=</code> are fine; the last <code>LEVEL</code> line wins), and the delete stops when the value is not a world name (letters, digits, <code>-</code>, <code>_</code>), uses <code>$</code> interpolation, or <code>EXTRA_ARGS</code> puts <code>--universe</code> somewhere mcctl does not support. These are the rules of <a href="#world-assignment-rules">World Assignment Rules</a>. Without any <code>LEVEL</code> line the world is <code>world</code>.</li>
+<li><code>servers/&lt;name&gt;/</code> or its <code>data/</code> is a symlink, or only <code>&lt;LEVEL&gt;_nether</code>/<code>&lt;LEVEL&gt;_the_end</code> exist without <code>data/&lt;LEVEL&gt;</code>.</li>
+<li>Another world folder (one with <code>level.dat</code>, <code>level.dat_old</code>, <code>region/</code> or <code>*.mca</code> files, such as an old world from a previous <code>LEVEL</code>) would be deleted, or a symlink inside the server points to something inside the server. The message lists them.</li>
+</ul>
+<p>If <code>worlds/</code> resolves to a folder inside the server (for example a symlink into <code>servers/&lt;name&gt;/</code>), the delete stops even with <code>--delete-world</code>. If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, <code>mcctl delete &lt;name&gt;</code> refuses unless you pass <code>--force</code>.</p>
+<p>No backup runs before the delete: the world is kept in <code>worlds/</code> (unless <code>--delete-world</code>). Only one delete of a server runs at a time: a second <code>mcctl delete</code> (or API delete) of the same server fails while the first one runs. Delete handles only the <code>servers/compose.yml</code> entry mcctl writes (<code>&lt;name&gt;/docker-compose.yml</code>); if you wrote another include entry for the server by hand (long form, extra compose files), the delete stops before changing anything and asks you to remove that entry first. The mDNS hostname <code>&lt;name&gt;.local</code> is removed from <code>/etc/avahi/hosts</code> after the server files are gone, with <code>sudo sed -i … /etc/avahi/hosts</code>, the command the README's sudoers <code>NOPASSWD</code> lines allow. The sudo password comes from <code>--sudo-password</code>, <a href="#mcctl_sudo_password"><code>MCCTL_SUDO_PASSWORD</code></a> or the prompt. If the removal fails (no password and no <code>NOPASSWD</code> rule, for example), the server is still deleted and <code>mcctl delete</code> prints a warning; remove the <code>&lt;name&gt;.local</code> line by hand. Files <code>mcctl delete</code> cannot remove from <code>servers/&lt;name&gt;/</code> (files the container wrote as root, for example) are a warning too, after the server is out of <code>servers/compose.yml</code>; remove them with the printed <code>sudo rm -rf</code> command.</p>
 <p><strong>Examples:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Interactive - shows server list</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>mcctl<span class="w"> </span>delete
@@ -4408,11 +4470,14 @@ to update just the CLI binary.</p>
 <a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># Delete specific server with confirmation</span>
 <a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver
 <a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>
-<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="c1"># Force delete without confirmation</span>
-<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="c1"># Delete without confirmation</span>
+<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--yes
 <a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a>
-<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="c1"># Automation with sudo password</span>
-<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span><span class="w"> </span>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
+<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="c1"># Delete the server and the world inside it</span>
+<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--yes<span class="w"> </span>--delete-world
+<a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a>
+<a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a><span class="c1"># Automation with sudo password</span>
+<a id="__codelineno-40-14" name="__codelineno-40-14" href="#__codelineno-40-14"></a><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span><span class="w"> </span>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--yes
 </code></pre></div>
 <hr />
 <h3 id="mcctl-start">mcctl start<a class="headerlink" href="#mcctl-start" title="Permanent link">&para;</a></h3>
@@ -4444,6 +4509,7 @@ to update just the CLI binary.</p>
 <a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># Start all servers</span>
 <a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
 </code></pre></div>
+<p><code>mcctl start &lt;name&gt;</code> creates the container if needed and starts it (<code>docker compose up -d mc-&lt;name&gt;</code>). It exits with code 2 and a warning when the server is already running, and with code 1 when <code>servers/&lt;name&gt;/docker-compose.yml</code> does not exist.</p>
 <div class="admonition tip">
 <p class="admonition-title">Auto-Start</p>
 <p>With mc-router, servers automatically start when a player connects.</p>
@@ -4478,10 +4544,12 @@ to update just the CLI binary.</p>
 <a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># Stop all servers</span>
 <a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
 </code></pre></div>
+<p><code>mcctl stop &lt;name&gt;</code> exits with code 2 and a warning when the server is not running. <code>start</code> and <code>stop</code> exit with code 1 when Docker cannot be queried.</p>
+<p>With <code>BACKUP_AUTO_ON_STOP=true</code> and a configured backup, <code>mcctl stop &lt;name&gt;</code> backs up the worlds after the server has stopped, the same way as <a href="#mcctl-backup-push"><code>mcctl backup push --auto</code></a>: it never prompts and waits up to 10 minutes for a running backup. A failed backup prints a warning; the stop still succeeds (exit code 0). Stopping from the web console or the API (<code>POST /api/servers/&lt;name&gt;/stop</code>) runs the same backup in the background. <code>mcctl stop --all</code> does not back up.</p>
 <hr />
 <h3 id="mcctl-logs">mcctl logs<a class="headerlink" href="#mcctl-logs" title="Permanent link">&para;</a></h3>
 <p>View server logs.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;name<span class="p">|</span>router&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -4501,7 +4569,12 @@ to update just the CLI binary.</p>
 <tr>
 <td><code>--lines</code></td>
 <td><code>-n</code></td>
-<td>Number of lines to show</td>
+<td>Number of lines to show (default 50). With <code>-f</code>, shows the last N lines, then keeps following</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td></td>
+<td>Print the lines as a JSON array (not combinable with <code>-f</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -4514,7 +4587,13 @@ to update just the CLI binary.</p>
 <a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
 <a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># Show last 10 lines</span>
 <a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>survival<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>
+<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a><span class="c1"># mc-router logs</span>
+<a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>router
 </code></pre></div>
+<blockquote>
+<p>Press Ctrl+C to end <code>-f</code>; the exit code is 0. <code>mcctl logs</code> does not cover avahi-daemon; run <code>journalctl -u avahi-daemon</code> yourself if needed.</p>
+</blockquote>
 <p><strong>Output Example:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>[22:09:48] [Server thread/INFO]: Steve joined the game
 <a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>[22:10:15] [Server thread/INFO]: Alex joined the game
@@ -4529,9 +4608,13 @@ to update just the CLI binary.</p>
 </code></pre></div></p>
 <hr />
 <h3 id="mcctl-console">mcctl console<a class="headerlink" href="#mcctl-console" title="Permanent link">&para;</a></h3>
-<p>Connect to server RCON console.</p>
+<p>Connect to server RCON console. This is the same interactive session as <a href="#mcctl-rcon"><code>mcctl rcon</code></a>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;name&gt;
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Changed in this release: TCP RCON instead of <code>docker exec</code></p>
+<p><code>mcctl console</code> connects to the server's RCON port over TCP (the container address, <code>RCON_PORT</code> and <code>RCON_PASSWORD</code>), like <code>mcctl rcon</code>. It used to run <code>docker exec -i mc-&lt;name&gt; rcon-cli</code>. The server must be running and its RCON port reachable from the host running <code>mcctl</code>. Type <code>exit</code> or <code>quit</code>, or press <code>Ctrl+C</code>/<code>Ctrl+D</code>, to leave. Piped input runs line by line (<code>printf 'list\n' | mcctl console myserver</code>). The session ends when the server closes the connection (for example after <code>stop</code>); a connection error exits with code 1.</p>
+</div>
 <p><strong>Example:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>myserver
 </code></pre></div>
@@ -4718,6 +4801,10 @@ to update just the CLI binary.</p>
 <div class="admonition note">
 <p class="admonition-title">Restart Required</p>
 <p>Some configuration changes require a server restart to take effect.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Changing <code>LEVEL</code></p>
+<p><code>LEVEL</code> is the world the server uses (see <a href="#world-assignment-rules">World Assignment Rules</a>). <code>mcctl config &lt;server&gt; LEVEL &lt;world&gt;</code> is refused while the server is running and when another server uses <code>&lt;world&gt;</code>. The same applies to <code>EXTRA_ARGS</code> when the new value moves the world between <code>worlds/</code> and <code>servers/&lt;server&gt;/data</code> (<code>--universe</code>).</p>
 </div>
 <hr />
 <h2 id="server-backup--restore">Server Backup &amp; Restore<a class="headerlink" href="#server-backup--restore" title="Permanent link">&para;</a></h2>
@@ -5070,6 +5157,16 @@ to update just the CLI binary.</p>
 </div>
 <hr />
 <h2 id="world-management">World Management<a class="headerlink" href="#world-management" title="Permanent link">&para;</a></h2>
+<h3 id="world-assignment-rules">World Assignment Rules<a class="headerlink" href="#world-assignment-rules" title="Permanent link">&para;</a></h3>
+<p>A world is assigned to a server by the server's <code>LEVEL</code> in <code>servers/&lt;name&gt;/config.env</code>. If <code>LEVEL</code> is unset, the legacy <code>WORLD_NAME</code> is read; if both are unset the server uses itzg's default <code>world</code>.</p>
+<ul>
+<li><strong>No lock file.</strong> <code>worlds/.locks</code> is no longer read, written or created (<code>mcctl init</code> does not create it). An existing <code>worlds/.locks</code> directory is harmless; <code>rm -rf worlds/.locks</code> is safe. The <code>lock.sh</code> and <code>mcctl.sh</code> scripts were removed (#670, #734).</li>
+<li><strong>One world, one server.</strong> A world and its <code>&lt;world&gt;_nether</code> / <code>&lt;world&gt;_the_end</code> folders count as one world. A world used by another server cannot be assigned: <code>mcctl world assign</code>, <code>mcctl create --world</code>, a new server's default world <code>&lt;name&gt;</code>, and <code>mcctl config &lt;server&gt; LEVEL &lt;world&gt;</code> are refused. Deleting a server frees its world for reuse.</li>
+<li><strong>Stopped server only.</strong> <code>world assign</code>, <code>world release</code>, <code>world new --server</code> and <code>config LEVEL</code> are refused while the server's container is running, paused, restarting or created. Nothing is stopped automatically (<code>world new --server</code> used to try to stop the server; it now refuses).</li>
+<li><strong>Fail-closed.</strong> If any server's <code>config.env</code> cannot be read, or its <code>LEVEL</code> cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Unsafe values are path separators, <code>.</code> or <code>..</code>, quotes, control characters, Compose interpolation such as <code>${VAR}</code> outside single quotes, and an unsupported <code>--universe</code> location. Legacy names such as <code>My World</code> are still accepted as existing values; new names must be letters, digits, <code>-</code> or <code>_</code>.</li>
+<li><strong>Older installs.</strong> Duplicate assignments are reported, not fixed: see <a href="#mcctl-world-list"><code>mcctl world list</code></a>.</li>
+</ul>
+<hr />
 <h3 id="mcctl-world-new">mcctl world new<a class="headerlink" href="#mcctl-world-new" title="Permanent link">&para;</a></h3>
 <p>Create a new world directory with optional seed configuration.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -5107,7 +5204,7 @@ to update just the CLI binary.</p>
 <tr>
 <td><code>--server</code></td>
 <td></td>
-<td>Server to assign world to (also sets SEED in config)</td>
+<td>Server to assign world to (sets <code>LEVEL</code>, and <code>SEED</code> if given). The server must be stopped</td>
 </tr>
 <tr>
 <td><code>--no-start</code></td>
@@ -5152,6 +5249,7 @@ to update just the CLI binary.</p>
 <li>Creates world directory in <code>worlds/&lt;name&gt;/</code></li>
 <li>Creates <code>.seed</code> file if seed is provided (for reference)</li>
 <li>If server assigned:</li>
+<li>Refuses if the server is running or the world is used by another server (the server is not stopped for you)</li>
 <li>Updates server's <code>config.env</code> with <code>LEVEL=&lt;world-name&gt;</code></li>
 <li>Sets <code>SEED=&lt;seed&gt;</code> if provided</li>
 <li>Optionally starts the server</li>
@@ -5163,7 +5261,7 @@ The world is generated with this seed when the server first starts.</p>
 </div>
 <hr />
 <h3 id="mcctl-world-list">mcctl world list<a class="headerlink" href="#mcctl-world-list" title="Permanent link">&para;</a></h3>
-<p>List all worlds with their lock status.</p>
+<p>List all worlds with the servers they are assigned to.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
@@ -5191,12 +5289,12 @@ The world is generated with this seed when the server first starts.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>Worlds:
 <a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>
 <a id="__codelineno-88-3" name="__codelineno-88-3" href="#__codelineno-88-3"></a>  survival-world
-<a id="__codelineno-88-4" name="__codelineno-88-4" href="#__codelineno-88-4"></a>    Status: locked (mc-survival)
+<a id="__codelineno-88-4" name="__codelineno-88-4" href="#__codelineno-88-4"></a>    Status: assigned: mc-survival
 <a id="__codelineno-88-5" name="__codelineno-88-5" href="#__codelineno-88-5"></a>    Size: 514.0MB
 <a id="__codelineno-88-6" name="__codelineno-88-6" href="#__codelineno-88-6"></a>    Path: /home/myuser/minecraft-servers/worlds/survival-world
 <a id="__codelineno-88-7" name="__codelineno-88-7" href="#__codelineno-88-7"></a>
 <a id="__codelineno-88-8" name="__codelineno-88-8" href="#__codelineno-88-8"></a>  creative-world
-<a id="__codelineno-88-9" name="__codelineno-88-9" href="#__codelineno-88-9"></a>    Status: unlocked
+<a id="__codelineno-88-9" name="__codelineno-88-9" href="#__codelineno-88-9"></a>    Status: unassigned
 <a id="__codelineno-88-10" name="__codelineno-88-10" href="#__codelineno-88-10"></a>    Size: 128.5MB
 <a id="__codelineno-88-11" name="__codelineno-88-11" href="#__codelineno-88-11"></a>    Path: /home/myuser/minecraft-servers/worlds/creative-world
 </code></pre></div></p>
@@ -5211,24 +5309,30 @@ The world is generated with this seed when the server first starts.</p>
 <a id="__codelineno-90-4" name="__codelineno-90-4" href="#__codelineno-90-4"></a><span class="w">    </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/myuser/minecraft-servers/worlds/survival-world"</span><span class="p">,</span>
 <a id="__codelineno-90-5" name="__codelineno-90-5" href="#__codelineno-90-5"></a><span class="w">    </span><span class="nt">"isLocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <a id="__codelineno-90-6" name="__codelineno-90-6" href="#__codelineno-90-6"></a><span class="w">    </span><span class="nt">"lockedBy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mc-survival"</span><span class="p">,</span>
-<a id="__codelineno-90-7" name="__codelineno-90-7" href="#__codelineno-90-7"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"514.0MB"</span><span class="p">,</span>
-<a id="__codelineno-90-8" name="__codelineno-90-8" href="#__codelineno-90-8"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-21T13:19:48.853Z"</span>
-<a id="__codelineno-90-9" name="__codelineno-90-9" href="#__codelineno-90-9"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-90-10" name="__codelineno-90-10" href="#__codelineno-90-10"></a><span class="w">  </span><span class="p">{</span>
-<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a><span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"creative-world"</span><span class="p">,</span>
-<a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a><span class="w">    </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/myuser/minecraft-servers/worlds/creative-world"</span><span class="p">,</span>
-<a id="__codelineno-90-13" name="__codelineno-90-13" href="#__codelineno-90-13"></a><span class="w">    </span><span class="nt">"isLocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-90-14" name="__codelineno-90-14" href="#__codelineno-90-14"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"128.5MB"</span><span class="p">,</span>
-<a id="__codelineno-90-15" name="__codelineno-90-15" href="#__codelineno-90-15"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20T10:30:00.000Z"</span>
-<a id="__codelineno-90-16" name="__codelineno-90-16" href="#__codelineno-90-16"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-90-17" name="__codelineno-90-17" href="#__codelineno-90-17"></a><span class="p">]</span>
+<a id="__codelineno-90-7" name="__codelineno-90-7" href="#__codelineno-90-7"></a><span class="w">    </span><span class="nt">"servers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"mc-survival"</span><span class="p">],</span>
+<a id="__codelineno-90-8" name="__codelineno-90-8" href="#__codelineno-90-8"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"514.0MB"</span><span class="p">,</span>
+<a id="__codelineno-90-9" name="__codelineno-90-9" href="#__codelineno-90-9"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-21T13:19:48.853Z"</span>
+<a id="__codelineno-90-10" name="__codelineno-90-10" href="#__codelineno-90-10"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a><span class="w">  </span><span class="p">{</span>
+<a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a><span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"creative-world"</span><span class="p">,</span>
+<a id="__codelineno-90-13" name="__codelineno-90-13" href="#__codelineno-90-13"></a><span class="w">    </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/myuser/minecraft-servers/worlds/creative-world"</span><span class="p">,</span>
+<a id="__codelineno-90-14" name="__codelineno-90-14" href="#__codelineno-90-14"></a><span class="w">    </span><span class="nt">"isLocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-90-15" name="__codelineno-90-15" href="#__codelineno-90-15"></a><span class="w">    </span><span class="nt">"servers"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<a id="__codelineno-90-16" name="__codelineno-90-16" href="#__codelineno-90-16"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"128.5MB"</span><span class="p">,</span>
+<a id="__codelineno-90-17" name="__codelineno-90-17" href="#__codelineno-90-17"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20T10:30:00.000Z"</span>
+<a id="__codelineno-90-18" name="__codelineno-90-18" href="#__codelineno-90-18"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-90-19" name="__codelineno-90-19" href="#__codelineno-90-19"></a><span class="p">]</span>
 </code></pre></div></p>
 </div>
 </div>
 </div>
+<div class="admonition info">
+<p class="admonition-title">Duplicate assignments</p>
+<p>If an older install has two servers on the same world, <code>mcctl world list</code> shows <code>assigned: a, b</code> and prints a warning for each duplicate (and for each server whose <code>config.env</code> cannot be read). Nothing is fixed automatically: assign another world to all but one of the servers. <code>isLocked</code> and <code>lockedBy</code> remain in the JSON output as aliases for "assigned".</p>
+</div>
 <hr />
 <h3 id="mcctl-world-assign">mcctl world assign<a class="headerlink" href="#mcctl-world-assign" title="Permanent link">&para;</a></h3>
-<p>Lock a world to a server.</p>
+<p>Assign a world to a server (sets the server's <code>LEVEL</code>).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
@@ -5265,12 +5369,12 @@ The world is generated with this seed when the server first starts.</p>
 </div>
 </div>
 <div class="admonition info">
-<p class="admonition-title">World Locking</p>
-<p>A locked world can only be used by the assigned server. This prevents data corruption from simultaneous access.</p>
+<p class="admonition-title">One world, one server</p>
+<p>A world used by another server cannot be assigned, and the target server must be stopped. This prevents data corruption from simultaneous access. A server that keeps its world inside <code>servers/&lt;name&gt;/data</code> is refused too: run <code>mcctl migrate worlds</code> first. See <a href="#world-assignment-rules">World Assignment Rules</a>.</p>
 </div>
 <hr />
 <h3 id="mcctl-world-release">mcctl world release<a class="headerlink" href="#mcctl-world-release" title="Permanent link">&para;</a></h3>
-<p>Release a world lock.</p>
+<p>Switch the server that uses a world back to its own default world <code>&lt;server&gt;</code>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
@@ -5299,17 +5403,19 @@ The world is generated with this seed when the server first starts.</p>
 <tbody>
 <tr>
 <td><code>--force</code></td>
-<td>Force release even if server is running</td>
+<td>Accepted and ignored (a running server is never released)</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a><span class="c1"># Interactive - shows locked worlds</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a><span class="c1"># Interactive - shows assigned worlds</span>
 <a id="__codelineno-95-2" name="__codelineno-95-2" href="#__codelineno-95-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release
 <a id="__codelineno-95-3" name="__codelineno-95-3" href="#__codelineno-95-3"></a>
 <a id="__codelineno-95-4" name="__codelineno-95-4" href="#__codelineno-95-4"></a><span class="c1"># Release specific world</span>
 <a id="__codelineno-95-5" name="__codelineno-95-5" href="#__codelineno-95-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>survival
 </code></pre></div>
+<p>The server using the world gets <code>LEVEL=&lt;server&gt;</code>: an existing free <code>worlds/&lt;server&gt;</code> is adopted, otherwise the world is created on the next start. The world itself is kept in <code>worlds/</code>.</p>
+<p>Release is refused when the server is running, when the server already uses its own default world, when the world is assigned to more than one server, when the server keeps its world inside <code>servers/&lt;name&gt;/data</code>, and when no server uses the world.</p>
 <hr />
 <h3 id="mcctl-world-delete">mcctl world delete<a class="headerlink" href="#mcctl-world-delete" title="Permanent link">&para;</a></h3>
 <p>Permanently delete a world and all its data.</p>
@@ -5343,7 +5449,7 @@ The world is generated with this seed when the server first starts.</p>
 <tr>
 <td><code>--force</code></td>
 <td><code>-f</code></td>
-<td>Skip confirmation prompt</td>
+<td>Skip confirmation prompt (does not delete a world a server uses)</td>
 </tr>
 <tr>
 <td><code>--json</code></td>
@@ -5383,7 +5489,8 @@ The world is generated with this seed when the server first starts.</p>
 </div>
 <p><strong>Safety Features:</strong></p>
 <ul>
-<li><strong>Lock Check</strong>: Cannot delete a world that is locked (assigned to a running server)</li>
+<li><strong>Assignment Check</strong>: Cannot delete a world that any server uses, running or not; <code>--force</code> does not override this. Assign another world to the server first. Servers that keep their world inside <code>servers/&lt;name&gt;/data</code> (no <code>EXTRA_ARGS=--universe /worlds/</code>) do not block deleting <code>worlds/&lt;world&gt;</code></li>
+<li><strong>Fail-closed</strong>: Refused while any server's <code>config.env</code> cannot be read or interpreted (see <a href="#world-assignment-rules">World Assignment Rules</a>)</li>
 <li><strong>Confirmation Prompt</strong>: Requires typing "DELETE" to confirm (unless <code>--force</code>)</li>
 <li><strong>Size Display</strong>: Shows world size before deletion</li>
 </ul>
@@ -5469,8 +5576,19 @@ The world is generated with this seed when the server first starts.</p>
 <td><code>-m</code></td>
 <td>Commit message</td>
 </tr>
+<tr>
+<td><code>--auto</code></td>
+<td></td>
+<td>No prompt; timestamp message; waits up to 10 min for a running backup (the same rules as the auto-backup on stop)</td>
+</tr>
+<tr>
+<td><code>--allow-missing</code></td>
+<td></td>
+<td>Drop worlds from the backup that were deleted on purpose (see <a href="../../advanced/backup/#deleted-worlds">Backup Guide</a>)</td>
+</tr>
 </tbody>
 </table>
+<p>Running servers are flushed (<code>save-off</code>, <code>save-all flush</code>, <code>save-on</code>) before the copy. "No changes" is a success.</p>
 <p><strong>Examples:</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Interactive Mode</label><label for="__tabbed_10_2">CLI Mode</label></div>
 <div class="tabbed-content">
@@ -5524,14 +5642,14 @@ The world is generated with this seed when the server first starts.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w"> </span>--json
 </code></pre></div>
 <p><strong>Output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a><span class="p">{</span>
-<a id="__codelineno-111-2" name="__codelineno-111-2" href="#__codelineno-111-2"></a><span class="w">  </span><span class="nt">"history"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-111-3" name="__codelineno-111-3" href="#__codelineno-111-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fd8633b"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20 21:06:35 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup: 2026-01-20 21:06:30"</span><span class="p">},</span>
-<a id="__codelineno-111-4" name="__codelineno-111-4" href="#__codelineno-111-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"19a7a4d"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20 20:21:08 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup: 2026-01-20 20:21:06"</span><span class="p">},</span>
-<a id="__codelineno-111-5" name="__codelineno-111-5" href="#__codelineno-111-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"7c2ad14"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-19 22:50:42 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Manual backup"</span><span class="p">},</span>
-<a id="__codelineno-111-6" name="__codelineno-111-6" href="#__codelineno-111-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ddeda27"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-17 23:43:24 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Initial backup"</span><span class="p">}</span>
-<a id="__codelineno-111-7" name="__codelineno-111-7" href="#__codelineno-111-7"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-111-8" name="__codelineno-111-8" href="#__codelineno-111-8"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a><span class="p">[</span>
+<a id="__codelineno-111-2" name="__codelineno-111-2" href="#__codelineno-111-2"></a><span class="w">  </span><span class="p">{</span>
+<a id="__codelineno-111-3" name="__codelineno-111-3" href="#__codelineno-111-3"></a><span class="w">    </span><span class="nt">"commitHash"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fd8633b2c1e4a7d9b0f3e6a5c8d1b4e7f0a3c6d9"</span><span class="p">,</span>
+<a id="__codelineno-111-4" name="__codelineno-111-4" href="#__codelineno-111-4"></a><span class="w">    </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup: 2026-01-20 21:06:30"</span><span class="p">,</span>
+<a id="__codelineno-111-5" name="__codelineno-111-5" href="#__codelineno-111-5"></a><span class="w">    </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20T12:06:35.000Z"</span><span class="p">,</span>
+<a id="__codelineno-111-6" name="__codelineno-111-6" href="#__codelineno-111-6"></a><span class="w">    </span><span class="nt">"author"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Minecraft Backup"</span>
+<a id="__codelineno-111-7" name="__codelineno-111-7" href="#__codelineno-111-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-111-8" name="__codelineno-111-8" href="#__codelineno-111-8"></a><span class="p">]</span>
 </code></pre></div></p>
 </div>
 </div>
@@ -5539,7 +5657,7 @@ The world is generated with this seed when the server first starts.</p>
 <hr />
 <h3 id="mcctl-backup-restore">mcctl backup restore<a class="headerlink" href="#mcctl-backup-restore" title="Permanent link">&para;</a></h3>
 <p>Restore world data from a backup.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -5554,8 +5672,13 @@ The world is generated with this seed when the server first starts.</p>
 <td><code>commit</code></td>
 <td>Commit hash (optional, shows list if not provided)</td>
 </tr>
+<tr>
+<td><code>--force</code></td>
+<td>Do not ask for confirmation</td>
+</tr>
 </tbody>
 </table>
+<p>Every server must be stopped. The result is exactly the commit, <code>worlds/.locks</code> is kept, and the replaced data is kept in <code>backups/restore-previous/&lt;timestamp&gt;/</code>. See the <a href="../../advanced/backup/#restore-from-backup">Backup Guide</a>.</p>
 <p><strong>Examples:</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Interactive Mode</label><label for="__tabbed_12_2">CLI Mode</label></div>
 <div class="tabbed-content">
@@ -5746,72 +5869,16 @@ The world is generated with this seed when the server first starts.</p>
 <a id="__codelineno-127-7" name="__codelineno-127-7" href="#__codelineno-127-7"></a>  Notch
 </code></pre></div>
 <hr />
-<h3 id="mcctl-player-lookup-legacy">mcctl player lookup (Legacy)<a class="headerlink" href="#mcctl-player-lookup-legacy" title="Permanent link">&para;</a></h3>
 <div class="admonition note">
-<p class="admonition-title">Deprecated</p>
-<p>Use <code>mcctl player info</code> instead. This command is kept for backward compatibility.</p>
+<p class="admonition-title">Removed</p>
+<p><code>mcctl player lookup</code> and <code>mcctl player uuid</code> were removed. Use <code>mcctl player info &lt;name&gt;</code> (add <code>--offline</code> for the offline UUID).
+The old <code>player.sh</code> computed a wrong offline UUID for some names (for example Steve and Alex) because of a variant-bit bug; <code>mcctl player info --offline</code> matches Minecraft.</p>
 </div>
-<p>Look up player information from Mojang API.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-128-1" name="__codelineno-128-1" href="#__codelineno-128-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--json</code></td>
-<td>Output in JSON format</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-129-1" name="__codelineno-129-1" href="#__codelineno-129-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>Notch
-</code></pre></div>
-<hr />
-<h3 id="mcctl-player-uuid-legacy">mcctl player uuid (Legacy)<a class="headerlink" href="#mcctl-player-uuid-legacy" title="Permanent link">&para;</a></h3>
-<div class="admonition note">
-<p class="admonition-title">Deprecated</p>
-<p>Use <code>mcctl player info</code> or <code>mcctl player info --offline</code> instead.</p>
-</div>
-<p>Get player UUID.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div>
-<p><strong>Options:</strong></p>
-<table>
-<thead>
-<tr>
-<th>Option</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--offline</code></td>
-<td>Generate offline UUID</td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>Output in JSON format</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a><span class="c1"># Online UUID (from Mojang)</span>
-<a id="__codelineno-131-2" name="__codelineno-131-2" href="#__codelineno-131-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Notch
-<a id="__codelineno-131-3" name="__codelineno-131-3" href="#__codelineno-131-3"></a>
-<a id="__codelineno-131-4" name="__codelineno-131-4" href="#__codelineno-131-4"></a><span class="c1"># Offline UUID (for offline-mode servers)</span>
-<a id="__codelineno-131-5" name="__codelineno-131-5" href="#__codelineno-131-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Steve<span class="w"> </span>--offline
-</code></pre></div>
 <hr />
 <h2 id="migration-commands">Migration Commands<a class="headerlink" href="#migration-commands" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-migrate-status">mcctl migrate status<a class="headerlink" href="#mcctl-migrate-status" title="Permanent link">&para;</a></h3>
 <p>Check migration status for all servers.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-128-1" name="__codelineno-128-1" href="#__codelineno-128-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -5829,22 +5896,22 @@ The world is generated with this seed when the server first starts.</p>
 </tbody>
 </table>
 <p><strong>Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-129-1" name="__codelineno-129-1" href="#__codelineno-129-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
 </code></pre></div>
 <p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>Migration Status:
-<a id="__codelineno-134-2" name="__codelineno-134-2" href="#__codelineno-134-2"></a>
-<a id="__codelineno-134-3" name="__codelineno-134-3" href="#__codelineno-134-3"></a>  survival: needs migration
-<a id="__codelineno-134-4" name="__codelineno-134-4" href="#__codelineno-134-4"></a>    Missing EXTRA_ARGS=--universe /worlds/
-<a id="__codelineno-134-5" name="__codelineno-134-5" href="#__codelineno-134-5"></a>  creative: up to date
-<a id="__codelineno-134-6" name="__codelineno-134-6" href="#__codelineno-134-6"></a>
-<a id="__codelineno-134-7" name="__codelineno-134-7" href="#__codelineno-134-7"></a>1 server(s) need migration.
-<a id="__codelineno-134-8" name="__codelineno-134-8" href="#__codelineno-134-8"></a>Run: mcctl migrate worlds to migrate.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>Migration Status:
+<a id="__codelineno-130-2" name="__codelineno-130-2" href="#__codelineno-130-2"></a>
+<a id="__codelineno-130-3" name="__codelineno-130-3" href="#__codelineno-130-3"></a>  survival: needs migration
+<a id="__codelineno-130-4" name="__codelineno-130-4" href="#__codelineno-130-4"></a>    Missing EXTRA_ARGS=--universe /worlds/
+<a id="__codelineno-130-5" name="__codelineno-130-5" href="#__codelineno-130-5"></a>  creative: up to date
+<a id="__codelineno-130-6" name="__codelineno-130-6" href="#__codelineno-130-6"></a>
+<a id="__codelineno-130-7" name="__codelineno-130-7" href="#__codelineno-130-7"></a>1 server(s) need migration.
+<a id="__codelineno-130-8" name="__codelineno-130-8" href="#__codelineno-130-8"></a>Run: mcctl migrate worlds to migrate.
 </code></pre></div>
 <hr />
 <h3 id="mcctl-migrate-worlds">mcctl migrate worlds<a class="headerlink" href="#mcctl-migrate-worlds" title="Permanent link">&para;</a></h3>
 <p>Migrate worlds to the shared <code>/worlds/</code> directory structure.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -5877,30 +5944,30 @@ The world is generated with this seed when the server first starts.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="14:4"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><input id="__tabbed_14_3" name="__tabbed_14" type="radio" /><input id="__tabbed_14_4" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Interactive Mode</label><label for="__tabbed_14_2">Migrate All</label><label for="__tabbed_14_3">Dry Run</label><label for="__tabbed_14_4">With Backup</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds
-<a id="__codelineno-136-2" name="__codelineno-136-2" href="#__codelineno-136-2"></a><span class="c1"># Shows servers needing migration, select one or all</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds
+<a id="__codelineno-132-2" name="__codelineno-132-2" href="#__codelineno-132-2"></a><span class="c1"># Shows servers needing migration, select one or all</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--dry-run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--dry-run
 </code></pre></div>
 <p><strong>Output:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>DRY RUN - No changes will be made
-<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>
-<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>Would migrate: survival
-<a id="__codelineno-139-4" name="__codelineno-139-4" href="#__codelineno-139-4"></a>  1. Stop server if running
-<a id="__codelineno-139-5" name="__codelineno-139-5" href="#__codelineno-139-5"></a>  2. Move world: servers/survival/data/world → worlds/survival
-<a id="__codelineno-139-6" name="__codelineno-139-6" href="#__codelineno-139-6"></a>  3. Update config.env:
-<a id="__codelineno-139-7" name="__codelineno-139-7" href="#__codelineno-139-7"></a>     - Add: EXTRA_ARGS=--universe /worlds/
-<a id="__codelineno-139-8" name="__codelineno-139-8" href="#__codelineno-139-8"></a>     - Set: LEVEL=survival
+<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>DRY RUN - No changes will be made
+<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>
+<a id="__codelineno-135-3" name="__codelineno-135-3" href="#__codelineno-135-3"></a>Would migrate: survival
+<a id="__codelineno-135-4" name="__codelineno-135-4" href="#__codelineno-135-4"></a>  1. Stop server if running
+<a id="__codelineno-135-5" name="__codelineno-135-5" href="#__codelineno-135-5"></a>  2. Move world: servers/survival/data/world → worlds/survival
+<a id="__codelineno-135-6" name="__codelineno-135-6" href="#__codelineno-135-6"></a>  3. Update config.env:
+<a id="__codelineno-135-7" name="__codelineno-135-7" href="#__codelineno-135-7"></a>     - Add: EXTRA_ARGS=--universe /worlds/
+<a id="__codelineno-135-8" name="__codelineno-135-8" href="#__codelineno-135-8"></a>     - Set: LEVEL=survival
 </code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--backup
+<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--backup
 </code></pre></div>
 </div>
 </div>
@@ -5914,17 +5981,53 @@ The world is generated with this seed when the server first starts.</p>
 <li>Sets <code>LEVEL=&lt;server-name&gt;</code></li>
 <li><strong>Detects existing worlds</strong> with case-insensitive matching</li>
 </ol>
+<p>If the resulting <code>LEVEL</code> is used by another server, or a server's assignment cannot be determined, the migration of that server is refused before any data is moved (see <a href="#world-assignment-rules">World Assignment Rules</a>).</p>
 <div class="admonition info">
 <p class="admonition-title">World Storage Change</p>
 <p>New servers created with <code>mcctl create</code> already use the <code>/worlds/</code> directory structure.
 This migration command is for existing servers created before this change.</p>
 </div>
 <hr />
+<h3 id="mcctl-migrate-spec">mcctl migrate spec<a class="headerlink" href="#mcctl-migrate-spec" title="Permanent link">&para;</a></h3>
+<p>Import servers into their definition file <code>servers/&lt;name&gt;/server.yaml</code> and write the files rendered from it (<code>config.env</code>, <code>docker-compose.yml</code>, the <code>servers/compose.yml</code> entry). See <a href="../../configuration/server-yaml/">Server Definition</a>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>spec<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<a id="__codelineno-137-2" name="__codelineno-137-2" href="#__codelineno-137-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>spec<span class="w"> </span>--all<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--all</code></td>
+<td>Every server</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Report what would be imported; write nothing</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>Re-render from <code>server.yaml</code> over hand edits of the generated files (keeps <code>.bak</code> copies)</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>Print the per-server report as JSON</td>
+</tr>
+</tbody>
+</table>
+<p>Running it again is safe: a server that is in sync is reported as <code>synced</code> and nothing is rewritten. A server is <code>refused</code> (exit 1) when its world or image cannot be determined, for example a <code>${...}</code> value in <code>config.env</code>. A changed <code>world.level</code> is checked against the <a href="#world-assignment-rules">World Assignment Rules</a> and needs the server to be stopped.</p>
+<p>You do not have to run this: a server without <code>server.yaml</code> is imported the first time mcctl changes it, and <code>mcctl upgrade</code> lists the servers not imported yet.</p>
+<hr />
 <h2 id="mod-management">Mod Management<a class="headerlink" href="#mod-management" title="Permanent link">&para;</a></h2>
 <p>Manage mods and plugins for your Minecraft servers. mcctl integrates with multiple mod sources including Modrinth, CurseForge, Spiget (SpigotMC), and direct URL downloads.</p>
 <h3 id="mcctl-mod-search">mcctl mod search<a class="headerlink" href="#mcctl-mod-search" title="Permanent link">&para;</a></h3>
 <p>Search for mods on Modrinth.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>&lt;query&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>&lt;query&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -5957,27 +6060,27 @@ This migration command is for existing servers created before this change.</p>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a><span class="c1"># Search for optimization mods</span>
-<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>sodium
-<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>
-<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a><span class="c1"># Search for world generation mods</span>
-<a id="__codelineno-142-5" name="__codelineno-142-5" href="#__codelineno-142-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"world generation"</span>
-<a id="__codelineno-142-6" name="__codelineno-142-6" href="#__codelineno-142-6"></a>
-<a id="__codelineno-142-7" name="__codelineno-142-7" href="#__codelineno-142-7"></a><span class="c1"># JSON output for scripting</span>
-<a id="__codelineno-142-8" name="__codelineno-142-8" href="#__codelineno-142-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>lithium<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a><span class="c1"># Search for optimization mods</span>
+<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>sodium
+<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>
+<a id="__codelineno-139-4" name="__codelineno-139-4" href="#__codelineno-139-4"></a><span class="c1"># Search for world generation mods</span>
+<a id="__codelineno-139-5" name="__codelineno-139-5" href="#__codelineno-139-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"world generation"</span>
+<a id="__codelineno-139-6" name="__codelineno-139-6" href="#__codelineno-139-6"></a>
+<a id="__codelineno-139-7" name="__codelineno-139-7" href="#__codelineno-139-7"></a><span class="c1"># JSON output for scripting</span>
+<a id="__codelineno-139-8" name="__codelineno-139-8" href="#__codelineno-139-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>lithium<span class="w"> </span>--json
 </code></pre></div>
 <p><strong>Output Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>Search results for "sodium" (25 total):
-<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>
-<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>  sodium (12.5M downloads)
-<a id="__codelineno-143-4" name="__codelineno-143-4" href="#__codelineno-143-4"></a>    Sodium server client
-<a id="__codelineno-143-5" name="__codelineno-143-5" href="#__codelineno-143-5"></a>    A modern rendering engine for Minecraft
-<a id="__codelineno-143-6" name="__codelineno-143-6" href="#__codelineno-143-6"></a>
-<a id="__codelineno-143-7" name="__codelineno-143-7" href="#__codelineno-143-7"></a>  sodium-extra (2.1M downloads)
-<a id="__codelineno-143-8" name="__codelineno-143-8" href="#__codelineno-143-8"></a>    Sodium Extra server? client
-<a id="__codelineno-143-9" name="__codelineno-143-9" href="#__codelineno-143-9"></a>    Extra options for Sodium
-<a id="__codelineno-143-10" name="__codelineno-143-10" href="#__codelineno-143-10"></a>
-<a id="__codelineno-143-11" name="__codelineno-143-11" href="#__codelineno-143-11"></a>Use: mcctl mod add &lt;server&gt; &lt;mod-slug&gt; to install
+<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>Search results for "sodium" (25 total):
+<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>
+<a id="__codelineno-140-3" name="__codelineno-140-3" href="#__codelineno-140-3"></a>  sodium (12.5M downloads)
+<a id="__codelineno-140-4" name="__codelineno-140-4" href="#__codelineno-140-4"></a>    Sodium server client
+<a id="__codelineno-140-5" name="__codelineno-140-5" href="#__codelineno-140-5"></a>    A modern rendering engine for Minecraft
+<a id="__codelineno-140-6" name="__codelineno-140-6" href="#__codelineno-140-6"></a>
+<a id="__codelineno-140-7" name="__codelineno-140-7" href="#__codelineno-140-7"></a>  sodium-extra (2.1M downloads)
+<a id="__codelineno-140-8" name="__codelineno-140-8" href="#__codelineno-140-8"></a>    Sodium Extra server? client
+<a id="__codelineno-140-9" name="__codelineno-140-9" href="#__codelineno-140-9"></a>    Extra options for Sodium
+<a id="__codelineno-140-10" name="__codelineno-140-10" href="#__codelineno-140-10"></a>
+<a id="__codelineno-140-11" name="__codelineno-140-11" href="#__codelineno-140-11"></a>Use: mcctl mod add &lt;server&gt; &lt;mod-slug&gt; to install
 </code></pre></div>
 <p>The output shows:</p>
 <ul>
@@ -5989,7 +6092,7 @@ This migration command is for existing servers created before this change.</p>
 <hr />
 <h3 id="mcctl-mod-add">mcctl mod add<a class="headerlink" href="#mcctl-mod-add" title="Permanent link">&para;</a></h3>
 <p>Add mods to a server configuration.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -6049,38 +6152,38 @@ This migration command is for existing servers created before this change.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="15:4"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><input id="__tabbed_15_3" name="__tabbed_15" type="radio" /><input id="__tabbed_15_4" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Modrinth (Default)</label><label for="__tabbed_15_2">CurseForge</label><label for="__tabbed_15_3">Spiget (SpigotMC)</label><label for="__tabbed_15_4">Direct URL</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-145-1" name="__codelineno-145-1" href="#__codelineno-145-1"></a><span class="c1"># Add single mod</span>
-<a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium
+<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a><span class="c1"># Add single mod</span>
+<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium
+<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>
+<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a><span class="c1"># Add multiple mods at once</span>
+<a id="__codelineno-142-5" name="__codelineno-142-5" href="#__codelineno-142-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
+<a id="__codelineno-142-6" name="__codelineno-142-6" href="#__codelineno-142-6"></a>
+<a id="__codelineno-142-7" name="__codelineno-142-7" href="#__codelineno-142-7"></a><span class="c1"># Add to Fabric server</span>
+<a id="__codelineno-142-8" name="__codelineno-142-8" href="#__codelineno-142-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>fabric-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a><span class="c1"># CF_API_KEY in .env is optional on Java 17+ images</span>
+<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
+<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>
+<a id="__codelineno-143-4" name="__codelineno-143-4" href="#__codelineno-143-4"></a><span class="c1"># Add popular modpack mods</span>
+<a id="__codelineno-143-5" name="__codelineno-143-5" href="#__codelineno-143-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>create<span class="w"> </span>applied-energistics-2
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a><span class="c1"># Use resource IDs from SpigotMC</span>
+<a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w"> </span><span class="m">1649</span>
+<a id="__codelineno-144-3" name="__codelineno-144-3" href="#__codelineno-144-3"></a>
+<a id="__codelineno-144-4" name="__codelineno-144-4" href="#__codelineno-144-4"></a><span class="c1"># EssentialsX example (resource ID: 9089)</span>
+<a id="__codelineno-144-5" name="__codelineno-144-5" href="#__codelineno-144-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>paper-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-145-1" name="__codelineno-145-1" href="#__codelineno-145-1"></a><span class="c1"># Download JAR directly from URL</span>
+<a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod.jar
 <a id="__codelineno-145-3" name="__codelineno-145-3" href="#__codelineno-145-3"></a>
-<a id="__codelineno-145-4" name="__codelineno-145-4" href="#__codelineno-145-4"></a><span class="c1"># Add multiple mods at once</span>
-<a id="__codelineno-145-5" name="__codelineno-145-5" href="#__codelineno-145-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
-<a id="__codelineno-145-6" name="__codelineno-145-6" href="#__codelineno-145-6"></a>
-<a id="__codelineno-145-7" name="__codelineno-145-7" href="#__codelineno-145-7"></a><span class="c1"># Add to Fabric server</span>
-<a id="__codelineno-145-8" name="__codelineno-145-8" href="#__codelineno-145-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>fabric-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a><span class="c1"># CF_API_KEY in .env is optional on Java 17+ images</span>
-<a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
-<a id="__codelineno-146-3" name="__codelineno-146-3" href="#__codelineno-146-3"></a>
-<a id="__codelineno-146-4" name="__codelineno-146-4" href="#__codelineno-146-4"></a><span class="c1"># Add popular modpack mods</span>
-<a id="__codelineno-146-5" name="__codelineno-146-5" href="#__codelineno-146-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>create<span class="w"> </span>applied-energistics-2
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a><span class="c1"># Use resource IDs from SpigotMC</span>
-<a id="__codelineno-147-2" name="__codelineno-147-2" href="#__codelineno-147-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w"> </span><span class="m">1649</span>
-<a id="__codelineno-147-3" name="__codelineno-147-3" href="#__codelineno-147-3"></a>
-<a id="__codelineno-147-4" name="__codelineno-147-4" href="#__codelineno-147-4"></a><span class="c1"># EssentialsX example (resource ID: 9089)</span>
-<a id="__codelineno-147-5" name="__codelineno-147-5" href="#__codelineno-147-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>paper-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-148-1" name="__codelineno-148-1" href="#__codelineno-148-1"></a><span class="c1"># Download JAR directly from URL</span>
-<a id="__codelineno-148-2" name="__codelineno-148-2" href="#__codelineno-148-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod.jar
-<a id="__codelineno-148-3" name="__codelineno-148-3" href="#__codelineno-148-3"></a>
-<a id="__codelineno-148-4" name="__codelineno-148-4" href="#__codelineno-148-4"></a><span class="c1"># Multiple URLs</span>
-<a id="__codelineno-148-5" name="__codelineno-148-5" href="#__codelineno-148-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod1.jar<span class="w"> </span>https://example.com/mod2.jar
+<a id="__codelineno-145-4" name="__codelineno-145-4" href="#__codelineno-145-4"></a><span class="c1"># Multiple URLs</span>
+<a id="__codelineno-145-5" name="__codelineno-145-5" href="#__codelineno-145-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod1.jar<span class="w"> </span>https://example.com/mod2.jar
 </code></pre></div>
 </div>
 </div>
@@ -6156,30 +6259,30 @@ This migration command is for existing servers created before this change.</p>
 </tbody>
 </table>
 <p><strong>Example</strong>: When you add <code>iris</code>, it automatically downloads <code>sodium</code> (required dependency).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-149-1" name="__codelineno-149-1" href="#__codelineno-149-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>iris
-<a id="__codelineno-149-2" name="__codelineno-149-2" href="#__codelineno-149-2"></a><span class="c1"># ✓ iris added</span>
-<a id="__codelineno-149-3" name="__codelineno-149-3" href="#__codelineno-149-3"></a><span class="c1"># ✓ sodium automatically downloaded on server start (required dependency)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>iris
+<a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a><span class="c1"># ✓ iris added</span>
+<a id="__codelineno-146-3" name="__codelineno-146-3" href="#__codelineno-146-3"></a><span class="c1"># ✓ sodium automatically downloaded on server start (required dependency)</span>
 </code></pre></div>
 </div>
 <p><strong>Output Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-150-1" name="__codelineno-150-1" href="#__codelineno-150-1"></a>Validating mods on Modrinth...
-<a id="__codelineno-150-2" name="__codelineno-150-2" href="#__codelineno-150-2"></a>  ✓ Sodium (sodium)
-<a id="__codelineno-150-3" name="__codelineno-150-3" href="#__codelineno-150-3"></a>  ✓ Lithium (lithium)
-<a id="__codelineno-150-4" name="__codelineno-150-4" href="#__codelineno-150-4"></a>
-<a id="__codelineno-150-5" name="__codelineno-150-5" href="#__codelineno-150-5"></a>✓ Added 2 mod(s) to myserver
-<a id="__codelineno-150-6" name="__codelineno-150-6" href="#__codelineno-150-6"></a>
-<a id="__codelineno-150-7" name="__codelineno-150-7" href="#__codelineno-150-7"></a>  sodium
-<a id="__codelineno-150-8" name="__codelineno-150-8" href="#__codelineno-150-8"></a>  lithium
-<a id="__codelineno-150-9" name="__codelineno-150-9" href="#__codelineno-150-9"></a>
-<a id="__codelineno-150-10" name="__codelineno-150-10" href="#__codelineno-150-10"></a>Config: MODRINTH_PROJECTS=sodium,lithium
-<a id="__codelineno-150-11" name="__codelineno-150-11" href="#__codelineno-150-11"></a>
-<a id="__codelineno-150-12" name="__codelineno-150-12" href="#__codelineno-150-12"></a>Restart the server to apply changes:
-<a id="__codelineno-150-13" name="__codelineno-150-13" href="#__codelineno-150-13"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a>Validating mods on Modrinth...
+<a id="__codelineno-147-2" name="__codelineno-147-2" href="#__codelineno-147-2"></a>  ✓ Sodium (sodium)
+<a id="__codelineno-147-3" name="__codelineno-147-3" href="#__codelineno-147-3"></a>  ✓ Lithium (lithium)
+<a id="__codelineno-147-4" name="__codelineno-147-4" href="#__codelineno-147-4"></a>
+<a id="__codelineno-147-5" name="__codelineno-147-5" href="#__codelineno-147-5"></a>✓ Added 2 mod(s) to myserver
+<a id="__codelineno-147-6" name="__codelineno-147-6" href="#__codelineno-147-6"></a>
+<a id="__codelineno-147-7" name="__codelineno-147-7" href="#__codelineno-147-7"></a>  sodium
+<a id="__codelineno-147-8" name="__codelineno-147-8" href="#__codelineno-147-8"></a>  lithium
+<a id="__codelineno-147-9" name="__codelineno-147-9" href="#__codelineno-147-9"></a>
+<a id="__codelineno-147-10" name="__codelineno-147-10" href="#__codelineno-147-10"></a>Config: MODRINTH_PROJECTS=sodium,lithium
+<a id="__codelineno-147-11" name="__codelineno-147-11" href="#__codelineno-147-11"></a>
+<a id="__codelineno-147-12" name="__codelineno-147-12" href="#__codelineno-147-12"></a>Restart the server to apply changes:
+<a id="__codelineno-147-13" name="__codelineno-147-13" href="#__codelineno-147-13"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
 </code></pre></div>
 <hr />
 <h3 id="mcctl-mod-list">mcctl mod list<a class="headerlink" href="#mcctl-mod-list" title="Permanent link">&para;</a></h3>
 <p>List configured mods for a server.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-148-1" name="__codelineno-148-1" href="#__codelineno-148-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -6212,40 +6315,40 @@ This migration command is for existing servers created before this change.</p>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a><span class="c1"># List mods for server</span>
-<a id="__codelineno-152-2" name="__codelineno-152-2" href="#__codelineno-152-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver
-<a id="__codelineno-152-3" name="__codelineno-152-3" href="#__codelineno-152-3"></a>
-<a id="__codelineno-152-4" name="__codelineno-152-4" href="#__codelineno-152-4"></a><span class="c1"># JSON output</span>
-<a id="__codelineno-152-5" name="__codelineno-152-5" href="#__codelineno-152-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-149-1" name="__codelineno-149-1" href="#__codelineno-149-1"></a><span class="c1"># List mods for server</span>
+<a id="__codelineno-149-2" name="__codelineno-149-2" href="#__codelineno-149-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver
+<a id="__codelineno-149-3" name="__codelineno-149-3" href="#__codelineno-149-3"></a>
+<a id="__codelineno-149-4" name="__codelineno-149-4" href="#__codelineno-149-4"></a><span class="c1"># JSON output</span>
+<a id="__codelineno-149-5" name="__codelineno-149-5" href="#__codelineno-149-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver<span class="w"> </span>--json
 </code></pre></div>
 <p><strong>Output Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a>Mods for myserver (FABRIC):
-<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>
-<a id="__codelineno-153-3" name="__codelineno-153-3" href="#__codelineno-153-3"></a>  Modrinth:
-<a id="__codelineno-153-4" name="__codelineno-153-4" href="#__codelineno-153-4"></a>    - sodium
-<a id="__codelineno-153-5" name="__codelineno-153-5" href="#__codelineno-153-5"></a>    - lithium
-<a id="__codelineno-153-6" name="__codelineno-153-6" href="#__codelineno-153-6"></a>    - phosphor
-<a id="__codelineno-153-7" name="__codelineno-153-7" href="#__codelineno-153-7"></a>
-<a id="__codelineno-153-8" name="__codelineno-153-8" href="#__codelineno-153-8"></a>  CurseForge:
-<a id="__codelineno-153-9" name="__codelineno-153-9" href="#__codelineno-153-9"></a>    - jei
-<a id="__codelineno-153-10" name="__codelineno-153-10" href="#__codelineno-153-10"></a>    - journeymap
-<a id="__codelineno-153-11" name="__codelineno-153-11" href="#__codelineno-153-11"></a>
-<a id="__codelineno-153-12" name="__codelineno-153-12" href="#__codelineno-153-12"></a>Total: 5 mod(s)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-150-1" name="__codelineno-150-1" href="#__codelineno-150-1"></a>Mods for myserver (FABRIC):
+<a id="__codelineno-150-2" name="__codelineno-150-2" href="#__codelineno-150-2"></a>
+<a id="__codelineno-150-3" name="__codelineno-150-3" href="#__codelineno-150-3"></a>  Modrinth:
+<a id="__codelineno-150-4" name="__codelineno-150-4" href="#__codelineno-150-4"></a>    - sodium
+<a id="__codelineno-150-5" name="__codelineno-150-5" href="#__codelineno-150-5"></a>    - lithium
+<a id="__codelineno-150-6" name="__codelineno-150-6" href="#__codelineno-150-6"></a>    - phosphor
+<a id="__codelineno-150-7" name="__codelineno-150-7" href="#__codelineno-150-7"></a>
+<a id="__codelineno-150-8" name="__codelineno-150-8" href="#__codelineno-150-8"></a>  CurseForge:
+<a id="__codelineno-150-9" name="__codelineno-150-9" href="#__codelineno-150-9"></a>    - jei
+<a id="__codelineno-150-10" name="__codelineno-150-10" href="#__codelineno-150-10"></a>    - journeymap
+<a id="__codelineno-150-11" name="__codelineno-150-11" href="#__codelineno-150-11"></a>
+<a id="__codelineno-150-12" name="__codelineno-150-12" href="#__codelineno-150-12"></a>Total: 5 mod(s)
 </code></pre></div>
 <p><strong>JSON Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a><span class="p">{</span>
-<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a><span class="w">  </span><span class="nt">"serverType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FABRIC"</span><span class="p">,</span>
-<a id="__codelineno-154-3" name="__codelineno-154-3" href="#__codelineno-154-3"></a><span class="w">  </span><span class="nt">"sources"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-154-4" name="__codelineno-154-4" href="#__codelineno-154-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"MODRINTH_PROJECTS"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Modrinth"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sodium"</span><span class="p">,</span><span class="w"> </span><span class="s2">"lithium"</span><span class="p">]},</span>
-<a id="__codelineno-154-5" name="__codelineno-154-5" href="#__codelineno-154-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CURSEFORGE_FILES"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CurseForge"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"jei"</span><span class="p">]}</span>
-<a id="__codelineno-154-6" name="__codelineno-154-6" href="#__codelineno-154-6"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-154-7" name="__codelineno-154-7" href="#__codelineno-154-7"></a><span class="w">  </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
-<a id="__codelineno-154-8" name="__codelineno-154-8" href="#__codelineno-154-8"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a><span class="p">{</span>
+<a id="__codelineno-151-2" name="__codelineno-151-2" href="#__codelineno-151-2"></a><span class="w">  </span><span class="nt">"serverType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FABRIC"</span><span class="p">,</span>
+<a id="__codelineno-151-3" name="__codelineno-151-3" href="#__codelineno-151-3"></a><span class="w">  </span><span class="nt">"sources"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-151-4" name="__codelineno-151-4" href="#__codelineno-151-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"MODRINTH_PROJECTS"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Modrinth"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sodium"</span><span class="p">,</span><span class="w"> </span><span class="s2">"lithium"</span><span class="p">]},</span>
+<a id="__codelineno-151-5" name="__codelineno-151-5" href="#__codelineno-151-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CURSEFORGE_FILES"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CurseForge"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"jei"</span><span class="p">]}</span>
+<a id="__codelineno-151-6" name="__codelineno-151-6" href="#__codelineno-151-6"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-151-7" name="__codelineno-151-7" href="#__codelineno-151-7"></a><span class="w">  </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<a id="__codelineno-151-8" name="__codelineno-151-8" href="#__codelineno-151-8"></a><span class="p">}</span>
 </code></pre></div>
 <hr />
 <h3 id="mcctl-mod-remove">mcctl mod remove<a class="headerlink" href="#mcctl-mod-remove" title="Permanent link">&para;</a></h3>
 <p>Remove mods from a server configuration.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -6282,20 +6385,20 @@ This migration command is for existing servers created before this change.</p>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a><span class="c1"># Remove single mod</span>
-<a id="__codelineno-156-2" name="__codelineno-156-2" href="#__codelineno-156-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium
-<a id="__codelineno-156-3" name="__codelineno-156-3" href="#__codelineno-156-3"></a>
-<a id="__codelineno-156-4" name="__codelineno-156-4" href="#__codelineno-156-4"></a><span class="c1"># Remove multiple mods</span>
-<a id="__codelineno-156-5" name="__codelineno-156-5" href="#__codelineno-156-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a><span class="c1"># Remove single mod</span>
+<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium
+<a id="__codelineno-153-3" name="__codelineno-153-3" href="#__codelineno-153-3"></a>
+<a id="__codelineno-153-4" name="__codelineno-153-4" href="#__codelineno-153-4"></a><span class="c1"># Remove multiple mods</span>
+<a id="__codelineno-153-5" name="__codelineno-153-5" href="#__codelineno-153-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
 </code></pre></div>
 <p><strong>Output Example:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>  ✓ Removed sodium from MODRINTH_PROJECTS
-<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>  ✓ Removed lithium from MODRINTH_PROJECTS
-<a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>
-<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>✓ Removed 2 mod(s) from myserver
-<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>
-<a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>Restart the server to apply changes:
-<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a>  ✓ Removed sodium from MODRINTH_PROJECTS
+<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a>  ✓ Removed lithium from MODRINTH_PROJECTS
+<a id="__codelineno-154-3" name="__codelineno-154-3" href="#__codelineno-154-3"></a>
+<a id="__codelineno-154-4" name="__codelineno-154-4" href="#__codelineno-154-4"></a>✓ Removed 2 mod(s) from myserver
+<a id="__codelineno-154-5" name="__codelineno-154-5" href="#__codelineno-154-5"></a>
+<a id="__codelineno-154-6" name="__codelineno-154-6" href="#__codelineno-154-6"></a>Restart the server to apply changes:
+<a id="__codelineno-154-7" name="__codelineno-154-7" href="#__codelineno-154-7"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Restart Required</p>
@@ -6304,7 +6407,7 @@ This migration command is for existing servers created before this change.</p>
 <hr />
 <h3 id="mcctl-mod-sources">mcctl mod sources<a class="headerlink" href="#mcctl-mod-sources" title="Permanent link">&para;</a></h3>
 <p>Display available mod sources and their configuration.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>Options:</strong></p>
 <table>
@@ -6322,63 +6425,63 @@ This migration command is for existing servers created before this change.</p>
 </tbody>
 </table>
 <p><strong>Examples:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources
+<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources
 </code></pre></div>
 <p><strong>Output:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a>Available Mod Sources:
-<a id="__codelineno-160-2" name="__codelineno-160-2" href="#__codelineno-160-2"></a>
-<a id="__codelineno-160-3" name="__codelineno-160-3" href="#__codelineno-160-3"></a>  Modrinth --modrinth (default)
-<a id="__codelineno-160-4" name="__codelineno-160-4" href="#__codelineno-160-4"></a>    Free, open-source mod platform. No API key required.
-<a id="__codelineno-160-5" name="__codelineno-160-5" href="#__codelineno-160-5"></a>    Config: MODRINTH_PROJECTS
-<a id="__codelineno-160-6" name="__codelineno-160-6" href="#__codelineno-160-6"></a>    mcctl mod add myserver sodium lithium
-<a id="__codelineno-160-7" name="__codelineno-160-7" href="#__codelineno-160-7"></a>
-<a id="__codelineno-160-8" name="__codelineno-160-8" href="#__codelineno-160-8"></a>  CurseForge --curseforge
-<a id="__codelineno-160-9" name="__codelineno-160-9" href="#__codelineno-160-9"></a>    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
-<a id="__codelineno-160-10" name="__codelineno-160-10" href="#__codelineno-160-10"></a>    Config: CURSEFORGE_FILES
-<a id="__codelineno-160-11" name="__codelineno-160-11" href="#__codelineno-160-11"></a>    mcctl mod add myserver --curseforge jei journeymap
-<a id="__codelineno-160-12" name="__codelineno-160-12" href="#__codelineno-160-12"></a>
-<a id="__codelineno-160-13" name="__codelineno-160-13" href="#__codelineno-160-13"></a>  Spiget (SpigotMC) --spiget
-<a id="__codelineno-160-14" name="__codelineno-160-14" href="#__codelineno-160-14"></a>    SpigotMC plugin repository. Use resource IDs.
-<a id="__codelineno-160-15" name="__codelineno-160-15" href="#__codelineno-160-15"></a>    Config: SPIGET_RESOURCES
-<a id="__codelineno-160-16" name="__codelineno-160-16" href="#__codelineno-160-16"></a>    mcctl mod add myserver --spiget 9089
-<a id="__codelineno-160-17" name="__codelineno-160-17" href="#__codelineno-160-17"></a>
-<a id="__codelineno-160-18" name="__codelineno-160-18" href="#__codelineno-160-18"></a>  URL --url
-<a id="__codelineno-160-19" name="__codelineno-160-19" href="#__codelineno-160-19"></a>    Direct JAR file download URLs.
-<a id="__codelineno-160-20" name="__codelineno-160-20" href="#__codelineno-160-20"></a>    Config: MODS / PLUGINS
-<a id="__codelineno-160-21" name="__codelineno-160-21" href="#__codelineno-160-21"></a>    mcctl mod add myserver --url https://example.com/mod.jar
+<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>Available Mod Sources:
+<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>
+<a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>  Modrinth --modrinth (default)
+<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>    Free, open-source mod platform. No API key required.
+<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>    Config: MODRINTH_PROJECTS
+<a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>    mcctl mod add myserver sodium lithium
+<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>
+<a id="__codelineno-157-8" name="__codelineno-157-8" href="#__codelineno-157-8"></a>  CurseForge --curseforge
+<a id="__codelineno-157-9" name="__codelineno-157-9" href="#__codelineno-157-9"></a>    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
+<a id="__codelineno-157-10" name="__codelineno-157-10" href="#__codelineno-157-10"></a>    Config: CURSEFORGE_FILES
+<a id="__codelineno-157-11" name="__codelineno-157-11" href="#__codelineno-157-11"></a>    mcctl mod add myserver --curseforge jei journeymap
+<a id="__codelineno-157-12" name="__codelineno-157-12" href="#__codelineno-157-12"></a>
+<a id="__codelineno-157-13" name="__codelineno-157-13" href="#__codelineno-157-13"></a>  Spiget (SpigotMC) --spiget
+<a id="__codelineno-157-14" name="__codelineno-157-14" href="#__codelineno-157-14"></a>    SpigotMC plugin repository. Use resource IDs.
+<a id="__codelineno-157-15" name="__codelineno-157-15" href="#__codelineno-157-15"></a>    Config: SPIGET_RESOURCES
+<a id="__codelineno-157-16" name="__codelineno-157-16" href="#__codelineno-157-16"></a>    mcctl mod add myserver --spiget 9089
+<a id="__codelineno-157-17" name="__codelineno-157-17" href="#__codelineno-157-17"></a>
+<a id="__codelineno-157-18" name="__codelineno-157-18" href="#__codelineno-157-18"></a>  URL --url
+<a id="__codelineno-157-19" name="__codelineno-157-19" href="#__codelineno-157-19"></a>    Direct JAR file download URLs.
+<a id="__codelineno-157-20" name="__codelineno-157-20" href="#__codelineno-157-20"></a>    Config: MODS / PLUGINS
+<a id="__codelineno-157-21" name="__codelineno-157-21" href="#__codelineno-157-21"></a>    mcctl mod add myserver --url https://example.com/mod.jar
 </code></pre></div>
 <hr />
 <h3 id="mod-management-workflows">Mod Management Workflows<a class="headerlink" href="#mod-management-workflows" title="Permanent link">&para;</a></h3>
 <h4 id="setting-up-a-modded-server">Setting Up a Modded Server<a class="headerlink" href="#setting-up-a-modded-server" title="Permanent link">&para;</a></h4>
 <p>Complete workflow for creating and configuring a modded Fabric server:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a><span class="c1"># 1. Create a Fabric server</span>
-<a id="__codelineno-161-2" name="__codelineno-161-2" href="#__codelineno-161-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded-server<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
-<a id="__codelineno-161-3" name="__codelineno-161-3" href="#__codelineno-161-3"></a>
-<a id="__codelineno-161-4" name="__codelineno-161-4" href="#__codelineno-161-4"></a><span class="c1"># 2. Search for mods</span>
-<a id="__codelineno-161-5" name="__codelineno-161-5" href="#__codelineno-161-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"optimization"</span>
-<a id="__codelineno-161-6" name="__codelineno-161-6" href="#__codelineno-161-6"></a>
-<a id="__codelineno-161-7" name="__codelineno-161-7" href="#__codelineno-161-7"></a><span class="c1"># 3. Add essential mods</span>
-<a id="__codelineno-161-8" name="__codelineno-161-8" href="#__codelineno-161-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>modded-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
-<a id="__codelineno-161-9" name="__codelineno-161-9" href="#__codelineno-161-9"></a>
-<a id="__codelineno-161-10" name="__codelineno-161-10" href="#__codelineno-161-10"></a><span class="c1"># 4. List configured mods</span>
-<a id="__codelineno-161-11" name="__codelineno-161-11" href="#__codelineno-161-11"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>modded-server
-<a id="__codelineno-161-12" name="__codelineno-161-12" href="#__codelineno-161-12"></a>
-<a id="__codelineno-161-13" name="__codelineno-161-13" href="#__codelineno-161-13"></a><span class="c1"># 5. Restart to apply</span>
-<a id="__codelineno-161-14" name="__codelineno-161-14" href="#__codelineno-161-14"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded-server
+<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a><span class="c1"># 1. Create a Fabric server</span>
+<a id="__codelineno-158-2" name="__codelineno-158-2" href="#__codelineno-158-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded-server<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-158-3" name="__codelineno-158-3" href="#__codelineno-158-3"></a>
+<a id="__codelineno-158-4" name="__codelineno-158-4" href="#__codelineno-158-4"></a><span class="c1"># 2. Search for mods</span>
+<a id="__codelineno-158-5" name="__codelineno-158-5" href="#__codelineno-158-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"optimization"</span>
+<a id="__codelineno-158-6" name="__codelineno-158-6" href="#__codelineno-158-6"></a>
+<a id="__codelineno-158-7" name="__codelineno-158-7" href="#__codelineno-158-7"></a><span class="c1"># 3. Add essential mods</span>
+<a id="__codelineno-158-8" name="__codelineno-158-8" href="#__codelineno-158-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>modded-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
+<a id="__codelineno-158-9" name="__codelineno-158-9" href="#__codelineno-158-9"></a>
+<a id="__codelineno-158-10" name="__codelineno-158-10" href="#__codelineno-158-10"></a><span class="c1"># 4. List configured mods</span>
+<a id="__codelineno-158-11" name="__codelineno-158-11" href="#__codelineno-158-11"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>modded-server
+<a id="__codelineno-158-12" name="__codelineno-158-12" href="#__codelineno-158-12"></a>
+<a id="__codelineno-158-13" name="__codelineno-158-13" href="#__codelineno-158-13"></a><span class="c1"># 5. Restart to apply</span>
+<a id="__codelineno-158-14" name="__codelineno-158-14" href="#__codelineno-158-14"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded-server
 </code></pre></div>
 <h4 id="setting-up-a-plugin-server">Setting Up a Plugin Server<a class="headerlink" href="#setting-up-a-plugin-server" title="Permanent link">&para;</a></h4>
 <p>Complete workflow for a Paper server with plugins:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a><span class="c1"># 1. Create a Paper server</span>
-<a id="__codelineno-162-2" name="__codelineno-162-2" href="#__codelineno-162-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>plugin-server<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-162-3" name="__codelineno-162-3" href="#__codelineno-162-3"></a>
-<a id="__codelineno-162-4" name="__codelineno-162-4" href="#__codelineno-162-4"></a><span class="c1"># 2. Add plugins from Modrinth</span>
-<a id="__codelineno-162-5" name="__codelineno-162-5" href="#__codelineno-162-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>luckperms
-<a id="__codelineno-162-6" name="__codelineno-162-6" href="#__codelineno-162-6"></a>
-<a id="__codelineno-162-7" name="__codelineno-162-7" href="#__codelineno-162-7"></a><span class="c1"># 3. Add plugins from Spiget (SpigotMC)</span>
-<a id="__codelineno-162-8" name="__codelineno-162-8" href="#__codelineno-162-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w">  </span><span class="c1"># EssentialsX</span>
-<a id="__codelineno-162-9" name="__codelineno-162-9" href="#__codelineno-162-9"></a>
-<a id="__codelineno-162-10" name="__codelineno-162-10" href="#__codelineno-162-10"></a><span class="c1"># 4. Restart to apply</span>
-<a id="__codelineno-162-11" name="__codelineno-162-11" href="#__codelineno-162-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>plugin-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>plugin-server
+<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a><span class="c1"># 1. Create a Paper server</span>
+<a id="__codelineno-159-2" name="__codelineno-159-2" href="#__codelineno-159-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>plugin-server<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-159-3" name="__codelineno-159-3" href="#__codelineno-159-3"></a>
+<a id="__codelineno-159-4" name="__codelineno-159-4" href="#__codelineno-159-4"></a><span class="c1"># 2. Add plugins from Modrinth</span>
+<a id="__codelineno-159-5" name="__codelineno-159-5" href="#__codelineno-159-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>luckperms
+<a id="__codelineno-159-6" name="__codelineno-159-6" href="#__codelineno-159-6"></a>
+<a id="__codelineno-159-7" name="__codelineno-159-7" href="#__codelineno-159-7"></a><span class="c1"># 3. Add plugins from Spiget (SpigotMC)</span>
+<a id="__codelineno-159-8" name="__codelineno-159-8" href="#__codelineno-159-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w">  </span><span class="c1"># EssentialsX</span>
+<a id="__codelineno-159-9" name="__codelineno-159-9" href="#__codelineno-159-9"></a>
+<a id="__codelineno-159-10" name="__codelineno-159-10" href="#__codelineno-159-10"></a><span class="c1"># 4. Restart to apply</span>
+<a id="__codelineno-159-11" name="__codelineno-159-11" href="#__codelineno-159-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>plugin-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>plugin-server
 </code></pre></div>
 <h4 id="curseforge-configuration">CurseForge Configuration<a class="headerlink" href="#curseforge-configuration" title="Permanent link">&para;</a></h4>
 <p>Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. To set your own key:</p>
@@ -6386,12 +6489,12 @@ This migration command is for existing servers created before this change.</p>
 <li>Get an API key from <a href="https://console.curseforge.com/">CurseForge for Studios</a></li>
 <li>Add to your <code>.env</code> file:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a><span class="nv">CF_API_KEY</span><span class="o">=</span>your-api-key-here
+<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a><span class="nv">CF_API_KEY</span><span class="o">=</span>your-api-key-here
 </code></pre></div>
 <ol>
 <li>Now you can add CurseForge mods:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
+<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
 </code></pre></div>
 <hr />
 <h2 id="global-options-reference">Global Options Reference<a class="headerlink" href="#global-options-reference" title="Permanent link">&para;</a></h2>
@@ -6432,7 +6535,7 @@ This migration command is for existing servers created before this change.</p>
 <p>Environment variables for automation and CI/CD pipelines.</p>
 <h3 id="mcctl_sudo_password">MCCTL_SUDO_PASSWORD<a class="headerlink" href="#mcctl_sudo_password" title="Permanent link">&para;</a></h3>
 <p>Provides sudo password for operations requiring root access (mDNS registration/deregistration).</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-165-1" name="__codelineno-165-1" href="#__codelineno-165-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span>
 </code></pre></div>
 <p><strong>Used by:</strong></p>
 <ul>
@@ -6440,19 +6543,19 @@ This migration command is for existing servers created before this change.</p>
 <li><code>mcctl delete</code> - For deregistering mDNS hostname</li>
 </ul>
 <p><strong>Example (CI/CD):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-166-1" name="__codelineno-166-1" href="#__codelineno-166-1"></a><span class="c1"># GitHub Actions example</span>
-<a id="__codelineno-166-2" name="__codelineno-166-2" href="#__codelineno-166-2"></a>-<span class="w"> </span>name:<span class="w"> </span>Create<span class="w"> </span>Minecraft<span class="w"> </span>Server
-<a id="__codelineno-166-3" name="__codelineno-166-3" href="#__codelineno-166-3"></a><span class="w">  </span>env:
-<a id="__codelineno-166-4" name="__codelineno-166-4" href="#__codelineno-166-4"></a><span class="w">    </span>MCCTL_SUDO_PASSWORD:<span class="w"> </span><span class="si">${</span><span class="p">{ secrets.SUDO_PASSWORD </span><span class="si">}</span><span class="o">}</span>
-<a id="__codelineno-166-5" name="__codelineno-166-5" href="#__codelineno-166-5"></a><span class="w">  </span>run:<span class="w"> </span><span class="p">|</span>
-<a id="__codelineno-166-6" name="__codelineno-166-6" href="#__codelineno-166-6"></a><span class="w">    </span>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a><span class="c1"># GitHub Actions example</span>
+<a id="__codelineno-163-2" name="__codelineno-163-2" href="#__codelineno-163-2"></a>-<span class="w"> </span>name:<span class="w"> </span>Create<span class="w"> </span>Minecraft<span class="w"> </span>Server
+<a id="__codelineno-163-3" name="__codelineno-163-3" href="#__codelineno-163-3"></a><span class="w">  </span>env:
+<a id="__codelineno-163-4" name="__codelineno-163-4" href="#__codelineno-163-4"></a><span class="w">    </span>MCCTL_SUDO_PASSWORD:<span class="w"> </span><span class="si">${</span><span class="p">{ secrets.SUDO_PASSWORD </span><span class="si">}</span><span class="o">}</span>
+<a id="__codelineno-163-5" name="__codelineno-163-5" href="#__codelineno-163-5"></a><span class="w">  </span>run:<span class="w"> </span><span class="p">|</span>
+<a id="__codelineno-163-6" name="__codelineno-163-6" href="#__codelineno-163-6"></a><span class="w">    </span>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Security</p>
 <p>Store sudo passwords securely using CI/CD secrets. Never commit passwords to version control.</p>
 </div>
 <p><strong>Alternative:</strong> Use <code>--sudo-password</code> option directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-167-1" name="__codelineno-167-1" href="#__codelineno-167-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">"your-password"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">"your-password"</span>
 </code></pre></div>
 
 

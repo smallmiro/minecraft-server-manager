@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -1898,6 +1928,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#v300-upgrade-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v3.0.0 upgrade script
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#0-pre-flight" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1939,6 +1980,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="3. Migrate configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#v300-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3-1. Upgrading to v3.0.0: the scripts folder is gone (#736)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1958,6 +2016,17 @@
     <span class="md-ellipsis">
       
         4-1. Upgrading to v2.32.0 or later: check the console access mode (#633)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pm2-kill-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4-2. Give mcctl-api time to finish an auto-backup (#734)
       
     </span>
   </a>
@@ -2359,6 +2428,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#v300-upgrade-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        v3.0.0 upgrade script
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#0-pre-flight" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2400,6 +2480,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="3. Migrate configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#v300-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3-1. Upgrading to v3.0.0: the scripts folder is gone (#736)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2419,6 +2516,17 @@
     <span class="md-ellipsis">
       
         4-1. Upgrading to v2.32.0 or later: check the console access mode (#633)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pm2-kill-timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4-2. Give mcctl-api time to finish an auto-backup (#734)
       
     </span>
   </a>
@@ -2586,31 +2694,150 @@
 <li>Run every command in a shell using <strong>the same Node version PM2 uses</strong> (step 0). If they differ, the native <code>better-sqlite3</code> module can hit an ABI mismatch and the Console returns 500.</li>
 </ul>
 </div>
+<h2 id="v300-upgrade-script">v3.0.0 upgrade script<a class="headerlink" href="#v300-upgrade-script" title="Permanent link">&para;</a></h2>
+<p>For v2.x to v3.0.0, <code>scripts/upgrade-v3.sh</code> walks through the steps below and asks before each change. Look first, then run it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Dry run: checks and shows the plan, changes nothing</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash<span class="w"> </span>-s<span class="w"> </span>--<span class="w"> </span>--dry-run
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># 2. Real run (asks before each change)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+</code></pre></div>
+<p>To read the script before running it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-fsSLO<span class="w"> </span>https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>less<span class="w"> </span>upgrade-v3.sh
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>bash<span class="w"> </span>upgrade-v3.sh<span class="w"> </span>--dry-run
+</code></pre></div>
+<p>It is safe to pipe into <code>bash</code>: questions are read from the terminal, every command it starts gets empty input, and a download cut short runs nothing. Linux and macOS (bash 3.2) are supported. Without a terminal and without <code>--yes</code>, steps that change something are skipped. The full output is also written to <code>upgrade.log</code> (in the backup folder, or in a temporary folder on a dry run).</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--root &lt;dir&gt;</code></td>
+<td>Platform root (default <code>$MCCTL_ROOT</code>, else <code>~/minecraft-servers</code>)</td>
+</tr>
+<tr>
+<td><code>--yes</code></td>
+<td>Do not ask; use each question's default answer</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>Check and show the plan; change nothing</td>
+</tr>
+<tr>
+<td><code>--skip-update</code></td>
+<td>Do not run <code>mcctl update</code> (CLI already updated, or a local build)</td>
+</tr>
+<tr>
+<td><code>--remove-scripts</code></td>
+<td>Delete <code>&lt;root&gt;/scripts</code> after it was backed up, without asking</td>
+</tr>
+<tr>
+<td><code>--help</code></td>
+<td>Show the options</td>
+</tr>
+</tbody>
+</table>
+<p>Before the first step the script reads <code>mcctl --version</code> and <code>npm view @minecraft-docker/mcctl version</code>. If the CLI is already 3.x the update is skipped. If npm <code>latest</code> is not 3.x it stops (use <code>--skip-update</code> with a v3 build).</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>What it does</th>
+<th>Kind (default answer)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 Pre-flight</td>
+<td>Root files, <code>which -a mcctl</code>, PM2 vs shell Node, git 2.31 for backups, cron and timers that call <code>scripts/*.sh</code> or <code>player lookup\|uuid</code>, macOS <code>mcctl console</code> note</td>
+<td>automatic, read only</td>
+</tr>
+<tr>
+<td>1 Backup</td>
+<td>Copies the files of <a href="#1-backup">step 1</a> and <code>&lt;root&gt;/scripts</code> to <code>&lt;root&gt;/backups/upgrade-v3-&lt;time&gt;/</code>; optional <code>mcctl backup push</code></td>
+<td>optional (yes; push: no)</td>
+</tr>
+<tr>
+<td>2 Update</td>
+<td><code>mcctl update --yes</code>, then checks the version is 3.x</td>
+<td>optional (yes)</td>
+</tr>
+<tr>
+<td>3 Upgrade</td>
+<td>Shows <code>mcctl upgrade --dry-run</code>, then <code>mcctl upgrade --non-interactive</code></td>
+<td>optional (yes)</td>
+</tr>
+<tr>
+<td>4 <code>&lt;root&gt;/scripts</code></td>
+<td>Keeps or removes the folder (only after the backup; a link is unlinked)</td>
+<td>optional (keep)</td>
+</tr>
+<tr>
+<td>5 <code>ecosystem.config.cjs</code></td>
+<td>Before v2.32.0, rewrites old <code>AUTH_MODE</code> values (<a href="#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633">4-1</a>); adds <code>kill_timeout</code> to mcctl-api (<a href="#pm2-kill-timeout">4-2</a>); then <code>mcctl console service restart --force</code></td>
+<td>optional (AUTH_MODE: no; kill_timeout: yes if <code>BACKUP_AUTO_ON_STOP=true</code>; restart: yes)</td>
+</tr>
+<tr>
+<td>6 ServerSpec</td>
+<td>Shows <code>mcctl migrate spec --all --dry-run</code>, optionally runs it</td>
+<td>optional (no)</td>
+</tr>
+<tr>
+<td>7 Worlds</td>
+<td>Shows <code>mcctl world list</code>, highlights duplicate or warning lines</td>
+<td>automatic</td>
+</tr>
+<tr>
+<td>8 Verify</td>
+<td><code>mcctl --version</code>, <code>docker compose config -q</code>, PM2 status, API <code>/health</code> (only when <code>ecosystem.config.cjs</code> exists)</td>
+<td>automatic</td>
+</tr>
+<tr>
+<td>9 Summary</td>
+<td>Result of each step, what is left, rollback, log path</td>
+<td>automatic</td>
+</tr>
+</tbody>
+</table>
+<p>If step 2 is skipped (you answer no, or there is no terminal and no <code>--yes</code>) or fails, the script runs no later step and stops with "The upgrade did not finish": the later steps need the v3 CLI. Fix the cause and run the script again. A failed backup or <code>mcctl upgrade</code> stops it the same way. Any failed step makes the exit code 1.</p>
+<p>On a dry run with a v2 CLI, the <code>mcctl upgrade --dry-run</code> preview is the plan of the v2 CLI installed now; the v3 plan appears after the update.</p>
+<p>Step 5 loads <code>ecosystem.config.cjs</code> with <code>node</code> (so it runs the file, like PM2 does), edits it only if the mcctl-api <code>name:</code> line is <code>name: 'mcctl-api',</code> alone on its line, loads it again to check the result and puts the original back if the check fails (no restart then). A symbolic link or a one-line app object is not edited; the script tells you what to add by hand.</p>
+<p><strong>What the script does not do</strong> (the summary repeats these):</p>
+<ul>
+<li><strong>Restart running servers.</strong> Do it at a quiet time: <code>mcctl stop &lt;server&gt; &amp;&amp; mcctl start &lt;server&gt;</code>.</li>
+<li><strong>Replace cron jobs, timers or your own scripts</strong> that called <code>&lt;root&gt;/scripts/*.sh</code>. It only warns; use the <a href="#v300-scripts">table in 3-1</a>.</li>
+<li><strong>Roll back.</strong> The summary prints the command: <code>npm install -g @minecraft-docker/mcctl@&lt;old version&gt; &amp;&amp; mcctl console service restart --force</code>, plus the backup folder to copy files back from (<a href="#8-rollback">step 8</a>).</li>
+</ul>
+<p>Test hook: <code>MCCTL_UPGRADE_TTY</code> replaces <code>/dev/tty</code> (a readable file gives the answers, a path that cannot be opened means "no terminal").</p>
 <h2 id="0-pre-flight">0. Pre-flight<a class="headerlink" href="#0-pre-flight" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Variables: current version / target version / platform root</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OLD</span><span class="o">=</span><span class="k">$(</span>mcctl<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'[0-9]+\.[0-9]+\.[0-9]+'</span><span class="k">)</span><span class="w">   </span><span class="c1"># for rollback</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NEW</span><span class="o">=</span><span class="m">2</span>.29.1
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ROOT</span><span class="o">=</span>~/minecraft-servers<span class="w">          </span><span class="c1"># directory with docker-compose.yml, .env, .mcctl.json</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Check PM2's Node version, then switch the shell to the same one (e.g. 22)</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>pm2<span class="w"> </span>jlist<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sys,json;[print(p['name'],p['pm2_env']['version'],p['pm2_env']['node_version']) for p in json.load(sys.stdin)]"</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>nvm<span class="w"> </span>use<span class="w"> </span><span class="m">22</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>node<span class="w"> </span>--version
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># If several mcctl installs exist, check which one runs</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>which<span class="w"> </span>-a<span class="w"> </span>mcctl<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>--version
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>npm<span class="w"> </span>view<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>version<span class="w">      </span><span class="c1"># must equal $NEW (registry can lag 1-2 min after publish)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Variables: current version / target version / platform root</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">OLD</span><span class="o">=</span><span class="k">$(</span>mcctl<span class="w"> </span>--version<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'[0-9]+\.[0-9]+\.[0-9]+'</span><span class="k">)</span><span class="w">   </span><span class="c1"># for rollback</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">NEW</span><span class="o">=</span><span class="m">2</span>.29.1
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ROOT</span><span class="o">=</span>~/minecraft-servers<span class="w">          </span><span class="c1"># directory with docker-compose.yml, .env, .mcctl.json</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Check PM2's Node version, then switch the shell to the same one (e.g. 22)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>pm2<span class="w"> </span>jlist<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sys,json;[print(p['name'],p['pm2_env']['version'],p['pm2_env']['node_version']) for p in json.load(sys.stdin)]"</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>nvm<span class="w"> </span>use<span class="w"> </span><span class="m">22</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>node<span class="w"> </span>--version
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># If several mcctl installs exist, check which one runs</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>which<span class="w"> </span>-a<span class="w"> </span>mcctl<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>--version
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>npm<span class="w"> </span>view<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>version<span class="w">      </span><span class="c1"># must equal $NEW (registry can lag 1-2 min after publish)</span>
 </code></pre></div>
 <p><strong>Gate:</strong> shell Node major equals PM2 Node major, and <code>npm view</code> returns <code>$NEW</code>.</p>
 <h2 id="1-backup">1. Backup<a class="headerlink" href="#1-backup" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nv">S</span><span class="o">=</span>pre-<span class="nv">$NEW</span><span class="p">;</span><span class="w"> </span><span class="nv">B</span><span class="o">=</span><span class="nv">$ROOT</span>/backups-<span class="nv">$S</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$B</span><span class="w">                                   </span><span class="c1"># keep it OUTSIDE servers/ (see warning below)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>cp<span class="w"> </span>docker-compose.yml<span class="w"> </span><span class="nv">$B</span>/docker-compose.yml
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cp<span class="w"> </span>.env<span class="w"> </span><span class="nv">$B</span>/.env
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>cp<span class="w"> </span>.mcctl.json<span class="w"> </span><span class="nv">$B</span>/.mcctl.json
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>cp<span class="w"> </span>-r<span class="w"> </span>servers/_template<span class="w"> </span><span class="nv">$B</span>/_template
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>mcctl<span class="w"> </span>status<span class="w">                                  </span><span class="c1"># record current state</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Before v</span><span class="nv">$NEW</span><span class="s2">"</span><span class="w">   </span><span class="c1"># worlds/config, whichever you use</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">S</span><span class="o">=</span>pre-<span class="nv">$NEW</span><span class="p">;</span><span class="w"> </span><span class="nv">B</span><span class="o">=</span><span class="nv">$ROOT</span>/backups-<span class="nv">$S</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$B</span><span class="w">                                   </span><span class="c1"># keep it OUTSIDE servers/ (see warning below)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>cp<span class="w"> </span>docker-compose.yml<span class="w"> </span><span class="nv">$B</span>/docker-compose.yml
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>cp<span class="w"> </span>.env<span class="w"> </span><span class="nv">$B</span>/.env
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>cp<span class="w"> </span>.mcctl.json<span class="w"> </span><span class="nv">$B</span>/.mcctl.json
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>cp<span class="w"> </span>-r<span class="w"> </span>servers/_template<span class="w"> </span><span class="nv">$B</span>/_template
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>mcctl<span class="w"> </span>status<span class="w">                                  </span><span class="c1"># record current state</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>&lt;server&gt;<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Before v</span><span class="nv">$NEW</span><span class="s2">"</span><span class="w">   </span><span class="c1"># worlds/config, whichever you use</span>
 </code></pre></div>
 <p><strong>Gate:</strong> <code>$B</code> contains <code>docker-compose.yml</code>, <code>.env</code>, <code>.mcctl.json</code> and <code>_template</code>.</p>
 <div class="admonition danger">
@@ -2618,9 +2845,9 @@
 <p><code>mcctl update</code> treats every directory under <code>servers/</code> as a server and checks/changes its image tag. A copy such as <code>servers/_template.pre-…</code> is mistaken for a server and modified, so a rollback would restore tampered values.</p>
 </div>
 <h2 id="2-update-packages">2. Update packages<a class="headerlink" href="#2-update-packages" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">          </span><span class="c1"># exits 1 when an update is available</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">            </span><span class="c1"># CLI + api/console/shared, restarts PM2</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nb">hash</span><span class="w"> </span>-r<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>--version<span class="w">    </span><span class="c1"># = $NEW</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">          </span><span class="c1"># exits 1 when an update is available</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--yes<span class="w">            </span><span class="c1"># CLI + api/console/shared, restarts PM2</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">hash</span><span class="w"> </span>-r<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>--version<span class="w">    </span><span class="c1"># = $NEW</span>
 </code></pre></div>
 <ul>
 <li>If you see <code>Updated (restart manually)</code>, do step 4.</li>
@@ -2628,11 +2855,11 @@
 </ul>
 <p><strong>Rollback point:</strong> <code>npm install -g @minecraft-docker/mcctl@&lt;previous&gt;</code> then <code>mcctl console service restart --force</code>.</p>
 <h2 id="3-migrate-configuration">3. Migrate configuration<a class="headerlink" href="#3-migrate-configuration" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mcctl<span class="w"> </span>upgrade<span class="w"> </span>--dry-run<span class="w">       </span><span class="c1"># preview only</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mcctl<span class="w"> </span>upgrade<span class="w"> </span>--dry-run<span class="w">       </span><span class="c1"># preview only</span>
 </code></pre></div>
 <p>Check the dry run for new <code>.env</code> variables, compose changes (<code>router.image</code>, <code>router.group_add</code>) and anything unexpected. Stop and report if something looks wrong.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mcctl<span class="w"> </span>upgrade<span class="w">                 </span><span class="c1"># accept defaults for new .env vars, y to apply compose changes</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>mcctl<span class="w"> </span>upgrade<span class="w"> </span>--non-interactive<span class="w">   </span><span class="c1"># apply defaults without prompting (automation)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mcctl<span class="w"> </span>upgrade<span class="w">                 </span><span class="c1"># accept defaults for new .env vars, y to apply compose changes</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>mcctl<span class="w"> </span>upgrade<span class="w"> </span>--non-interactive<span class="w">   </span><span class="c1"># apply defaults without prompting (automation)</span>
 </code></pre></div>
 <ul>
 <li>New <code>.env</code> variables are added (e.g. <code>DOCKER_GID</code>), <code>docker-compose.yml.bak-&lt;timestamp&gt;</code> is created, and <code>docker compose up -d router</code> runs automatically when the router changes.</li>
@@ -2642,16 +2869,89 @@
 <li>If <code>.mcctl.json</code> has no <code>installId</code>, it is added once (an existing value is kept). The web console uses it for anonymous usage analytics; to opt out, set <code>"telemetry": false</code> in <code>.mcctl.json</code> (see <a href="../../console/web-console/#usage-analytics">Usage Analytics</a>).</li>
 <li><strong>If the router image is the untagged <code>itzg/mc-router</code>, <code>mcctl upgrade</code> does not bump the image.</strong> Pin <code>image:</code> in <code>docker-compose.yml</code> to the version named in the release notes, then run <code>docker compose config -q &amp;&amp; docker compose up -d router</code>.</li>
 </ul>
+<h3 id="v300-scripts">3-1. Upgrading to v3.0.0: the <code>scripts</code> folder is gone (#736)<a class="headerlink" href="#v300-scripts" title="Permanent link">&para;</a></h3>
+<p>v3.0.0 removes every Bash script (#715). <code>mcctl</code> no longer reads <code>&lt;root&gt;/scripts</code>, and the <code>MCCTL_SCRIPTS</code> environment variable is ignored.</p>
+<ul>
+<li><code>mcctl upgrade</code> prints the path of <code>&lt;root&gt;/scripts</code>, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and a link to this table. In a terminal it asks <code>Remove &lt;path&gt;?</code> and deletes <strong>only after you answer <code>y</code></strong> (default <code>N</code>). With <code>--non-interactive</code> or without a terminal (cron) it prints <code>rm -r &lt;path&gt;</code> as a hint and deletes nothing; <code>--dry-run</code> only says <code>Would ask before removing &lt;path&gt;.</code>. A symbolic link is unlinked, not followed. There is no option to skip the question. You can also delete the folder yourself; nothing else in the platform root depends on it.</li>
+<li><strong>Before you delete it, copy any script you edited</strong> (for example <code>cp -r $ROOT/scripts ~/scripts-backup</code>). Deleting cannot be undone.</li>
+<li>If cron jobs, systemd units or your own scripts called <code>&lt;root&gt;/scripts/*.sh</code> directly, change them before you delete the folder. Use this table:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Old script (<code>&lt;root&gt;/scripts/</code>)</th>
+<th>v3.0.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mcctl.sh start</code> / <code>stop</code> / <code>status</code> / <code>logs</code></td>
+<td><code>mcctl start</code> / <code>mcctl stop</code> / <code>mcctl status</code> / <code>mcctl logs</code></td>
+</tr>
+<tr>
+<td><code>mcctl.sh console</code></td>
+<td><code>mcctl console &lt;server&gt;</code> (TCP RCON)</td>
+</tr>
+<tr>
+<td>RCON commands (<code>rcon-cli</code> through the script)</td>
+<td><code>mcctl exec &lt;server&gt; &lt;command...&gt;</code></td>
+</tr>
+<tr>
+<td><code>create-server.sh</code></td>
+<td><code>mcctl create</code></td>
+</tr>
+<tr>
+<td><code>delete-server.sh</code></td>
+<td><code>mcctl delete</code></td>
+</tr>
+<tr>
+<td><code>backup.sh push</code> / <code>status</code> / <code>history</code> / <code>restore</code></td>
+<td><code>mcctl backup push</code> / <code>status</code> / <code>history</code> / <code>restore</code></td>
+</tr>
+<tr>
+<td><code>lock.sh</code></td>
+<td><code>mcctl world</code> (<code>list</code>, <code>assign</code>, <code>release</code>; see <a href="../../cli/commands/#world-assignment-rules">World Assignment Rules</a>)</td>
+</tr>
+<tr>
+<td><code>player.sh lookup</code> / <code>uuid</code></td>
+<td><code>mcctl player info &lt;name&gt; [--offline]</code></td>
+</tr>
+<tr>
+<td><code>logs.sh</code></td>
+<td><code>mcctl logs</code></td>
+</tr>
+<tr>
+<td><code>init.sh</code></td>
+<td><code>mcctl init</code></td>
+</tr>
+<tr>
+<td><code>render-map.sh</code></td>
+<td>No CLI command. Use <strong>Render map</strong> in the web console, or the API (BlueMap)</td>
+</tr>
+<tr>
+<td><code>migrate-nip-io.sh</code></td>
+<td>No dedicated command. After the host IP changes, run <code>mcctl init --reconfigure</code> and answer yes to "Update existing servers with new IP hostnames?"; it renders every server again and the nip.io router hosts follow the new <code>HOST_IPS</code> (custom hosts stay)</td>
+</tr>
+<tr>
+<td><code>lib/common.sh</code></td>
+<td>None. It was the scripts' own helper library; the name rules are in TypeScript</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Servers keep working. The first command that changes a server writes <code>servers/&lt;name&gt;/server.yaml</code> and rewrites <code>config.env</code> and the server's <code>compose.yml</code>; see <a href="../../configuration/server-yaml/">server.yaml</a>.</li>
+</ul>
+<p><strong>Gate:</strong> <code>ls $ROOT/scripts</code> reports no such folder (or you chose to keep it), and nothing in <code>crontab -l</code> or <code>systemctl list-timers</code> still names a <code>.sh</code> file from it.</p>
 <h2 id="4-restart-api--console-if-needed">4. Restart API / Console (if needed)<a class="headerlink" href="#4-restart-api--console-if-needed" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># if the new build does not come up or you see an ABI error (NODE_MODULE_VERSION)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>rebuild<span class="w"> </span>better-sqlite3<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># if the new build does not come up or you see an ABI error (NODE_MODULE_VERSION)</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>npm<span class="w"> </span>rebuild<span class="w"> </span>better-sqlite3<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
 </code></pre></div>
 <h3 id="4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633">4-1. Upgrading to v2.32.0 or later: check the console access mode (#633)<a class="headerlink" href="#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633" title="Permanent link">&para;</a></h3>
 <p>Do this once when upgrading from v2.31.0 or earlier to v2.32.0 or later, and only on hosts where <code>mcctl console init</code> was run.</p>
 <p>Up to v2.31.0, <code>mcctl console init</code> wrote the chosen access mode to <code>AUTH_MODE</code> as is. mcctl-api does not recognise <code>internal</code>, <code>api-key-ip</code> or <code>open</code>, and falls back to <code>api-key</code> under <code>NODE_ENV=production</code> (<code>disabled</code> otherwise). From v2.32.0, <code>mcctl console init</code> writes a value mcctl-api recognises. <code>mcctl update</code> and <code>mcctl upgrade</code> do not rewrite <code>ecosystem.config.cjs</code>, so an existing install keeps the old value until you change it.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"AUTH_MODE|AUTH_IP_WHITELIST"</span><span class="w"> </span><span class="nv">$ROOT</span>/ecosystem.config.cjs
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"AUTH_MODE|AUTH_IP_WHITELIST"</span><span class="w"> </span><span class="nv">$ROOT</span>/ecosystem.config.cjs
 </code></pre></div>
 <table>
 <thead>
@@ -2684,54 +2984,65 @@
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>cp<span class="w"> </span>ecosystem.config.cjs<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w">     </span><span class="c1"># for rollback (step 8)</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>sed<span class="w"> </span>-i<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/^\( *\)AUTH_MODE: 'internal',/\1AUTH_MODE: 'ip-whitelist',\n\1AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',/"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/AUTH_MODE: 'api-key-ip',/AUTH_MODE: 'combined',/"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span>ecosystem.config.cjs
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"AUTH_MODE|AUTH_IP_WHITELIST"</span><span class="w"> </span>ecosystem.config.cjs
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force<span class="w">               </span><span class="c1"># plain restart keeps the old env</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>cp<span class="w"> </span>ecosystem.config.cjs<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w">     </span><span class="c1"># for rollback (step 8)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>sed<span class="w"> </span>-i<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/^\( *\)AUTH_MODE: 'internal',/\1AUTH_MODE: 'ip-whitelist',\n\1AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',/"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/AUTH_MODE: 'api-key-ip',/AUTH_MODE: 'combined',/"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="s2">"s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span>ecosystem.config.cjs
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>grep<span class="w"> </span>-nE<span class="w"> </span><span class="s2">"AUTH_MODE|AUTH_IP_WHITELIST"</span><span class="w"> </span>ecosystem.config.cjs
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force<span class="w">               </span><span class="c1"># plain restart keeps the old env</span>
 </code></pre></div>
 <p>The <code>sed</code> leaves the other modes untouched. Instead of editing the file, you can re-run <code>mcctl console init --force</code>, which rewrites the whole file and asks every setup question again.</p>
 <p><strong>Gate:</strong> <code>AUTH_MODE</code> is one of <code>disabled</code>, <code>api-key</code>, <code>ip-whitelist</code>, <code>basic</code>, <code>combined</code>; API <code>/health</code> returns 200 and the Console can list servers (step 7-6).</p>
+<h3 id="pm2-kill-timeout">4-2. Give mcctl-api time to finish an auto-backup (#734)<a class="headerlink" href="#pm2-kill-timeout" title="Permanent link">&para;</a></h3>
+<p>Do this once on hosts where <code>mcctl console init</code> was run before this release and <code>BACKUP_AUTO_ON_STOP=true</code> is set.</p>
+<p>A stop from the API or the Console runs the auto-backup in the background, and mcctl-api waits up to 2 minutes for it when it shuts down, so the backup can turn auto-save back on (<code>save-on</code>) on the servers it flushed. PM2 kills a process 1.6 seconds after asking it to stop unless the app sets <code>kill_timeout</code>. <code>mcctl console init</code> now writes <code>kill_timeout: 130000</code> for mcctl-api; <code>mcctl update</code> and <code>mcctl upgrade</code> do not rewrite <code>ecosystem.config.cjs</code>, and a plain PM2 restart keeps the old setting.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>grep<span class="w"> </span>-n<span class="w"> </span><span class="s2">"kill_timeout"</span><span class="w"> </span>ecosystem.config.cjs<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"missing: add it"</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># add the line to the mcctl-api app, next to max_memory_restart:</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1">#       kill_timeout: 130000,</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force<span class="w">               </span><span class="c1"># re-registers the apps from the file</span>
+</code></pre></div>
+<p>Instead of editing the file, you can re-run <code>mcctl console init --force</code>, which rewrites the whole file and asks every setup question again.</p>
+<p><strong>Gate:</strong> <code>pm2 describe mcctl-api</code> shows <code>kill timeout</code> 130000 (or <code>grep kill_timeout ecosystem.config.cjs</code> shows it before the restart).</p>
 <h2 id="5-apply-server-images">5. Apply server images<a class="headerlink" href="#5-apply-server-images" title="Permanent link">&para;</a></h2>
 <p>Stopped servers get the new image on next start. Restart running servers at a quiet time with <code>mcctl stop &lt;server&gt; &amp;&amp; mcctl start &lt;server&gt;</code> (worlds are preserved).</p>
 <h2 id="6-re-render-maps-bluemap--only-if-the-release-notes-mention-map-changes">6. Re-render maps (BlueMap) — only if the release notes mention map changes<a class="headerlink" href="#6-re-render-maps-bluemap--only-if-the-release-notes-mention-map-changes" title="Permanent link">&para;</a></h2>
-<p>For worlds that have a map, run <strong>Render map</strong> again from the world detail page in the Console. <code>render-map.sh</code> regenerates the map config on every render, so <code>--force</code> is usually not needed.</p>
+<p>For worlds that have a map, run <strong>Render map</strong> again from the world detail page in the Console. The renderer regenerates the map config on every render, so <code>--force</code> is usually not needed.</p>
 <h2 id="7-post-upgrade-verification">7. Post-upgrade verification<a class="headerlink" href="#7-post-upgrade-verification" title="Permanent link">&para;</a></h2>
 <p>Everything must pass. If anything fails, go to step 8 (rollback).</p>
 <h3 id="7-1-versions">7-1. Versions<a class="headerlink" href="#7-1-versions" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">hash</span><span class="w"> </span>-r
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>--version<span class="w">                                   </span><span class="c1"># = $NEW</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pm2<span class="w"> </span>jlist<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sys,json;[print(p['name'],p['pm2_env']['version'],p['pm2_env']['status'],p['pm2_env']['node_version'],'restarts=',p['pm2_env']['restart_time']) for p in json.load(sys.stdin)]"</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># expect: mcctl-api / mcctl-console both $NEW, online, same Node as PM2, restarts not climbing</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">                              </span><span class="c1"># nothing left to update (incl. shared)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">hash</span><span class="w"> </span>-r
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>mcctl<span class="w"> </span>--version<span class="w">                                   </span><span class="c1"># = $NEW</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>pm2<span class="w"> </span>jlist<span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import sys,json;[print(p['name'],p['pm2_env']['version'],p['pm2_env']['status'],p['pm2_env']['node_version'],'restarts=',p['pm2_env']['restart_time']) for p in json.load(sys.stdin)]"</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># expect: mcctl-api / mcctl-console both $NEW, online, same Node as PM2, restarts not climbing</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>mcctl<span class="w"> </span>update<span class="w"> </span>--check<span class="w">                              </span><span class="c1"># nothing left to update (incl. shared)</span>
 </code></pre></div>
 <h3 id="7-2-config-files">7-2. Config files<a class="headerlink" href="#7-2-config-files" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import json;c=json.load(open('.mcctl.json'));print('templateVersion =',c.get('templateVersion'),'| installId present =','installId' in c)"</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>diff<span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span>.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w">   </span><span class="c1"># only added variables</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>config<span class="w"> </span>-q<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"compose OK"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python3<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import json;c=json.load(open('.mcctl.json'));print('templateVersion =',c.get('templateVersion'),'| installId present =','installId' in c)"</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>diff<span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span>.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w"> </span>&lt;<span class="o">(</span>grep<span class="w"> </span>-oE<span class="w"> </span><span class="s1">'^[A-Z_]+='</span><span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="o">)</span><span class="w">   </span><span class="c1"># only added variables</span>
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>config<span class="w"> </span>-q<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"compose OK"</span>
 </code></pre></div>
 <h3 id="7-3-router">7-3. router<a class="headerlink" href="#7-3-router" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>stat<span class="w"> </span>-c<span class="w"> </span>%g<span class="w"> </span>/var/run/docker.sock<span class="w">                   </span><span class="c1"># socket GID</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>grep<span class="w"> </span><span class="s1">'^DOCKER_GID='</span><span class="w"> </span>.env<span class="w">                          </span><span class="c1"># must match</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>docker<span class="w"> </span>inspect<span class="w"> </span>mc-router<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Config.Image}} {{.HostConfig.GroupAdd}}'</span><span class="w">   </span><span class="c1"># expected tag, GroupAdd has the GID</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w">                   </span><span class="c1"># no "permission denied", routing started</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>stat<span class="w"> </span>-c<span class="w"> </span>%g<span class="w"> </span>/var/run/docker.sock<span class="w">                   </span><span class="c1"># socket GID</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>grep<span class="w"> </span><span class="s1">'^DOCKER_GID='</span><span class="w"> </span>.env<span class="w">                          </span><span class="c1"># must match</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>docker<span class="w"> </span>inspect<span class="w"> </span>mc-router<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Config.Image}} {{.HostConfig.GroupAdd}}'</span><span class="w">   </span><span class="c1"># expected tag, GroupAdd has the GID</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w">                   </span><span class="c1"># no "permission denied", routing started</span>
 </code></pre></div>
 <h3 id="7-4-api--console">7-4. API / Console<a class="headerlink" href="#7-4-api--console" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'console %{http_code}\n'</span><span class="w"> </span>http://localhost:5000<span class="w">          </span><span class="c1"># 200 or 3xx</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'api %{http_code}\n'</span><span class="w">     </span>http://localhost:5001/health<span class="w">   </span><span class="c1"># 200</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">                      </span><span class="c1"># both online</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">30</span><span class="w"> </span>--nostream<span class="w">      </span><span class="c1"># no better-sqlite3 / NODE_MODULE_VERSION errors</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'console %{http_code}\n'</span><span class="w"> </span>http://localhost:5000<span class="w">          </span><span class="c1"># 200 or 3xx</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'api %{http_code}\n'</span><span class="w">     </span>http://localhost:5001/health<span class="w">   </span><span class="c1"># 200</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>status<span class="w">                      </span><span class="c1"># both online</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>pm2<span class="w"> </span>logs<span class="w"> </span>mcctl-console<span class="w"> </span>--lines<span class="w"> </span><span class="m">30</span><span class="w"> </span>--nostream<span class="w">      </span><span class="c1"># no better-sqlite3 / NODE_MODULE_VERSION errors</span>
 </code></pre></div>
 <h3 id="7-5-servers--auto-scale">7-5. Servers / auto-scale<a class="headerlink" href="#7-5-servers--auto-scale" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mcctl<span class="w"> </span>status
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># connect to a stopped server (&lt;server&gt;.&lt;HOST_IP&gt;.nip.io:25565) and confirm it starts</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s2">"error|denied|scale"</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Names}}\t{{.Image}}\t{{.Status}}'</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mcctl<span class="w"> </span>status
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1"># connect to a stopped server (&lt;server&gt;.&lt;HOST_IP&gt;.nip.io:25565) and confirm it starts</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">30</span><span class="w"> </span>mc-router<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-iE<span class="w"> </span><span class="s2">"error|denied|scale"</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>docker<span class="w"> </span>ps<span class="w"> </span>--format<span class="w"> </span><span class="s1">'{{.Names}}\t{{.Image}}\t{{.Status}}'</span>
 </code></pre></div>
 <h3 id="7-6-ui-smoke-test">7-6. UI smoke test<a class="headerlink" href="#7-6-ui-smoke-test" title="Permanent link">&para;</a></h3>
 <p>In a browser (hard refresh) open <code>http://&lt;host&gt;:5000</code>: log in → server list → world detail (info/stats panels) → map panel (default view must be Overworld). Also check any screen the release notes call out.</p>
@@ -2748,18 +3059,18 @@
 <li>[ ] once stable, delete <code>$B</code> (<code>backups-pre-$NEW</code>)</li>
 </ul>
 <h2 id="8-rollback">8. Rollback<a class="headerlink" href="#8-rollback" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="p">;</span><span class="w"> </span><span class="nv">B</span><span class="o">=</span><span class="nv">$ROOT</span>/backups-pre-<span class="nv">$NEW</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>cp<span class="w"> </span><span class="nv">$B</span>/docker-compose.yml<span class="w"> </span>docker-compose.yml
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>cp<span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span>.env
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>cp<span class="w"> </span><span class="nv">$B</span>/.mcctl.json<span class="w"> </span>.mcctl.json
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>servers/_template<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span>-r<span class="w"> </span><span class="nv">$B</span>/_template<span class="w"> </span>servers/_template
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>router
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w"> </span>ecosystem.config.cjs<span class="w">   </span><span class="c1"># if changed in step 4-1</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>ls<span class="w"> </span>ecosystem.config.cjs.bak-*<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"restore the latest ecosystem.config.cjs.bak-* if step 3 moved BETTER_AUTH_*"</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># packages back to $OLD (in the PM2-Node shell)</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl@<span class="nv">$OLD</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/mcctl-console@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/shared@<span class="nv">$OLD</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">cd</span><span class="w"> </span><span class="nv">$ROOT</span><span class="p">;</span><span class="w"> </span><span class="nv">B</span><span class="o">=</span><span class="nv">$ROOT</span>/backups-pre-<span class="nv">$NEW</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>cp<span class="w"> </span><span class="nv">$B</span>/docker-compose.yml<span class="w"> </span>docker-compose.yml
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>cp<span class="w"> </span><span class="nv">$B</span>/.env<span class="w"> </span>.env
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>cp<span class="w"> </span><span class="nv">$B</span>/.mcctl.json<span class="w"> </span>.mcctl.json
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>servers/_template<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span>-r<span class="w"> </span><span class="nv">$B</span>/_template<span class="w"> </span>servers/_template
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>router
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cp<span class="w"> </span><span class="nv">$B</span>/ecosystem.config.cjs<span class="w"> </span>ecosystem.config.cjs<span class="w">   </span><span class="c1"># if changed in step 4-1</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>ls<span class="w"> </span>ecosystem.config.cjs.bak-*<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"restore the latest ecosystem.config.cjs.bak-* if step 3 moved BETTER_AUTH_*"</span>
+<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="c1"># packages back to $OLD (in the PM2-Node shell)</span>
+<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>@minecraft-docker/mcctl@<span class="nv">$OLD</span>
+<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>npm<span class="w"> </span>install<span class="w"> </span>@minecraft-docker/mcctl-api@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/mcctl-console@<span class="nv">$OLD</span><span class="w"> </span>@minecraft-docker/shared@<span class="nv">$OLD</span>
+<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a>mcctl<span class="w"> </span>console<span class="w"> </span>service<span class="w"> </span>restart<span class="w"> </span>--force
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>

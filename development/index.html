@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2435,7 +2465,7 @@
 </tr>
 </tbody>
 </table>
-<p>Supported operating systems are Linux and macOS, because the <code>mcctl</code> CLI depends on bash scripts. <code>better-sqlite3</code> (a dependency of mcctl-console) is a native module, so some environments need a build toolchain (gcc, make, python).</p>
+<p>Supported operating systems are Linux and macOS. <code>better-sqlite3</code> (a dependency of mcctl-console) is a native module, so some environments need a build toolchain (gcc, make, python).</p>
 <h2 id="fork-and-set-up">Fork and Set Up<a class="headerlink" href="#fork-and-set-up" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1) Fork smallmiro/minecraft-server-manager on GitHub, then:</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;your-account&gt;/minecraft-server-manager.git
@@ -2496,12 +2526,8 @@
 <td><code>@minecraft-docker/mod-source-modrinth</code>: Modrinth adapter</td>
 </tr>
 <tr>
-<td><code>platform/scripts/</code></td>
-<td>Bash management scripts (tests in <code>platform/scripts/tests/</code>)</td>
-</tr>
-<tr>
-<td><code>templates/</code></td>
-<td>Platform templates copied by <code>mcctl init</code></td>
+<td><code>platform/services/cli/templates/</code></td>
+<td>Single source of the platform templates copied by <code>mcctl init</code> (<code>platform/docker-compose.yml</code> and <code>platform/servers/_template</code> link to it)</td>
 </tr>
 <tr>
 <td><code>e2e/</code></td>
@@ -2588,8 +2614,6 @@
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>pnpm<span class="w"> </span>test:e2e<span class="w">                                </span><span class="c1"># Management Console E2E (Playwright)</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:e2e<span class="w">    </span><span class="c1"># CLI E2E (Vitest)</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>bash<span class="w"> </span>platform/scripts/tests/&lt;name&gt;.test.sh<span class="w">   </span><span class="c1"># bash script tests</span>
 </code></pre></div>
 <p>Add E2E tests for new REST endpoints in <code>e2e/tests/api-*.spec.ts</code>, for console UI flows in <code>e2e/tests/*.spec.ts</code>, and for new CLI commands or options in <code>platform/services/cli/tests/e2e/cli-*.test.ts</code>.</p>
 <h2 id="contribution-workflow">Contribution Workflow<a class="headerlink" href="#contribution-workflow" title="Permanent link">&para;</a></h2>
@@ -2607,34 +2631,26 @@
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--title<span class="w"> </span><span class="s2">"feat: add backup script (#12)"</span><span class="w"> </span>--body<span class="w"> </span><span class="s2">"Closes #12 ..."</span>
 </code></pre></div>
 <h3 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
-<p>PR checks against <code>develop</code> must pass before merge. They are path-filtered:</p>
+<p>PR checks against <code>develop</code> must pass before merge. <code>ci.yml</code> runs on every PR, with no path filter:</p>
 <table>
 <thead>
 <tr>
-<th>Workflow</th>
-<th>Runs when</th>
+<th>Job</th>
 <th>What it does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>cli-test</code></td>
-<td>The PR touches <code>platform/services/cli/**</code> or <code>platform/services/shared/**</code></td>
-<td>Builds <code>mcctl</code> and its dependencies, runs the CLI tests</td>
+<td><code>lint, typecheck, test</code></td>
+<td>Builds every package, then runs <code>pnpm lint</code>, <code>pnpm typecheck</code>, the tests of every package except <code>e2e</code>, and the cli <code>verify:package</code> check (the tarball has <code>docker/bluemap/Dockerfile</code> and no <code>scripts/</code>)</td>
 </tr>
 <tr>
-<td><code>shared-test</code></td>
-<td>The PR touches <code>platform/services/shared/**</code></td>
-<td>Runs the shared package tests</td>
-</tr>
-<tr>
-<td><code>e2e</code></td>
-<td>Daily at 03:00 KST and on manual dispatch, <strong>not on PRs</strong></td>
-<td>Starts mcctl-api and mcctl-console, runs the Playwright suite</td>
+<td><code>docker compose config</code> (platform, templates)</td>
+<td>Validates both compose files</td>
 </tr>
 </tbody>
 </table>
-<p>Because <code>e2e</code> does not run on PRs, run <code>pnpm test:e2e</code> locally when you change API or console behavior. CI does not run <code>pnpm lint</code>, so run it yourself.</p>
+<p><code>e2e.yml</code> runs daily at 03:00 KST and on manual dispatch, <strong>not on PRs</strong>: it starts mcctl-api and mcctl-console and runs the Playwright suite. Run <code>pnpm test:e2e</code> locally when you change API or console behavior.</p>
 <p>Branch naming, commit rules, versioning, and the release process are described in <a href="git-workflow/">Git Workflow</a>.</p>
 <h2 id="developing-with-claude-code">Developing with Claude Code<a class="headerlink" href="#developing-with-claude-code" title="Permanent link">&para;</a></h2>
 <p>The repository ships Claude Code configuration. Run <code>claude</code> from the repository root and <code>CLAUDE.md</code> plus the subagents, commands, and hooks in <code>.claude/</code> are loaded automatically.</p>

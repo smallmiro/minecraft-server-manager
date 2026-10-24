@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2621,14 +2651,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>cli-test.yml</code></td>
-<td><code>platform/services/cli/**</code> 또는 <code>platform/services/shared/**</code>를 변경하는 <code>develop</code>/<code>main</code> 대상 PR, <code>develop</code> 푸시</td>
-<td><code>mcctl</code> 빌드와 테스트</td>
-</tr>
-<tr>
-<td><code>shared-test.yml</code></td>
-<td><code>platform/services/shared/**</code>를 변경하는 <code>develop</code>/<code>main</code> 대상 PR, <code>develop</code> 푸시</td>
-<td>shared 패키지 테스트</td>
+<td><code>ci.yml</code></td>
+<td><code>develop</code>/<code>main</code> 대상 모든 PR, <code>develop</code> 푸시, <code>release.yml</code>에서 호출</td>
+<td>전 패키지 빌드·lint·타입 검사·테스트, Linux·macOS 스크립트 테스트, compose 검증</td>
 </tr>
 <tr>
 <td><code>e2e.yml</code></td>
@@ -2638,7 +2663,7 @@
 <tr>
 <td><code>release.yml</code></td>
 <td><code>v*</code> 태그 푸시</td>
-<td>npm 발행, GitHub Release, 문서 배포</td>
+<td><code>ci.yml</code> 통과 후 npm 발행, GitHub Release, 문서 배포</td>
 </tr>
 <tr>
 <td><code>deploy-website.yml</code></td>

@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2180,10 +2210,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#world-locking" class="md-nav__link">
+  <a href="#world-assignment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        World Locking
+        World Assignment
       
     </span>
   </a>
@@ -2436,7 +2466,7 @@
 <li><strong>Backup</strong> - Automatic GitHub backup for world data</li>
 <li><strong>Upgrade Runbook</strong> - Release-independent procedure to upgrade every component, with post-upgrade verification</li>
 <li><strong>RCON</strong> - Remote console protocol for server administration</li>
-<li><strong>World Management</strong> - Multi-server world sharing with locking</li>
+<li><strong>World Management</strong> - Assigning worlds to servers (one world, one server)</li>
 <li><strong>Auto-scaling</strong> - Automatic server start/stop based on player activity</li>
 </ul>
 <h2 id="feature-guides">Feature Guides<a class="headerlink" href="#feature-guides" title="Permanent link">&para;</a></h2>
@@ -2519,31 +2549,38 @@
     E --&gt; F[Wait DOCKER_TIMEOUT]
     F --&gt; D
     D --&gt; G[Player connected]</code></pre>
-<h3 id="world-locking">World Locking<a class="headerlink" href="#world-locking" title="Permanent link">&para;</a></h3>
-<p>World locking prevents data corruption when sharing worlds between servers:</p>
+<h3 id="world-assignment">World Assignment<a class="headerlink" href="#world-assignment" title="Permanent link">&para;</a></h3>
+<p>A world is assigned to a server by the server's <code>LEVEL</code> in <code>servers/&lt;name&gt;/config.env</code> (legacy <code>WORLD_NAME</code> is read when <code>LEVEL</code> is unset; unset means itzg's default <code>world</code>). One world is used by one server, which prevents data corruption from simultaneous access. A world and its <code>&lt;world&gt;_nether</code> / <code>&lt;world&gt;_the_end</code> folders count as one world.</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant A as Server A
     participant W as World
     participant B as Server B
 
-    A-&gt;&gt;W: assign world
-    Note over W: Locked to A
+    A-&gt;&gt;W: assign world (LEVEL=survival)
+    Note over W: Used by A
     B-&gt;&gt;W: try assign
     W--xB: DENIED
-    A-&gt;&gt;W: release world
-    Note over W: Unlocked
-    B-&gt;&gt;W: assign world
-    Note over W: Locked to B</code></pre>
-<p><strong>Manage world locks with mcctl:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># List all worlds with lock status</span>
+    A-&gt;&gt;W: release (A stopped)
+    Note over W: Free, A uses its own world
+    B-&gt;&gt;W: assign world (B stopped)
+    Note over W: Used by B</code></pre>
+<p><strong>Manage world assignments with mcctl:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># List all worlds with the servers they are assigned to</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Assign a world to a server (locks it)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Assign a world to a stopped server (sets its LEVEL)</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>survival<span class="w"> </span>mc-myserver
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Release a world lock</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Switch the server using the world back to its own default world</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>survival
 </code></pre></div>
+<ul>
+<li>There is no lock file. <code>worlds/.locks</code> is no longer read, written or created; an existing directory is harmless and <code>rm -rf worlds/.locks</code> is safe.</li>
+<li>Assign and release need a stopped server. Nothing is stopped automatically.</li>
+<li>Deleting a server frees its world for reuse. <code>mcctl world delete</code> refuses a world a server uses, even with <code>--force</code>.</li>
+<li>If a server's <code>config.env</code> cannot be read or its <code>LEVEL</code> cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Duplicate assignments from older installs are reported by <code>mcctl world list</code>, not fixed.</li>
+</ul>
+<p>See <a href="../cli/commands/#world-assignment-rules">World Assignment Rules</a> for the full rules.</p>
 <h2 id="performance-tuning">Performance Tuning<a class="headerlink" href="#performance-tuning" title="Permanent link">&para;</a></h2>
 <h3 id="jvm-optimization">JVM Optimization<a class="headerlink" href="#jvm-optimization" title="Permanent link">&para;</a></h3>
 <p>Use Aikar's flags for optimal performance:</p>
@@ -2676,7 +2713,7 @@
 <tr>
 <td>World corruption</td>
 <td><code>mcctl world list</code></td>
-<td>Check lock status</td>
+<td>Check world assignments</td>
 </tr>
 </tbody>
 </table>

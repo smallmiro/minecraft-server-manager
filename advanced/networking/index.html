@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -3779,9 +3809,8 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># New servers automatically get multiple hostnames</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># For existing servers, run migration script</span>
-<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="nb">cd</span><span class="w"> </span>~/minecraft-servers
-<a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>./scripts/migrate-nip-io.sh
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># For existing servers, update hostnames with the new IPs</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>mcctl<span class="w"> </span>init<span class="w"> </span>--reconfigure
 </code></pre></div>
 <h4 id="5-client-connection">5. Client Connection<a class="headerlink" href="#5-client-connection" title="Permanent link">&para;</a></h4>
 <p>Have friends install Tailscale and invite them to your network, then:</p>
@@ -3836,7 +3865,7 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">When VPN IP Changes</p>
-<p>If your VPN IP changes, update <code>.env</code> and run <code>./scripts/migrate-nip-io.sh</code> again.</p>
+<p>If your VPN IP changes, run <code>mcctl init --reconfigure</code>, enter the new IPs, and accept updating existing servers.</p>
 </div>
 <h3 id="debug-mode">Debug Mode<a class="headerlink" href="#debug-mode" title="Permanent link">&para;</a></h3>
 <p>Enable mc-router debug output in <code>.env</code>:</p>
@@ -3945,7 +3974,7 @@ See <a href="https://github.com/itzg/mc-router/issues/507">mc-router #507</a> fo
 <li>
 <p>Check Docker timeout in <code>.env</code>:
    <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="c1"># ~/minecraft-servers/.env</span>
-<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span><span class="m">180</span><span class="w">  </span><span class="c1"># Increase if server takes long to start</span>
+<a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span>180s<span class="w"> </span><span class="c1"># Increase if server takes long to start</span>
 </code></pre></div></p>
 </li>
 <li>

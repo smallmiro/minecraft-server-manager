@@ -1281,6 +1281,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#world-assignment-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        월드 할당 규칙
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mcctl-world-new" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1457,28 +1468,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#mcctl-player-lookup-레거시" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player lookup (레거시)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcctl-player-uuid-레거시" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player uuid (레거시)
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -1512,6 +1501,17 @@
     <span class="md-ellipsis">
       
         mcctl migrate worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate spec
       
     </span>
   </a>
@@ -1823,6 +1823,8 @@
       
         
       
+        
+      
     
     
     
@@ -1894,6 +1896,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -3230,6 +3260,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#world-assignment-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        월드 할당 규칙
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#mcctl-world-new" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3406,28 +3447,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#mcctl-player-lookup-레거시" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player lookup (레거시)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcctl-player-uuid-레거시" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        mcctl player uuid (레거시)
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -3461,6 +3480,17 @@
     <span class="md-ellipsis">
       
         mcctl migrate worlds
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcctl-migrate-spec" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        mcctl migrate spec
       
     </span>
   </a>
@@ -3701,8 +3731,7 @@
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── shared/
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   ├── plugins/
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   └── mods/
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>├── scripts/
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>└── backups/
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└── backups/
 </code></pre></div>
 <hr />
 <h3 id="mcctl-up">mcctl up<a class="headerlink" href="#mcctl-up" title="Permanent link">&para;</a></h3>
@@ -3767,7 +3796,7 @@
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nv">AUTO_SCALE_UP</span><span class="o">=</span><span class="nb">true</span><span class="w">              </span><span class="c1"># 플레이어 접속 시 서버 자동 시작</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="nv">AUTO_SCALE_DOWN</span><span class="o">=</span><span class="nb">true</span><span class="w">            </span><span class="c1"># 유휴 서버 자동 중지</span>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nv">AUTO_SCALE_DOWN_AFTER</span><span class="o">=</span>10m<span class="w">       </span><span class="c1"># 유휴 타임아웃 (1m, 5m, 10m, 30m, 1h)</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span><span class="m">120</span><span class="w">              </span><span class="c1"># 컨테이너 시작 타임아웃 (초)</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nv">DOCKER_TIMEOUT</span><span class="o">=</span>120s<span class="w">             </span><span class="c1"># 컨테이너 시작 타임아웃 (Go time.Duration: 120s, 2m)</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># 슬립 상태 서버의 커스텀 MOTD</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nv">AUTO_SCALE_ASLEEP_MOTD</span><span class="o">=</span>§e§l서버가<span class="w"> </span>슬립<span class="w"> </span>중§r<span class="se">\n</span>§7접속하면<span class="w"> </span>깨어납니다!
@@ -4114,6 +4143,7 @@
 <li>루트 <code>docker-compose.yml</code>의 <code>router</code> 서비스를 패치합니다 (아래 참조)</li>
 <li><code>servers/_template/</code> 파일을 갱신하고 <code>.mcctl.json</code>에 <code>templateVersion</code>을 기록합니다</li>
 <li><code>.mcctl.json</code>에 <code>installId</code>가 없으면 추가합니다 (기존 값은 유지)</li>
+<li>(v3.0.0 이상) <code>&lt;root&gt;/scripts</code>가 있으면 경로, v3.0.0부터 쓰지 않으며 직접 고친 파일이 있을 수 있다는 경고, <a href="../../advanced/upgrade-runbook/#v300-scripts">스크립트 → mcctl 대응표</a> 링크를 출력합니다. 터미널에서는 <code>Remove &lt;path&gt;?</code>(기본값 <code>N</code>)를 묻고 <code>y</code>일 때만 삭제합니다. <code>--non-interactive</code>이거나 터미널이 없으면 힌트(<code>rm -r &lt;path&gt;</code>)만 출력하고 아무것도 지우지 않습니다. <code>--dry-run</code>이면 <code>Would ask before removing &lt;path&gt;.</code>만 출력합니다. 심볼릭 링크는 링크만 지우고 따라가지 않습니다. 확인을 건너뛰는 옵션은 없습니다.</li>
 </ol>
 <p><strong>docker-compose.yml router 패치:</strong> <code>router</code> 서비스의 <code>image</code> 태그와 <code>group_add</code> 항목만 번들 템플릿에 맞춥니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.</p>
 <ul>
@@ -4215,6 +4245,14 @@
 </tr>
 </tbody>
 </table>
+<div class="admonition info">
+<p class="admonition-title">create가 쓰는 파일</p>
+<p><code>mcctl create</code>는 <code>servers/&lt;이름&gt;/server.yaml</code>을 쓰고, 그 파일에서 <code>config.env</code>, <code>docker-compose.yml</code>, <code>servers/compose.yml</code> 항목을 만듭니다(<a href="../../configuration/server-yaml/">서버 정의</a>). 서버가 만들어지기 전에 실패하면 아무것도 남기지 않으므로 같은 명령을 다시 실행하면 됩니다. 서버는 만들어졌지만 시작하지 못하면 서버는 그대로 두고 원인과 함께 종료 코드 1로 끝납니다. <code>mcctl start &lt;이름&gt;</code>으로 시작하세요.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">월드 하나는 서버 하나</p>
+<p>다른 서버가 이미 사용 중인 월드는 <code>--world</code>(그리고 새 서버의 기본 월드 <code>&lt;name&gt;</code>)로 지정할 수 없습니다. <a href="#world-assignment-rules">월드 할당 규칙</a>을 참고하세요.</p>
+</div>
 <div class="admonition note">
 <p class="admonition-title">화이트리스트는 기본 비활성입니다</p>
 <p>화이트리스트 옵션 없이 만든 서버는 화이트리스트가 <strong>꺼진 상태</strong>라서 정품(online-mode) 계정이면 누구나 접속할 수 있습니다. 접속을 제한하려면 <code>--whitelist</code> 또는 <code>--enable-whitelist</code>를 사용하거나, 나중에 <code>mcctl whitelist &lt;server&gt; on</code>으로 켜세요. 대화형 모드에서는 "Enable whitelist?"(기본 No)를 묻고, Yes를 선택한 경우에만 플레이어를 입력받습니다. 웹 콘솔에서 만든 서버도 화이트리스트가 꺼진 상태로 생성됩니다.</p>
@@ -4386,9 +4424,19 @@
 </thead>
 <tbody>
 <tr>
-<td><code>--force</code></td>
+<td><code>--yes</code></td>
 <td><code>-y</code></td>
 <td>확인 건너뛰기</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td></td>
+<td>접속 중인 플레이어가 있어도 삭제 (<code>--yes</code> 포함)</td>
+</tr>
+<tr>
+<td><code>--delete-world</code></td>
+<td></td>
+<td>서버 안의 월드를 <code>worlds/</code>로 옮기지 않고 삭제</td>
 </tr>
 <tr>
 <td><code>--sudo-password</code></td>
@@ -4397,10 +4445,24 @@
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">월드 데이터 보존</p>
-<p><code>mcctl delete</code>는 서버 설정만 제거하고 월드 데이터는 <code>worlds/</code> 디렉토리에 보존됩니다.</p>
+<p><code>mcctl delete</code>는 삭제 전에 확인을 묻습니다. 터미널이 없는 환경(스크립트, CI)에서는 <code>--yes</code>나 <code>--force</code>를 주지 않으면 삭제하지 않습니다.</p>
+<div class="admonition info">
+<p class="admonition-title">월드는 서버를 삭제해도 남습니다</p>
+<ul>
+<li><code>worlds/</code>에 있는 월드는 그대로 둡니다. 삭제한 서버에 배정된 상태만 풀립니다.</li>
+<li>서버 안의 월드(<code>servers/&lt;name&gt;/data/&lt;LEVEL&gt;</code>와 <code>&lt;LEVEL&gt;_nether</code>, <code>&lt;LEVEL&gt;_the_end</code>)는 서버 디렉터리를 지우기 전에 <code>worlds/&lt;LEVEL&gt;</code>로 옮깁니다. 옮긴 월드는 다른 서버에 배정할 수 있습니다.</li>
+<li><code>worlds/</code>에 같은 이름의 폴더가 이미 있으면 삭제를 중단하고 아무것도 지우지 않습니다. <code>worlds/</code>의 폴더 이름을 바꾸거나 <code>--delete-world</code>를 지정하세요.</li>
+<li><code>--delete-world</code>는 서버 안의 월드를 삭제합니다. <code>worlds/</code>의 월드는 지우지 않으므로 <a href="#mcctl-world-delete"><code>mcctl world delete</code></a>로 지우세요.</li>
+</ul>
 </div>
+<p><code>--delete-world</code>가 없으면 월드를 확실히 보존할 수 없는 다음 경우에도 아무것도 지우지 않고 중단합니다.</p>
+<ul>
+<li><code>config.env</code>로 서버의 월드를 정할 수 없는 경우. <code>LEVEL</code>은 Docker Compose가 파일을 읽는 방식으로 읽습니다(따옴표, 줄 끝 주석, <code>=</code> 앞뒤 공백은 괜찮고, <code>LEVEL</code> 줄이 여럿이면 마지막 줄을 씁니다). 값이 월드 이름(영문자, 숫자, <code>-</code>, <code>_</code>)이 아니거나, <code>$</code> 보간을 쓰거나, <code>EXTRA_ARGS</code>의 <code>--universe</code>가 mcctl이 지원하지 않는 위치를 가리키면 중단합니다. <a href="#world-assignment-rules">월드 할당 규칙</a>과 같은 규칙입니다. <code>LEVEL</code> 줄이 아예 없으면 월드는 <code>world</code>로 봅니다.</li>
+<li><code>servers/&lt;name&gt;/</code>나 그 안의 <code>data/</code>가 심볼릭 링크이거나, <code>data/&lt;LEVEL&gt;</code> 없이 <code>&lt;LEVEL&gt;_nether</code>·<code>&lt;LEVEL&gt;_the_end</code>만 있는 경우.</li>
+<li>다른 월드 폴더(<code>level.dat</code>, <code>level.dat_old</code>, <code>region/</code>, <code>*.mca</code> 중 하나가 있는 폴더. 예: 이전 <code>LEVEL</code>의 옛 월드)가 함께 지워지게 되거나, 서버 안의 심볼릭 링크가 서버 안을 가리키는 경우. 메시지에 그 경로를 보여 줍니다.</li>
+</ul>
+<p><code>worlds/</code>의 실제 경로가 서버 안(예: <code>servers/&lt;name&gt;/</code>을 가리키는 심볼릭 링크)이면 <code>--delete-world</code>를 줘도 중단합니다. 서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 <code>mcctl delete &lt;name&gt;</code>은 <code>--force</code> 없이는 삭제를 거부합니다.</p>
+<p>삭제 전에 백업은 하지 않습니다. 월드는 <code>worlds/</code>에 남습니다(<code>--delete-world</code>가 아니면). 한 서버의 삭제는 한 번에 하나만 실행됩니다. 삭제가 도는 동안 같은 서버에 대한 두 번째 <code>mcctl delete</code>(또는 API 삭제)는 실패합니다. 삭제는 mcctl이 쓰는 <code>servers/compose.yml</code> 항목(<code>&lt;name&gt;/docker-compose.yml</code>)만 다룹니다. 그 서버에 대한 include 항목을 손으로 따로 썼다면(객체형, 추가 compose 파일) 아무것도 바꾸지 않고 멈추며, 그 항목을 먼저 지우라고 안내합니다. mDNS 호스트명 <code>&lt;name&gt;.local</code>은 서버 파일을 지운 뒤 README의 sudoers <code>NOPASSWD</code> 줄이 허용하는 명령인 <code>sudo sed -i … /etc/avahi/hosts</code>로 <code>/etc/avahi/hosts</code>에서 지웁니다. sudo 비밀번호는 <code>--sudo-password</code>, <a href="#mcctl_sudo_password"><code>MCCTL_SUDO_PASSWORD</code></a>, 프롬프트 중 하나로 받습니다. 지우지 못해도(예: 비밀번호도 <code>NOPASSWD</code> 규칙도 없음) 서버는 삭제되고 <code>mcctl delete</code>가 경고를 출력합니다. 이때는 <code>&lt;name&gt;.local</code> 줄을 직접 지우세요. <code>servers/compose.yml</code>에서 빠진 뒤 <code>servers/&lt;name&gt;/</code>에서 지우지 못한 파일(예: 컨테이너가 root로 만든 파일)도 경고로 출력합니다. 출력된 <code>sudo rm -rf</code> 명령으로 지우세요.</p>
 <p><strong>예제:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># 대화형 - 서버 목록 표시</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>mcctl<span class="w"> </span>delete
@@ -4408,11 +4470,14 @@
 <a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a><span class="c1"># 확인과 함께 특정 서버 삭제</span>
 <a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver
 <a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>
-<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="c1"># 확인 없이 강제 삭제</span>
-<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
+<a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a><span class="c1"># 확인 없이 삭제</span>
+<a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--yes
 <a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a>
-<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="c1"># 자동화 시 sudo 비밀번호 사용</span>
-<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span><span class="w"> </span>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--force
+<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a><span class="c1"># 서버와 서버 안의 월드를 함께 삭제</span>
+<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--yes<span class="w"> </span>--delete-world
+<a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a>
+<a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a><span class="c1"># 자동화 시 sudo 비밀번호 사용</span>
+<a id="__codelineno-40-14" name="__codelineno-40-14" href="#__codelineno-40-14"></a><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span><span class="w"> </span>mcctl<span class="w"> </span>delete<span class="w"> </span>myserver<span class="w"> </span>--yes
 </code></pre></div>
 <hr />
 <h3 id="mcctl-start">mcctl start<a class="headerlink" href="#mcctl-start" title="Permanent link">&para;</a></h3>
@@ -4444,6 +4509,7 @@
 <a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="c1"># 모든 서버 시작</span>
 <a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>--all
 </code></pre></div>
+<p><code>mcctl start &lt;name&gt;</code>은 필요하면 컨테이너를 만든 뒤 시작합니다(<code>docker compose up -d mc-&lt;name&gt;</code>). 서버가 이미 실행 중이면 경고와 함께 종료 코드 2로, <code>servers/&lt;name&gt;/docker-compose.yml</code>이 없으면 종료 코드 1로 끝납니다.</p>
 <div class="admonition tip">
 <p class="admonition-title">자동 시작</p>
 <p>mc-router를 사용하면 플레이어가 접속할 때 서버가 자동으로 시작됩니다.</p>
@@ -4478,10 +4544,12 @@
 <a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="c1"># 모든 서버 중지</span>
 <a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>--all
 </code></pre></div>
+<p><code>mcctl stop &lt;name&gt;</code>은 서버가 실행 중이 아니면 경고와 함께 종료 코드 2로 끝납니다. Docker를 조회할 수 없으면 <code>start</code>와 <code>stop</code>은 종료 코드 1로 끝납니다.</p>
+<p><code>BACKUP_AUTO_ON_STOP=true</code>이고 백업이 설정되어 있으면 <code>mcctl stop &lt;name&gt;</code>은 서버가 멈춘 뒤 월드를 백업합니다. 방식은 <a href="#mcctl-backup-push"><code>mcctl backup push --auto</code></a>와 같습니다. 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다. 백업이 실패하면 경고만 출력하고 정지는 성공합니다(종료 코드 0). 웹 콘솔이나 API(<code>POST /api/servers/&lt;name&gt;/stop</code>)로 정지해도 같은 백업을 백그라운드에서 실행합니다. <code>mcctl stop --all</code>은 백업하지 않습니다.</p>
 <hr />
 <h3 id="mcctl-logs">mcctl logs<a class="headerlink" href="#mcctl-logs" title="Permanent link">&para;</a></h3>
 <p>서버 로그를 조회합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;name<span class="p">|</span>router&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>옵션:</strong></p>
 <table>
@@ -4501,7 +4569,12 @@
 <tr>
 <td><code>--lines</code></td>
 <td><code>-n</code></td>
-<td>표시할 줄 수</td>
+<td>표시할 줄 수(기본 50). <code>-f</code>와 함께 쓰면 마지막 N줄 다음 이어서 추적</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td></td>
+<td>줄 배열을 JSON으로 출력(<code>-f</code>와 함께 사용 불가)</td>
 </tr>
 </tbody>
 </table>
@@ -4514,7 +4587,13 @@
 <a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
 <a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># 마지막 10줄 표시</span>
 <a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>survival<span class="w"> </span>-n<span class="w"> </span><span class="m">10</span>
+<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>
+<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a><span class="c1"># mc-router 로그</span>
+<a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>router
 </code></pre></div>
+<blockquote>
+<p>추적(<code>-f</code>)은 Ctrl+C로 끝내며 종료 코드는 0이다. avahi-daemon 로그는 <code>mcctl logs</code>가 다루지 않는다. 필요하면 <code>journalctl -u avahi-daemon</code>을 직접 실행한다.</p>
+</blockquote>
 <p><strong>출력 예시:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>[22:09:48] [Server thread/INFO]: Steve joined the game
 <a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>[22:10:15] [Server thread/INFO]: Alex joined the game
@@ -4529,9 +4608,13 @@
 </code></pre></div></p>
 <hr />
 <h3 id="mcctl-console">mcctl console<a class="headerlink" href="#mcctl-console" title="Permanent link">&para;</a></h3>
-<p>서버 RCON 콘솔에 연결합니다.</p>
+<p>서버 RCON 콘솔에 연결합니다. <a href="#mcctl-rcon"><code>mcctl rcon</code></a>과 같은 대화형 세션입니다.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>&lt;name&gt;
 </code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">이번 릴리스 변경: <code>docker exec</code> 대신 TCP RCON</p>
+<p><code>mcctl console</code>은 <code>mcctl rcon</code>처럼 서버의 RCON 포트에 TCP로 연결합니다(컨테이너 주소, <code>RCON_PORT</code>, <code>RCON_PASSWORD</code>). 예전에는 <code>docker exec -i mc-&lt;name&gt; rcon-cli</code>를 실행했습니다. 서버가 실행 중이어야 하고, <code>mcctl</code>을 실행하는 호스트에서 RCON 포트에 닿아야 합니다. <code>exit</code>나 <code>quit</code>을 입력하거나 <code>Ctrl+C</code>/<code>Ctrl+D</code>를 누르면 끝납니다. 파이프 입력은 한 줄씩 실행합니다(<code>printf 'list\n' | mcctl console myserver</code>). 서버가 연결을 끊으면(예: <code>stop</code> 뒤) 세션이 끝나고, 연결 오류는 종료 코드 1로 끝납니다.</p>
+</div>
 <p><strong>예제:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>mcctl<span class="w"> </span>console<span class="w"> </span>myserver
 </code></pre></div>
@@ -4718,6 +4801,10 @@
 <div class="admonition note">
 <p class="admonition-title">재시작 필요</p>
 <p>일부 설정 변경은 적용을 위해 서버 재시작이 필요합니다.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title"><code>LEVEL</code> 변경</p>
+<p><code>LEVEL</code>은 서버가 사용하는 월드입니다(<a href="#world-assignment-rules">월드 할당 규칙</a> 참고). 서버가 실행 중이거나 다른 서버가 <code>&lt;world&gt;</code>를 사용 중이면 <code>mcctl config &lt;server&gt; LEVEL &lt;world&gt;</code>는 거부됩니다. 새 <code>EXTRA_ARGS</code> 값이 월드 위치를 <code>worlds/</code>와 <code>servers/&lt;server&gt;/data</code> 사이에서 바꾸는 경우(<code>--universe</code>)에도 같습니다.</p>
 </div>
 <hr />
 <h2 id="서버-백업-및-복원">서버 백업 및 복원<a class="headerlink" href="#서버-백업-및-복원" title="Permanent link">&para;</a></h2>
@@ -5070,6 +5157,16 @@
 </div>
 <hr />
 <h2 id="월드-관리">월드 관리<a class="headerlink" href="#월드-관리" title="Permanent link">&para;</a></h2>
+<h3 id="world-assignment-rules">월드 할당 규칙<a class="headerlink" href="#world-assignment-rules" title="Permanent link">&para;</a></h3>
+<p>월드는 <code>servers/&lt;name&gt;/config.env</code>의 <code>LEVEL</code>로 서버에 할당됩니다. <code>LEVEL</code>이 없으면 레거시 <code>WORLD_NAME</code>을 읽고, 둘 다 없으면 서버는 itzg 기본값인 <code>world</code>를 사용합니다.</p>
+<ul>
+<li><strong>잠금 파일 없음.</strong> <code>worlds/.locks</code>는 더 이상 읽거나 쓰거나 만들지 않습니다(<code>mcctl init</code>도 만들지 않습니다). 기존 <code>worlds/.locks</code> 디렉토리는 무해하며 <code>rm -rf worlds/.locks</code>로 지워도 안전합니다. <code>lock.sh</code>와 <code>mcctl.sh</code> 스크립트는 제거되었습니다(#670, #734).</li>
+<li><strong>월드 하나는 서버 하나.</strong> 월드와 그 <code>&lt;world&gt;_nether</code> / <code>&lt;world&gt;_the_end</code> 폴더는 하나의 월드로 취급합니다. 다른 서버가 사용 중인 월드는 할당할 수 없습니다. <code>mcctl world assign</code>, <code>mcctl create --world</code>, 새 서버의 기본 월드 <code>&lt;name&gt;</code>, <code>mcctl config &lt;server&gt; LEVEL &lt;world&gt;</code>가 거부됩니다. 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다.</li>
+<li><strong>중지된 서버만.</strong> 서버 컨테이너가 running, paused, restarting, created 상태이면 <code>world assign</code>, <code>world release</code>, <code>world new --server</code>, <code>config LEVEL</code>은 거부됩니다. 서버를 자동으로 중지하지 않습니다(<code>world new --server</code>는 예전에 서버 중지를 시도했지만, 이제는 거부합니다).</li>
+<li><strong>안전 우선(fail-closed).</strong> 어떤 서버의 <code>config.env</code>를 읽을 수 없거나 <code>LEVEL</code>을 안전하게 해석할 수 없으면, 문제를 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 안전하지 않은 값은 경로 구분자, <code>.</code> 또는 <code>..</code>, 따옴표, 제어 문자, 작은따옴표 밖의 <code>${VAR}</code> 같은 Compose 보간, 지원하지 않는 <code>--universe</code> 위치입니다. <code>My World</code> 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, <code>-</code>, <code>_</code>만 쓸 수 있습니다.</li>
+<li><strong>이전 설치.</strong> 중복 할당은 고치지 않고 알려 줍니다. <a href="#mcctl-world-list"><code>mcctl world list</code></a>를 참고하세요.</li>
+</ul>
+<hr />
 <h3 id="mcctl-world-new">mcctl world new<a class="headerlink" href="#mcctl-world-new" title="Permanent link">&para;</a></h3>
 <p>선택적 시드 설정으로 새 월드 디렉토리를 생성합니다.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
@@ -5107,7 +5204,7 @@
 <tr>
 <td><code>--server</code></td>
 <td></td>
-<td>월드를 할당할 서버 (config에 SEED도 설정)</td>
+<td>월드를 할당할 서버 (<code>LEVEL</code>을 설정하고, 시드가 있으면 <code>SEED</code>도 설정). 서버가 중지되어 있어야 함</td>
 </tr>
 <tr>
 <td><code>--no-start</code></td>
@@ -5152,6 +5249,7 @@
 <li><code>worlds/&lt;name&gt;/</code> 디렉토리에 월드 디렉토리 생성</li>
 <li>시드가 제공되면 <code>.seed</code> 파일 생성 (참조용)</li>
 <li>서버가 할당되면:</li>
+<li>서버가 실행 중이거나 다른 서버가 그 월드를 사용 중이면 거부 (서버를 대신 중지하지 않음)</li>
 <li>서버의 <code>config.env</code>에 <code>LEVEL=&lt;world-name&gt;</code> 업데이트</li>
 <li>시드가 있으면 <code>SEED=&lt;seed&gt;</code> 설정</li>
 <li>선택적으로 서버 시작</li>
@@ -5163,7 +5261,7 @@
 </div>
 <hr />
 <h3 id="mcctl-world-list">mcctl world list<a class="headerlink" href="#mcctl-world-list" title="Permanent link">&para;</a></h3>
-<p>모든 월드와 잠금 상태를 나열합니다.</p>
+<p>모든 월드와 할당된 서버를 나열합니다.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>옵션:</strong></p>
@@ -5191,12 +5289,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-88-1" name="__codelineno-88-1" href="#__codelineno-88-1"></a>Worlds:
 <a id="__codelineno-88-2" name="__codelineno-88-2" href="#__codelineno-88-2"></a>
 <a id="__codelineno-88-3" name="__codelineno-88-3" href="#__codelineno-88-3"></a>  survival-world
-<a id="__codelineno-88-4" name="__codelineno-88-4" href="#__codelineno-88-4"></a>    Status: locked (mc-survival)
+<a id="__codelineno-88-4" name="__codelineno-88-4" href="#__codelineno-88-4"></a>    Status: assigned: mc-survival
 <a id="__codelineno-88-5" name="__codelineno-88-5" href="#__codelineno-88-5"></a>    Size: 514.0MB
 <a id="__codelineno-88-6" name="__codelineno-88-6" href="#__codelineno-88-6"></a>    Path: /home/myuser/minecraft-servers/worlds/survival-world
 <a id="__codelineno-88-7" name="__codelineno-88-7" href="#__codelineno-88-7"></a>
 <a id="__codelineno-88-8" name="__codelineno-88-8" href="#__codelineno-88-8"></a>  creative-world
-<a id="__codelineno-88-9" name="__codelineno-88-9" href="#__codelineno-88-9"></a>    Status: unlocked
+<a id="__codelineno-88-9" name="__codelineno-88-9" href="#__codelineno-88-9"></a>    Status: unassigned
 <a id="__codelineno-88-10" name="__codelineno-88-10" href="#__codelineno-88-10"></a>    Size: 128.5MB
 <a id="__codelineno-88-11" name="__codelineno-88-11" href="#__codelineno-88-11"></a>    Path: /home/myuser/minecraft-servers/worlds/creative-world
 </code></pre></div></p>
@@ -5211,24 +5309,30 @@
 <a id="__codelineno-90-4" name="__codelineno-90-4" href="#__codelineno-90-4"></a><span class="w">    </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/myuser/minecraft-servers/worlds/survival-world"</span><span class="p">,</span>
 <a id="__codelineno-90-5" name="__codelineno-90-5" href="#__codelineno-90-5"></a><span class="w">    </span><span class="nt">"isLocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
 <a id="__codelineno-90-6" name="__codelineno-90-6" href="#__codelineno-90-6"></a><span class="w">    </span><span class="nt">"lockedBy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mc-survival"</span><span class="p">,</span>
-<a id="__codelineno-90-7" name="__codelineno-90-7" href="#__codelineno-90-7"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"514.0MB"</span><span class="p">,</span>
-<a id="__codelineno-90-8" name="__codelineno-90-8" href="#__codelineno-90-8"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-21T13:19:48.853Z"</span>
-<a id="__codelineno-90-9" name="__codelineno-90-9" href="#__codelineno-90-9"></a><span class="w">  </span><span class="p">},</span>
-<a id="__codelineno-90-10" name="__codelineno-90-10" href="#__codelineno-90-10"></a><span class="w">  </span><span class="p">{</span>
-<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a><span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"creative-world"</span><span class="p">,</span>
-<a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a><span class="w">    </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/myuser/minecraft-servers/worlds/creative-world"</span><span class="p">,</span>
-<a id="__codelineno-90-13" name="__codelineno-90-13" href="#__codelineno-90-13"></a><span class="w">    </span><span class="nt">"isLocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
-<a id="__codelineno-90-14" name="__codelineno-90-14" href="#__codelineno-90-14"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"128.5MB"</span><span class="p">,</span>
-<a id="__codelineno-90-15" name="__codelineno-90-15" href="#__codelineno-90-15"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20T10:30:00.000Z"</span>
-<a id="__codelineno-90-16" name="__codelineno-90-16" href="#__codelineno-90-16"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-90-17" name="__codelineno-90-17" href="#__codelineno-90-17"></a><span class="p">]</span>
+<a id="__codelineno-90-7" name="__codelineno-90-7" href="#__codelineno-90-7"></a><span class="w">    </span><span class="nt">"servers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"mc-survival"</span><span class="p">],</span>
+<a id="__codelineno-90-8" name="__codelineno-90-8" href="#__codelineno-90-8"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"514.0MB"</span><span class="p">,</span>
+<a id="__codelineno-90-9" name="__codelineno-90-9" href="#__codelineno-90-9"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-21T13:19:48.853Z"</span>
+<a id="__codelineno-90-10" name="__codelineno-90-10" href="#__codelineno-90-10"></a><span class="w">  </span><span class="p">},</span>
+<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a><span class="w">  </span><span class="p">{</span>
+<a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a><span class="w">    </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"creative-world"</span><span class="p">,</span>
+<a id="__codelineno-90-13" name="__codelineno-90-13" href="#__codelineno-90-13"></a><span class="w">    </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/home/myuser/minecraft-servers/worlds/creative-world"</span><span class="p">,</span>
+<a id="__codelineno-90-14" name="__codelineno-90-14" href="#__codelineno-90-14"></a><span class="w">    </span><span class="nt">"isLocked"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<a id="__codelineno-90-15" name="__codelineno-90-15" href="#__codelineno-90-15"></a><span class="w">    </span><span class="nt">"servers"</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
+<a id="__codelineno-90-16" name="__codelineno-90-16" href="#__codelineno-90-16"></a><span class="w">    </span><span class="nt">"size"</span><span class="p">:</span><span class="w"> </span><span class="s2">"128.5MB"</span><span class="p">,</span>
+<a id="__codelineno-90-17" name="__codelineno-90-17" href="#__codelineno-90-17"></a><span class="w">    </span><span class="nt">"lastModified"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20T10:30:00.000Z"</span>
+<a id="__codelineno-90-18" name="__codelineno-90-18" href="#__codelineno-90-18"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-90-19" name="__codelineno-90-19" href="#__codelineno-90-19"></a><span class="p">]</span>
 </code></pre></div></p>
 </div>
 </div>
 </div>
+<div class="admonition info">
+<p class="admonition-title">중복 할당</p>
+<p>이전 설치에서 두 서버가 같은 월드를 쓰고 있으면 <code>mcctl world list</code>가 <code>assigned: a, b</code>로 표시하고, 중복마다(그리고 <code>config.env</code>를 읽을 수 없는 서버마다) 경고를 출력합니다. 자동으로 고치지 않으므로, 한 서버만 남기고 나머지 서버에는 다른 월드를 할당하세요. JSON 출력의 <code>isLocked</code>와 <code>lockedBy</code>는 "할당됨"의 별칭으로 남아 있습니다.</p>
+</div>
 <hr />
 <h3 id="mcctl-world-assign">mcctl world assign<a class="headerlink" href="#mcctl-world-assign" title="Permanent link">&para;</a></h3>
-<p>월드를 서버에 잠급니다.</p>
+<p>월드를 서버에 할당합니다(서버의 <code>LEVEL</code>을 설정).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-91-1" name="__codelineno-91-1" href="#__codelineno-91-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
@@ -5265,12 +5369,12 @@
 </div>
 </div>
 <div class="admonition info">
-<p class="admonition-title">월드 잠금</p>
-<p>잠긴 월드는 할당된 서버만 사용할 수 있습니다. 이는 동시 접근으로 인한 데이터 손상을 방지합니다.</p>
+<p class="admonition-title">월드 하나는 서버 하나</p>
+<p>다른 서버가 사용 중인 월드는 할당할 수 없고, 대상 서버는 중지되어 있어야 합니다. 이는 동시 접근으로 인한 데이터 손상을 방지합니다. 월드를 <code>servers/&lt;name&gt;/data</code> 안에 두는 서버에도 할당할 수 없으므로 먼저 <code>mcctl migrate worlds</code>를 실행하세요. <a href="#world-assignment-rules">월드 할당 규칙</a>을 참고하세요.</p>
 </div>
 <hr />
 <h3 id="mcctl-world-release">mcctl world release<a class="headerlink" href="#mcctl-world-release" title="Permanent link">&para;</a></h3>
-<p>월드 잠금을 해제합니다.</p>
+<p>월드를 사용하던 서버를 서버 자신의 기본 월드 <code>&lt;server&gt;</code>로 되돌립니다.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-94-1" name="__codelineno-94-1" href="#__codelineno-94-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
@@ -5299,17 +5403,19 @@
 <tbody>
 <tr>
 <td><code>--force</code></td>
-<td>서버가 실행 중이어도 강제 해제</td>
+<td>받아들이지만 무시됨 (실행 중인 서버는 해제하지 않음)</td>
 </tr>
 </tbody>
 </table>
 <p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a><span class="c1"># 대화형 - 잠긴 월드 목록 표시</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-95-1" name="__codelineno-95-1" href="#__codelineno-95-1"></a><span class="c1"># 대화형 - 할당된 월드 목록 표시</span>
 <a id="__codelineno-95-2" name="__codelineno-95-2" href="#__codelineno-95-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release
 <a id="__codelineno-95-3" name="__codelineno-95-3" href="#__codelineno-95-3"></a>
 <a id="__codelineno-95-4" name="__codelineno-95-4" href="#__codelineno-95-4"></a><span class="c1"># 특정 월드 해제</span>
 <a id="__codelineno-95-5" name="__codelineno-95-5" href="#__codelineno-95-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>survival
 </code></pre></div>
+<p>월드를 사용하던 서버는 <code>LEVEL=&lt;server&gt;</code>가 됩니다. 비어 있는 <code>worlds/&lt;server&gt;</code>가 이미 있으면 그것을 사용하고, 없으면 다음 시작 때 새로 만듭니다. 월드 자체는 <code>worlds/</code>에 그대로 남습니다.</p>
+<p>서버가 실행 중이거나, 서버가 이미 자신의 기본 월드를 쓰고 있거나, 월드가 둘 이상의 서버에 할당되어 있거나, 서버가 월드를 <code>servers/&lt;name&gt;/data</code> 안에 두고 있거나, 월드를 쓰는 서버가 없으면 해제는 거부됩니다.</p>
 <hr />
 <h3 id="mcctl-world-delete">mcctl world delete<a class="headerlink" href="#mcctl-world-delete" title="Permanent link">&para;</a></h3>
 <p>월드와 모든 데이터를 영구적으로 삭제합니다.</p>
@@ -5343,7 +5449,7 @@
 <tr>
 <td><code>--force</code></td>
 <td><code>-f</code></td>
-<td>확인 프롬프트 건너뛰기</td>
+<td>확인 프롬프트 건너뛰기 (서버가 사용 중인 월드는 삭제하지 않음)</td>
 </tr>
 <tr>
 <td><code>--json</code></td>
@@ -5383,7 +5489,8 @@
 </div>
 <p><strong>안전 기능:</strong></p>
 <ul>
-<li><strong>잠금 확인</strong>: 잠긴 월드(실행 중인 서버에 할당된)는 삭제할 수 없음</li>
+<li><strong>할당 확인</strong>: 서버가 사용 중인 월드는 실행 여부와 관계없이 삭제할 수 없으며 <code>--force</code>로도 우회할 수 없음. 먼저 서버에 다른 월드를 할당하세요. 월드를 <code>servers/&lt;name&gt;/data</code> 안에 두는 서버(<code>EXTRA_ARGS=--universe /worlds/</code> 없음)는 <code>worlds/&lt;world&gt;</code> 삭제를 막지 않음</li>
+<li><strong>안전 우선(fail-closed)</strong>: 어떤 서버의 <code>config.env</code>를 읽거나 해석할 수 없으면 거부됨(<a href="#world-assignment-rules">월드 할당 규칙</a> 참고)</li>
 <li><strong>확인 프롬프트</strong>: "DELETE" 입력 필요 (<code>--force</code> 미사용 시)</li>
 <li><strong>크기 표시</strong>: 삭제 전 월드 크기 표시</li>
 </ul>
@@ -5469,8 +5576,19 @@
 <td><code>-m</code></td>
 <td>커밋 메시지</td>
 </tr>
+<tr>
+<td><code>--auto</code></td>
+<td></td>
+<td>묻지 않고 시각 메시지로 백업합니다. 다른 백업이 실행 중이면 최대 10분 기다립니다(정지 시 자동 백업과 같은 규칙)</td>
+</tr>
+<tr>
+<td><code>--allow-missing</code></td>
+<td></td>
+<td>일부러 지운 월드를 백업에서도 지웁니다(<a href="../../advanced/backup/#삭제한-월드">백업 가이드</a> 참조)</td>
+</tr>
 </tbody>
 </table>
+<p>실행 중인 서버는 복사 전에 디스크에 기록합니다(<code>save-off</code>, <code>save-all flush</code>, <code>save-on</code>). 변경이 없으면 성공입니다.</p>
 <p><strong>예제:</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">대화형 모드</label><label for="__tabbed_10_2">CLI 모드</label></div>
 <div class="tabbed-content">
@@ -5524,14 +5642,14 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-110-1" name="__codelineno-110-1" href="#__codelineno-110-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span><span class="nb">history</span><span class="w"> </span>--json
 </code></pre></div>
 <p><strong>출력:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a><span class="p">{</span>
-<a id="__codelineno-111-2" name="__codelineno-111-2" href="#__codelineno-111-2"></a><span class="w">  </span><span class="nt">"history"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-111-3" name="__codelineno-111-3" href="#__codelineno-111-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fd8633b"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20 21:06:35 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup: 2026-01-20 21:06:30"</span><span class="p">},</span>
-<a id="__codelineno-111-4" name="__codelineno-111-4" href="#__codelineno-111-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"19a7a4d"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20 20:21:08 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup: 2026-01-20 20:21:06"</span><span class="p">},</span>
-<a id="__codelineno-111-5" name="__codelineno-111-5" href="#__codelineno-111-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"7c2ad14"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-19 22:50:42 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Manual backup"</span><span class="p">},</span>
-<a id="__codelineno-111-6" name="__codelineno-111-6" href="#__codelineno-111-6"></a><span class="w">    </span><span class="p">{</span><span class="nt">"commit"</span><span class="p">:</span><span class="w"> </span><span class="s2">"ddeda27"</span><span class="p">,</span><span class="w"> </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-17 23:43:24 +0900"</span><span class="p">,</span><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Initial backup"</span><span class="p">}</span>
-<a id="__codelineno-111-7" name="__codelineno-111-7" href="#__codelineno-111-7"></a><span class="w">  </span><span class="p">]</span>
-<a id="__codelineno-111-8" name="__codelineno-111-8" href="#__codelineno-111-8"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-111-1" name="__codelineno-111-1" href="#__codelineno-111-1"></a><span class="p">[</span>
+<a id="__codelineno-111-2" name="__codelineno-111-2" href="#__codelineno-111-2"></a><span class="w">  </span><span class="p">{</span>
+<a id="__codelineno-111-3" name="__codelineno-111-3" href="#__codelineno-111-3"></a><span class="w">    </span><span class="nt">"commitHash"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fd8633b2c1e4a7d9b0f3e6a5c8d1b4e7f0a3c6d9"</span><span class="p">,</span>
+<a id="__codelineno-111-4" name="__codelineno-111-4" href="#__codelineno-111-4"></a><span class="w">    </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Backup: 2026-01-20 21:06:30"</span><span class="p">,</span>
+<a id="__codelineno-111-5" name="__codelineno-111-5" href="#__codelineno-111-5"></a><span class="w">    </span><span class="nt">"date"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2026-01-20T12:06:35.000Z"</span><span class="p">,</span>
+<a id="__codelineno-111-6" name="__codelineno-111-6" href="#__codelineno-111-6"></a><span class="w">    </span><span class="nt">"author"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Minecraft Backup"</span>
+<a id="__codelineno-111-7" name="__codelineno-111-7" href="#__codelineno-111-7"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-111-8" name="__codelineno-111-8" href="#__codelineno-111-8"></a><span class="p">]</span>
 </code></pre></div></p>
 </div>
 </div>
@@ -5539,7 +5657,7 @@
 <hr />
 <h3 id="mcctl-backup-restore">mcctl backup restore<a class="headerlink" href="#mcctl-backup-restore" title="Permanent link">&para;</a></h3>
 <p>백업에서 월드 데이터를 복원합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-112-1" name="__codelineno-112-1" href="#__codelineno-112-1"></a>mcctl<span class="w"> </span>backup<span class="w"> </span>restore<span class="w"> </span><span class="o">[</span>commit<span class="o">]</span><span class="w"> </span><span class="o">[</span>--force<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
 <table>
@@ -5554,8 +5672,13 @@
 <td><code>commit</code></td>
 <td>커밋 해시 (선택사항, 제공하지 않으면 목록 표시)</td>
 </tr>
+<tr>
+<td><code>--force</code></td>
+<td>확인을 묻지 않습니다</td>
+</tr>
 </tbody>
 </table>
+<p>모든 서버가 중지되어 있어야 합니다. 결과는 그 커밋과 정확히 같고, <code>worlds/.locks</code>는 남으며, 교체된 데이터는 <code>backups/restore-previous/&lt;시각&gt;/</code>에 남습니다. <a href="../../advanced/backup/#백업에서-복원">백업 가이드</a>를 참조하세요.</p>
 <p><strong>예제:</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">대화형 모드</label><label for="__tabbed_12_2">CLI 모드</label></div>
 <div class="tabbed-content">
@@ -5746,72 +5869,16 @@
 <a id="__codelineno-127-7" name="__codelineno-127-7" href="#__codelineno-127-7"></a>  Notch
 </code></pre></div>
 <hr />
-<h3 id="mcctl-player-lookup-레거시">mcctl player lookup (레거시)<a class="headerlink" href="#mcctl-player-lookup-레거시" title="Permanent link">&para;</a></h3>
 <div class="admonition note">
-<p class="admonition-title">지원 중단 예정</p>
-<p><code>mcctl player info</code>를 대신 사용하세요. 이 명령어는 하위 호환성을 위해 유지됩니다.</p>
+<p class="admonition-title">제거됨</p>
+<p><code>mcctl player lookup</code>과 <code>mcctl player uuid</code>는 제거되었습니다. <code>mcctl player info &lt;name&gt;</code>을 사용하세요(오프라인 UUID는 <code>--offline</code>).
+기존 <code>player.sh</code>는 variant 비트 버그 때문에 일부 이름(예: Steve, Alex)의 오프라인 UUID를 잘못 계산했습니다. <code>mcctl player info --offline</code>은 Minecraft와 같은 값을 출력합니다.</p>
 </div>
-<p>Mojang API에서 플레이어 정보를 조회합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-128-1" name="__codelineno-128-1" href="#__codelineno-128-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div>
-<p><strong>옵션:</strong></p>
-<table>
-<thead>
-<tr>
-<th>옵션</th>
-<th>설명</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--json</code></td>
-<td>JSON 형식으로 출력</td>
-</tr>
-</tbody>
-</table>
-<p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-129-1" name="__codelineno-129-1" href="#__codelineno-129-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>lookup<span class="w"> </span>Notch
-</code></pre></div>
-<hr />
-<h3 id="mcctl-player-uuid-레거시">mcctl player uuid (레거시)<a class="headerlink" href="#mcctl-player-uuid-레거시" title="Permanent link">&para;</a></h3>
-<div class="admonition note">
-<p class="admonition-title">지원 중단 예정</p>
-<p><code>mcctl player info</code> 또는 <code>mcctl player info --offline</code>을 대신 사용하세요.</p>
-</div>
-<p>플레이어 UUID를 가져옵니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>&lt;name&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
-</code></pre></div>
-<p><strong>옵션:</strong></p>
-<table>
-<thead>
-<tr>
-<th>옵션</th>
-<th>설명</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--offline</code></td>
-<td>오프라인 UUID 생성</td>
-</tr>
-<tr>
-<td><code>--json</code></td>
-<td>JSON 형식으로 출력</td>
-</tr>
-</tbody>
-</table>
-<p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a><span class="c1"># 온라인 UUID (Mojang에서)</span>
-<a id="__codelineno-131-2" name="__codelineno-131-2" href="#__codelineno-131-2"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Notch
-<a id="__codelineno-131-3" name="__codelineno-131-3" href="#__codelineno-131-3"></a>
-<a id="__codelineno-131-4" name="__codelineno-131-4" href="#__codelineno-131-4"></a><span class="c1"># 오프라인 UUID (오프라인 모드 서버용)</span>
-<a id="__codelineno-131-5" name="__codelineno-131-5" href="#__codelineno-131-5"></a>mcctl<span class="w"> </span>player<span class="w"> </span>uuid<span class="w"> </span>Steve<span class="w"> </span>--offline
-</code></pre></div>
 <hr />
 <h2 id="마이그레이션-명령어">마이그레이션 명령어<a class="headerlink" href="#마이그레이션-명령어" title="Permanent link">&para;</a></h2>
 <h3 id="mcctl-migrate-status">mcctl migrate status<a class="headerlink" href="#mcctl-migrate-status" title="Permanent link">&para;</a></h3>
 <p>모든 서버의 마이그레이션 상태를 확인합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-128-1" name="__codelineno-128-1" href="#__codelineno-128-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>옵션:</strong></p>
 <table>
@@ -5829,22 +5896,22 @@
 </tbody>
 </table>
 <p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
+<div class="highlight"><pre><span></span><code><a id="__codelineno-129-1" name="__codelineno-129-1" href="#__codelineno-129-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>status
 </code></pre></div>
 <p><strong>출력:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>Migration Status:
-<a id="__codelineno-134-2" name="__codelineno-134-2" href="#__codelineno-134-2"></a>
-<a id="__codelineno-134-3" name="__codelineno-134-3" href="#__codelineno-134-3"></a>  survival: needs migration
-<a id="__codelineno-134-4" name="__codelineno-134-4" href="#__codelineno-134-4"></a>    Missing EXTRA_ARGS=--universe /worlds/
-<a id="__codelineno-134-5" name="__codelineno-134-5" href="#__codelineno-134-5"></a>  creative: up to date
-<a id="__codelineno-134-6" name="__codelineno-134-6" href="#__codelineno-134-6"></a>
-<a id="__codelineno-134-7" name="__codelineno-134-7" href="#__codelineno-134-7"></a>1 server(s) need migration.
-<a id="__codelineno-134-8" name="__codelineno-134-8" href="#__codelineno-134-8"></a>Run: mcctl migrate worlds to migrate.
+<div class="highlight"><pre><span></span><code><a id="__codelineno-130-1" name="__codelineno-130-1" href="#__codelineno-130-1"></a>Migration Status:
+<a id="__codelineno-130-2" name="__codelineno-130-2" href="#__codelineno-130-2"></a>
+<a id="__codelineno-130-3" name="__codelineno-130-3" href="#__codelineno-130-3"></a>  survival: needs migration
+<a id="__codelineno-130-4" name="__codelineno-130-4" href="#__codelineno-130-4"></a>    Missing EXTRA_ARGS=--universe /worlds/
+<a id="__codelineno-130-5" name="__codelineno-130-5" href="#__codelineno-130-5"></a>  creative: up to date
+<a id="__codelineno-130-6" name="__codelineno-130-6" href="#__codelineno-130-6"></a>
+<a id="__codelineno-130-7" name="__codelineno-130-7" href="#__codelineno-130-7"></a>1 server(s) need migration.
+<a id="__codelineno-130-8" name="__codelineno-130-8" href="#__codelineno-130-8"></a>Run: mcctl migrate worlds to migrate.
 </code></pre></div>
 <hr />
 <h3 id="mcctl-migrate-worlds">mcctl migrate worlds<a class="headerlink" href="#mcctl-migrate-worlds" title="Permanent link">&para;</a></h3>
 <p>월드를 공유 <code>/worlds/</code> 디렉토리 구조로 마이그레이션합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-131-1" name="__codelineno-131-1" href="#__codelineno-131-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>옵션:</strong></p>
 <table>
@@ -5877,30 +5944,30 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="14:4"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><input id="__tabbed_14_3" name="__tabbed_14" type="radio" /><input id="__tabbed_14_4" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">대화형 모드</label><label for="__tabbed_14_2">전체 마이그레이션</label><label for="__tabbed_14_3">드라이 런</label><label for="__tabbed_14_4">백업과 함께</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds
-<a id="__codelineno-136-2" name="__codelineno-136-2" href="#__codelineno-136-2"></a><span class="c1"># 마이그레이션이 필요한 서버 표시, 하나 또는 전체 선택</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-132-1" name="__codelineno-132-1" href="#__codelineno-132-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds
+<a id="__codelineno-132-2" name="__codelineno-132-2" href="#__codelineno-132-2"></a><span class="c1"># 마이그레이션이 필요한 서버 표시, 하나 또는 전체 선택</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
+<div class="highlight"><pre><span></span><code><a id="__codelineno-133-1" name="__codelineno-133-1" href="#__codelineno-133-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--dry-run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-134-1" name="__codelineno-134-1" href="#__codelineno-134-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--dry-run
 </code></pre></div>
 <p><strong>출력:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a>DRY RUN - No changes will be made
-<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>
-<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>Would migrate: survival
-<a id="__codelineno-139-4" name="__codelineno-139-4" href="#__codelineno-139-4"></a>  1. Stop server if running
-<a id="__codelineno-139-5" name="__codelineno-139-5" href="#__codelineno-139-5"></a>  2. Move world: servers/survival/data/world → worlds/survival
-<a id="__codelineno-139-6" name="__codelineno-139-6" href="#__codelineno-139-6"></a>  3. Update config.env:
-<a id="__codelineno-139-7" name="__codelineno-139-7" href="#__codelineno-139-7"></a>     - Add: EXTRA_ARGS=--universe /worlds/
-<a id="__codelineno-139-8" name="__codelineno-139-8" href="#__codelineno-139-8"></a>     - Set: LEVEL=survival
+<div class="highlight"><pre><span></span><code><a id="__codelineno-135-1" name="__codelineno-135-1" href="#__codelineno-135-1"></a>DRY RUN - No changes will be made
+<a id="__codelineno-135-2" name="__codelineno-135-2" href="#__codelineno-135-2"></a>
+<a id="__codelineno-135-3" name="__codelineno-135-3" href="#__codelineno-135-3"></a>Would migrate: survival
+<a id="__codelineno-135-4" name="__codelineno-135-4" href="#__codelineno-135-4"></a>  1. Stop server if running
+<a id="__codelineno-135-5" name="__codelineno-135-5" href="#__codelineno-135-5"></a>  2. Move world: servers/survival/data/world → worlds/survival
+<a id="__codelineno-135-6" name="__codelineno-135-6" href="#__codelineno-135-6"></a>  3. Update config.env:
+<a id="__codelineno-135-7" name="__codelineno-135-7" href="#__codelineno-135-7"></a>     - Add: EXTRA_ARGS=--universe /worlds/
+<a id="__codelineno-135-8" name="__codelineno-135-8" href="#__codelineno-135-8"></a>     - Set: LEVEL=survival
 </code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--backup
+<div class="highlight"><pre><span></span><code><a id="__codelineno-136-1" name="__codelineno-136-1" href="#__codelineno-136-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>worlds<span class="w"> </span>--all<span class="w"> </span>--backup
 </code></pre></div>
 </div>
 </div>
@@ -5914,17 +5981,53 @@
 <li><code>LEVEL=&lt;server-name&gt;</code> 설정</li>
 <li>대소문자 무시로 <strong>기존 월드 탐지</strong></li>
 </ol>
+<p>결과 <code>LEVEL</code>을 다른 서버가 사용 중이거나 서버의 할당을 확인할 수 없으면, 데이터를 옮기기 전에 해당 서버의 마이그레이션을 거부합니다(<a href="#world-assignment-rules">월드 할당 규칙</a> 참고).</p>
 <div class="admonition info">
 <p class="admonition-title">월드 저장 경로 변경</p>
 <p><code>mcctl create</code>로 생성된 새 서버는 이미 <code>/worlds/</code> 디렉토리 구조를 사용합니다.
 이 마이그레이션 명령어는 이 변경 이전에 생성된 기존 서버를 위한 것입니다.</p>
 </div>
 <hr />
+<h3 id="mcctl-migrate-spec">mcctl migrate spec<a class="headerlink" href="#mcctl-migrate-spec" title="Permanent link">&para;</a></h3>
+<p>서버를 정의 파일 <code>servers/&lt;이름&gt;/server.yaml</code>로 가져오고, 그 파일에서 만드는 파일(<code>config.env</code>, <code>docker-compose.yml</code>, <code>servers/compose.yml</code> 항목)을 씁니다. <a href="../../configuration/server-yaml/">서버 정의</a>를 참고하세요.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-137-1" name="__codelineno-137-1" href="#__codelineno-137-1"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>spec<span class="w"> </span>&lt;서버&gt;<span class="w"> </span><span class="o">[</span>옵션<span class="o">]</span>
+<a id="__codelineno-137-2" name="__codelineno-137-2" href="#__codelineno-137-2"></a>mcctl<span class="w"> </span>migrate<span class="w"> </span>spec<span class="w"> </span>--all<span class="w"> </span><span class="o">[</span>옵션<span class="o">]</span>
+</code></pre></div>
+<p><strong>옵션:</strong></p>
+<table>
+<thead>
+<tr>
+<th>옵션</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--all</code></td>
+<td>모든 서버</td>
+</tr>
+<tr>
+<td><code>--dry-run</code></td>
+<td>가져올 내용만 보고하고 쓰지 않음</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>생성 파일의 손수정을 무시하고 <code>server.yaml</code>에서 다시 만듦(<code>.bak</code> 사본을 남김)</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td>서버별 보고서를 JSON으로 출력</td>
+</tr>
+</tbody>
+</table>
+<p>다시 실행해도 안전합니다. 동기화된 서버는 <code>synced</code>로 보고하고 아무것도 다시 쓰지 않습니다. 월드나 이미지를 정할 수 없는 서버(예: <code>config.env</code>의 <code>${...}</code> 값)는 <code>refused</code>이고 종료 코드는 1입니다. <code>world.level</code>을 바꾸면 <a href="#world-assignment-rules">월드 할당 규칙</a>으로 검사하며 서버가 정지돼 있어야 합니다.</p>
+<p>꼭 실행할 필요는 없습니다. <code>server.yaml</code>이 없는 서버는 mcctl이 처음 바꿀 때 가져오고, <code>mcctl upgrade</code>가 아직 가져오지 않은 서버를 알려 줍니다.</p>
+<hr />
 <h2 id="모드-관리">모드 관리<a class="headerlink" href="#모드-관리" title="Permanent link">&para;</a></h2>
 <p>마인크래프트 서버의 모드와 플러그인을 관리합니다. mcctl은 Modrinth, CurseForge, Spiget (SpigotMC), 직접 URL 다운로드 등 다양한 모드 소스와 통합됩니다.</p>
 <h3 id="mcctl-mod-search">mcctl mod search<a class="headerlink" href="#mcctl-mod-search" title="Permanent link">&para;</a></h3>
 <p>Modrinth에서 모드를 검색합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>&lt;query&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-138-1" name="__codelineno-138-1" href="#__codelineno-138-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>&lt;query&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
 <table>
@@ -5957,27 +6060,27 @@
 </tbody>
 </table>
 <p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a><span class="c1"># 최적화 모드 검색</span>
-<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>sodium
-<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>
-<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a><span class="c1"># 월드 생성 모드 검색</span>
-<a id="__codelineno-142-5" name="__codelineno-142-5" href="#__codelineno-142-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"world generation"</span>
-<a id="__codelineno-142-6" name="__codelineno-142-6" href="#__codelineno-142-6"></a>
-<a id="__codelineno-142-7" name="__codelineno-142-7" href="#__codelineno-142-7"></a><span class="c1"># 스크립팅용 JSON 출력</span>
-<a id="__codelineno-142-8" name="__codelineno-142-8" href="#__codelineno-142-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>lithium<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-139-1" name="__codelineno-139-1" href="#__codelineno-139-1"></a><span class="c1"># 최적화 모드 검색</span>
+<a id="__codelineno-139-2" name="__codelineno-139-2" href="#__codelineno-139-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>sodium
+<a id="__codelineno-139-3" name="__codelineno-139-3" href="#__codelineno-139-3"></a>
+<a id="__codelineno-139-4" name="__codelineno-139-4" href="#__codelineno-139-4"></a><span class="c1"># 월드 생성 모드 검색</span>
+<a id="__codelineno-139-5" name="__codelineno-139-5" href="#__codelineno-139-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"world generation"</span>
+<a id="__codelineno-139-6" name="__codelineno-139-6" href="#__codelineno-139-6"></a>
+<a id="__codelineno-139-7" name="__codelineno-139-7" href="#__codelineno-139-7"></a><span class="c1"># 스크립팅용 JSON 출력</span>
+<a id="__codelineno-139-8" name="__codelineno-139-8" href="#__codelineno-139-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span>lithium<span class="w"> </span>--json
 </code></pre></div>
 <p><strong>출력 예시:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a>Search results for "sodium" (25 total):
-<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>
-<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>  sodium (12.5M downloads)
-<a id="__codelineno-143-4" name="__codelineno-143-4" href="#__codelineno-143-4"></a>    Sodium server client
-<a id="__codelineno-143-5" name="__codelineno-143-5" href="#__codelineno-143-5"></a>    A modern rendering engine for Minecraft
-<a id="__codelineno-143-6" name="__codelineno-143-6" href="#__codelineno-143-6"></a>
-<a id="__codelineno-143-7" name="__codelineno-143-7" href="#__codelineno-143-7"></a>  sodium-extra (2.1M downloads)
-<a id="__codelineno-143-8" name="__codelineno-143-8" href="#__codelineno-143-8"></a>    Sodium Extra server? client
-<a id="__codelineno-143-9" name="__codelineno-143-9" href="#__codelineno-143-9"></a>    Extra options for Sodium
-<a id="__codelineno-143-10" name="__codelineno-143-10" href="#__codelineno-143-10"></a>
-<a id="__codelineno-143-11" name="__codelineno-143-11" href="#__codelineno-143-11"></a>Use: mcctl mod add &lt;server&gt; &lt;mod-slug&gt; to install
+<div class="highlight"><pre><span></span><code><a id="__codelineno-140-1" name="__codelineno-140-1" href="#__codelineno-140-1"></a>Search results for "sodium" (25 total):
+<a id="__codelineno-140-2" name="__codelineno-140-2" href="#__codelineno-140-2"></a>
+<a id="__codelineno-140-3" name="__codelineno-140-3" href="#__codelineno-140-3"></a>  sodium (12.5M downloads)
+<a id="__codelineno-140-4" name="__codelineno-140-4" href="#__codelineno-140-4"></a>    Sodium server client
+<a id="__codelineno-140-5" name="__codelineno-140-5" href="#__codelineno-140-5"></a>    A modern rendering engine for Minecraft
+<a id="__codelineno-140-6" name="__codelineno-140-6" href="#__codelineno-140-6"></a>
+<a id="__codelineno-140-7" name="__codelineno-140-7" href="#__codelineno-140-7"></a>  sodium-extra (2.1M downloads)
+<a id="__codelineno-140-8" name="__codelineno-140-8" href="#__codelineno-140-8"></a>    Sodium Extra server? client
+<a id="__codelineno-140-9" name="__codelineno-140-9" href="#__codelineno-140-9"></a>    Extra options for Sodium
+<a id="__codelineno-140-10" name="__codelineno-140-10" href="#__codelineno-140-10"></a>
+<a id="__codelineno-140-11" name="__codelineno-140-11" href="#__codelineno-140-11"></a>Use: mcctl mod add &lt;server&gt; &lt;mod-slug&gt; to install
 </code></pre></div>
 <p>출력 내용:</p>
 <ul>
@@ -5989,7 +6092,7 @@
 <hr />
 <h3 id="mcctl-mod-add">mcctl mod add<a class="headerlink" href="#mcctl-mod-add" title="Permanent link">&para;</a></h3>
 <p>서버 설정에 모드를 추가합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-141-1" name="__codelineno-141-1" href="#__codelineno-141-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
 <table>
@@ -6049,38 +6152,38 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="15:4"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><input id="__tabbed_15_3" name="__tabbed_15" type="radio" /><input id="__tabbed_15_4" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Modrinth (기본값)</label><label for="__tabbed_15_2">CurseForge</label><label for="__tabbed_15_3">Spiget (SpigotMC)</label><label for="__tabbed_15_4">직접 URL</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-145-1" name="__codelineno-145-1" href="#__codelineno-145-1"></a><span class="c1"># 단일 모드 추가</span>
-<a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium
+<div class="highlight"><pre><span></span><code><a id="__codelineno-142-1" name="__codelineno-142-1" href="#__codelineno-142-1"></a><span class="c1"># 단일 모드 추가</span>
+<a id="__codelineno-142-2" name="__codelineno-142-2" href="#__codelineno-142-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium
+<a id="__codelineno-142-3" name="__codelineno-142-3" href="#__codelineno-142-3"></a>
+<a id="__codelineno-142-4" name="__codelineno-142-4" href="#__codelineno-142-4"></a><span class="c1"># 여러 모드 한 번에 추가</span>
+<a id="__codelineno-142-5" name="__codelineno-142-5" href="#__codelineno-142-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
+<a id="__codelineno-142-6" name="__codelineno-142-6" href="#__codelineno-142-6"></a>
+<a id="__codelineno-142-7" name="__codelineno-142-7" href="#__codelineno-142-7"></a><span class="c1"># Fabric 서버에 추가</span>
+<a id="__codelineno-142-8" name="__codelineno-142-8" href="#__codelineno-142-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>fabric-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-143-1" name="__codelineno-143-1" href="#__codelineno-143-1"></a><span class="c1"># Java 17+ 이미지에서는 .env의 CF_API_KEY가 선택 사항</span>
+<a id="__codelineno-143-2" name="__codelineno-143-2" href="#__codelineno-143-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
+<a id="__codelineno-143-3" name="__codelineno-143-3" href="#__codelineno-143-3"></a>
+<a id="__codelineno-143-4" name="__codelineno-143-4" href="#__codelineno-143-4"></a><span class="c1"># 인기 모드팩 모드 추가</span>
+<a id="__codelineno-143-5" name="__codelineno-143-5" href="#__codelineno-143-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>create<span class="w"> </span>applied-energistics-2
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-144-1" name="__codelineno-144-1" href="#__codelineno-144-1"></a><span class="c1"># SpigotMC의 리소스 ID 사용</span>
+<a id="__codelineno-144-2" name="__codelineno-144-2" href="#__codelineno-144-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w"> </span><span class="m">1649</span>
+<a id="__codelineno-144-3" name="__codelineno-144-3" href="#__codelineno-144-3"></a>
+<a id="__codelineno-144-4" name="__codelineno-144-4" href="#__codelineno-144-4"></a><span class="c1"># EssentialsX 예제 (리소스 ID: 9089)</span>
+<a id="__codelineno-144-5" name="__codelineno-144-5" href="#__codelineno-144-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>paper-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span>
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><a id="__codelineno-145-1" name="__codelineno-145-1" href="#__codelineno-145-1"></a><span class="c1"># URL에서 JAR 직접 다운로드</span>
+<a id="__codelineno-145-2" name="__codelineno-145-2" href="#__codelineno-145-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod.jar
 <a id="__codelineno-145-3" name="__codelineno-145-3" href="#__codelineno-145-3"></a>
-<a id="__codelineno-145-4" name="__codelineno-145-4" href="#__codelineno-145-4"></a><span class="c1"># 여러 모드 한 번에 추가</span>
-<a id="__codelineno-145-5" name="__codelineno-145-5" href="#__codelineno-145-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
-<a id="__codelineno-145-6" name="__codelineno-145-6" href="#__codelineno-145-6"></a>
-<a id="__codelineno-145-7" name="__codelineno-145-7" href="#__codelineno-145-7"></a><span class="c1"># Fabric 서버에 추가</span>
-<a id="__codelineno-145-8" name="__codelineno-145-8" href="#__codelineno-145-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>fabric-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a><span class="c1"># Java 17+ 이미지에서는 .env의 CF_API_KEY가 선택 사항</span>
-<a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
-<a id="__codelineno-146-3" name="__codelineno-146-3" href="#__codelineno-146-3"></a>
-<a id="__codelineno-146-4" name="__codelineno-146-4" href="#__codelineno-146-4"></a><span class="c1"># 인기 모드팩 모드 추가</span>
-<a id="__codelineno-146-5" name="__codelineno-146-5" href="#__codelineno-146-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>create<span class="w"> </span>applied-energistics-2
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a><span class="c1"># SpigotMC의 리소스 ID 사용</span>
-<a id="__codelineno-147-2" name="__codelineno-147-2" href="#__codelineno-147-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w"> </span><span class="m">1649</span>
-<a id="__codelineno-147-3" name="__codelineno-147-3" href="#__codelineno-147-3"></a>
-<a id="__codelineno-147-4" name="__codelineno-147-4" href="#__codelineno-147-4"></a><span class="c1"># EssentialsX 예제 (리소스 ID: 9089)</span>
-<a id="__codelineno-147-5" name="__codelineno-147-5" href="#__codelineno-147-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>paper-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-148-1" name="__codelineno-148-1" href="#__codelineno-148-1"></a><span class="c1"># URL에서 JAR 직접 다운로드</span>
-<a id="__codelineno-148-2" name="__codelineno-148-2" href="#__codelineno-148-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod.jar
-<a id="__codelineno-148-3" name="__codelineno-148-3" href="#__codelineno-148-3"></a>
-<a id="__codelineno-148-4" name="__codelineno-148-4" href="#__codelineno-148-4"></a><span class="c1"># 여러 URL</span>
-<a id="__codelineno-148-5" name="__codelineno-148-5" href="#__codelineno-148-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod1.jar<span class="w"> </span>https://example.com/mod2.jar
+<a id="__codelineno-145-4" name="__codelineno-145-4" href="#__codelineno-145-4"></a><span class="c1"># 여러 URL</span>
+<a id="__codelineno-145-5" name="__codelineno-145-5" href="#__codelineno-145-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--url<span class="w"> </span>https://example.com/mod1.jar<span class="w"> </span>https://example.com/mod2.jar
 </code></pre></div>
 </div>
 </div>
@@ -6156,30 +6259,30 @@
 </tbody>
 </table>
 <p><strong>예시</strong>: <code>iris</code>를 추가하면 서버 시작 시 <code>sodium</code>(필수 의존성)이 자동으로 다운로드됩니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-149-1" name="__codelineno-149-1" href="#__codelineno-149-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>iris
-<a id="__codelineno-149-2" name="__codelineno-149-2" href="#__codelineno-149-2"></a><span class="c1"># ✓ iris 추가됨</span>
-<a id="__codelineno-149-3" name="__codelineno-149-3" href="#__codelineno-149-3"></a><span class="c1"># ✓ sodium 서버 시작 시 자동 다운로드 (필수 의존성)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-146-1" name="__codelineno-146-1" href="#__codelineno-146-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>iris
+<a id="__codelineno-146-2" name="__codelineno-146-2" href="#__codelineno-146-2"></a><span class="c1"># ✓ iris 추가됨</span>
+<a id="__codelineno-146-3" name="__codelineno-146-3" href="#__codelineno-146-3"></a><span class="c1"># ✓ sodium 서버 시작 시 자동 다운로드 (필수 의존성)</span>
 </code></pre></div>
 </div>
 <p><strong>출력 예시:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-150-1" name="__codelineno-150-1" href="#__codelineno-150-1"></a>Validating mods on Modrinth...
-<a id="__codelineno-150-2" name="__codelineno-150-2" href="#__codelineno-150-2"></a>  ✓ Sodium (sodium)
-<a id="__codelineno-150-3" name="__codelineno-150-3" href="#__codelineno-150-3"></a>  ✓ Lithium (lithium)
-<a id="__codelineno-150-4" name="__codelineno-150-4" href="#__codelineno-150-4"></a>
-<a id="__codelineno-150-5" name="__codelineno-150-5" href="#__codelineno-150-5"></a>✓ Added 2 mod(s) to myserver
-<a id="__codelineno-150-6" name="__codelineno-150-6" href="#__codelineno-150-6"></a>
-<a id="__codelineno-150-7" name="__codelineno-150-7" href="#__codelineno-150-7"></a>  sodium
-<a id="__codelineno-150-8" name="__codelineno-150-8" href="#__codelineno-150-8"></a>  lithium
-<a id="__codelineno-150-9" name="__codelineno-150-9" href="#__codelineno-150-9"></a>
-<a id="__codelineno-150-10" name="__codelineno-150-10" href="#__codelineno-150-10"></a>Config: MODRINTH_PROJECTS=sodium,lithium
-<a id="__codelineno-150-11" name="__codelineno-150-11" href="#__codelineno-150-11"></a>
-<a id="__codelineno-150-12" name="__codelineno-150-12" href="#__codelineno-150-12"></a>Restart the server to apply changes:
-<a id="__codelineno-150-13" name="__codelineno-150-13" href="#__codelineno-150-13"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-147-1" name="__codelineno-147-1" href="#__codelineno-147-1"></a>Validating mods on Modrinth...
+<a id="__codelineno-147-2" name="__codelineno-147-2" href="#__codelineno-147-2"></a>  ✓ Sodium (sodium)
+<a id="__codelineno-147-3" name="__codelineno-147-3" href="#__codelineno-147-3"></a>  ✓ Lithium (lithium)
+<a id="__codelineno-147-4" name="__codelineno-147-4" href="#__codelineno-147-4"></a>
+<a id="__codelineno-147-5" name="__codelineno-147-5" href="#__codelineno-147-5"></a>✓ Added 2 mod(s) to myserver
+<a id="__codelineno-147-6" name="__codelineno-147-6" href="#__codelineno-147-6"></a>
+<a id="__codelineno-147-7" name="__codelineno-147-7" href="#__codelineno-147-7"></a>  sodium
+<a id="__codelineno-147-8" name="__codelineno-147-8" href="#__codelineno-147-8"></a>  lithium
+<a id="__codelineno-147-9" name="__codelineno-147-9" href="#__codelineno-147-9"></a>
+<a id="__codelineno-147-10" name="__codelineno-147-10" href="#__codelineno-147-10"></a>Config: MODRINTH_PROJECTS=sodium,lithium
+<a id="__codelineno-147-11" name="__codelineno-147-11" href="#__codelineno-147-11"></a>
+<a id="__codelineno-147-12" name="__codelineno-147-12" href="#__codelineno-147-12"></a>Restart the server to apply changes:
+<a id="__codelineno-147-13" name="__codelineno-147-13" href="#__codelineno-147-13"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
 </code></pre></div>
 <hr />
 <h3 id="mcctl-mod-list">mcctl mod list<a class="headerlink" href="#mcctl-mod-list" title="Permanent link">&para;</a></h3>
 <p>서버에 설정된 모드 목록을 표시합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-148-1" name="__codelineno-148-1" href="#__codelineno-148-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>&lt;server&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
 <table>
@@ -6212,40 +6315,40 @@
 </tbody>
 </table>
 <p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a><span class="c1"># 서버의 모드 목록</span>
-<a id="__codelineno-152-2" name="__codelineno-152-2" href="#__codelineno-152-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver
-<a id="__codelineno-152-3" name="__codelineno-152-3" href="#__codelineno-152-3"></a>
-<a id="__codelineno-152-4" name="__codelineno-152-4" href="#__codelineno-152-4"></a><span class="c1"># JSON 출력</span>
-<a id="__codelineno-152-5" name="__codelineno-152-5" href="#__codelineno-152-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver<span class="w"> </span>--json
+<div class="highlight"><pre><span></span><code><a id="__codelineno-149-1" name="__codelineno-149-1" href="#__codelineno-149-1"></a><span class="c1"># 서버의 모드 목록</span>
+<a id="__codelineno-149-2" name="__codelineno-149-2" href="#__codelineno-149-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver
+<a id="__codelineno-149-3" name="__codelineno-149-3" href="#__codelineno-149-3"></a>
+<a id="__codelineno-149-4" name="__codelineno-149-4" href="#__codelineno-149-4"></a><span class="c1"># JSON 출력</span>
+<a id="__codelineno-149-5" name="__codelineno-149-5" href="#__codelineno-149-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>myserver<span class="w"> </span>--json
 </code></pre></div>
 <p><strong>출력 예시:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a>Mods for myserver (FABRIC):
-<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>
-<a id="__codelineno-153-3" name="__codelineno-153-3" href="#__codelineno-153-3"></a>  Modrinth:
-<a id="__codelineno-153-4" name="__codelineno-153-4" href="#__codelineno-153-4"></a>    - sodium
-<a id="__codelineno-153-5" name="__codelineno-153-5" href="#__codelineno-153-5"></a>    - lithium
-<a id="__codelineno-153-6" name="__codelineno-153-6" href="#__codelineno-153-6"></a>    - phosphor
-<a id="__codelineno-153-7" name="__codelineno-153-7" href="#__codelineno-153-7"></a>
-<a id="__codelineno-153-8" name="__codelineno-153-8" href="#__codelineno-153-8"></a>  CurseForge:
-<a id="__codelineno-153-9" name="__codelineno-153-9" href="#__codelineno-153-9"></a>    - jei
-<a id="__codelineno-153-10" name="__codelineno-153-10" href="#__codelineno-153-10"></a>    - journeymap
-<a id="__codelineno-153-11" name="__codelineno-153-11" href="#__codelineno-153-11"></a>
-<a id="__codelineno-153-12" name="__codelineno-153-12" href="#__codelineno-153-12"></a>Total: 5 mod(s)
+<div class="highlight"><pre><span></span><code><a id="__codelineno-150-1" name="__codelineno-150-1" href="#__codelineno-150-1"></a>Mods for myserver (FABRIC):
+<a id="__codelineno-150-2" name="__codelineno-150-2" href="#__codelineno-150-2"></a>
+<a id="__codelineno-150-3" name="__codelineno-150-3" href="#__codelineno-150-3"></a>  Modrinth:
+<a id="__codelineno-150-4" name="__codelineno-150-4" href="#__codelineno-150-4"></a>    - sodium
+<a id="__codelineno-150-5" name="__codelineno-150-5" href="#__codelineno-150-5"></a>    - lithium
+<a id="__codelineno-150-6" name="__codelineno-150-6" href="#__codelineno-150-6"></a>    - phosphor
+<a id="__codelineno-150-7" name="__codelineno-150-7" href="#__codelineno-150-7"></a>
+<a id="__codelineno-150-8" name="__codelineno-150-8" href="#__codelineno-150-8"></a>  CurseForge:
+<a id="__codelineno-150-9" name="__codelineno-150-9" href="#__codelineno-150-9"></a>    - jei
+<a id="__codelineno-150-10" name="__codelineno-150-10" href="#__codelineno-150-10"></a>    - journeymap
+<a id="__codelineno-150-11" name="__codelineno-150-11" href="#__codelineno-150-11"></a>
+<a id="__codelineno-150-12" name="__codelineno-150-12" href="#__codelineno-150-12"></a>Total: 5 mod(s)
 </code></pre></div>
 <p><strong>JSON 출력:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a><span class="p">{</span>
-<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a><span class="w">  </span><span class="nt">"serverType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FABRIC"</span><span class="p">,</span>
-<a id="__codelineno-154-3" name="__codelineno-154-3" href="#__codelineno-154-3"></a><span class="w">  </span><span class="nt">"sources"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-154-4" name="__codelineno-154-4" href="#__codelineno-154-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"MODRINTH_PROJECTS"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Modrinth"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sodium"</span><span class="p">,</span><span class="w"> </span><span class="s2">"lithium"</span><span class="p">]},</span>
-<a id="__codelineno-154-5" name="__codelineno-154-5" href="#__codelineno-154-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CURSEFORGE_FILES"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CurseForge"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"jei"</span><span class="p">]}</span>
-<a id="__codelineno-154-6" name="__codelineno-154-6" href="#__codelineno-154-6"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-154-7" name="__codelineno-154-7" href="#__codelineno-154-7"></a><span class="w">  </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
-<a id="__codelineno-154-8" name="__codelineno-154-8" href="#__codelineno-154-8"></a><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-151-1" name="__codelineno-151-1" href="#__codelineno-151-1"></a><span class="p">{</span>
+<a id="__codelineno-151-2" name="__codelineno-151-2" href="#__codelineno-151-2"></a><span class="w">  </span><span class="nt">"serverType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"FABRIC"</span><span class="p">,</span>
+<a id="__codelineno-151-3" name="__codelineno-151-3" href="#__codelineno-151-3"></a><span class="w">  </span><span class="nt">"sources"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-151-4" name="__codelineno-151-4" href="#__codelineno-151-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"MODRINTH_PROJECTS"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Modrinth"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"sodium"</span><span class="p">,</span><span class="w"> </span><span class="s2">"lithium"</span><span class="p">]},</span>
+<a id="__codelineno-151-5" name="__codelineno-151-5" href="#__codelineno-151-5"></a><span class="w">    </span><span class="p">{</span><span class="nt">"key"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CURSEFORGE_FILES"</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"CurseForge"</span><span class="p">,</span><span class="w"> </span><span class="nt">"mods"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"jei"</span><span class="p">]}</span>
+<a id="__codelineno-151-6" name="__codelineno-151-6" href="#__codelineno-151-6"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-151-7" name="__codelineno-151-7" href="#__codelineno-151-7"></a><span class="w">  </span><span class="nt">"total"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<a id="__codelineno-151-8" name="__codelineno-151-8" href="#__codelineno-151-8"></a><span class="p">}</span>
 </code></pre></div>
 <hr />
 <h3 id="mcctl-mod-remove">mcctl mod remove<a class="headerlink" href="#mcctl-mod-remove" title="Permanent link">&para;</a></h3>
 <p>서버 설정에서 모드를 제거합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-152-1" name="__codelineno-152-1" href="#__codelineno-152-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>&lt;server&gt;<span class="w"> </span>&lt;mod...&gt;<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>인자:</strong></p>
 <table>
@@ -6282,20 +6385,20 @@
 </tbody>
 </table>
 <p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a><span class="c1"># 단일 모드 제거</span>
-<a id="__codelineno-156-2" name="__codelineno-156-2" href="#__codelineno-156-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium
-<a id="__codelineno-156-3" name="__codelineno-156-3" href="#__codelineno-156-3"></a>
-<a id="__codelineno-156-4" name="__codelineno-156-4" href="#__codelineno-156-4"></a><span class="c1"># 여러 모드 제거</span>
-<a id="__codelineno-156-5" name="__codelineno-156-5" href="#__codelineno-156-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
+<div class="highlight"><pre><span></span><code><a id="__codelineno-153-1" name="__codelineno-153-1" href="#__codelineno-153-1"></a><span class="c1"># 단일 모드 제거</span>
+<a id="__codelineno-153-2" name="__codelineno-153-2" href="#__codelineno-153-2"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium
+<a id="__codelineno-153-3" name="__codelineno-153-3" href="#__codelineno-153-3"></a>
+<a id="__codelineno-153-4" name="__codelineno-153-4" href="#__codelineno-153-4"></a><span class="c1"># 여러 모드 제거</span>
+<a id="__codelineno-153-5" name="__codelineno-153-5" href="#__codelineno-153-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>remove<span class="w"> </span>myserver<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
 </code></pre></div>
 <p><strong>출력 예시:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>  ✓ Removed sodium from MODRINTH_PROJECTS
-<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>  ✓ Removed lithium from MODRINTH_PROJECTS
-<a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>
-<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>✓ Removed 2 mod(s) from myserver
-<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>
-<a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>Restart the server to apply changes:
-<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
+<div class="highlight"><pre><span></span><code><a id="__codelineno-154-1" name="__codelineno-154-1" href="#__codelineno-154-1"></a>  ✓ Removed sodium from MODRINTH_PROJECTS
+<a id="__codelineno-154-2" name="__codelineno-154-2" href="#__codelineno-154-2"></a>  ✓ Removed lithium from MODRINTH_PROJECTS
+<a id="__codelineno-154-3" name="__codelineno-154-3" href="#__codelineno-154-3"></a>
+<a id="__codelineno-154-4" name="__codelineno-154-4" href="#__codelineno-154-4"></a>✓ Removed 2 mod(s) from myserver
+<a id="__codelineno-154-5" name="__codelineno-154-5" href="#__codelineno-154-5"></a>
+<a id="__codelineno-154-6" name="__codelineno-154-6" href="#__codelineno-154-6"></a>Restart the server to apply changes:
+<a id="__codelineno-154-7" name="__codelineno-154-7" href="#__codelineno-154-7"></a>  mcctl stop myserver &amp;&amp; mcctl start myserver
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">재시작 필요</p>
@@ -6304,7 +6407,7 @@
 <hr />
 <h3 id="mcctl-mod-sources">mcctl mod sources<a class="headerlink" href="#mcctl-mod-sources" title="Permanent link">&para;</a></h3>
 <p>사용 가능한 모드 소스와 설정을 표시합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-155-1" name="__codelineno-155-1" href="#__codelineno-155-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources<span class="w"> </span><span class="o">[</span>options<span class="o">]</span>
 </code></pre></div>
 <p><strong>옵션:</strong></p>
 <table>
@@ -6322,63 +6425,63 @@
 </tbody>
 </table>
 <p><strong>예제:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources
+<div class="highlight"><pre><span></span><code><a id="__codelineno-156-1" name="__codelineno-156-1" href="#__codelineno-156-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>sources
 </code></pre></div>
 <p><strong>출력:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a>Available Mod Sources:
-<a id="__codelineno-160-2" name="__codelineno-160-2" href="#__codelineno-160-2"></a>
-<a id="__codelineno-160-3" name="__codelineno-160-3" href="#__codelineno-160-3"></a>  Modrinth --modrinth (default)
-<a id="__codelineno-160-4" name="__codelineno-160-4" href="#__codelineno-160-4"></a>    Free, open-source mod platform. No API key required.
-<a id="__codelineno-160-5" name="__codelineno-160-5" href="#__codelineno-160-5"></a>    Config: MODRINTH_PROJECTS
-<a id="__codelineno-160-6" name="__codelineno-160-6" href="#__codelineno-160-6"></a>    mcctl mod add myserver sodium lithium
-<a id="__codelineno-160-7" name="__codelineno-160-7" href="#__codelineno-160-7"></a>
-<a id="__codelineno-160-8" name="__codelineno-160-8" href="#__codelineno-160-8"></a>  CurseForge --curseforge
-<a id="__codelineno-160-9" name="__codelineno-160-9" href="#__codelineno-160-9"></a>    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
-<a id="__codelineno-160-10" name="__codelineno-160-10" href="#__codelineno-160-10"></a>    Config: CURSEFORGE_FILES
-<a id="__codelineno-160-11" name="__codelineno-160-11" href="#__codelineno-160-11"></a>    mcctl mod add myserver --curseforge jei journeymap
-<a id="__codelineno-160-12" name="__codelineno-160-12" href="#__codelineno-160-12"></a>
-<a id="__codelineno-160-13" name="__codelineno-160-13" href="#__codelineno-160-13"></a>  Spiget (SpigotMC) --spiget
-<a id="__codelineno-160-14" name="__codelineno-160-14" href="#__codelineno-160-14"></a>    SpigotMC plugin repository. Use resource IDs.
-<a id="__codelineno-160-15" name="__codelineno-160-15" href="#__codelineno-160-15"></a>    Config: SPIGET_RESOURCES
-<a id="__codelineno-160-16" name="__codelineno-160-16" href="#__codelineno-160-16"></a>    mcctl mod add myserver --spiget 9089
-<a id="__codelineno-160-17" name="__codelineno-160-17" href="#__codelineno-160-17"></a>
-<a id="__codelineno-160-18" name="__codelineno-160-18" href="#__codelineno-160-18"></a>  URL --url
-<a id="__codelineno-160-19" name="__codelineno-160-19" href="#__codelineno-160-19"></a>    Direct JAR file download URLs.
-<a id="__codelineno-160-20" name="__codelineno-160-20" href="#__codelineno-160-20"></a>    Config: MODS / PLUGINS
-<a id="__codelineno-160-21" name="__codelineno-160-21" href="#__codelineno-160-21"></a>    mcctl mod add myserver --url https://example.com/mod.jar
+<div class="highlight"><pre><span></span><code><a id="__codelineno-157-1" name="__codelineno-157-1" href="#__codelineno-157-1"></a>Available Mod Sources:
+<a id="__codelineno-157-2" name="__codelineno-157-2" href="#__codelineno-157-2"></a>
+<a id="__codelineno-157-3" name="__codelineno-157-3" href="#__codelineno-157-3"></a>  Modrinth --modrinth (default)
+<a id="__codelineno-157-4" name="__codelineno-157-4" href="#__codelineno-157-4"></a>    Free, open-source mod platform. No API key required.
+<a id="__codelineno-157-5" name="__codelineno-157-5" href="#__codelineno-157-5"></a>    Config: MODRINTH_PROJECTS
+<a id="__codelineno-157-6" name="__codelineno-157-6" href="#__codelineno-157-6"></a>    mcctl mod add myserver sodium lithium
+<a id="__codelineno-157-7" name="__codelineno-157-7" href="#__codelineno-157-7"></a>
+<a id="__codelineno-157-8" name="__codelineno-157-8" href="#__codelineno-157-8"></a>  CurseForge --curseforge
+<a id="__codelineno-157-9" name="__codelineno-157-9" href="#__codelineno-157-9"></a>    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
+<a id="__codelineno-157-10" name="__codelineno-157-10" href="#__codelineno-157-10"></a>    Config: CURSEFORGE_FILES
+<a id="__codelineno-157-11" name="__codelineno-157-11" href="#__codelineno-157-11"></a>    mcctl mod add myserver --curseforge jei journeymap
+<a id="__codelineno-157-12" name="__codelineno-157-12" href="#__codelineno-157-12"></a>
+<a id="__codelineno-157-13" name="__codelineno-157-13" href="#__codelineno-157-13"></a>  Spiget (SpigotMC) --spiget
+<a id="__codelineno-157-14" name="__codelineno-157-14" href="#__codelineno-157-14"></a>    SpigotMC plugin repository. Use resource IDs.
+<a id="__codelineno-157-15" name="__codelineno-157-15" href="#__codelineno-157-15"></a>    Config: SPIGET_RESOURCES
+<a id="__codelineno-157-16" name="__codelineno-157-16" href="#__codelineno-157-16"></a>    mcctl mod add myserver --spiget 9089
+<a id="__codelineno-157-17" name="__codelineno-157-17" href="#__codelineno-157-17"></a>
+<a id="__codelineno-157-18" name="__codelineno-157-18" href="#__codelineno-157-18"></a>  URL --url
+<a id="__codelineno-157-19" name="__codelineno-157-19" href="#__codelineno-157-19"></a>    Direct JAR file download URLs.
+<a id="__codelineno-157-20" name="__codelineno-157-20" href="#__codelineno-157-20"></a>    Config: MODS / PLUGINS
+<a id="__codelineno-157-21" name="__codelineno-157-21" href="#__codelineno-157-21"></a>    mcctl mod add myserver --url https://example.com/mod.jar
 </code></pre></div>
 <hr />
 <h3 id="모드-관리-워크플로우">모드 관리 워크플로우<a class="headerlink" href="#모드-관리-워크플로우" title="Permanent link">&para;</a></h3>
 <h4 id="모드-서버-설정하기">모드 서버 설정하기<a class="headerlink" href="#모드-서버-설정하기" title="Permanent link">&para;</a></h4>
 <p>Fabric 모드 서버를 생성하고 설정하는 전체 워크플로우:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a><span class="c1"># 1. Fabric 서버 생성</span>
-<a id="__codelineno-161-2" name="__codelineno-161-2" href="#__codelineno-161-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded-server<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
-<a id="__codelineno-161-3" name="__codelineno-161-3" href="#__codelineno-161-3"></a>
-<a id="__codelineno-161-4" name="__codelineno-161-4" href="#__codelineno-161-4"></a><span class="c1"># 2. 모드 검색</span>
-<a id="__codelineno-161-5" name="__codelineno-161-5" href="#__codelineno-161-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"optimization"</span>
-<a id="__codelineno-161-6" name="__codelineno-161-6" href="#__codelineno-161-6"></a>
-<a id="__codelineno-161-7" name="__codelineno-161-7" href="#__codelineno-161-7"></a><span class="c1"># 3. 필수 모드 추가</span>
-<a id="__codelineno-161-8" name="__codelineno-161-8" href="#__codelineno-161-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>modded-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
-<a id="__codelineno-161-9" name="__codelineno-161-9" href="#__codelineno-161-9"></a>
-<a id="__codelineno-161-10" name="__codelineno-161-10" href="#__codelineno-161-10"></a><span class="c1"># 4. 설정된 모드 목록 확인</span>
-<a id="__codelineno-161-11" name="__codelineno-161-11" href="#__codelineno-161-11"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>modded-server
-<a id="__codelineno-161-12" name="__codelineno-161-12" href="#__codelineno-161-12"></a>
-<a id="__codelineno-161-13" name="__codelineno-161-13" href="#__codelineno-161-13"></a><span class="c1"># 5. 재시작하여 적용</span>
-<a id="__codelineno-161-14" name="__codelineno-161-14" href="#__codelineno-161-14"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded-server
+<div class="highlight"><pre><span></span><code><a id="__codelineno-158-1" name="__codelineno-158-1" href="#__codelineno-158-1"></a><span class="c1"># 1. Fabric 서버 생성</span>
+<a id="__codelineno-158-2" name="__codelineno-158-2" href="#__codelineno-158-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>modded-server<span class="w"> </span>-t<span class="w"> </span>FABRIC<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.20.4
+<a id="__codelineno-158-3" name="__codelineno-158-3" href="#__codelineno-158-3"></a>
+<a id="__codelineno-158-4" name="__codelineno-158-4" href="#__codelineno-158-4"></a><span class="c1"># 2. 모드 검색</span>
+<a id="__codelineno-158-5" name="__codelineno-158-5" href="#__codelineno-158-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>search<span class="w"> </span><span class="s2">"optimization"</span>
+<a id="__codelineno-158-6" name="__codelineno-158-6" href="#__codelineno-158-6"></a>
+<a id="__codelineno-158-7" name="__codelineno-158-7" href="#__codelineno-158-7"></a><span class="c1"># 3. 필수 모드 추가</span>
+<a id="__codelineno-158-8" name="__codelineno-158-8" href="#__codelineno-158-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>modded-server<span class="w"> </span>fabric-api<span class="w"> </span>sodium<span class="w"> </span>lithium<span class="w"> </span>phosphor
+<a id="__codelineno-158-9" name="__codelineno-158-9" href="#__codelineno-158-9"></a>
+<a id="__codelineno-158-10" name="__codelineno-158-10" href="#__codelineno-158-10"></a><span class="c1"># 4. 설정된 모드 목록 확인</span>
+<a id="__codelineno-158-11" name="__codelineno-158-11" href="#__codelineno-158-11"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>list<span class="w"> </span>modded-server
+<a id="__codelineno-158-12" name="__codelineno-158-12" href="#__codelineno-158-12"></a>
+<a id="__codelineno-158-13" name="__codelineno-158-13" href="#__codelineno-158-13"></a><span class="c1"># 5. 재시작하여 적용</span>
+<a id="__codelineno-158-14" name="__codelineno-158-14" href="#__codelineno-158-14"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>modded-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>modded-server
 </code></pre></div>
 <h4 id="플러그인-서버-설정하기">플러그인 서버 설정하기<a class="headerlink" href="#플러그인-서버-설정하기" title="Permanent link">&para;</a></h4>
 <p>플러그인이 있는 Paper 서버 전체 워크플로우:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a><span class="c1"># 1. Paper 서버 생성</span>
-<a id="__codelineno-162-2" name="__codelineno-162-2" href="#__codelineno-162-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>plugin-server<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
-<a id="__codelineno-162-3" name="__codelineno-162-3" href="#__codelineno-162-3"></a>
-<a id="__codelineno-162-4" name="__codelineno-162-4" href="#__codelineno-162-4"></a><span class="c1"># 2. Modrinth에서 플러그인 추가</span>
-<a id="__codelineno-162-5" name="__codelineno-162-5" href="#__codelineno-162-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>luckperms
-<a id="__codelineno-162-6" name="__codelineno-162-6" href="#__codelineno-162-6"></a>
-<a id="__codelineno-162-7" name="__codelineno-162-7" href="#__codelineno-162-7"></a><span class="c1"># 3. Spiget (SpigotMC)에서 플러그인 추가</span>
-<a id="__codelineno-162-8" name="__codelineno-162-8" href="#__codelineno-162-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w">  </span><span class="c1"># EssentialsX</span>
-<a id="__codelineno-162-9" name="__codelineno-162-9" href="#__codelineno-162-9"></a>
-<a id="__codelineno-162-10" name="__codelineno-162-10" href="#__codelineno-162-10"></a><span class="c1"># 4. 재시작하여 적용</span>
-<a id="__codelineno-162-11" name="__codelineno-162-11" href="#__codelineno-162-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>plugin-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>plugin-server
+<div class="highlight"><pre><span></span><code><a id="__codelineno-159-1" name="__codelineno-159-1" href="#__codelineno-159-1"></a><span class="c1"># 1. Paper 서버 생성</span>
+<a id="__codelineno-159-2" name="__codelineno-159-2" href="#__codelineno-159-2"></a>mcctl<span class="w"> </span>create<span class="w"> </span>plugin-server<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<a id="__codelineno-159-3" name="__codelineno-159-3" href="#__codelineno-159-3"></a>
+<a id="__codelineno-159-4" name="__codelineno-159-4" href="#__codelineno-159-4"></a><span class="c1"># 2. Modrinth에서 플러그인 추가</span>
+<a id="__codelineno-159-5" name="__codelineno-159-5" href="#__codelineno-159-5"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>luckperms
+<a id="__codelineno-159-6" name="__codelineno-159-6" href="#__codelineno-159-6"></a>
+<a id="__codelineno-159-7" name="__codelineno-159-7" href="#__codelineno-159-7"></a><span class="c1"># 3. Spiget (SpigotMC)에서 플러그인 추가</span>
+<a id="__codelineno-159-8" name="__codelineno-159-8" href="#__codelineno-159-8"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>plugin-server<span class="w"> </span>--spiget<span class="w"> </span><span class="m">9089</span><span class="w">  </span><span class="c1"># EssentialsX</span>
+<a id="__codelineno-159-9" name="__codelineno-159-9" href="#__codelineno-159-9"></a>
+<a id="__codelineno-159-10" name="__codelineno-159-10" href="#__codelineno-159-10"></a><span class="c1"># 4. 재시작하여 적용</span>
+<a id="__codelineno-159-11" name="__codelineno-159-11" href="#__codelineno-159-11"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>plugin-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>plugin-server
 </code></pre></div>
 <h4 id="curseforge-설정">CurseForge 설정<a class="headerlink" href="#curseforge-설정" title="Permanent link">&para;</a></h4>
 <p>Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 자체 키를 설정하려면:</p>
@@ -6386,12 +6489,12 @@
 <li><a href="https://console.curseforge.com/">CurseForge for Studios</a>에서 API 키 발급</li>
 <li><code>.env</code> 파일에 추가:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a><span class="nv">CF_API_KEY</span><span class="o">=</span>your-api-key-here
+<div class="highlight"><pre><span></span><code><a id="__codelineno-160-1" name="__codelineno-160-1" href="#__codelineno-160-1"></a><span class="nv">CF_API_KEY</span><span class="o">=</span>your-api-key-here
 </code></pre></div>
 <ol>
 <li>이제 CurseForge 모드를 추가할 수 있습니다:</li>
 </ol>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
+<div class="highlight"><pre><span></span><code><a id="__codelineno-161-1" name="__codelineno-161-1" href="#__codelineno-161-1"></a>mcctl<span class="w"> </span>mod<span class="w"> </span>add<span class="w"> </span>myserver<span class="w"> </span>--curseforge<span class="w"> </span>jei<span class="w"> </span>journeymap
 </code></pre></div>
 <hr />
 <h2 id="전역-옵션-레퍼런스">전역 옵션 레퍼런스<a class="headerlink" href="#전역-옵션-레퍼런스" title="Permanent link">&para;</a></h2>
@@ -6432,7 +6535,7 @@
 <p>자동화 및 CI/CD 파이프라인을 위한 환경 변수입니다.</p>
 <h3 id="mcctl_sudo_password">MCCTL_SUDO_PASSWORD<a class="headerlink" href="#mcctl_sudo_password" title="Permanent link">&para;</a></h3>
 <p>root 권한이 필요한 작업(mDNS 등록/해제)에 sudo 비밀번호를 제공합니다.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-165-1" name="__codelineno-165-1" href="#__codelineno-165-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-162-1" name="__codelineno-162-1" href="#__codelineno-162-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MCCTL_SUDO_PASSWORD</span><span class="o">=</span><span class="s2">"your-password"</span>
 </code></pre></div>
 <p><strong>사용하는 명령어:</strong></p>
 <ul>
@@ -6440,19 +6543,19 @@
 <li><code>mcctl delete</code> - mDNS 호스트명 해제</li>
 </ul>
 <p><strong>예제 (CI/CD):</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-166-1" name="__codelineno-166-1" href="#__codelineno-166-1"></a><span class="c1"># GitHub Actions 예제</span>
-<a id="__codelineno-166-2" name="__codelineno-166-2" href="#__codelineno-166-2"></a>-<span class="w"> </span>name:<span class="w"> </span>Create<span class="w"> </span>Minecraft<span class="w"> </span>Server
-<a id="__codelineno-166-3" name="__codelineno-166-3" href="#__codelineno-166-3"></a><span class="w">  </span>env:
-<a id="__codelineno-166-4" name="__codelineno-166-4" href="#__codelineno-166-4"></a><span class="w">    </span>MCCTL_SUDO_PASSWORD:<span class="w"> </span><span class="si">${</span><span class="p">{ secrets.SUDO_PASSWORD </span><span class="si">}</span><span class="o">}</span>
-<a id="__codelineno-166-5" name="__codelineno-166-5" href="#__codelineno-166-5"></a><span class="w">  </span>run:<span class="w"> </span><span class="p">|</span>
-<a id="__codelineno-166-6" name="__codelineno-166-6" href="#__codelineno-166-6"></a><span class="w">    </span>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
+<div class="highlight"><pre><span></span><code><a id="__codelineno-163-1" name="__codelineno-163-1" href="#__codelineno-163-1"></a><span class="c1"># GitHub Actions 예제</span>
+<a id="__codelineno-163-2" name="__codelineno-163-2" href="#__codelineno-163-2"></a>-<span class="w"> </span>name:<span class="w"> </span>Create<span class="w"> </span>Minecraft<span class="w"> </span>Server
+<a id="__codelineno-163-3" name="__codelineno-163-3" href="#__codelineno-163-3"></a><span class="w">  </span>env:
+<a id="__codelineno-163-4" name="__codelineno-163-4" href="#__codelineno-163-4"></a><span class="w">    </span>MCCTL_SUDO_PASSWORD:<span class="w"> </span><span class="si">${</span><span class="p">{ secrets.SUDO_PASSWORD </span><span class="si">}</span><span class="o">}</span>
+<a id="__codelineno-163-5" name="__codelineno-163-5" href="#__codelineno-163-5"></a><span class="w">  </span>run:<span class="w"> </span><span class="p">|</span>
+<a id="__codelineno-163-6" name="__codelineno-163-6" href="#__codelineno-163-6"></a><span class="w">    </span>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>-t<span class="w"> </span>PAPER<span class="w"> </span>-v<span class="w"> </span><span class="m">1</span>.21.1
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">보안</p>
 <p>sudo 비밀번호는 CI/CD secrets를 사용하여 안전하게 저장하세요. 비밀번호를 버전 관리에 커밋하지 마세요.</p>
 </div>
 <p><strong>대안:</strong> <code>--sudo-password</code> 옵션 직접 사용:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-167-1" name="__codelineno-167-1" href="#__codelineno-167-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">"your-password"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-164-1" name="__codelineno-164-1" href="#__codelineno-164-1"></a>mcctl<span class="w"> </span>create<span class="w"> </span>myserver<span class="w"> </span>--sudo-password<span class="w"> </span><span class="s2">"your-password"</span>
 </code></pre></div>
 
 

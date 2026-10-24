@@ -1030,6 +1030,8 @@
       
         
       
+        
+      
     
     
     
@@ -1101,6 +1103,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -3688,10 +3718,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-share-world-between-servers" class="md-nav__link">
+  <a href="#4-move-a-world-to-another-server" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Share World Between Servers
+        4. Move a World to Another Server
       
     </span>
   </a>
@@ -3904,10 +3934,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#world-already-locked" class="md-nav__link">
+  <a href="#world-already-assigned" class="md-nav__link">
     <span class="md-ellipsis">
       
-        World Already Locked
+        World Already Assigned
       
     </span>
   </a>
@@ -4327,6 +4357,17 @@
   
     <nav class="md-nav" aria-label="16. Version History">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#version-300-2026-10-24---scripts-removed-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 3.0.0 (2026-10-24) - Scripts Removed (BREAKING)
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#version-2330-2026-10-18---console-auth-upgrade-fix" class="md-nav__link">
@@ -4839,8 +4880,8 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 2.33.0
-<strong>Last Updated</strong>: 2026-10-18
+<p><strong>Version</strong>: 3.0.0
+<strong>Last Updated</strong>: 2026-10-24
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
 <hr />
@@ -4920,7 +4961,7 @@
 </tr>
 <tr>
 <td><strong>World Management</strong></td>
-<td>Shared world storage with locking, cross-server world sharing</td>
+<td>Shared world storage, world-server assignment via <code>LEVEL</code> (one world, one server)</td>
 </tr>
 <tr>
 <td><strong>GitHub Backup</strong></td>
@@ -5138,12 +5179,10 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>│   ├── compose.yml         # Server include list (auto-generated)
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>│   └── _template/          # Template for new servers
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>├── worlds/                 # Shared world storage
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>│   └── .locks/             # Lock files for world-server assignment
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>├── shared/                 # Shared resources
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   ├── plugins/            # Shared plugins (read-only mount)
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>│   └── mods/               # Shared mods (read-only mount)
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>├── scripts/                # Management scripts (Bash)
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>└── backups/                # Backup storage
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>├── shared/                 # Shared resources
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>│   ├── plugins/            # Shared plugins (read-only mount)
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>│   └── mods/               # Shared mods (read-only mount)
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>└── backups/                # Backup storage
 </code></pre></div>
 <hr />
 <h2 id="4-architecture">4. Architecture<a class="headerlink" href="#4-architecture" title="Permanent link">&para;</a></h2>
@@ -5248,29 +5287,27 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>│       └── data/                     # Server container data mount
 <a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>│
 <a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>├── worlds/                           # Shared world storage
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│   ├── .locks/                       # Lock files (server-world assignment)
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│   │   └── &lt;world&gt;.lock              # Lock file content: server-name
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>│   └── &lt;world-name&gt;/                 # World directories
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│       ├── .meta                     # World metadata (seed, createdAt)
-<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│       ├── level.dat                 # Minecraft world data
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│       ├── region/                   # Overworld chunks
-<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│       ├── DIM-1/                    # Nether dimension
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>│       └── DIM1/                     # End dimension
-<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│
-<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>├── shared/
-<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>│   ├── plugins/                      # Shared plugins (read-only mount)
-<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>│   └── mods/                         # Shared mods (read-only mount)
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>│   └── &lt;world-name&gt;/                 # World directories
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>│       ├── .meta                     # World metadata (seed, createdAt)
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>│       ├── level.dat                 # Minecraft world data
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>│       ├── region/                   # Overworld chunks
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>│       ├── DIM-1/                    # Nether dimension
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>│       └── DIM1/                     # End dimension
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>│
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>├── shared/
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a>│   ├── plugins/                      # Shared plugins (read-only mount)
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>│   └── mods/                         # Shared mods (read-only mount)
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>│
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>├── backups/                          # Local backup storage
 <a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>│
-<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>├── backups/                          # Local backup storage
-<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>│
-<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>└── .services/                        # Service packages installed by console init (older installs: node_modules/ in the platform root)
-<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>    └── node_modules/
-<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>        └── @minecraft-docker/
-<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>            ├── mcctl-api/            # REST API package
-<a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>            ├── mcctl-console/        # Web Console package
-<a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a>            └── shared/               # Shared domain package
+<a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>└── .services/                        # Service packages installed by console init (older installs: node_modules/ in the platform root)
+<a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>    └── node_modules/
+<a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>        └── @minecraft-docker/
+<a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>            ├── mcctl-api/            # REST API package
+<a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>            ├── mcctl-console/        # Web Console package
+<a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>            └── shared/               # Shared domain package
 </code></pre></div>
-<p>The Bash management scripts are bundled inside the mcctl package (the location can be overridden with <code>MCCTL_SCRIPTS</code>); they are not part of the platform root.</p>
+<p>There are no Bash management scripts (removed in v3.0.0, #715). Every <code>mcctl</code> command is TypeScript. <code>MCCTL_SCRIPTS</code> is ignored, and <code>mcctl upgrade</code> offers to delete a leftover <code>&lt;root&gt;/scripts</code> folder; see the script to mcctl table in <code>docs/advanced/upgrade-runbook.md</code> (section 3-1).</p>
 <h3 id="connection-flow-lan">Connection Flow (LAN)<a class="headerlink" href="#connection-flow-lan" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>1. Player opens Minecraft → Add Server → survival.192.168.1.100.nip.io:25565
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>2. DNS: nip.io resolves to 192.168.1.100
@@ -5807,17 +5844,28 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </code></pre></div>
 <hr />
 <h3 id="world-management">World Management<a class="headerlink" href="#world-management" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w">                              </span><span class="c1"># List worlds with lock status</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list<span class="w">                              </span><span class="c1"># List worlds with assigned servers (and duplicate warnings)</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span><span class="o">[</span>name<span class="o">]</span><span class="w">                        </span><span class="c1"># Create new world (interactive or CLI)</span>
 <a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--seed<span class="w"> </span><span class="m">12345</span><span class="w">           </span><span class="c1"># Create with seed</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--server<span class="w"> </span>&lt;srv&gt;<span class="w">         </span><span class="c1"># Create and assign to server</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--server<span class="w"> </span>&lt;srv&gt;<span class="w">         </span><span class="c1"># Create and assign to a stopped server</span>
 <a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>new<span class="w"> </span>&lt;name&gt;<span class="w"> </span>--server<span class="w"> </span>&lt;srv&gt;<span class="w"> </span>--no-start<span class="w">  </span><span class="c1"># Don't auto-start server</span>
-<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span><span class="w">           </span><span class="c1"># Lock world to server</span>
-<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w">                   </span><span class="c1"># Release lock</span>
-<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span>--force<span class="w">           </span><span class="c1"># Force release</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span><span class="o">[</span>server<span class="o">]</span><span class="w">           </span><span class="c1"># Assign world to a stopped server (sets LEVEL)</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w">                   </span><span class="c1"># Switch the world's server back to its own default world</span>
+<a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span>--force<span class="w">           </span><span class="c1"># --force is accepted and ignored</span>
 <a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>mcctl<span class="w"> </span>world<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w">                    </span><span class="c1"># Delete world (with confirmation)</span>
-<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>mcctl<span class="w"> </span>world<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span>--force<span class="w">            </span><span class="c1"># Force delete</span>
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>mcctl<span class="w"> </span>world<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>world<span class="o">]</span><span class="w"> </span>--force<span class="w">            </span><span class="c1"># Skip the prompt (does not delete a world a server uses)</span>
 </code></pre></div>
+<p><strong>World assignment rules</strong> (#670):</p>
+<ul>
+<li>A world is assigned to a server by the server's <code>LEVEL</code> in <code>servers/&lt;name&gt;/config.env</code> (legacy <code>WORLD_NAME</code> is read when <code>LEVEL</code> is unset; unset means itzg's default <code>world</code>). There is no lock file: <code>worlds/.locks</code> is no longer read, written or created (<code>mcctl init</code> does not create it), and the <code>lock.sh</code> script was removed (<code>mcctl.sh</code> too, #670, #734). An existing <code>worlds/.locks</code> directory is harmless; <code>rm -rf worlds/.locks</code> is safe.</li>
+<li><strong>One world, one server (R1).</strong> A world and its <code>&lt;world&gt;_nether</code> / <code>&lt;world&gt;_the_end</code> folders count as one world. A world used by another server cannot be assigned: <code>mcctl world assign</code>, <code>mcctl create --world</code>, a new server's default world <code>&lt;name&gt;</code>, <code>mcctl config &lt;srv&gt; LEVEL &lt;w&gt;</code>, API <code>POST /api/worlds/:name/assign</code>, <code>PATCH /api/servers/:name/config</code> with <code>level</code>, <code>POST /api/servers</code>, <code>POST /api/worlds</code> with <code>serverName</code>. Deleting a server frees its world for reuse.</li>
+<li><strong>Stopped server only.</strong> assign, release, <code>world new --server</code>, config <code>LEVEL</code> and PATCH <code>level</code> are refused when the container is running, paused, restarting or created. Nothing is stopped automatically (<code>world new --server</code> used to try to stop the server; it now refuses).</li>
+<li><strong>Fail-closed.</strong> If any server's <code>config.env</code> cannot be read, or its <code>LEVEL</code> cannot be interpreted safely (path separators, <code>.</code>/<code>..</code>, quotes, control characters, Compose interpolation like <code>${VAR}</code> outside single quotes, or an unsupported <code>--universe</code> location), every assignment change and world delete/reset is refused until it is fixed. Legacy names such as <code>My World</code> are still accepted as existing values; new names must be letters, digits, <code>-</code>, <code>_</code>.</li>
+<li><strong>Release</strong> switches the server using the world back to its own default world <code>&lt;server&gt;</code> (adopting an existing free <code>worlds/&lt;server&gt;</code>, otherwise created on next start). <code>--force</code> is accepted and ignored. Releasing a server from its own default world, a duplicated world, or a server whose world is inside <code>servers/&lt;n&gt;/data</code> is refused.</li>
+<li><strong>Delete.</strong> <code>mcctl world delete &lt;w&gt; --force</code> only skips the prompt; it never deletes a world a server uses. Servers keeping their world inside <code>servers/&lt;n&gt;/data</code> (no <code>EXTRA_ARGS=--universe /worlds/</code>) do not block deleting <code>worlds/&lt;w&gt;</code>. <code>POST /api/servers/:name/world/reset</code> is refused for such servers and when another server uses the same world.</li>
+<li><strong>Duplicate assignments</strong> from older installs are reported, not fixed: <code>mcctl world list</code> shows <code>assigned: a, b</code> and prints warnings; <code>GET /api/worlds</code> adds <code>assignmentWarnings: string[]</code>; the console worlds page shows a warning alert and the card shows "Assigned to N servers". <code>isLocked</code>/<code>lockedBy</code> remain in the API as aliases for "assigned".</li>
+<li><strong>API status codes</strong> for world assign/release/delete/create and config <code>level</code>: invalid world name 400, unknown server or world 404, everything else refused by these rules 409 (conflict, server running, undetermined config). Config snapshot restore answers 409 when the restored <code>config.env</code> would assign a world another server uses, or change the world of a running server (even with force), or when the restored <code>docker-compose.yml</code> sets world keys in <code>environment</code> or changes the <code>/worlds</code>/<code>/data</code> mapping. <code>mcctl config &lt;srv&gt; EXTRA_ARGS</code> that moves the world is checked the same way. <code>mcctl migrate worlds</code> refuses the same way before moving data.</li>
+</ul>
 <p><strong>World behavior</strong>: <code>mcctl world new</code> creates a world directory with a <code>.meta</code> file (containing seed and creation timestamp). Actual Minecraft world files are generated when a server first uses the world.</p>
 <hr />
 <h3 id="mod-management">Mod Management<a class="headerlink" href="#mod-management" title="Permanent link">&para;</a></h3>
@@ -6574,7 +6622,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tr>
 <td><code>LEVEL</code></td>
 <td><code>world</code></td>
-<td>World save folder name</td>
+<td>World save folder name; this is the server's world assignment (stopped server only, one world per server)</td>
 </tr>
 <tr>
 <td><code>SEED</code></td>
@@ -7123,7 +7171,7 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tr>
 <td>GET</td>
 <td><code>/api/servers</code></td>
-<td>List all servers</td>
+<td>List all servers (<code>?include=summary</code> adds type, version, memory, players, stats per server and <code>totals</code>; RCON ~2 s timeout, cached ~10 s)</td>
 </tr>
 <tr>
 <td>POST</td>
@@ -7212,7 +7260,22 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tr>
 <td>GET</td>
 <td><code>/api/router/status</code></td>
-<td>Get mc-router status and routes</td>
+<td>Get mc-router status and routes. Router adds optional <code>image</code>, <code>autoScale { up, down, downAfter?, asleepMotd? }</code>, <code>resolver { hostIp?, hostIps[] }</code>; each route adds <code>autoScaleUp</code>, <code>autoScaleDown</code>, <code>discoveredByRouter</code> (absent when mc-router or its management API <code>127.0.0.1:25580/routes</code> is unreadable; stopped routes are not judged while global <code>AUTO_SCALE_UP</code> is off)</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/router/restart</code></td>
+<td>Restart mc-router (<code>docker compose restart router</code>); no body; 200 <code>{ success, message }</code>, 500 <code>{ error, message }</code>; audit action <code>router.restart</code>; admin-only in the console</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/router/status/stream</code></td>
+<td>SSE: <code>router-status</code> (same payload as <code>/status</code>; sent on connect, then only on change, <code>uptimeSeconds</code> ignored), <code>router-status-error</code> <code>{ timestamp }</code>; <code>?interval=</code> 1000..60000 ms (default 5000); heartbeat every 30s</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/router/logs/stream</code></td>
+<td>SSE: <code>connected</code>, <code>router-log</code> (<code>{ ts?, kind: connect/wake/error/info, hostname?, target?, player?, raw }</code>), <code>end</code> <code>{ code, error? }</code>; <code>?tail=</code> 1..500 (default 100); heartbeat every 30s</td>
 </tr>
 </tbody>
 </table>
@@ -7374,12 +7437,12 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <tr>
 <td>POST</td>
 <td><code>/api/worlds/:name/assign</code></td>
-<td>Assign world to server</td>
+<td>Assign world to a stopped server (409 if another server uses it)</td>
 </tr>
 <tr>
 <td>POST</td>
 <td><code>/api/worlds/:name/release</code></td>
-<td>Release world lock</td>
+<td>Switch the world's server back to its own default world (response adds <code>fallbackWorld</code>, <code>fallbackExists</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -7639,10 +7702,10 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-53-10" name="__codelineno-53-10" href="#__codelineno-53-10"></a><span class="c1"># Assign world to server</span>
 <a id="__codelineno-53-11" name="__codelineno-53-11" href="#__codelineno-53-11"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-12" name="__codelineno-53-12" href="#__codelineno-53-12"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-53-13" name="__codelineno-53-13" href="#__codelineno-53-13"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"server": "survival"}'</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-53-13" name="__codelineno-53-13" href="#__codelineno-53-13"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"serverName": "survival"}'</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-14" name="__codelineno-53-14" href="#__codelineno-53-14"></a><span class="w">  </span>http://localhost:5001/api/worlds/newworld/assign
 <a id="__codelineno-53-15" name="__codelineno-53-15" href="#__codelineno-53-15"></a>
-<a id="__codelineno-53-16" name="__codelineno-53-16" href="#__codelineno-53-16"></a><span class="c1"># Release world lock</span>
+<a id="__codelineno-53-16" name="__codelineno-53-16" href="#__codelineno-53-16"></a><span class="c1"># Release world (its server goes back to its own default world)</span>
 <a id="__codelineno-53-17" name="__codelineno-53-17" href="#__codelineno-53-17"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-API-Key: mctk_xxx"</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-53-18" name="__codelineno-53-18" href="#__codelineno-53-18"></a><span class="w">  </span>http://localhost:5001/api/worlds/newworld/release
 <a id="__codelineno-53-19" name="__codelineno-53-19" href="#__codelineno-53-19"></a>
@@ -7869,10 +7932,10 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </ul>
 <h4 id="worlds-page-worlds">Worlds Page (<code>/worlds</code>)<a class="headerlink" href="#worlds-page-worlds" title="Permanent link">&para;</a></h4>
 <ul>
-<li>World list with: name, size, lock status, assigned server</li>
+<li>World list with: name, size, assignment status, assigned server(s); warning alert for duplicate assignments, "Assigned to N servers" chip on affected cards</li>
 <li>Create new world with seed option</li>
-<li>Assign world to server (shows non-running servers only)</li>
-<li>Release world lock</li>
+<li>Assign world to server (running servers are listed but cannot be selected)</li>
+<li>Release world (the server goes back to its own default world)</li>
 <li>Delete world with confirmation</li>
 <li>World reset functionality with safety checks</li>
 </ul>
@@ -8823,12 +8886,13 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <a id="__codelineno-75-4" name="__codelineno-75-4" href="#__codelineno-75-4"></a>mcctl<span class="w"> </span>config<span class="w"> </span>perf<span class="w"> </span>USE_AIKAR_FLAGS<span class="w"> </span><span class="nb">true</span>
 <a id="__codelineno-75-5" name="__codelineno-75-5" href="#__codelineno-75-5"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>perf<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mcctl<span class="w"> </span>start<span class="w"> </span>perf
 </code></pre></div>
-<h3 id="4-share-world-between-servers">4. Share World Between Servers<a class="headerlink" href="#4-share-world-between-servers" title="Permanent link">&para;</a></h3>
+<h3 id="4-move-a-world-to-another-server">4. Move a World to Another Server<a class="headerlink" href="#4-move-a-world-to-another-server" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-76-1" name="__codelineno-76-1" href="#__codelineno-76-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
 <a id="__codelineno-76-2" name="__codelineno-76-2" href="#__codelineno-76-2"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>oldserver
 <a id="__codelineno-76-3" name="__codelineno-76-3" href="#__codelineno-76-3"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>myworld
-<a id="__codelineno-76-4" name="__codelineno-76-4" href="#__codelineno-76-4"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>myworld<span class="w"> </span>mc-newserver
-<a id="__codelineno-76-5" name="__codelineno-76-5" href="#__codelineno-76-5"></a>mcctl<span class="w"> </span>start<span class="w"> </span>newserver
+<a id="__codelineno-76-4" name="__codelineno-76-4" href="#__codelineno-76-4"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>newserver
+<a id="__codelineno-76-5" name="__codelineno-76-5" href="#__codelineno-76-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>myworld<span class="w"> </span>mc-newserver
+<a id="__codelineno-76-6" name="__codelineno-76-6" href="#__codelineno-76-6"></a>mcctl<span class="w"> </span>start<span class="w"> </span>newserver
 </code></pre></div>
 <h3 id="5-backup-before-major-changes">5. Backup Before Major Changes<a class="headerlink" href="#5-backup-before-major-changes" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a>mcctl<span class="w"> </span>server-backup<span class="w"> </span>myserver<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Before 1.22 upgrade"</span>
@@ -8989,11 +9053,14 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 </code></pre></div></p>
 <p><strong>Windows:</strong> Install Bonjour Print Services from Apple</p>
 <p><strong>Fallback:</strong> Use nip.io hostname instead of .local</p>
-<h4 id="world-already-locked">World Already Locked<a class="headerlink" href="#world-already-locked" title="Permanent link">&para;</a></h4>
-<p><strong>Error:</strong> <code>World 'myworld' is already locked by 'mc-otherserver'</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>myworld<span class="w"> </span>--force
-<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>myworld<span class="w"> </span>mc-myserver
+<h4 id="world-already-assigned">World Already Assigned<a class="headerlink" href="#world-already-assigned" title="Permanent link">&para;</a></h4>
+<p><strong>Error:</strong> <code>World 'myworld' is assigned to 'mc-otherserver'; assign another world to 'mc-otherserver' or delete it first</code> (API: 409)</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-92-1" name="__codelineno-92-1" href="#__codelineno-92-1"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>otherserver
+<a id="__codelineno-92-2" name="__codelineno-92-2" href="#__codelineno-92-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>myworld
+<a id="__codelineno-92-3" name="__codelineno-92-3" href="#__codelineno-92-3"></a>mcctl<span class="w"> </span>stop<span class="w"> </span>myserver
+<a id="__codelineno-92-4" name="__codelineno-92-4" href="#__codelineno-92-4"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>myworld<span class="w"> </span>mc-myserver
 </code></pre></div>
+<p>If the error mentions an unreadable world assignment, fix the <code>LEVEL</code> line in that server's <code>config.env</code> (plain <code>LEVEL=&lt;name&gt;</code>); every assignment change is refused until then.</p>
 <h4 id="out-of-memory">Out of Memory<a class="headerlink" href="#out-of-memory" title="Permanent link">&para;</a></h4>
 <table>
 <thead>
@@ -9074,8 +9141,9 @@ For external access via playit.gg, see <code>mcctl playit setup</code>.</p>
 <h4 id="world-management-issues">World management issues<a class="headerlink" href="#world-management-issues" title="Permanent link">&para;</a></h4>
 <ul>
 <li>Ensure server is stopped before world reset</li>
-<li>Check world locks: <code>mcctl world list</code></li>
-<li>Release stuck locks: <code>mcctl world release &lt;world&gt;</code></li>
+<li>Check world assignments and warnings: <code>mcctl world list</code></li>
+<li>Free a world another server uses: stop that server, then <code>mcctl world release &lt;world&gt;</code></li>
+<li>Leftover <code>worlds/.locks</code> is unused and can be removed: <code>rm -rf worlds/.locks</code></li>
 </ul>
 <h3 id="mod-issues">Mod Issues<a class="headerlink" href="#mod-issues" title="Permanent link">&para;</a></h3>
 <h4 id="version-mismatch">Version mismatch<a class="headerlink" href="#version-mismatch" title="Permanent link">&para;</a></h4>
@@ -9320,7 +9388,7 @@ A: Server configuration files (config.env, docker-compose.yml), not world data.<
 A: Only for the GitHub backup feature. Manual backups don't require it.</p>
 <h3 id="world">World<a class="headerlink" href="#world" title="Permanent link">&para;</a></h3>
 <p><strong>Q: Can I share a world between servers?</strong>
-A: Yes. Release the world lock and assign to another server.</p>
+A: No. One world is used by one server. To move a world, stop both servers, run <code>mcctl world release &lt;world&gt;</code> (the old server goes back to its own default world), then <code>mcctl world assign &lt;world&gt; &lt;server&gt;</code>.</p>
 <p><strong>Q: What happens when I delete a server?</strong>
 A: World data is preserved in the worlds/ directory.</p>
 <p><strong>Q: How do I import an existing world?</strong>
@@ -9420,6 +9488,11 @@ A: Yes. It only appends new <code>.env</code> variables and never modifies exist
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-300-2026-10-24---scripts-removed-breaking">Version 3.0.0 (2026-10-24) - Scripts Removed (BREAKING)<a class="headerlink" href="#version-300-2026-10-24---scripts-removed-breaking" title="Permanent link">&para;</a></h3>
+<p>Upgrade: <code>curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run</code>, then without <code>--dry-run</code>; runbook <code>docs/advanced/upgrade-runbook.md</code> (v3.0.0 sections).</p>
+<p><strong>Removed:</strong> all Bash scripts (#715); script-based <code>@minecraft-docker/shared</code> exports (#736); <code>MCCTL_SCRIPTS</code> is ignored; <code>&lt;root&gt;/scripts</code> is deleted by <code>mcctl upgrade</code> only after <code>y</code>.</p>
+<p><strong>Added:</strong> <code>server.yaml</code> (ServerSpec) + <code>mcctl migrate spec</code>; <code>mcctl delete --delete-world</code>, <code>mcctl backup push --allow-missing</code>; <code>GET /api/router/logs/stream</code>, <code>GET /api/router/status/stream</code>, <code>POST /api/router/restart</code>, <code>GET /api/servers?include=summary</code>, console <code>GET /api/changelog</code>.</p>
+<p><strong>Changed:</strong> create/delete/backup in TypeScript; delete keeps the world by default; hosts with <code>BACKUP_AUTO_ON_STOP=true</code> add <code>kill_timeout: 130000</code> to mcctl-api; console dashboard, server detail and Routing page on Bento (hostname routing table, live router log, routing flow).</p>
 <h3 id="version-2330-2026-10-18---console-auth-upgrade-fix">Version 2.33.0 (2026-10-18) - Console Auth Upgrade Fix<a class="headerlink" href="#version-2330-2026-10-18---console-auth-upgrade-fix" title="Permanent link">&para;</a></h3>
 <p>Upgrade: <code>mcctl upgrade</code>, then <code>mcctl console service restart --console</code>. From ≤2.31 go straight to 2.33.0.</p>
 <p><strong>Changed:</strong>
@@ -9832,8 +9905,8 @@ A: <code>mcctl update</code> updates the CLI and service packages to newer versi
 <td>mc-router feature that starts/stops servers based on player activity</td>
 </tr>
 <tr>
-<td><strong>World lock</strong></td>
-<td>Mechanism preventing simultaneous server access to a world</td>
+<td><strong>World assignment</strong></td>
+<td>A world belongs to the one server whose <code>LEVEL</code> in <code>config.env</code> names it; prevents simultaneous server access to a world (replaced the former lock files)</td>
 </tr>
 <tr>
 <td><strong>ecosystem.config.cjs</strong></td>

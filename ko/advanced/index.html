@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2180,10 +2210,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#월드-잠금" class="md-nav__link">
+  <a href="#월드-할당" class="md-nav__link">
     <span class="md-ellipsis">
       
-        월드 잠금
+        월드 할당
       
     </span>
   </a>
@@ -2436,7 +2466,7 @@
 <li><strong>백업</strong> - 월드 데이터 자동 GitHub 백업</li>
 <li><strong>업그레이드 런북</strong> - 릴리즈와 무관하게 전체 구성요소를 올리고 검증하는 절차</li>
 <li><strong>RCON</strong> - 서버 관리를 위한 원격 콘솔 프로토콜</li>
-<li><strong>월드 관리</strong> - 잠금 기능이 있는 멀티 서버 월드 공유</li>
+<li><strong>월드 관리</strong> - 서버에 월드 할당하기 (월드 하나는 서버 하나)</li>
 <li><strong>자동 스케일링</strong> - 플레이어 활동에 따른 서버 자동 시작/중지</li>
 </ul>
 <h2 id="기능-가이드">기능 가이드<a class="headerlink" href="#기능-가이드" title="Permanent link">&para;</a></h2>
@@ -2519,31 +2549,38 @@
     E --&gt; F[DOCKER_TIMEOUT 대기]
     F --&gt; D
     D --&gt; G[플레이어 접속됨]</code></pre>
-<h3 id="월드-잠금">월드 잠금<a class="headerlink" href="#월드-잠금" title="Permanent link">&para;</a></h3>
-<p>월드 잠금은 서버 간 월드 공유 시 데이터 손상을 방지합니다:</p>
+<h3 id="월드-할당">월드 할당<a class="headerlink" href="#월드-할당" title="Permanent link">&para;</a></h3>
+<p>월드는 <code>servers/&lt;name&gt;/config.env</code>의 <code>LEVEL</code>로 서버에 할당됩니다(<code>LEVEL</code>이 없으면 레거시 <code>WORLD_NAME</code>을 읽고, 둘 다 없으면 itzg 기본값 <code>world</code>). 한 월드는 한 서버만 사용하므로 동시 접근으로 인한 데이터 손상을 방지합니다. 월드와 그 <code>&lt;world&gt;_nether</code> / <code>&lt;world&gt;_the_end</code> 폴더는 하나의 월드로 취급합니다.</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant A as 서버 A
     participant W as 월드
     participant B as 서버 B
 
-    A-&gt;&gt;W: 월드 할당
-    Note over W: A에 잠김
+    A-&gt;&gt;W: 월드 할당 (LEVEL=survival)
+    Note over W: A가 사용 중
     B-&gt;&gt;W: 할당 시도
     W--xB: 거부됨
-    A-&gt;&gt;W: 월드 해제
-    Note over W: 잠금 해제됨
-    B-&gt;&gt;W: 월드 할당
-    Note over W: B에 잠김</code></pre>
-<p><strong>mcctl로 월드 잠금 관리:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 모든 월드와 잠금 상태 목록</span>
+    A-&gt;&gt;W: 월드 해제 (A 중지됨)
+    Note over W: 비어 있음, A는 자신의 월드 사용
+    B-&gt;&gt;W: 월드 할당 (B 중지됨)
+    Note over W: B가 사용 중</code></pre>
+<p><strong>mcctl로 월드 할당 관리:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 모든 월드와 할당된 서버 목록</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># 월드를 서버에 할당 (잠금)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># 월드를 중지된 서버에 할당 (서버의 LEVEL 설정)</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>survival<span class="w"> </span>mc-myserver
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># 월드 잠금 해제</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># 월드를 쓰던 서버를 자신의 기본 월드로 되돌리기</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>survival
 </code></pre></div>
+<ul>
+<li>잠금 파일은 없습니다. <code>worlds/.locks</code>는 더 이상 읽거나 쓰거나 만들지 않으며, 기존 디렉토리는 무해하고 <code>rm -rf worlds/.locks</code>로 지워도 안전합니다.</li>
+<li>할당과 해제에는 중지된 서버가 필요합니다. 서버를 자동으로 중지하지 않습니다.</li>
+<li>서버를 삭제하면 그 월드는 다시 쓸 수 있습니다. <code>mcctl world delete</code>는 <code>--force</code>를 써도 서버가 사용 중인 월드를 거부합니다.</li>
+<li>서버의 <code>config.env</code>를 읽을 수 없거나 <code>LEVEL</code>을 안전하게 해석할 수 없으면, 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 이전 설치의 중복 할당은 <code>mcctl world list</code>가 알려 줄 뿐 고치지 않습니다.</li>
+</ul>
+<p>전체 규칙은 <a href="../cli/commands/#world-assignment-rules">월드 할당 규칙</a>을 참고하세요.</p>
 <h2 id="성능-튜닝">성능 튜닝<a class="headerlink" href="#성능-튜닝" title="Permanent link">&para;</a></h2>
 <h3 id="jvm-최적화">JVM 최적화<a class="headerlink" href="#jvm-최적화" title="Permanent link">&para;</a></h3>
 <p>최적의 성능을 위해 Aikar의 플래그를 사용합니다:</p>
@@ -2676,7 +2713,7 @@
 <tr>
 <td>월드 손상</td>
 <td><code>mcctl world list</code></td>
-<td>잠금 상태 확인</td>
+<td>월드 할당 확인</td>
 </tr>
 </tbody>
 </table>

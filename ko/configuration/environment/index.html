@@ -14,7 +14,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../server-types/">
+        <link rel="next" href="../server-yaml/">
       
       
         
@@ -1038,6 +1038,8 @@
       
         
       
+        
+      
     
     
     
@@ -1480,6 +1482,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2918,7 +2948,7 @@
 </tr>
 <tr>
 <td><code>EXTRA_ARGS</code></td>
-<td>모든 서버에 전달하는 추가 인자. 서버의 <code>config.env</code>가 이 값을 덮어쓰며, 새 서버는 그곳에 <code>EXTRA_ARGS=--universe /worlds/</code>를 설정합니다</td>
+<td>모든 서버에 전달하는 추가 인자. 서버의 <code>config.env</code>가 이 값을 덮어쓰며, 새 서버는 그곳에 <code>EXTRA_ARGS=--universe /worlds/</code>를 설정합니다. 이 값을 상속하는 실행 중 서버의 월드 위치를 바꾸거나, 상속 서버를 다른 서버가 쓰는 월드에 놓게 되면 콘솔 저장이 거부됩니다(409, 해당 서버 목록 포함)</td>
 <td>-</td>
 <td>수동</td>
 </tr>
@@ -3062,8 +3092,8 @@
 <tbody>
 <tr>
 <td><code>HOST_IP</code>, <code>HOST_IPS</code></td>
-<td><code>create-server.sh</code>, <code>migrate-nip-io.sh</code></td>
-<td><code>next-create</code>: 다음 <code>mcctl create</code>부터 사용. 기존 서버의 호스트명은 바뀌지 않습니다</td>
+<td><code>mcctl create</code>, <code>mcctl init --reconfigure</code></td>
+<td><code>next-create</code>: 다음 <code>mcctl create</code>부터 사용. <code>mcctl init --reconfigure</code>는 기존 서버를 다시 만들어 nip.io 호스트명을 맞춥니다</td>
 </tr>
 <tr>
 <td><code>DOCKER_GID</code></td>
@@ -3082,13 +3112,13 @@
 </tr>
 <tr>
 <td><code>BACKUP_GITHUB_TOKEN</code> (시크릿), <code>BACKUP_GITHUB_REPO</code>, <code>BACKUP_GITHUB_BRANCH</code></td>
-<td><code>backup.sh</code> (실행마다 <code>.env</code> 재읽기), mcctl-api 백업 라우트 (<code>process.env</code>)</td>
-<td><code>api</code>: <code>mcctl console service restart --api</code>. CLI는 즉시 반영됩니다</td>
+<td>CLI와 mcctl-api 백업 (<code>GitWorldBackupAdapter</code>가 작업마다 <code>.env</code>를 다시 읽음)</td>
+<td><code>none</code>: 다음 백업 작업</td>
 </tr>
 <tr>
 <td><code>BACKUP_AUTO_ON_STOP</code></td>
-<td><code>mcctl stop</code> 경로</td>
-<td><code>none</code>: 다음 <code>mcctl stop</code></td>
+<td><code>mcctl stop &lt;server&gt;</code>, API·콘솔 정지</td>
+<td><code>none</code>: 다음 정지</td>
 </tr>
 <tr>
 <td><code>PLAYIT_SECRET_KEY</code> (시크릿)</td>
@@ -3663,8 +3693,8 @@
 </tr>
 <tr>
 <td><code>DOCKER_TIMEOUT</code></td>
-<td>서버 시작 타임아웃 (초)</td>
-<td><code>120</code></td>
+<td>서버 시작 타임아웃 (Go duration, 예: <code>120s</code>)</td>
+<td><code>120s</code></td>
 <td>수동</td>
 </tr>
 <tr>

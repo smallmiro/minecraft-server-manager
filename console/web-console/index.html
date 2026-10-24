@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2339,6 +2369,17 @@
     <span class="md-ellipsis">
       
         Filtering and Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#assignment-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assignment Warnings
       
     </span>
   </a>
@@ -4120,6 +4161,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#assignment-warnings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Assignment Warnings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#creating-a-new-world" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4813,7 +4865,7 @@
 <li>Server name, <code>Minecraft &lt;version&gt; · &lt;type&gt;</code>, hostname, and uptime</li>
 <li>A status badge showing the current server state, a health badge (e.g., <code>Healthy</code>, <code>Unhealthy</code>), and a <strong>Reconnecting</strong> badge while the real-time connection is being restored</li>
 <li><strong>Start</strong> for a stopped server, or <strong>Stop</strong> and <strong>Restart</strong> for a running server</li>
-<li>A <strong>⋮</strong> menu with <strong>Delete Server</strong>. The confirmation dialog requires you to type the server name, and the deletion cannot be undone</li>
+<li>A <strong>⋮</strong> menu with <strong>Delete Server</strong>. The confirmation dialog requires you to type the server name, and the deletion cannot be undone. The dialog also asks what to do with the world: <strong>Keep the world (move to worlds/)</strong> is the default and moves the server's world to <code>worlds/</code> (a world already in <code>worlds/</code> is just unassigned); <strong>Delete the world inside the server too</strong> removes the server's own world. Worlds in <code>worlds/</code> are never deleted. If the deletion fails (for example <code>worlds/&lt;name&gt; already exists</code>), nothing is deleted and the error is shown in the page</li>
 </ul>
 <h4 id="navigation-tabs">Navigation Tabs<a class="headerlink" href="#navigation-tabs" title="Permanent link">&para;</a></h4>
 <p>The server detail page is organized into ten tabs:</p>
@@ -5089,7 +5141,7 @@
 </ul>
 <h4 id="map">Map<a class="headerlink" href="#map" title="Permanent link">&para;</a></h4>
 <p><img alt="World Map" src="../../images/world-map.png" /></p>
-<p><strong>Render map</strong> generates a BlueMap web map of the world, and <strong>Re-render</strong> refreshes it. The map is embedded right below the buttons, with a progress bar while rendering. The map opens on the <strong>Overworld</strong> by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on <strong>Re-render</strong>. After a render, <strong>Show structures</strong> marks structures on the map; you can toggle the structure types in the BlueMap legend.</p>
+<p><strong>Render map</strong> generates a BlueMap web map of the world, and <strong>Re-render</strong> refreshes it. The render runs in a Docker container limited to 2 GB of memory; the first render also builds the BlueMap image. The map is embedded right below the buttons, with a progress bar while rendering. The map opens on the <strong>Overworld</strong> by default (Nether and End remain selectable in the viewer). Worlds rendered before v2.29.0 pick this up on <strong>Re-render</strong>. After a render, <strong>Show structures</strong> marks structures on the map; you can toggle the structure types in the BlueMap legend.</p>
 <h4 id="ore--block-stats">Ore &amp; Block Stats<a class="headerlink" href="#ore--block-stats" title="Permanent link">&para;</a></h4>
 <p><img alt="World Stats" src="../../images/world-stats.png" /></p>
 <p><strong>Analyze</strong> scans every chunk of the world (it can take minutes on large worlds; progress is shown) and caches the result, and <strong>Re-analyze</strong> refreshes it. The panel shows when the world was last analyzed, followed by:</p>
@@ -5363,13 +5415,13 @@
 <p>The page header shows the <strong>+ Create World</strong> button and three cards: <strong>Total worlds</strong>, <strong>Assigned worlds</strong>, and <strong>Free worlds</strong>. Worlds are displayed as cards in a grid layout. Each world card shows:</p>
 <ul>
 <li><strong>World name</strong> (e.g., <code>Wild-Deity</code>, <code>botagent</code>, <code>factory</code>)</li>
-<li><strong>Status badge</strong> -- <code>Available</code> (green) for unlocked worlds, <code>Locked</code> for worlds currently assigned to a server</li>
+<li><strong>Status badge</strong> -- <code>Available</code> (green) for unassigned worlds, <code>Assigned</code> for worlds currently assigned to a server. A red <strong>Assigned to N servers</strong> chip appears when an older install has several servers on the same world</li>
 <li><strong>Size</strong> -- Disk space used by the world (e.g., <code>610.2MB</code>, <code>20.5MB</code>), plus <strong>Overworld</strong> / <strong>Nether</strong> / <strong>End</strong> chips when the world has more than one dimension</li>
-<li><strong>Servers</strong> -- The servers using the world, or "No servers". A locked world also shows which server it is assigned to</li>
+<li><strong>Servers</strong> -- The servers using the world, or "No servers". An assigned world also shows which server it is assigned to</li>
 <li><strong>Date</strong> -- When the world was last modified</li>
 <li><strong>Action buttons</strong>:<ul>
 <li><strong>Assign</strong> (link icon) -- Assign an available world to a server</li>
-<li><strong>Release</strong> (unlink icon) -- Release a locked world from its server</li>
+<li><strong>Release</strong> (unlink icon) -- Switch the server using the world back to its own default world (the world is kept in <code>worlds/</code>)</li>
 <li><strong>Delete</strong> (red trash can icon) -- Delete the world</li>
 </ul>
 </li>
@@ -5379,10 +5431,12 @@
 <p>At the top of the list:</p>
 <ul>
 <li><strong>ALL</strong> -- Show all worlds</li>
-<li><strong>AVAILABLE</strong> -- Show only available (unlocked) worlds</li>
-<li><strong>LOCKED</strong> -- Show only worlds currently assigned to a server</li>
+<li><strong>AVAILABLE</strong> -- Show only available (unassigned) worlds</li>
+<li><strong>ASSIGNED</strong> -- Show only worlds currently assigned to a server</li>
 </ul>
 <p>A <strong>Search worlds...</strong> box lets you filter worlds by name.</p>
+<h3 id="assignment-warnings">Assignment Warnings<a class="headerlink" href="#assignment-warnings" title="Permanent link">&para;</a></h3>
+<p>If an older install has two servers on the same world, or a server's <code>config.env</code> cannot be read, a warning alert at the top of the page lists each problem. Nothing is fixed automatically: assign another world to all but one of the servers. Until a server's <code>config.env</code> is fixed, assigning, releasing and deleting worlds are refused.</p>
 <h3 id="creating-a-new-world">Creating a New World<a class="headerlink" href="#creating-a-new-world" title="Permanent link">&para;</a></h3>
 <p><img alt="Create World dialog" src="../../images/world-create-dialog.png" /></p>
 <p>Click <strong>+ Create World</strong> in the page header to open the <strong>Create New World</strong> dialog:</p>
@@ -5397,10 +5451,10 @@
 <li>PAPER, SPIGOT, BUKKIT -- Zip <code>&lt;world-name&gt;</code>, <code>&lt;world-name&gt;_nether</code>, and <code>&lt;world-name&gt;_the_end</code> together; leaving one out loses that dimension</li>
 </ul>
 <h3 id="assigning-a-world-to-a-server">Assigning a World to a Server<a class="headerlink" href="#assigning-a-world-to-a-server" title="Permanent link">&para;</a></h3>
-<p>Click the <strong>Assign</strong> (link) icon on an available world card to open the <strong>Assign World</strong> dialog. Select a server in <strong>Select Server</strong>; stopped servers are listed under <strong>Available Servers</strong>, and running servers appear under <strong>Running Servers (not recommended)</strong>. Click <strong>Assign</strong>. The world is linked to that server and marked as <code>Locked</code>.</p>
-<p>To undo an assignment, click the <strong>Release</strong> icon on the locked world's card.</p>
+<p>Click the <strong>Assign</strong> (link) icon on an available world card to open the <strong>Assign World</strong> dialog. Select a server in <strong>Select Server</strong>; stopped servers are listed under <strong>Available Servers</strong>. Running servers appear under <strong>Running Servers (stop them first)</strong> and cannot be selected. Click <strong>Assign</strong>. The server's <code>LEVEL</code> is set to the world and the card is marked <code>Assigned</code>.</p>
+<p>A world can be used by one server only, and the server must be stopped. To switch a server back to its own default world, click the <strong>Release</strong> icon on the assigned world's card; the server must be stopped for this too.</p>
 <h3 id="deleting-a-world">Deleting a World<a class="headerlink" href="#deleting-a-world" title="Permanent link">&para;</a></h3>
-<p>Click the <strong>red trash can icon</strong> on a world card. A <strong>Delete World</strong> dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible.</p>
+<p>Click the <strong>red trash can icon</strong> on a world card. A <strong>Delete World</strong> dialog appears requiring you to type the exact world name to prevent accidental deletion. This action is irreversible. A world that a server uses cannot be deleted: assign another world to that server first.</p>
 <div class="admonition warning">
 <p class="admonition-title">Data Loss</p>
 <p>Deleting a world permanently removes all world data including terrain, player builds, and entities. Always create a backup before deleting a world.</p>

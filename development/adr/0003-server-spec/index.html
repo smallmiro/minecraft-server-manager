@@ -1,0 +1,2991 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/development/adr/0003-server-spec/">
+      
+      
+      
+      
+        
+          <link rel="alternate" href="./" hreflang="en">
+        
+          <link rel="alternate" href="../../../ko/development/adr/0003-server-spec/" hreflang="ko">
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>ADR-0003: ServerSpec, the Single Server Definition - Minecraft Docker Server Manager</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-0003-serverspec-the-single-server-definition" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Minecraft Docker Server Manager
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-0003: ServerSpec, the Single Server Definition
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="../../../ko/development/adr/0003-server-spec/" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/smallmiro/minecraft-server-manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../getting-started/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../usage/server-management/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Usage Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../cli/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  CLI Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../api/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  REST API
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../configuration/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Configuration
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../mods-and-plugins/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Mods & Plugins
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../console/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Management Console
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../advanced/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Advanced
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../troubleshooting/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Troubleshooting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962" class="md-tabs__link">
+        
+  
+  
+    
+  
+  AI Assistant
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Minecraft Docker Server Manager
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/smallmiro/minecraft-server-manager" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    smallmiro/minecraft-server-manager
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../getting-started/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../usage/server-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Start & Stop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../cli/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CLI Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../api/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    REST API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/endpoints/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Endpoints
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../configuration/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../configuration/server-types/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Types
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../mods-and-plugins/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mods & Plugins
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Mods & Plugins
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mods-and-plugins/modrinth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modrinth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mods-and-plugins/curseforge/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CurseForge
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mods-and-plugins/spiget/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spiget (SpigotMC)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mods-and-plugins/direct-download/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Direct Download
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../mods-and-plugins/modpacks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modpacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../console/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Management Console
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Management Console
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/setup-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/cli-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/web-console/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Console
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/audit-log-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logs (API)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../console/audit-log-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Logs (UI)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../advanced/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Networking
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/external-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    External Access (playit.gg)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/backup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../advanced/upgrade-runbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+          
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_11" id="__nav_11_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../git-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cli-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agent-collaboration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Collaboration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Decision Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#resolved-questions-2026-10-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolved questions (2026-10-23)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Schema
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-repository-storage-and-concurrency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Repository, Storage and Concurrency
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-rendering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Rendering
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-import-of-existing-installs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Import of Existing Installs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-provision-replaces-create-serversh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Provision (replaces create-server.sh)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-write-paths" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Write Paths
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-stages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Stages
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-tests-tdd-failing-test-first-in-each-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Tests (TDD, failing test first in each PR)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-0003-serverspec-the-single-server-definition">ADR-0003: ServerSpec, the Single Server Definition<a class="headerlink" href="#adr-0003-serverspec-the-single-server-definition" title="Permanent link">&para;</a></h1>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Status</strong></td>
+<td>Accepted with changes after system-architect review (2026-10-23); implemented in PR 1 (#754), PR 2 (#754) and PR 3 (<code>feature/675-provision</code>)</td>
+</tr>
+<tr>
+<td><strong>Issue</strong></td>
+<td><a href="https://github.com/smallmiro/minecraft-server-manager/issues/675">#675</a> (Hardening D5, milestone M4 #645), includes #715 S8 (replace <code>create-server.sh</code>)</td>
+</tr>
+<tr>
+<td><strong>Changes</strong></td>
+<td><a href="../0001-container-runtime-ports/">ADR-0001</a>: <code>IServerSpecRepository</code> gains <code>load</code>/<code>write</code> (v2 methods kept), <code>IHostnameRegistrarPort.register</code>/<code>unregister</code></td>
+</tr>
+<tr>
+<td><strong>Builds on</strong></td>
+<td><a href="../0002-world-server-assignment/">ADR-0002</a> (#670, <code>LEVEL</code> is the assignment; merged in PR #750), PR #749 (#656: env codec, <code>atomicWriteFile</code>, API create/delete queue), #651 (single template), #649 (names), #654 (runtime ports), #751 (avahi sudoers shape)</td>
+</tr>
+<tr>
+<td><strong>Related</strong></td>
+<td>#735 (S7 delete), #657 (create cleanup), #658 (progress), #736 (S9, v3.0.0), #641 (k8s), #655 (migrate worlds), #737, #726</td>
+</tr>
+</tbody>
+</table>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<ul>
+<li>One server is defined in seven places: <code>config.env</code>, the server <code>docker-compose.yml</code> (image tag, router labels), the <code>servers/compose.yml</code> include list, <code>.env</code> (<code>HOST_IPS</code>), <code>.mcctl.json</code>, <code>/etc/avahi/hosts</code>, and lock files (gone since ADR-0002).</li>
+<li>More than ten code paths write them (table in <a href="#6-write-paths">Write paths</a>); four edit compose YAML with regexes (B4).</li>
+<li><code>create-server.sh</code> (789 lines) builds a server with <code>cp</code> + <code>sed</code>, leaves <code>servers/&lt;n&gt;</code> behind on failure (#657), and prints progress the API cannot parse (#658).</li>
+<li>The k8s adapter (#641) needs one runtime-neutral definition to render manifests from (plan §12, condition 3).</li>
+</ul>
+<h2 id="decision-summary">Decision Summary<a class="headerlink" href="#decision-summary" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>servers/&lt;n&gt;/server.yaml</code> is the definition.</strong> <code>config.env</code>, the server <code>docker-compose.yml</code> and the include entry are <strong>generated</strong> from it. Platform files (<code>.env</code>, main compose, <code>.mcctl.json</code>) stay out of the spec.</li>
+<li><strong>Small typed core + <code>env</code> pass-through.</strong> Typed fields only for what mcctl reasons about or a renderer must translate (type, version, memory, image, world, routing). Every other <code>config.env</code> key lives in <code>env</code> unchanged, so import is lossless.</li>
+<li><strong>Readers do not change in v2.x.</strong> Generated files are rewritten on every save, so existing readers (<code>ServerRepository</code>, status, API config) keep reading <code>config.env</code>/compose. Only writers move.</li>
+<li><strong>Hand edits are absorbed, not lost.</strong> A header hash detects them. <code>config.env</code> edits and edits of spec-owned compose fields (<code>image</code>, <code>mc-router.*</code> labels) are absorbed into the spec before the next write. Any other compose difference is protected: never overwritten silently.</li>
+<li><strong>No new port, no broken export</strong> (#715, v2.x rule). <code>IServerSpecRepository</code> and <code>ServerSpec</code> keep their v2 shape; the full type is the new <code>ServerSpecDocument</code>, and the new behaviour comes from added methods (<code>load</code>, <code>write</code>), as #670 did for <code>IWorldAssignmentPort</code>. Rendering is an infrastructure detail of the repository adapter. <code>IHostnameRegistrarPort</code> gains <code>register</code>; <code>unregister</code> was added with delete in #735.</li>
+<li><strong>No lock file.</strong> Create claims the directory with <code>mkdir</code>; updates use an optimistic revision (sha256 of <code>server.yaml</code>). The in-process API queue from #749 stays.</li>
+<li><strong>Import is lazy or explicit, never bulk.</strong> A server without <code>server.yaml</code> is imported in memory on its first write; <code>mcctl migrate spec</code> imports on request. <code>mcctl upgrade</code> only reports which servers are not imported yet. A server that is never imported keeps working as today.</li>
+<li><strong>Provision replaces <code>create-server.sh</code></strong> inside <code>CreateServerUseCase</code>, with progress events named as the API SSE already expects and all-or-nothing cleanup so a retry works.</li>
+</ol>
+<h3 id="resolved-questions-2026-10-23">Resolved questions (2026-10-23)<a class="headerlink" href="#resolved-questions-2026-10-23" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Start fails after a successful create</td>
+<td>The server stays created. CLI prints the cause and exits 1. The API answers success with <code>server.status: 'created'</code> and a <code>warning</code> (SSE <code>completed</code>), so the console does not offer a retry that would hit "already exists".</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Hand-edited compose</td>
+<td>Absorb spec-owned fields, protect the rest, <code>--force</code> overwrites after a <code>.bak</code>. An override file can be added later.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>EXTRA_ARGS</code> inherited from <code>global.env</code>/<code>.env</code></td>
+<td>Import pins the effective value into <code>config.env</code> and reports it.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Bulk import in <code>mcctl upgrade</code></td>
+<td>No. <code>upgrade</code> reports; import is lazy or via <code>mcctl migrate spec</code>.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Template for creates</td>
+<td>The bundled template only (#651); the API stops reading <code>&lt;root&gt;/servers/_template</code>.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Deviations from plan §9.2</td>
+<td>Accepted (see §1).</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>.mcctl.json</code> <code>avahiEnabled: false</code></td>
+<td>Ignored, as the script does.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Sudoers shape for <code>unregister</code></td>
+<td><code>sudo -n sed -i &lt;expr&gt; /etc/avahi/hosts</code>, the README shape #751 restored (ADR-0001).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-schema">1. Schema<a class="headerlink" href="#1-schema" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1">// shared/src/domain/server-spec/ServerSpecDocument.ts (pure, no I/O)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1">// ServerSpec ({ name: string }) stays the v2 export; the document extends it.</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">ServerSpecDocument</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">ServerSpec</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nx">specVersion</span><span class="o">:</span><span class="w"> </span><span class="kt">1</span><span class="p">;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">                      </span><span class="c1">// directory name, mc-&lt;name&gt; container</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="kr">type</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">                      </span><span class="c1">// TYPE</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nx">version?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">                  </span><span class="c1">// VERSION; absent = itzg/modpack decides</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nx">memory?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">                   </span><span class="c1">// MEMORY</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="nx">image</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">                     </span><span class="c1">// compose image, e.g. itzg/minecraft-server:java25</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nx">world</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nx">level</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">                   </span><span class="c1">// LEVEL (ADR-0002 resolveWorldName)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="nx">storage</span><span class="o">:</span><span class="w"> </span><span class="s1">'universe'</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="s1">'data'</span><span class="p">;</span><span class="w">    </span><span class="c1">// worlds/&lt;level&gt; | servers/&lt;n&gt;/data/&lt;level&gt; (D-1)</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="p">};</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nx">routing</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="nx">customHostnames</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span><span class="w">       </span><span class="c1">// user-added mc-router hostnames</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="nx">playitDomain?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">           </span><span class="c1">// PLAYIT_DOMAIN and a router hostname</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="nx">autoScale</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">up</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span><span class="w"> </span><span class="nx">down</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">};</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="nx">asleepMotd?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">             </span><span class="c1">// mc-router.auto-scale-asleep-motd</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="nx">loadingMotd?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w">            </span><span class="c1">// mc-router.auto-scale-loading-motd</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">  </span><span class="p">};</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">  </span><span class="nx">env</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="o">&gt;</span><span class="p">;</span><span class="w">       </span><span class="c1">// every other config.env key, file order kept</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">}</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">specVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">survival</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PAPER</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.21.1"</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4G</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">itzg/minecraft-server:java25</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nt">world</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> level</span><span class="p">:</span><span class="w"> </span><span class="nv">survival</span><span class="p p-Indicator">,</span><span class="nt"> storage</span><span class="p">:</span><span class="w"> </span><span class="nv">universe</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nt">routing</span><span class="p">:</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="nt">customHostnames</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">mc.example.com</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">playitDomain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aa.example.com</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="nt">autoScale</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> up</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">,</span><span class="nt"> down</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span><span class="nt">asleepMotd</span><span class="p">:</span><span class="w"> </span><span class="s">"§e§lServer</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">sleeping§r\n§7Connect</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">wake</span><span class="nv"> </span><span class="s">up!"</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span><span class="nt">loadingMotd</span><span class="p">:</span><span class="w"> </span><span class="s">"§a§lServer</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">starting...§r\n§7Please</span><span class="nv"> </span><span class="s">wait!"</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="nt">env</span><span class="p">:</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">  </span><span class="nt">GAMEMODE</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">survival</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">  </span><span class="nt">ENABLE_RCON</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="nt">MOTD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Welcome to survival! Your adventure begins here.</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">  </span><span class="nt">SEED</span><span class="p">:</span><span class="w"> </span><span class="s">"12345"</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">  </span><span class="nt">MODRINTH_PROJECTS</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fabric-api,lithium</span>
+</code></pre></div>
+<p><strong>Validation</strong> (<code>validateServerSpecDocument</code>, pure). <em>Create</em> uses the strict value objects; <em>import</em> accepts what works today and reports what the strict rules reject (C1 #7: unknown <code>TYPE</code> and snapshot <code>VERSION</code> must not make a server disappear).</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Create</th>
+<th>Import / save of an imported spec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>ServerName</code> (DNS-1123, reserved words, #649); equals the directory</td>
+<td><code>EXISTING_SERVER_NAME_PATTERN</code></td>
+</tr>
+<tr>
+<td><code>world.level</code></td>
+<td><code>WORLD_NAME_PATTERN</code>, not <code>*_nether</code>/<code>*_the_end</code> (ADR-0002)</td>
+<td><code>EXISTING_WORLD_NAME_PATTERN</code></td>
+</tr>
+<tr>
+<td><code>type</code>, <code>version</code>, <code>memory</code></td>
+<td><code>ServerType</code>, <code>MC_VERSION_INPUT_PATTERN</code> (releases, <code>LATEST</code>, snapshots and pre-releases, the API create rule), <code>Memory</code></td>
+<td>env value rule</td>
+</tr>
+<tr>
+<td><code>routing.*Hostnames</code>, <code>playitDomain</code></td>
+<td>hostname rule (moved from <code>HostnameService</code> to domain)</td>
+<td>same</td>
+</tr>
+<tr>
+<td><code>env</code> keys / values</td>
+<td><code>ENV_KEY_RE</code> / <code>assertEnvFileValue</code> (#726), and a value the <code>config.env</code> writer can write (PR 3 review)</td>
+<td><code>ENV_KEY_RE</code> / <code>assertEnvFileValue</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Managed keys</strong> cannot appear in <code>env</code>: <code>TYPE</code>, <code>VERSION</code>, <code>MEMORY</code>, <code>LEVEL</code>, <code>PLAYIT_DOMAIN</code>. <code>env.EXTRA_ARGS</code> is allowed but must not contain <code>--universe</code> (that is <code>world.storage</code>).</li>
+<li><strong>Strict file</strong>: unknown top-level keys and non-string scalars are rejected with the path (<code>version: 1.21</code> is a float in YAML; the error says to quote it). mcctl itself writes with <code>js-yaml</code> <code>dump</code>, which quotes as needed.</li>
+<li><strong>Errors are actionable</strong>: every <code>ServerSpecError</code> names the server, the file and the field, and the next step (<code>quote the value</code>, <code>run mcctl migrate spec &lt;n&gt; --force</code>, <code>upgrade mcctl</code>). Saving a bare v2 <code>{ name }</code> through <code>save</code> fails with <code>invalid_spec</code> listing the missing fields.</li>
+<li><strong><code>specVersion</code></strong>: optional fields are added without a bump. A breaking change bumps it and the repository upgrades older files in memory on read (written on the next save). A higher version is refused (<code>unsupported_spec_version</code>).</li>
+<li><strong>Hand edits of <code>server.yaml</code></strong> are allowed. They take effect on the next mcctl write to that server or on <code>mcctl migrate spec &lt;n&gt;</code>; <code>mcctl start</code> does not render.</li>
+<li><strong>Secrets</strong>: no <code>secretRefs</code> in version 1 (no per-server secret exists; RCON and tokens stay in <code>.env</code>, passed through <code>global.env</code>). A secret a user put in <code>config.env</code> (e.g. <code>CF_API_KEY</code>) lands in <code>env</code>: <code>server.yaml</code> gets <code>config.env</code>'s file mode, is collected by config snapshots like <code>config.env</code>, and is never returned by the API. #641 adds <code>secretRefs</code> as an optional field.</li>
+<li><strong>Deviations from plan §9.2</strong> (accepted): <code>world.source</code>, <code>modpack</code> and <code>whitelist</code> are plain <code>env</code> keys (<code>SEED</code>/<code>WORLD</code>, <code>MODRINTH_*</code>/<code>CF_*</code>, <code>ENABLE_WHITELIST</code>/<code>WHITELIST</code>); <code>image</code> replaces <code>imageTag</code> (lossless for custom images); <code>stopGraceSec</code> and <code>resources</code> wait for A2/C3; an optimistic revision replaces the per-server lock.</li>
+</ul>
+<h2 id="2-repository-storage-and-concurrency">2. Repository, Storage and Concurrency<a class="headerlink" href="#2-repository-storage-and-concurrency" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">// IServerSpecRepository: v2 methods unchanged, #675 adds load/write (full text in ADR-0001)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nx">list</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ServerSpec</span><span class="p">[]</span><span class="o">&gt;</span><span class="p">;</span><span class="w">                       </span><span class="c1">// { name } per server dir with server.yaml or config.env</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="cm">/** @deprecated Use load(). Removed in v3.0.0 (#736). */</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nx">get</span><span class="p">(</span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ServerSpec</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="p">;</span><span class="w">       </span><span class="c1">// the document, typed as the v2 ServerSpec</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nx">save</span><span class="p">(</span><span class="nx">spec</span><span class="o">:</span><span class="w"> </span><span class="kt">ServerSpec</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="p">;</span><span class="w">               </span><span class="c1">// = write(spec) after validating it is a document</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="ow">delete</span><span class="p">(</span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">options?</span><span class="o">:</span><span class="w"> </span><span class="kt">DeleteServerSpecOptions</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">ServerSpecDeleteResult</span><span class="o">&gt;</span><span class="p">;</span><span class="w"> </span><span class="c1">// #735</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nx">load</span><span class="p">(</span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="nx">LoadedServerSpec</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">null</span><span class="o">&gt;</span><span class="p">;</span><span class="w">               </span><span class="c1">// { document, revision, warnings }</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nx">write</span><span class="p">(</span><span class="nx">doc</span><span class="o">:</span><span class="w"> </span><span class="kt">ServerSpecDocument</span><span class="p">,</span><span class="w"> </span><span class="nx">options?</span><span class="o">:</span><span class="w"> </span><span class="kt">WriteServerSpecOptions</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="p">;</span><span class="w"> </span><span class="c1">// { expectedRevision?, create?, force?, allowStorageChange? }</span>
+</code></pre></div>
+<ul>
+<li><strong>File</strong>: <code>servers/&lt;n&gt;/server.yaml</code>, fixed key order, written with <code>atomicWriteFile</code> (#749).</li>
+<li><strong>Create</strong>: <code>mkdir servers/&lt;n&gt;</code> (not recursive) is the claim; <code>EEXIST</code> → <code>already_exists</code>. Works across CLI and API processes.</li>
+<li><strong>Update</strong>: <code>load</code> returns <code>revision</code> = sha256 of the bytes it read. <code>write</code> compares it when it starts and again right before its first write, after every awaited check (host addresses, import, world snapshot); the generated files it planned against are re-read at the same point. A mismatch is <code>conflict</code> and nothing is written. <code>updateServerSpec(repo, name, mutate)</code> (application helper) retries once with a fresh <code>load</code>. <code>ponytail:</code> the remaining window is the temp-file write and fsync of <code>atomicWriteFile</code> (milliseconds); add a per-server lock only if lost updates are ever observed.</li>
+<li><strong>World guard (R1, R7)</strong>: when the rendered <code>LEVEL</code> or storage differs from the current <code>config.env</code>, <code>write</code> runs ADR-0002's pure <code>checkProposed</code> on a snapshot with the rendered <code>config.env</code>. It uses the same snapshot reader as <code>IWorldAssignmentPort.preview</code> directly, not the port, because the assignment adapter itself writes through this repository. A storage change is refused (<code>storage_change</code>) unless <code>allowStorageChange</code> is set, which only <code>mcctl migrate worlds</code> does. The same write also refuses a server that is not stopped (<code>checkServerStopped</code> with the runtime the adapter is built with; no runtime or an unreadable state is undetermined), so a hand edit of <code>world.level</code> rendered by <code>mcctl migrate spec</code> cannot bypass ADR-0002 decision 5. Use cases keep their own stop checks.</li>
+<li><strong>Write order</strong>: <code>server.yaml</code> first, then the generated files. A crash in between leaves generated files with a valid hash but an old <code>spec=</code> (§3), which the next write or <code>mcctl migrate spec</code> re-renders, completing the interrupted write.</li>
+</ul>
+<h2 id="3-rendering">3. Rendering<a class="headerlink" href="#3-rendering" title="Permanent link">&para;</a></h2>
+<p><strong>Seam</strong> (infrastructure, not a port):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">// shared/src/infrastructure/adapters/server-spec/ServerSpecRenderer.ts</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">RenderContext</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nx">root</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">templatesDir</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">hostIps</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">[];</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nx">read</span><span class="p">(</span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="p">;</span><span class="w">   </span><span class="c1">// current file content</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">}</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">RenderedFile</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span><span class="w"> </span><span class="nx">guarded</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="k">export</span><span class="w"> </span><span class="kd">interface</span><span class="w"> </span><span class="nx">ServerSpecRenderer</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nx">render</span><span class="p">(</span><span class="nx">doc</span><span class="o">:</span><span class="w"> </span><span class="kt">ServerSpecDocument</span><span class="p">,</span><span class="w"> </span><span class="nx">ctx</span><span class="o">:</span><span class="w"> </span><span class="kt">RenderContext</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">RenderedFile</span><span class="p">[];</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">}</span>
+</code></pre></div>
+<p><code>FileServerSpecRepository</code> (the <code>IServerSpecRepository</code> adapter) takes a renderer in its constructor. Application code never calls a renderer, so it is not a port. <code>DockerComposeRenderer</code> is implemented now. <code>KubernetesManifestRenderer</code> (StatefulSet, Service, PVC from <code>world.storage</code>) is only this interface until #641, which adds the renderer plus whatever storing the spec and applying manifests need in a k8s repository adapter; ADR-0001's <code>apply(spec)</code> is not needed. Removal (#735) drops the generated include entry <code>&lt;n&gt;/docker-compose.yml</code> with <code>removeIncludeEntry</code> (and <code>include:</code> itself when no entry is left) before moving its world, refusing a hand-written entry for the server, and deletes <code>servers/&lt;n&gt;</code> after; see <a href="../0001-container-runtime-ports/#script-removal-s7-delete-serversh-735">ADR-0001 S7</a>.</p>
+<p><strong>Docker outputs</strong></p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>How</th>
+<th>Guarded</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config.env</code></td>
+<td><code>applyEnvChanges(current ?? bundled _template/config.env, diff, { raw: true })</code>: set keys whose value differs, remove keys the spec lacks. Untouched lines (comments, quoted values) stay byte-identical.</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>docker-compose.yml</code></td>
+<td>Bundled <code>_template/docker-compose.yml</code> loaded with <code>js-yaml</code>; service key and <code>container_name</code> → <code>mc-&lt;n&gt;</code>, <code>image</code>, router labels set; <code>dump</code>.</td>
+<td>yes</td>
+</tr>
+<tr>
+<td><code>servers/compose.yml</code></td>
+<td><code>js-yaml</code> load, add <code>&lt;n&gt;/docker-compose.yml</code> if no entry equals it, keep all other entries (long form <code>- path:</code> too), dump with a static header. The whole read-merge-write runs under <code>servers/.compose.yml.lock</code> (<code>acquireFileLock</code>, shared with the backup lock: link-based, a holder that provably died on this host is taken over, about 10 s wait, then <code>locked</code>), because CLI and API processes add servers to the same file. Inside the lock the file is read fresh, written, read back and checked for every entry it had plus the new one; retry once on mismatch. A file that fails to load is never overwritten: the write stops with an error before anything is written.</td>
+<td>no (merge)</td>
+</tr>
+<tr>
+<td><code>data/</code>, <code>logs/</code>, <code>servers/global.env</code></td>
+<td><code>mkdir -p</code>; copy <code>global.env</code> from the template if missing (as the script does).</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Env projection</strong>: <code>TYPE</code>, <code>VERSION</code> (omitted when absent, <code>VERSION=</code> when <code>''</code>), <code>MEMORY</code>, <code>LEVEL</code>, <code>PLAYIT_DOMAIN</code>, <code>EXTRA_ARGS</code>, then <code>env</code>. <code>EXTRA_ARGS</code> = <code>--universe /worlds/</code> plus <code>env.EXTRA_ARGS</code> for <code>universe</code>; <code>env.EXTRA_ARGS ?? ''</code> for <code>data</code> (an empty value still overrides <code>global.env</code>, ADR-0002).</li>
+<li><strong>Router hosts</strong>: <code>&lt;n&gt;.local</code>, <code>&lt;n&gt;.&lt;ip&gt;.nip.io</code> for each <code>hostIps</code>, <code>playitDomain</code>, <code>customHostnames</code> (deduplicated, in this order). This one generator replaces <code>build_hostnames</code>, <code>init.ts</code> <code>buildHostnames</code>/<code>mergeHostnames</code>, and the system part of <code>HostnameService</code> (B4).</li>
+<li><strong>Host IPs</strong> (<code>resolveHostIps</code>, shared infrastructure, the script's order): <code>.env</code> <code>HOST_IPS</code>, else <code>HOST_IP</code> (comma list), read with the env codec; else the <code>src</code> address of <code>ip route get 1</code>; else the first address of <code>hostname -I</code>; else (macOS) the first non-internal IPv4 from <code>os.networkInterfaces()</code>. Addresses on <code>docker0</code>, <code>br-*</code>, <code>veth*</code> are skipped in every probe. Avahi gets the first address.</li>
+<li><strong>Header</strong> (first line of guarded files):
+  <code># Generated by mcctl from server.yaml; edits are detected (ADR-0003). mcctl:sha256=&lt;64 hex&gt; spec=&lt;12 hex&gt;</code>
+  <code>sha256</code> hashes the rest of the file; <code>spec</code> is the prefix of the <code>server.yaml</code> revision it was rendered from. No other state file.</li>
+<li><strong>Idempotent</strong>: rendering twice gives the same bytes; an unchanged spec means no writes (no mtime churn, no needless container recreation).</li>
+<li><strong>Who does what</strong> (PR 2): the renderer returns file bodies and reads bodies through <code>ctx.read</code>; the repository adds and checks the header, so the renderer never sees it. Every check (revision, storage, edit detection, an unreadable <code>servers/compose.yml</code>) runs before the first write. A write that fails part way puts back every file it already changed (a new file is removed) before the error is thrown, but only while the file still holds what it wrote: a file another writer changed meanwhile (e.g. during the include lock wait) is left and named. <code>server.yaml</code>, the definition, is put back only when every generated file was; otherwise it keeps the new spec, so what is left is all earlier content or the new spec with some new generated files, and <code>mcctl migrate spec</code> renders the new spec again. The files it could not put back are on the error (<code>unrestoredFiles(error)</code>); <code>mcctl migrate worlds</code> then places the world where the spec <code>mcctl migrate spec</code> would render (<code>load()</code>) puts it (new: it stays in <code>worlds/</code>; earlier: moved back; otherwise left, with what to check) and says to run <code>mcctl migrate spec</code> before the next start, or, when that spec and <code>server.yaml</code> disagree on the storage (which <code>mcctl migrate spec</code> refuses), to remove <code>server.yaml</code> and run <code>mcctl migrate worlds</code> again (PR 3 review). <code>FileServerSpecRepository.loadFile(name)</code> (adapter only, not the port) reads <code>server.yaml</code> without absorbing; <code>mcctl migrate spec --force</code> uses it to re-render from <code>server.yaml</code>. With <code>server.yaml</code> present, compose <code>environment</code> entries are not spec-owned: they count as edits outside the spec (import still moves them, §4).</li>
+</ul>
+<p><strong>Edit detection</strong> (on <code>load</code>):</p>
+<table>
+<thead>
+<tr>
+<th><code>config.env</code></th>
+<th>Meaning</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hash ok, <code>spec=</code> current</td>
+<td>in sync</td>
+<td>—</td>
+</tr>
+<tr>
+<td>hash ok, <code>spec=</code> old</td>
+<td><code>server.yaml</code> edited by hand, or an interrupted write</td>
+<td>next write renders it</td>
+</tr>
+<tr>
+<td>hash bad or no header, <code>spec=</code> current or none</td>
+<td><code>config.env</code> edited (or never rendered)</td>
+<td>absorb into the spec (as import, step 1)</td>
+</tr>
+<tr>
+<td>hash bad, <code>spec=</code> old</td>
+<td>both edited</td>
+<td><code>edit_conflict</code>; <code>mcctl migrate spec &lt;n&gt; --force</code> re-renders from <code>server.yaml</code> after writing <code>config.env.bak</code></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th><code>docker-compose.yml</code></th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>hash ok</td>
+<td>overwrite freely (also picks up template changes from a newer mcctl)</td>
+</tr>
+<tr>
+<td>hash bad or no header</td>
+<td>1. absorb spec-owned fields (<code>image</code>, <code>mc-router.*</code> labels) into the spec, as import step 4; 2. normalize known legacy variants (env_file <code>../../.env</code> #685, missing loading-MOTD label); 3. compare the rest semantically with <code>render(spec)</code>. Equal → overwrite. Different → protected: a write that would change the rendered compose fails with <code>compose_edited</code> and the differing YAML paths, other writes leave the file untouched, <code>--force</code> overwrites after <code>docker-compose.yml.bak</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4-import-of-existing-installs">4. Import of Existing Installs<a class="headerlink" href="#4-import-of-existing-installs" title="Permanent link">&para;</a></h2>
+<p><code>importDockerServer(name, ctx)</code> (infrastructure, next to the renderer):</p>
+<ol>
+<li><strong><code>config.env</code></strong> via <code>parseEnvDocument</code>: <code>TYPE</code>, <code>VERSION</code>, <code>MEMORY</code>, <code>PLAYIT_DOMAIN</code> → typed fields; an empty <code>VERSION</code>, <code>MEMORY</code> or <code>PLAYIT_DOMAIN</code> stays <code>''</code>, so the rendered <code>KEY=</code> keeps overriding <code>global.env</code> (PR 3 review). <code>world.level</code> = <code>resolveWorldName(env)</code> (<code>LEVEL</code>, else legacy <code>WORLD_NAME</code>, else <code>world</code>; <code>WORLD_NAME</code> stays in <code>env</code>). Every other key → <code>env</code> in file order (unknown keys preserved).</li>
+<li><strong>Storage</strong> from the <em>effective</em> <code>EXTRA_ARGS</code>, with ADR-0002's resolution reused (config.env wins even when empty, else <code>global.env</code>, whose bare key takes the <code>.env</code> value): <code>--universe /worlds[/]</code> → <code>universe</code>; no <code>--universe</code>, <code>/data</code> or <code>.</code> → <code>data</code>. The <code>--universe</code> token is stripped and the rest goes to <code>env.EXTRA_ARGS</code> (pinned, reported when it came from <code>global.env</code>). The directories are only cross-checked (warning when <code>worlds/&lt;level&gt;</code> is missing but <code>servers/&lt;n&gt;/data/&lt;level&gt;</code> exists).</li>
+<li><strong>Fail-closed</strong> (R7 style): an interpolated managed value (<code>${...}</code> unquoted or double-quoted) or another <code>--universe</code> location is <code>undetermined</code>: the import is refused for that server, it keeps running, and writes to it fail with the reason until the file is fixed.</li>
+<li><strong>Compose</strong>: one service <code>mc-&lt;n&gt;</code> expected. <code>image</code> and router labels → <code>routing</code>; hostnames are classified as system (<code>&lt;n&gt;.local</code>, <code>&lt;n&gt;.&lt;IPv4&gt;.nip.io</code>, the playit domain) or custom. <code>environment</code> entries other than <code>EULA</code> move to <code>env</code>; Compose gives <code>environment</code> precedence over <code>env_file</code>, so on a key clash the compose value wins and the clash is reported. <code>${...}</code> in a spec-owned field or a moved <code>environment</code> entry → <code>undetermined</code>; elsewhere → protected. <code>$$</code> is Compose's literal <code>$</code> and is read as <code>$</code>; the renderer writes every <code>$</code> it puts in the compose as <code>$$</code>, and the <code>config.env</code> writer single-quotes a value with <code>$</code>, refusing one that ends with <code>\</code> (Compose reads <code>\'</code> as an escaped quote; PR 3 review). The semantic comparison of §3 runs on the compose with the moved and absorbed items removed.</li>
+<li><strong>Report</strong> per server (<code>imported</code> | <code>refused</code>; a protected compose is a warning) with warnings: pinned <code>EXTRA_ARGS</code>, <code>environment</code> clashes, stale nip.io hosts re-derived from the current <code>HOST_IPS</code>, values the strict create rules would reject.</li>
+</ol>
+<p><strong>When it runs</strong></p>
+<ul>
+<li><strong>Lazy</strong>: <code>load</code> imports in memory when <code>server.yaml</code> is missing; the first write saves it. Reads never write.</li>
+<li><strong><code>mcctl migrate spec [&lt;name&gt;|--all] [--dry-run] [--force]</code></strong>: import or absorb, render, print the report. Idempotent. Same command family as <code>migrate worlds</code>.</li>
+<li><strong><code>mcctl upgrade</code></strong>: prints which servers have no <code>server.yaml</code> yet (and the <code>migrate spec --dry-run</code> findings); it writes nothing.</li>
+<li><strong>Never imported (v2.x)</strong>: works exactly as today, because readers still read the files. A server directory copied in by hand is adopted on its first write.</li>
+</ul>
+<h2 id="5-provision-replaces-create-serversh">5. Provision (replaces <code>create-server.sh</code>)<a class="headerlink" href="#5-provision-replaces-create-serversh" title="Permanent link">&para;</a></h2>
+<p><code>CreateServerUseCase</code> gains one optional trailing constructor parameter <code>provision?: ServerProvisionDeps</code> (<code>{ specRepo, hostnames?, runtime?, hostIps? }</code>, after #670's <code>assignments?</code>; one object keeps the constructor change small next to #665) and <code>executeWithConfig(config, options?: CreateServerRunOptions)</code> (<code>{ onProgress?, onLog? }</code>). Without it, since the script is deleted, that path and <code>ShellAdapter.createServer</code> fail with a clear error instead of ENOENT: <code>create-server.sh was removed in #675; pass specRepo / use ServerSpec provision</code>. Both <code>execute</code> (interactive) and <code>executeWithConfig</code> use the same flow; the API route calls the use case instead of spawning the script.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th><code>create-server.sh</code></th>
+<th>TS provision</th>
+<th>Progress</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>parse flags, validate names, world exclusivity, env values, modpack slug</td>
+<td><code>buildCreateSpec(input)</code> (pure; the repository adds the bundled template's other <code>config.env</code> keys under the document's values on <code>create</code>, so the use case needs no template) + validation (<code>parseCreateServerConfig</code>, pure: an input the value objects refuse, or a spec the create rules refuse, such as a seed <code>config.env</code> cannot hold, is <code>invalid_spec</code>; the API runs it before it opens the SSE stream, so JSON and SSE both answer 400); #670 <code>checkAssign(..., { newServer: true })</code> (reads the assignment snapshot). No writes before this passes.</td>
+<td><code>initializing</code> (API)</td>
+</tr>
+<tr>
+<td>1–4</td>
+<td><code>cp -RL _template</code>, <code>sed</code> compose and <code>config.env</code>, add include, <code>docker compose config --quiet</code>, restore <code>.bak</code> on failure</td>
+<td>one call, <code>specRepo.write(doc, { create: true })</code>: <code>mkdir</code> claim, <code>server.yaml</code>, render, include entry (read back, §3). <code>docker compose config</code> is dropped: the files are generated by <code>js-yaml</code>, and <code>start</code> reports a broken project.</td>
+<td><code>creating</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>avahi <code>&lt;n&gt;.local</code> → first IP, best effort</td>
+<td><code>hostnames.register('&lt;n&gt;.local', hostIps[0])</code>; a skip is a warning</td>
+<td><code>configuring</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>docker compose up -d mc-&lt;n&gt;</code> unless <code>--no-start</code>, <code>sleep 2</code>, <code>ps</code></td>
+<td><code>runtime.start('mc-&lt;n&gt;')</code> unless <code>autoStart === false</code>; no sleep</td>
+<td><code>starting</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Events</strong>: <code>onProgress(stage, message)</code> uses the statuses the API <code>server-create</code> SSE event and the console <code>CreateServerStatus</code> already define (<code>creating</code>, <code>configuring</code>, <code>starting</code>); <code>onLog(line)</code> becomes <code>server-create-log</code>. The API sends <code>initializing</code> first and <code>completed</code>/<code>error</code> from the result, never from stderr text (#658: a server named <code>error-test</code> succeeds). A client disconnect stops events, not provisioning (today it kills the script mid-way).</li>
+<li><strong>Start failure</strong> (decision 1): CLI exit 1 with the cause and <code>mcctl start &lt;n&gt;</code>; API <code>201</code>/SSE <code>completed</code> with <code>server.status: 'created'</code> and <code>warning</code>. PR 3 checks how the console's <code>CreateServerStatus</code> handling shows that warning (a warning dialog). JSON <code>POST /api/servers</code> (no <code>follow</code>) waits for the container start at most <code>createTimeoutMs</code> (120 s) once the files are written; past that it gives the same answer with a warning that the start goes on in the background, and the create/delete queue moves on with the reply. SSE and the CLI keep the 30-minute start limit.</li>
+<li><strong>Cleanup (#657)</strong>: <code>write({ create: true })</code> is all-or-nothing. On any failure after the claim it removes the include entry it added and the directory it created, then rethrows, so the same create can be retried at once. It never touches <code>worlds/</code> (itzg creates the world on first start). Hostname registration is best effort as today. A process killed mid-create can leave <code>servers/&lt;n&gt;</code>; <code>mcctl delete &lt;n&gt;</code> removes it (<code>ponytail:</code> no marker file).</li>
+<li><strong>Avahi adapter</strong> runs the commands the <code>README.md</code> sudoers lines allow, as argv without a shell: <code>sudo -n tee -a /etc/avahi/hosts</code> (stdin <code>&lt;ip&gt; &lt;host&gt;</code>), then <code>sudo -n systemctl restart avahi-daemon</code>. The sudo password is an adapter option, not an environment variable: the CLI passes <code>--sudo-password</code>, <code>MCCTL_SUDO_PASSWORD</code>, or what <code>promptSudoPasswordIfNeeded</code> asked for (mcctl prompts, not sudo); the API passes the request's <code>sudoPassword</code>. With a password, <code>sudo -S -p '' -v</code> reads it on stdin first and the command never sees it (#682). Without one, <code>sudo -n</code> relies on NOPASSWD or cached credentials and a failure becomes a warning. Exact-match check (#660), IPv4 check, avahi presence via <code>getStatus</code>.</li>
+</ul>
+<p><strong>Option parity</strong> (every flag the CLI and API pass today)</p>
+<table>
+<thead>
+<tr>
+<th>Script</th>
+<th>CLI / API</th>
+<th>ServerSpec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;name&gt;</code></td>
+<td>name</td>
+<td><code>name</code></td>
+</tr>
+<tr>
+<td><code>-t</code> (default <code>PAPER</code>); bare <code>PAPER</code> positional</td>
+<td><code>--type</code> / <code>type</code></td>
+<td><code>type</code>; the positional form is dropped (no caller)</td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td><code>--version</code> / <code>version</code></td>
+<td><code>version</code>; modpack type without version → no <code>VERSION</code> (a given <code>LATEST</code> is written), otherwise the template default</td>
+</tr>
+<tr>
+<td><code>-m</code></td>
+<td><code>--memory</code> / <code>memory</code></td>
+<td><code>memory</code> (closes #737 if still open)</td>
+</tr>
+<tr>
+<td><code>-s</code>, <code>-u</code> (exclusive with <code>-w</code>)</td>
+<td><code>--seed</code>, <code>--world-url</code> / <code>seed</code>, <code>worldUrl</code></td>
+<td><code>env.SEED</code>, <code>env.WORLD</code></td>
+</tr>
+<tr>
+<td><code>-w</code></td>
+<td><code>--world</code> / <code>worldName</code></td>
+<td><code>world.level</code>; missing world: warning (CLI), 400 (API), as today</td>
+</tr>
+<tr>
+<td><code>--modpack</code></td>
+<td>same / <code>modpack</code></td>
+<td><code>MODRINTH</code>: <code>env.MODRINTH_MODPACK</code>; <code>AUTO_CURSEFORGE</code>: <code>env.CF_SLUG</code></td>
+</tr>
+<tr>
+<td><code>--modpack-version</code></td>
+<td>same / <code>modpackVersion</code></td>
+<td><code>env.MODRINTH_VERSION</code> / <code>env.CF_VERSION</code></td>
+</tr>
+<tr>
+<td><code>--mod-loader</code></td>
+<td>same / <code>modLoader</code></td>
+<td><code>env.MODRINTH_LOADER</code> / <code>env.CF_LOADER</code></td>
+</tr>
+<tr>
+<td><code>--exclude-files</code></td>
+<td>same / <code>excludeFiles</code></td>
+<td><code>env.MODRINTH_EXCLUDE_FILES</code> / <code>env.CF_EXCLUDE_MODS</code></td>
+</tr>
+<tr>
+<td><code>--whitelist P</code>, <code>--enable-whitelist</code>, <code>--no-whitelist</code> (wins)</td>
+<td>CLI only</td>
+<td><code>env.ENABLE_WHITELIST=TRUE</code> (+ <code>WHITELIST</code>); template whitelist lines dropped</td>
+</tr>
+<tr>
+<td><code>--playit-domain D</code></td>
+<td>CLI only</td>
+<td><code>routing.playitDomain</code>. <strong>Intended difference</strong>: the script added <code>D</code> to the router hosts only when a host IP was found; TS always adds it.</td>
+</tr>
+<tr>
+<td><code>--no-playit-domain</code></td>
+<td>CLI only</td>
+<td>no-op (the script ignores it too)</td>
+</tr>
+<tr>
+<td><code>--start</code></td>
+<td>—</td>
+<td>no-op (default)</td>
+</tr>
+<tr>
+<td><code>--no-start</code></td>
+<td><code>--no-start</code> / <code>autoStart: false</code></td>
+<td>skip <code>start</code></td>
+</tr>
+<tr>
+<td><code>MCCTL_SUDO_PASSWORD</code></td>
+<td><code>--sudo-password</code> / <code>sudoPassword</code></td>
+<td>avahi adapter option</td>
+</tr>
+<tr>
+<td>defaults <code>MOTD=Welcome to &lt;n&gt;!…</code>, <code>LEVEL=&lt;n&gt;</code></td>
+<td>—</td>
+<td><code>env.MOTD</code>, <code>world.level</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>bats → vitest</strong>: <code>get_host_ip</code> ×4 → <code>resolveHostIps</code>; <code>register_avahi_hostname</code> ×5 → avahi adapter with fake <code>sudo</code>/<code>avahi-daemon</code> on <code>PATH</code> (as <code>docker-shell-injection.test.ts</code>); create writes dir/config/include, seed/modpack-version rejection, text seed → provision tests on a temp root (plus "retry after failure succeeds"); "aborts when compose config fails" → "aborts and writes nothing when <code>servers/compose.yml</code> fails to load"; symlinked <code>_template</code> → "the renderer never writes <code>templatesDir</code>"; whitelist ×3 → render tests with the bundled template and a legacy one with <code>ENABLE_WHITELIST=TRUE</code>. <code>sudo-password.bats</code> stayed until #735, which moved its cases to the avahi adapter tests and removed it with <code>delete-server.sh</code>.</p>
+<h2 id="6-write-paths">6. Write Paths<a class="headerlink" href="#6-write-paths" title="Permanent link">&para;</a></h2>
+<p>All in PR 3. Every writer goes through <code>updateServerSpec(repo, name, mutate)</code>. <code>setEnvKey(doc, key, value)</code> maps managed keys to typed fields, so the generic config writers need no key list.</p>
+<table>
+<thead>
+<tr>
+<th>Writer today</th>
+<th>Writes</th>
+<th>PR 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI <code>config</code>, <code>whitelist</code>, <code>op</code> (<code>ShellExecutor.writeConfigValue</code>)</td>
+<td>any <code>config.env</code> key</td>
+<td><code>setEnvKey</code> (<code>LEVEL</code>/<code>WORLD_NAME</code> keep #670's assign path)</td>
+</tr>
+<tr>
+<td>API PATCH config (<code>ConfigService</code>), <code>PlayerFileService.writeConfigEnv</code>, <code>ModConfigService</code>; CLI <code>mod</code></td>
+<td><code>config.env</code> keys</td>
+<td><code>setEnvKey</code></td>
+</tr>
+<tr>
+<td><code>setServerPlayitDomain</code> (CLI and API playit)</td>
+<td><code>PLAYIT_DOMAIN</code> + host label</td>
+<td><code>routing.playitDomain</code>; body delegates, <code>@deprecated</code></td>
+</tr>
+<tr>
+<td>API <code>HostnameService.update</code></td>
+<td>host label (regex)</td>
+<td><code>routing.customHostnames</code></td>
+</tr>
+<tr>
+<td>CLI <code>init --reconfigure</code> (new <code>HOST_IP</code>)</td>
+<td>every host label (regex)</td>
+<td>re-render every server, no spec change</td>
+</tr>
+<tr>
+<td>CLI <code>update</code></td>
+<td>image tag, loading-MOTD label</td>
+<td><code>doc.image</code>; the label comes from the template</td>
+</tr>
+<tr>
+<td>CLI upgrade <code>server-env-migration</code></td>
+<td><code>env_file</code> repoint</td>
+<td><strong>kept until #736</strong>: servers that were never imported still need it (decision 4)</td>
+</tr>
+<tr>
+<td><code>ConfigEnvWorldAssignmentAdapter.assign/release</code> (#670)</td>
+<td><code>LEVEL</code></td>
+<td><code>world.level</code> through the repository</td>
+</tr>
+<tr>
+<td><code>WorldManagementUseCase</code> → <code>shell.setServerConfig</code> (<code>SEED</code>, <code>LEVEL</code>); since #734 <code>assign(world, server, { seed })</code></td>
+<td><code>config.env</code></td>
+<td><code>env.SEED</code> in the same write as <code>world.level</code> (row above)</td>
+</tr>
+<tr>
+<td><code>mcctl migrate worlds</code> (#655)</td>
+<td><code>EXTRA_ARGS</code>, <code>LEVEL</code></td>
+<td><code>world.storage = 'universe'</code> with <code>allowStorageChange</code></td>
+</tr>
+<tr>
+<td>config snapshot restore</td>
+<td><code>config.env</code>, compose</td>
+<td>restore <code>server.yaml</code> and render when the snapshot has it (add it to <code>KNOWN_CONFIG_FILES</code>); older snapshots: write the files, then absorb</td>
+</tr>
+<tr>
+<td><code>create-server.sh</code> / <code>delete-server.sh</code></td>
+<td>everything</td>
+<td>provision (§5) / #735 via <code>repo.delete</code></td>
+</tr>
+</tbody>
+</table>
+<p>Out of scope: platform files (main compose and its playit service, <code>.env</code>, <code>ecosystem.config.js</code>, <code>.mcctl.json</code>).</p>
+<p><strong>One source of truth with #670.</strong> <code>server.yaml</code> is the only thing writers change; <code>LEVEL</code> in <code>config.env</code> is its projection. ADR-0002's adapter keeps <em>reading</em> <code>config.env</code>, which is right: it is exactly what the container uses, including a hand edit not yet absorbed. Its <em>writes</em> go through the repository, so <code>assign</code>/<code>release</code> never write <code>config.env</code> directly. The pure rules in <code>worldAssignment.ts</code> do not change, and <code>world.storage === 'data'</code> is ADR-0002's <code>internal: true</code>.</p>
+<h2 id="7-stages">7. Stages<a class="headerlink" href="#7-stages" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>PR</th>
+<th>Content</th>
+<th>Behaviour change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 schema + import</td>
+<td><code>ServerSpecDocument</code>, validation; <code>IServerSpecRepository.load</code>/<code>write</code> on <code>server.yaml</code> only (revision check, no rendering yet) and the v2 <code>list</code>/<code>get</code>/<code>save</code>; the importer, which reads world storage through the same <code>effectiveExtraArgs.ts</code> rules as the #670 assignment adapter; <code>mcctl migrate spec</code> (dry run, or write <code>server.yaml</code> only)</td>
+<td>none: only <code>migrate spec</code> writes, and nothing reads <code>server.yaml</code> yet</td>
+</tr>
+<tr>
+<td>2 renderer + write</td>
+<td><code>ServerSpecRenderer</code>, <code>DockerComposeRenderer</code>, header and edit detection, <code>write</code> renders (<code>force</code> with <code>.bak</code>, storage guard, the R1/R7 world guard with the stopped check, include read-back), <code>mcctl migrate spec</code> renders</td>
+<td>only <code>migrate spec</code> writes</td>
+</tr>
+<tr>
+<td>3 write paths (#715 S8)</td>
+<td>golden outputs of today's <code>create-server.sh</code> for each option combination (captured in its bats harness before it is deleted) as the parity oracle; <code>buildCreateSpec</code>; <code>write({ create: true })</code> (claim, rollback, <code>data/</code>, <code>logs/</code>, <code>global.env</code>); the <code>mcctl upgrade</code> report; <code>IHostnameRegistrarPort.register</code> + avahi adapter; provision; CLI and API create (SSE events, start-failure warning, console check); every writer in §6; delete <code>create-server.sh</code> and its 3 bats files; <code>@deprecated</code> on <code>IShellPort.createServer</code>, <code>ShellAdapter.createServer</code>, <code>Server.toCliArgs</code>, <code>WorldOptions.toCliArgs</code>, <code>setServerPlayitDomain</code>, <code>replaceRouterHosts</code>, <code>IServerSpecRepository.get</code>; the shell create path fails with the clear "removed in #675" error; a test that fails when code outside the repository adapter writes <code>config.env</code> or a server compose (allow-list: <code>server-env-migration</code>); docs EN/KO; <code>test:scripts</code> and <code>verify:package</code> pass. May split into 3a (create) and 3b (other writers).</td>
+<td>yes</td>
+</tr>
+</tbody>
+</table>
+<p>All eight acceptance criteria of #675 are met by PR 3, so <strong>#675 closes after PR 3</strong>. The former stage 4 ("end of old-format support") is folded into PR 3 as the write guard test and the docs: from PR 3 on, no code path writes the old way except <code>server-env-migration</code>. Servers without <code>server.yaml</code> stay supported through lazy import (also how a hand-copied server is adopted). <strong>Deferred to #736 (v3.0.0)</strong>: removing the <code>@deprecated</code> exports above, <code>IShellPort</code>/<code>ShellAdapter</code>, and <code>server-env-migration</code>. No ServerSpec behaviour changes in v3.0.0.</p>
+<p>Order: PR 1–2 after #749 (#656) merges; PR 3 after #670 (merged in PR #750); #735 follows PR 3. A server whose <code>server.yaml</code> was written by PR 1's <code>migrate spec</code> and whose <code>config.env</code> was later changed by a v2 writer has no header, so PR 2 absorbs the <code>config.env</code> change on the next load (§3).</p>
+<p><strong>PR 3 notes</strong> (as built):</p>
+<ul>
+<li>The rendered server compose quotes every string, because the v2 label readers (<code>parseRouterHosts</code>, <code>HostnameService</code>) match <code>mc-router.host: "..."</code>.</li>
+<li>Every writer of §6 goes through <code>updateServerSpec</code>/<code>setEnvKeys</code> except: <code>setServerPlayitDomain</code> (deprecated v2 export, no longer called by mcctl), <code>server-env-migration</code> (until #736) and config snapshot restore, which writes a consistent set: snapshots and <code>mcctl server-backup</code> now include <code>server.yaml</code>, and a pre-#675 set without it is absorbed on the next load. The write-guard test lists each exception with its reason.</li>
+<li><code>ConfigEnvWorldAssignmentAdapter</code> takes the repository in its constructor; without one that has a runtime, a <code>LEVEL</code> change is refused (R7). A new world's <code>SEED</code> goes in the same write: <code>WorldManagementUseCase</code> passes it to <code>assign</code> (#734).</li>
+<li>The CLI and API build their repositories through small factories (<code>serverSpecRepositories</code>, <code>serverProvision</code>) that tests replace; no test runs docker, sudo or the real platform root.</li>
+<li>Provisioning starts the server with a 30-minute <code>docker compose up</code> timeout (<code>DockerComposeRuntimeAdapter</code> <code>startTimeoutMs</code>): the first start can pull the image, and the script had no timeout.</li>
+<li>A modpack type without a version writes no <code>VERSION</code> (the CLI used to pass <code>LATEST</code>); an explicit <code>LATEST</code> is written. Snapshot and pre-release versions the API accepts are written as given.</li>
+</ul>
+<h2 id="8-tests-tdd-failing-test-first-in-each-pr">8. Tests (TDD, failing test first in each PR)<a class="headerlink" href="#8-tests-tdd-failing-test-first-in-each-pr" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>v2 compatibility</strong>: a type test written against the v2 contract still compiles (<code>const s: ServerSpec = { name: 'a' }</code>; <code>repo.list()</code>, <code>repo.get(n)</code>, <code>repo.save(s)</code>, <code>repo.delete(n)</code> with v2 types) and the package root still exports <code>ServerSpec</code> and <code>IServerSpecRepository</code>; <code>save({ name })</code> fails with <code>invalid_spec</code> naming the missing fields.</li>
+<li><strong>Domain</strong>: validation tables (create vs import rules, managed keys in <code>env</code>, <code>--universe</code> in <code>env.EXTRA_ARGS</code>, non-string scalars, <code>specVersion</code>), <code>buildCreateSpec</code> for every row of the parity table, host generator.</li>
+<li><strong>Import</strong> on temp roots: template-created server, legacy template variants, quoted/commented/duplicate keys, <code>WORLD_NAME</code>, <code>global.env</code>/<code>.env</code> inheritance and every <code>--universe</code> form (shared fixtures with ADR-0002), interpolation → refused, compose <code>environment</code> → <code>env</code> with a clash report, <code>${...}</code> in compose, hand-edited compose image/labels absorbed, other compose edits protected; report text.</li>
+<li><strong>Render</strong>: idempotent bytes, unchanged spec means no writes, comment preservation, header hash, both edit-detection tables, include add/remove by exact name with long-form entries kept, read-back retry, unloadable <code>servers/compose.yml</code> left untouched, <code>atomicWriteFile</code> failure leaves old files.</li>
+<li><strong>Repository</strong>: revision conflict + one retry, create claim against an existing directory, rollback on render/include failure followed by a successful retry, world guard (<code>conflict</code> from <code>checkProposed</code>, <code>storage_change</code> without the option).</li>
+<li><strong>Host IPs</strong>: <code>.env</code> precedence and trimming; <code>ip route get 1</code> → <code>hostname -I</code> → interfaces order with fake binaries; <code>docker0</code>/<code>br-*</code> skipped.</li>
+<li><strong>Provision and API</strong>: golden parity (parsed <code>config.env</code> and compose equal to the PR 3 fixtures except the header, explicit <code>LEVEL</code>, <code>EXTRA_ARGS</code> and the playit host); event order; <code>--no-start</code>; SSE <code>creating → configuring → starting → completed</code>, start failure → <code>completed</code> + <code>status: 'created'</code> + <code>warning</code>, <code>error</code> with the cause, name containing <code>error</code>; avahi argv exactly as the sudoers lines, password only on <code>-S -v</code>, never in the child environment.</li>
+<li><strong>Removed script</strong>: <code>CreateServerUseCase</code> built without <code>specRepo</code> and <code>ShellAdapter.createServer</code> reject with the "create-server.sh was removed in #675" message, not ENOENT.</li>
+<li><strong>Writers</strong>: one test per row of §6 through the spec; #670's assignment tests keep passing with the repository-backed writes.</li>
+</ul>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>+</strong> One definition per server; compose files become output, so the k8s work (#641) adds a renderer instead of editing call sites.</li>
+<li><strong>+</strong> Host generation, env writing and YAML editing each have one implementation; no regex edits YAML.</li>
+<li><strong>+</strong> Create cleans up after itself, reports real progress, and works without bash.</li>
+<li><strong>+</strong> v2 consumers of <code>IServerSpecRepository</code>/<code>ServerSpec</code> keep compiling.</li>
+<li><strong>−</strong> Comments are lost in rendered compose files (header explains) and in <code>servers/compose.yml</code>.</li>
+<li><strong>−</strong> A compose edit outside the spec-owned fields blocks compose-changing writes for that server until the user reverts it or forces a re-render.</li>
+<li><strong>−</strong> Two derived states (header hash, revision) must stay correct; the edit-detection tables are the test contract.</li>
+<li><strong>−</strong> Until v3.0.0 the repository carries the v2 <code>get</code>/<code>save</code> alongside <code>load</code>/<code>write</code>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 smallmiro
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/smallmiro/minecraft-server-manager" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://mcctl.mirolab.dev/" target="_blank" rel="noopener" title="Website" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2m-5.15 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56M14.34 14H9.66c-.1-.66-.16-1.32-.16-2s.06-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2M12 19.96c-.83-1.2-1.5-2.53-1.91-3.96h3.82c-.41 1.43-1.08 2.76-1.91 3.96M8 8H5.08A7.92 7.92 0 0 1 9.4 4.44C8.8 5.55 8.35 6.75 8 8m-2.92 8H8c.35 1.25.8 2.45 1.4 3.56A8 8 0 0 1 5.08 16m-.82-2C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2M12 4.03c.83 1.2 1.5 2.54 1.91 3.97h-3.82c.41-1.43 1.08-2.77 1.91-3.97M18.92 8h-2.95a15.7 15.7 0 0 0-1.38-3.56c1.84.63 3.37 1.9 4.33 3.56M12 2C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.indexes", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2435,7 +2465,7 @@
 </tr>
 </tbody>
 </table>
-<p><code>mcctl</code> CLI가 bash 스크립트에 의존하므로 지원 OS는 Linux와 macOS입니다. mcctl-console이 사용하는 <code>better-sqlite3</code>는 네이티브 모듈이라 환경에 따라 빌드 도구(gcc, make, python)가 필요합니다.</p>
+<p>지원 OS는 Linux와 macOS입니다. mcctl-console이 사용하는 <code>better-sqlite3</code>는 네이티브 모듈이라 환경에 따라 빌드 도구(gcc, make, python)가 필요합니다.</p>
 <h2 id="fork-and-set-up">포크와 로컬 설정<a class="headerlink" href="#fork-and-set-up" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 1) GitHub에서 smallmiro/minecraft-server-manager를 포크한 뒤:</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/&lt;your-account&gt;/minecraft-server-manager.git
@@ -2496,12 +2526,8 @@
 <td><code>@minecraft-docker/mod-source-modrinth</code>: Modrinth 어댑터</td>
 </tr>
 <tr>
-<td><code>platform/scripts/</code></td>
-<td>Bash 관리 스크립트 (테스트는 <code>platform/scripts/tests/</code>)</td>
-</tr>
-<tr>
-<td><code>templates/</code></td>
-<td><code>mcctl init</code>이 복사하는 플랫폼 템플릿</td>
+<td><code>platform/services/cli/templates/</code></td>
+<td><code>mcctl init</code>이 복사하는 플랫폼 템플릿의 단일 원천 (<code>platform/docker-compose.yml</code>, <code>platform/servers/_template</code>은 이를 가리키는 심볼릭 링크)</td>
 </tr>
 <tr>
 <td><code>e2e/</code></td>
@@ -2588,8 +2614,6 @@
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>pnpm<span class="w"> </span>test:e2e<span class="w">                                </span><span class="c1"># Management Console E2E (Playwright)</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">cd</span><span class="w"> </span>platform/services/cli<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pnpm<span class="w"> </span>test:e2e<span class="w">    </span><span class="c1"># CLI E2E (Vitest)</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>bash<span class="w"> </span>platform/scripts/tests/&lt;name&gt;.test.sh<span class="w">   </span><span class="c1"># bash 스크립트 테스트</span>
 </code></pre></div>
 <p>새 REST 엔드포인트의 E2E 테스트는 <code>e2e/tests/api-*.spec.ts</code>에, 콘솔 UI 흐름은 <code>e2e/tests/*.spec.ts</code>에, 새 CLI 명령이나 옵션은 <code>platform/services/cli/tests/e2e/cli-*.test.ts</code>에 추가합니다.</p>
 <h2 id="기여-절차">기여 절차<a class="headerlink" href="#기여-절차" title="Permanent link">&para;</a></h2>
@@ -2607,34 +2631,26 @@
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>--title<span class="w"> </span><span class="s2">"feat: add backup script (#12)"</span><span class="w"> </span>--body<span class="w"> </span><span class="s2">"Closes #12 ..."</span>
 </code></pre></div>
 <h3 id="ci">CI<a class="headerlink" href="#ci" title="Permanent link">&para;</a></h3>
-<p><code>develop</code>으로 향하는 PR의 검사는 머지 전에 통과해야 합니다. 경로 필터가 적용됩니다:</p>
+<p><code>develop</code>으로 향하는 PR의 검사는 머지 전에 통과해야 합니다. <code>ci.yml</code>이 경로 필터 없이 모든 PR에서 실행됩니다:</p>
 <table>
 <thead>
 <tr>
-<th>워크플로우</th>
-<th>실행 조건</th>
+<th>잡</th>
 <th>내용</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>cli-test</code></td>
-<td>PR이 <code>platform/services/cli/**</code> 또는 <code>platform/services/shared/**</code>를 변경</td>
-<td><code>mcctl</code>과 의존 패키지 빌드, CLI 테스트 실행</td>
+<td><code>lint, typecheck, test</code></td>
+<td>모든 패키지를 빌드하고 <code>pnpm lint</code>, <code>pnpm typecheck</code>, <code>e2e</code>를 제외한 전 패키지 테스트, cli <code>verify:package</code> 검사(tarball에 <code>docker/bluemap/Dockerfile</code>이 있고 <code>scripts/</code>가 없는지)를 실행</td>
 </tr>
 <tr>
-<td><code>shared-test</code></td>
-<td>PR이 <code>platform/services/shared/**</code>를 변경</td>
-<td>shared 패키지 테스트 실행</td>
-</tr>
-<tr>
-<td><code>e2e</code></td>
-<td>매일 03:00 KST와 수동 실행 시, <strong>PR에서는 실행 안 됨</strong></td>
-<td>mcctl-api와 mcctl-console을 띄우고 Playwright 테스트 실행</td>
+<td><code>docker compose config</code> (platform, templates)</td>
+<td>두 compose 파일 검증</td>
 </tr>
 </tbody>
 </table>
-<p><code>e2e</code>는 PR에서 돌지 않으므로 API나 콘솔 동작을 바꿨다면 로컬에서 <code>pnpm test:e2e</code>를 실행하세요. CI는 <code>pnpm lint</code>를 실행하지 않으므로 직접 확인해야 합니다.</p>
+<p><code>e2e.yml</code>은 매일 03:00 KST와 수동 실행 시에만 돌고 <strong>PR에서는 실행되지 않습니다</strong>. mcctl-api와 mcctl-console을 띄우고 Playwright 테스트를 실행합니다. API나 콘솔 동작을 바꿨다면 로컬에서 <code>pnpm test:e2e</code>를 실행하세요.</p>
 <p>브랜치 이름, 커밋 규칙, 버전 관리, 릴리즈 절차는 <a href="git-workflow/">Git 워크플로우</a>에 있습니다.</p>
 <h2 id="claude-code로-개발하기">Claude Code로 개발하기<a class="headerlink" href="#claude-code로-개발하기" title="Permanent link">&para;</a></h2>
 <p>저장소에 Claude Code 설정이 포함되어 있습니다. 저장소 루트에서 <code>claude</code>를 실행하면 <code>CLAUDE.md</code>와 <code>.claude/</code>의 서브에이전트, 커맨드, 훅이 자동으로 로드됩니다.</p>

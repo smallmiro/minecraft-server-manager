@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2621,14 +2651,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>cli-test.yml</code></td>
-<td>PR to <code>develop</code>/<code>main</code> or push to <code>develop</code> touching <code>platform/services/cli/**</code> or <code>platform/services/shared/**</code></td>
-<td>Build <code>mcctl</code> and run its tests</td>
-</tr>
-<tr>
-<td><code>shared-test.yml</code></td>
-<td>PR to <code>develop</code>/<code>main</code> or push to <code>develop</code> touching <code>platform/services/shared/**</code></td>
-<td>Run shared package tests</td>
+<td><code>ci.yml</code></td>
+<td>Every PR to <code>develop</code>/<code>main</code>, push to <code>develop</code>, called by <code>release.yml</code></td>
+<td>Build, lint, typecheck and test all packages; script tests on Linux and macOS; compose validation</td>
 </tr>
 <tr>
 <td><code>e2e.yml</code></td>
@@ -2638,7 +2663,7 @@
 <tr>
 <td><code>release.yml</code></td>
 <td>Push of a <code>v*</code> tag</td>
-<td>npm publish, GitHub Release, docs deploy</td>
+<td>Runs <code>ci.yml</code> first, then npm publish, GitHub Release, docs deploy</td>
 </tr>
 <tr>
 <td><code>deploy-website.yml</code></td>

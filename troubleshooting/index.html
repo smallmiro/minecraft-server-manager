@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -1997,6 +2027,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#world-assignment-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Assignment Refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#modsplugins-not-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2329,6 +2370,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#world-assignment-refused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        World Assignment Refused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#modsplugins-not-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2533,7 +2585,7 @@
 <h3 id="world-corruption">World Corruption<a class="headerlink" href="#world-corruption" title="Permanent link">&para;</a></h3>
 <p><strong>Symptoms:</strong> Missing chunks, corrupted blocks, server crashes on load.</p>
 <p><strong>Diagnosis:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Check world lock status</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Check which servers use each world</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Check server logs for errors</span>
@@ -2547,20 +2599,49 @@
 </code></pre></div></p>
 </li>
 <li>
-<p><strong>Check world locking:</strong>
+<p><strong>Check world assignments:</strong>
    <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Ensure world is not assigned to multiple servers</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Release and reassign if needed</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Move a world to another server (both servers stopped)</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>mcctl<span class="w"> </span>world<span class="w"> </span>release<span class="w"> </span>&lt;world-name&gt;
 <a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>mcctl<span class="w"> </span>world<span class="w"> </span>assign<span class="w"> </span>&lt;world-name&gt;<span class="w"> </span>&lt;server-name&gt;
 </code></pre></div></p>
 </li>
 </ol>
+<h3 id="world-assignment-refused">World Assignment Refused<a class="headerlink" href="#world-assignment-refused" title="Permanent link">&para;</a></h3>
+<p><strong>Symptoms:</strong> <code>mcctl world assign</code>, <code>mcctl world release</code>, <code>mcctl world new --server</code>, <code>mcctl create --world</code>, <code>mcctl config &lt;server&gt; LEVEL &lt;world&gt;</code>, <code>mcctl world delete</code>, or the matching Web Console and API actions are refused (API: <code>409 Conflict</code>).</p>
+<p><strong>Cause:</strong> A world is assigned to a server by its <code>LEVEL</code> in <code>servers/&lt;name&gt;/config.env</code> (there is no lock file), and one world can be used by one server only. The request is refused when:</p>
+<ul>
+<li>another server already uses the world (a world and its <code>&lt;world&gt;_nether</code> / <code>&lt;world&gt;_the_end</code> folders count as one world), or a server uses the world you try to delete (<code>--force</code> does not override this)</li>
+<li>the server is running, paused, restarting or created (nothing is stopped for you)</li>
+<li>any server's <code>config.env</code> cannot be read, or its <code>LEVEL</code> cannot be interpreted safely (path separators, <code>.</code>/<code>..</code>, quotes, control characters, <code>${VAR}</code> outside single quotes, or an unsupported <code>--universe</code> location). Every assignment change and world delete/reset is refused until it is fixed</li>
+</ul>
+<p><strong>Diagnosis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Shows "assigned: &lt;servers&gt;" per world and warnings for duplicates and unreadable configs</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mcctl<span class="w"> </span>world<span class="w"> </span>list
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># See which world each server uses</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>grep<span class="w"> </span>-E<span class="w"> </span><span class="s1">'^(LEVEL|WORLD_NAME)='</span><span class="w"> </span>servers/*/config.env
+</code></pre></div>
+<p><strong>Solution:</strong></p>
+<ol>
+<li>Stop the server (<code>mcctl stop &lt;server-name&gt;</code>).</li>
+<li>To free a world another server uses, run <code>mcctl world release &lt;world-name&gt;</code> on that stopped server. It switches back to its own default world <code>&lt;server&gt;</code>.</li>
+<li>If a <code>config.env</code> is reported as unreadable, fix its <code>LEVEL</code> line to a plain <code>LEVEL=&lt;name&gt;</code> and run the command again.</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Duplicate assignments from older installs</p>
+<p>Older versions allowed two servers on the same world. These are reported, not fixed: <code>mcctl world list</code> shows <code>assigned: a, b</code> with a warning, <code>GET /api/worlds</code> returns them in <code>assignmentWarnings</code>, and the Web Console shows a warning alert. Assign another world to all but one of the servers.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Leftover <code>worlds/.locks</code></p>
+<p><code>mcctl</code> no longer reads, writes or creates <code>worlds/.locks</code>. An existing directory is harmless and <code>rm -rf worlds/.locks</code> is safe.</p>
+</div>
 <h3 id="modsplugins-not-loading">Mods/Plugins Not Loading<a class="headerlink" href="#modsplugins-not-loading" title="Permanent link">&para;</a></h3>
 <p><strong>Symptoms:</strong> Server starts but mods or plugins don't appear.</p>
 <p><strong>Diagnosis:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"mod\|plugin"</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mcctl<span class="w"> </span>logs<span class="w"> </span>&lt;server-name&gt;<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span><span class="s2">"mod\|plugin"</span>
 </code></pre></div>
 <p><strong>Common Causes:</strong></p>
 <table>
@@ -2593,15 +2674,15 @@
 <p><strong>Affected:</strong> You created servers with mcctl earlier than 2.32.0 and supplied a sudo password through <code>MCCTL_SUDO_PASSWORD</code>, <code>--sudo-password</code>, or the web console's sudo password field.</p>
 <p>If sudo did not need to ask for the password at that moment (credentials cached from a recent <code>sudo</code>, or <code>NOPASSWD</code> in sudoers), the password line was appended to <code>/etc/avahi/hosts</code> in plain text. This file is readable by every user on the host. 2.32.0 fixes this; existing files are not changed automatically.</p>
 <p><strong>Check:</strong> list the lines that are not comments, blank lines, or a single <code>&lt;IPv4&gt; &lt;name&gt;.local</code> entry:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>grep<span class="w"> </span>-nvE<span class="w"> </span><span class="s1">'^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]]*$'</span><span class="w"> </span>/etc/avahi/hosts
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>grep<span class="w"> </span>-nvE<span class="w"> </span><span class="s1">'^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]]*$'</span><span class="w"> </span>/etc/avahi/hosts
 </code></pre></div>
 <p>No output means the file is clean. Each printed line starts with its line number. A line that is your password, or an entry with several IPs such as <code>192.168.1.10,100.64.0.5 myserver.local</code>, must be fixed.</p>
 <p><strong>Fix:</strong></p>
 <ol>
 <li>
 <p>Delete the bad line by its number (replace <code>&lt;N&gt;</code>) and restart avahi:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>sudo<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'&lt;N&gt;d'</span><span class="w"> </span>/etc/avahi/hosts
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>avahi-daemon
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>sudo<span class="w"> </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">'&lt;N&gt;d'</span><span class="w"> </span>/etc/avahi/hosts
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>avahi-daemon
 </code></pre></div>
 </li>
 <li>

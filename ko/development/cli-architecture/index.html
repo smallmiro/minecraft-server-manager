@@ -1036,6 +1036,8 @@
       
         
       
+        
+      
     
     
     
@@ -1107,6 +1109,34 @@
     
   
     Environment Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/server-yaml/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Server Definition (server.yaml)
   
 
     
@@ -2604,11 +2634,15 @@
 </tr>
 <tr>
 <td><code>lib/</code></td>
-<td>헬퍼: <code>shell.ts</code>(<code>ShellExecutor</code>), <code>rcon.ts</code>, <code>console-db.ts</code>, <code>pm2-utils.ts</code>, <code>prompts/</code></td>
+<td>헬퍼: <code>shell.ts</code>(<code>ShellExecutor</code> re-export), <code>rcon.ts</code>, <code>console-db.ts</code>, <code>pm2-utils.ts</code>, <code>prompts/</code></td>
 </tr>
 <tr>
 <td><code>infrastructure/adapters/</code></td>
 <td>CLI 전용 어댑터: <code>ClackPromptAdapter</code>, <code>OpsJsonAdapter</code>, <code>Pm2ServiceManagerAdapter</code></td>
+</tr>
+<tr>
+<td><code>infrastructure/ShellExecutor.ts</code></td>
+<td>compose 프로젝트 조작(pull, up/down, 전체 start/stop, router)과 <code>config.env</code> 접근만 맡습니다. 런타임 포트가 아닙니다(ADR-0001, 15행)</td>
 </tr>
 <tr>
 <td><code>infrastructure/di/container.ts</code></td>
@@ -2639,7 +2673,7 @@
 </tr>
 <tr>
 <td><code>application/ports/outbound/</code></td>
-<td>인프라 인터페이스(<code>IShellPort</code>, <code>IServerRepository</code>, <code>IPromptPort</code>, <code>IDocProvider</code>, <code>IModSourcePort</code> 등)</td>
+<td>인프라 인터페이스(<code>IContainerRuntimePort</code>, <code>IServerConsolePort</code>, <code>IWorldBackupPort</code>, <code>IWorldAssignmentPort</code>, <code>IServerSpecRepository</code>, <code>IServerRepository</code>, <code>IPromptPort</code>, <code>IDocProvider</code>, <code>IModSourcePort</code> 등)</td>
 </tr>
 <tr>
 <td><code>application/use-cases/</code></td>
@@ -2647,7 +2681,7 @@
 </tr>
 <tr>
 <td><code>infrastructure/adapters/</code></td>
-<td><code>ShellAdapter</code>, <code>ServerRepository</code>, <code>WorldRepository</code>, <code>DocsAdapter</code>, <code>ApiPromptAdapter</code>, <code>Sqlite*Repository</code>, <code>RconCliAdapter</code> 등</td>
+<td><code>DockerComposeRuntimeAdapter</code>, <code>GitWorldBackupAdapter</code>, <code>ConfigEnvWorldAssignmentAdapter</code>, <code>AvahiHostnameRegistrarAdapter</code>, <code>ServerRepository</code>, <code>WorldRepository</code>, <code>DocsAdapter</code>, <code>ApiPromptAdapter</code>, <code>Sqlite*Repository</code>, <code>RconCliAdapter</code> 등</td>
 </tr>
 <tr>
 <td><code>infrastructure/config/</code>, <code>infrastructure/factories/</code></td>
@@ -2664,25 +2698,23 @@
     subgraph CLI["cli package"]
         IDX["index.ts&lt;br/&gt;parseArgs + switch"] --&gt; CMD["commands/*.ts"]
         CMD --&gt; DI["Container&lt;br/&gt;getContainer()"]
-        CMD -.thin commands.-&gt; SH["lib/shell.ts&lt;br/&gt;ShellExecutor"]
+        CMD -.compose commands.-&gt; SH["infrastructure/ShellExecutor.ts&lt;br/&gt;(compose project only)"]
         CLIAD["ClackPromptAdapter&lt;br/&gt;OpsJsonAdapter&lt;br/&gt;Pm2ServiceManagerAdapter"]
     end
     subgraph SHARED["shared package"]
         UC["Use cases&lt;br/&gt;(application/use-cases)"] --&gt; PORTS["Ports&lt;br/&gt;(inbound / outbound)"]
-        ADP["Adapters&lt;br/&gt;ShellAdapter, ServerRepository,&lt;br/&gt;Sqlite*, ..."] -.implements.-&gt; PORTS
+        ADP["Adapters&lt;br/&gt;DockerComposeRuntimeAdapter,&lt;br/&gt;GitWorldBackupAdapter, ServerRepository,&lt;br/&gt;Sqlite*, ..."] -.implements.-&gt; PORTS
         UC --&gt; DOM["Domain&lt;br/&gt;entities, value objects"]
     end
     API["mcctl-api"] --&gt; UC
     DI --&gt; UC
     DI --&gt; ADP
-    DI --&gt; CLIAD
-    SH --&gt; BASH["platform/scripts/*.sh"]
-    ADP --&gt; BASH</code></pre>
+    DI --&gt; CLIAD</code></pre>
 <h2 id="두-종류의-커맨드">두 종류의 커맨드<a class="headerlink" href="#두-종류의-커맨드" title="Permanent link">&para;</a></h2>
 <p>코드를 읽거나 추가할 때 두 가지 방식이 공존한다는 점을 알아두어야 합니다.</p>
 <ul>
 <li><strong>유스케이스 커맨드</strong>는 비즈니스 로직을 가집니다. 핸들러가 컨테이너를 얻고, <code>shared</code>의 유스케이스를 호출한 뒤 결과를 출력합니다. 예: <code>create</code>, <code>delete</code>, <code>config-snapshot</code>, <code>backup-schedule</code>, <code>world</code>, <code>mod</code>.</li>
-<li><strong>Thin 커맨드</strong>는 단순 전달용입니다. <code>ShellExecutor</code>로 bash 스크립트(<code>mcctl.sh</code> 등)를 호출하거나, <code>docker exec &lt;container&gt; rcon-cli</code>로 RCON을 실행합니다(<code>lib/rcon.ts</code>). 예: <code>start</code>, <code>stop</code>, <code>logs</code>, <code>console &lt;server&gt;</code>(RCON 콘솔), <code>router</code>, <code>exec</code>. <code>console init/service/user/api/remove</code> 하위 명령은 별개이며 아래에서 설명합니다.</li>
+<li><strong>Thin 커맨드</strong>는 단순 전달용입니다. 런타임 포트를 부르거나(<code>start</code>, <code>stop</code>, <code>logs</code>), <code>IServerConsolePort.getEndpoint</code>로 TCP RCON 세션을 열거나(<code>rcon</code>, <code>console &lt;server&gt;</code>), <code>ShellExecutor</code>로 docker compose를 실행하거나(<code>up</code>, <code>down</code>, <code>--all</code>, <code>router</code>; compose 프로젝트만), <code>docker exec &lt;container&gt; rcon-cli</code>로 RCON을 실행합니다(<code>lib/rcon.ts</code>, <code>exec</code>). <code>console init/service/user/api/remove</code> 하위 명령은 별개이며 아래에서 설명합니다.</li>
 </ul>
 <p>새로운 비즈니스 로직은 <code>commands/</code> 아래 파일이 아니라 shared 유스케이스에 두어야 합니다. 커맨드 파일은 옵션 파싱, 유스케이스 호출, 출력만 담당합니다.</p>
 <h2 id="도메인-계층">도메인 계층<a class="headerlink" href="#도메인-계층" title="Permanent link">&para;</a></h2>
@@ -2698,7 +2730,7 @@
 <tbody>
 <tr>
 <td><code>ServerName</code></td>
-<td>2~32자, 소문자, 영문자로 시작, 하이픈 허용(연속 불가). <code>containerName</code>(<code>mc-&lt;name&gt;</code>)과 <code>hostname</code>을 제공합니다</td>
+<td>2~32자, 소문자, 영문자로 시작, 하이픈 허용(연속 불가). <code>value</code>를 제공합니다. 컨테이너·호스트 이름은 <code>containerNameOf</code> / <code>serverHostnameOf</code>로 얻습니다</td>
 </tr>
 <tr>
 <td><code>ServerType</code></td>
@@ -2736,11 +2768,7 @@
 </tr>
 <tr>
 <td><code>IDeleteServerUseCase</code></td>
-<td><code>execute()</code>(프롬프트) / <code>executeWithName(name)</code></td>
-</tr>
-<tr>
-<td><code>IServerStatusUseCase</code></td>
-<td><code>execute()</code> / <code>executeForServer(name)</code></td>
+<td><code>execute()</code>(프롬프트) / <code>executeWithName(name, { force, yes, deleteWorld })</code></td>
 </tr>
 </tbody>
 </table>
@@ -2756,7 +2784,7 @@
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="ow">delete</span><span class="p">(</span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="p">;</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">}</span>
 </code></pre></div>
-<p><strong>Outbound 포트</strong>(<code>application/ports/outbound/</code>)에는 <code>IPromptPort</code>, <code>IShellPort</code>, <code>IServerRepository</code>, <code>IWorldRepository</code>, <code>IDocProvider</code>, <code>IAuditLogPort</code>, <code>IRconPort</code>, <code>IModSourcePort</code>, <code>IServiceManagerPort</code>와 스냅샷/백업 저장소가 있습니다. <code>IPromptPort</code>와 <code>IDocProvider</code>는 outbound 포트입니다.</p>
+<p><strong>Outbound 포트</strong>(<code>application/ports/outbound/</code>)에는 <code>IPromptPort</code>, <code>IContainerRuntimePort</code>, <code>IServerConsolePort</code>, <code>IWorldBackupPort</code>, <code>IWorldAssignmentPort</code>, <code>IServerSpecRepository</code>, <code>IServerRepository</code>, <code>IWorldRepository</code>, <code>IDocProvider</code>, <code>IAuditLogPort</code>, <code>IRconPort</code>, <code>IModSourcePort</code>, <code>IServiceManagerPort</code>와 스냅샷/백업 저장소가 있습니다. <code>IPromptPort</code>와 <code>IDocProvider</code>는 outbound 포트입니다.</p>
 <h2 id="어댑터">어댑터<a class="headerlink" href="#어댑터" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -2778,8 +2806,23 @@
 <td>shared</td>
 </tr>
 <tr>
-<td><code>IShellPort</code></td>
-<td><code>ShellAdapter</code></td>
+<td><code>IContainerRuntimePort</code></td>
+<td><code>DockerComposeRuntimeAdapter</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IServerConsolePort</code></td>
+<td><code>DockerServerConsoleAdapter</code>(RCON)</td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IWorldBackupPort</code></td>
+<td><code>GitWorldBackupAdapter</code></td>
+<td>shared</td>
+</tr>
+<tr>
+<td><code>IWorldAssignmentPort</code></td>
+<td><code>ConfigEnvWorldAssignmentAdapter</code></td>
 <td>shared</td>
 </tr>
 <tr>
@@ -2819,7 +2862,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getContainer</span><span class="p">(</span><span class="nx">options</span><span class="p">.</span><span class="nx">root</span><span class="p">);</span><span class="w">   </span><span class="c1">// ContainerOptions | rootDir string</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">container</span><span class="p">.</span><span class="nx">configSnapshotUseCase</span><span class="p">;</span><span class="w"> </span><span class="c1">// created on first access</span>
 </code></pre></div>
-<p>사용 가능한 getter: <code>promptPort</code>, <code>shellPort</code>, <code>serverRepository</code>, <code>worldRepository</code>, <code>docProvider</code>, <code>auditLogPort</code>, <code>modSourcePort</code>, <code>createServerUseCase</code>, <code>deleteServerUseCase</code>, <code>serverStatusUseCase</code>, <code>worldManagementUseCase</code>, <code>backupUseCase</code>, <code>playerLookupUseCase</code>, <code>backupScheduleUseCase</code>, <code>configSnapshotUseCase</code>, <code>configSnapshotScheduleUseCase</code>.</p>
+<p>사용 가능한 getter: <code>promptPort</code>, <code>runtimePort</code>, <code>containerRuntime</code>, <code>serverConsolePort</code>, <code>worldBackupPort</code>, <code>worldAssignmentPort</code>, <code>serverSpecRepository</code>, <code>serverRepository</code>, <code>worldRepository</code>, <code>docProvider</code>, <code>auditLogPort</code>, <code>modSourcePort</code>, <code>createServerUseCase</code>, <code>deleteServerUseCase</code>, <code>worldManagementUseCase</code>, <code>backupUseCase</code>, <code>backupScheduleUseCase</code>, <code>configSnapshotUseCase</code>, <code>configSnapshotScheduleUseCase</code>.</p>
 <p>관련 헬퍼:</p>
 <ul>
 <li><code>getContainer(options?)</code>는 프로세스 전역 <code>Container</code>를 반환합니다.</li>
@@ -2943,7 +2986,7 @@
 <li><code>mcctl console ...</code>은 <code>Pm2ServiceManagerAdapter</code>와 <code>shared/src/infrastructure/config/Pm2EcosystemConfig.ts</code>를 통해 <code>mcctl-api</code>, <code>mcctl-console</code>을 PM2 프로세스로 관리합니다.</li>
 <li><code>mcctl console user</code>는 콘솔 SQLite 데이터베이스에 직접 기록합니다(<code>cli/src/lib/console-db.ts</code>).</li>
 <li>SQLite 저장소(better-sqlite3), 플랫폼 루트 기준: <code>data/audit.db</code>, <code>backups/meta/backup-schedules.db</code>, <code>backups/meta/config-snapshots.db</code>.</li>
-<li>bash 스크립트는 <code>platform/scripts/</code>에 있으며, 배포 시 <code>sync-scripts</code> npm 스크립트(<code>prepublishOnly</code>에서 실행)가 CLI 패키지로 복사합니다.</li>
+<li>bash 스크립트는 없습니다. 모든 명령이 TypeScript이며(#715), <code>mcctl</code>은 docker, git, avahi를 포트와 어댑터로 실행합니다.</li>
 <li>일부 하위 시스템은 <code>mcctl-api</code>에서만 사용합니다: BlueMap 렌더링, 월드 분석, 플레이어 세션, RCON 어댑터(<code>RconCliAdapter</code>).</li>
 </ul>
 <h2 id="테스트">테스트<a class="headerlink" href="#테스트" title="Permanent link">&para;</a></h2>
@@ -2974,7 +3017,7 @@
 </tr>
 <tr>
 <td><code>mocks/</code></td>
-<td><code>MockPromptAdapter</code>, <code>MockShellAdapter</code>, <code>MockServerRepository</code>, <code>MockWorldRepository</code></td>
+<td><code>MockPromptAdapter</code>, <code>MockServerRepository</code>, <code>MockWorldRepository</code>, <code>MockWorldAssignmentPort</code>, <code>createMockContainerRuntime</code></td>
 </tr>
 </tbody>
 </table>
@@ -2985,11 +3028,10 @@
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>pnpm<span class="w"> </span>--filter<span class="w"> </span>@minecraft-docker/mcctl<span class="w"> </span>test:e2e<span class="w">          </span><span class="c1"># needs a build (dist/)</span>
 </code></pre></div>
 <p>오래된 테스트는 <code>node:assert</code>를, 새 테스트는 vitest의 <code>expect</code>와 <code>vi.mock()</code>을 사용합니다. 새 테스트에는 <code>expect</code>를 사용하세요.</p>
-<p>유스케이스 통합 테스트(Mock으로 유스케이스를 직접 생성합니다. <code>MockShellAdapter.wasCommandCalled()</code>는 명령 문자열이 정확히 일치해야 합니다):</p>
+<p>유스케이스 통합 테스트(Mock과 가짜 포트로 유스케이스를 직접 생성합니다. <code>cli/tests/integration/BackupUseCase-port.test.ts</code> 참고):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">const</span><span class="w"> </span><span class="nx">prompt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockPromptAdapter</span><span class="p">({</span><span class="w"> </span><span class="cm">/* scripted answers */</span><span class="w"> </span><span class="p">});</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">shell</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockShellAdapter</span><span class="p">();</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">repo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">MockServerRepository</span><span class="p">();</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">CreateServerUseCase</span><span class="p">(</span><span class="nx">prompt</span><span class="p">,</span><span class="w"> </span><span class="nx">shell</span><span class="p">,</span><span class="w"> </span><span class="nx">repo</span><span class="p">);</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kd">const</span><span class="w"> </span><span class="nx">port</span><span class="o">:</span><span class="w"> </span><span class="kt">IWorldBackupPort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fakeBackupPort</span><span class="p">();</span><span class="w">   </span><span class="c1">// 호출을 기록하는 가짜</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">useCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">BackupUseCase</span><span class="p">(</span><span class="nx">prompt</span><span class="p">,</span><span class="w"> </span><span class="nx">port</span><span class="p">);</span>
 </code></pre></div>
 <p>컨테이너를 mock한 커맨드 테스트(<code>cli/tests/commands/config-snapshot.test.ts</code> 참고):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nx">vi</span><span class="p">.</span><span class="nx">mock</span><span class="p">(</span><span class="s1">'../../src/infrastructure/di/container.js'</span><span class="p">);</span>
@@ -2997,7 +3039,7 @@
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nx">configSnapshotUseCase</span><span class="o">:</span><span class="w"> </span><span class="kt">mockUseCase</span><span class="p">,</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">}</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">never</span><span class="p">);</span>
 </code></pre></div>
-<p>실제 <code>Container</code>가 필요하면 <code>Container.createWithAdapters(prompt, shell, serverRepo, worldRepo)</code>로 Mock 기반 컨테이너를 만들 수 있습니다. 테스트 사이에는 <code>resetContainer()</code>로 전역 컨테이너를 초기화하세요.</p>
+<p>실제 <code>Container</code>가 필요하면 <code>Container.createWithAdapters(prompt, serverRepo, worldRepo)</code>로 Mock 기반 컨테이너를 만들 수 있습니다. 테스트 사이에는 <code>resetContainer()</code>로 전역 컨테이너를 초기화하세요.</p>
 <h2 id="참고">참고<a class="headerlink" href="#참고" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../">개발 가이드 인덱스</a></li>
