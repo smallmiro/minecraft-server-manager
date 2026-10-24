@@ -2793,7 +2793,7 @@
 </tr>
 <tr>
 <td>7b Stopped servers</td>
-<td>Lists running servers (restart them yourself). On yes, recreates each stopped one with <code>docker compose up --no-start --no-deps mc-&lt;server&gt;</code>, so its next start uses the pulled image; otherwise the summary lists those commands</td>
+<td>Lists running servers (restart them yourself) and stopped ones already on the local image their compose service names (<code>up to date</code>). On yes, recreates each other stopped one with <code>docker compose up --no-start --no-deps mc-&lt;server&gt;</code>, so its next start uses the pulled image; otherwise the summary lists those commands. Without such servers it does not ask</td>
 <td>optional (no)</td>
 </tr>
 <tr>

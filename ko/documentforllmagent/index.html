@@ -4359,6 +4359,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#version-302-2026-10-24---recreate-only-changed-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 3.0.2 (2026-10-24) - Recreate Only Changed Images
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#version-301-2026-10-24---upgrade-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4891,7 +4902,7 @@
 
 <h1 id="mcctl---docker-minecraft-server-management-cli">mcctl - Docker Minecraft Server Management CLI<a class="headerlink" href="#mcctl---docker-minecraft-server-management-cli" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Version</strong>: 3.0.1
+<p><strong>Version</strong>: 3.0.2
 <strong>Last Updated</strong>: 2026-10-24
 <strong>Purpose</strong>: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions</p>
 </blockquote>
@@ -9499,6 +9510,9 @@ A: Yes. It only appends new <code>.env</code> variables and never modifies exist
 A: <code>mcctl update</code> updates the CLI and service packages to newer versions. <code>mcctl upgrade</code> updates your platform configuration files (.env, templates) to match the new version's template.</p>
 <hr />
 <h2 id="16-version-history">16. Version History<a class="headerlink" href="#16-version-history" title="Permanent link">&para;</a></h2>
+<h3 id="version-302-2026-10-24---recreate-only-changed-images">Version 3.0.2 (2026-10-24) - Recreate Only Changed Images<a class="headerlink" href="#version-302-2026-10-24---recreate-only-changed-images" title="Permanent link">&para;</a></h3>
+<p>Upgrade: from v3.0.x <code>mcctl update</code>; from v2.x <code>upgrade-v3.sh</code>.</p>
+<p><strong>Fixed:</strong> <code>mcctl update</code> and <code>upgrade-v3.sh</code> step 7b no longer offer to recreate stopped servers already on the current image; they report <code>up to date</code> (#810).</p>
 <h3 id="version-301-2026-10-24---upgrade-fixes">Version 3.0.1 (2026-10-24) - Upgrade Fixes<a class="headerlink" href="#version-301-2026-10-24---upgrade-fixes" title="Permanent link">&para;</a></h3>
 <p>Upgrade: from v2.x use the fixed <code>upgrade-v3.sh</code>; from v3.0.0 run <code>mcctl update</code> twice (the first run is still the 3.0.0 CLI).</p>
 <p><strong>Fixed:</strong> <code>upgrade-v3.sh</code> (restart with <code>--console --force</code>, <code>kill_timeout</code> check, rollback summary, recreate stopped servers) (#794); <code>mcctl console service</code> without a terminal (#795); <code>mcctl update</code> offers to recreate stopped servers, default No (#796).</p>

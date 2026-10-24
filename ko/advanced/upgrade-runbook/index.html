@@ -2793,7 +2793,7 @@
 </tr>
 <tr>
 <td>7b 중지된 서버</td>
-<td>실행 중인 서버를 알려 줌(재시작은 직접). 예라고 답하면 중지된 서버를 <code>docker compose up --no-start --no-deps mc-&lt;server&gt;</code>로 다시 만들어 다음 기동 때 받은 이미지를 쓰게 하고, 아니면 요약에 그 명령을 보여 줌</td>
+<td>실행 중인 서버와, compose 서비스가 가리키는 로컬 이미지를 이미 쓰는 중지 서버(<code>up to date</code>)를 알려 줌(재시작은 직접). 예라고 답하면 나머지 중지 서버를 <code>docker compose up --no-start --no-deps mc-&lt;server&gt;</code>로 다시 만들어 다음 기동 때 받은 이미지를 쓰게 하고, 아니면 요약에 그 명령을 보여 줌. 그런 서버가 없으면 묻지 않음</td>
 <td>선택(아니요)</td>
 </tr>
 <tr>
