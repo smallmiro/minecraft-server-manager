@@ -86,6 +86,7 @@ export function HostnameDisplay({
       >
         {formatHost(primary)}
       </Box>
+      {showCopyButton && <CopyButton text={formatHost(primary)} />}
       <Chip
         label={`+${hosts.length - 1}`}
         size="small"

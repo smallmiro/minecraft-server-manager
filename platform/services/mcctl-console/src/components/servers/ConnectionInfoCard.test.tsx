@@ -234,4 +234,12 @@ describe('ConnectionInfoCard', () => {
     expect(screen.getByText('mDNS')).toBeInTheDocument();
     expect(screen.getAllByLabelText('Copy to clipboard')).toHaveLength(3);
   });
+
+  it('renders as a Bento panel without a MUI Card', () => {
+    renderComponent('survival', 'survival.10.0.0.1.nip.io');
+
+    const panel = screen.getByRole('region', { name: 'Connection' });
+    expect(panel).toHaveAttribute('data-accent', 'neutral');
+    expect(document.querySelector('.MuiCard-root')).toBeNull();
+  });
 });

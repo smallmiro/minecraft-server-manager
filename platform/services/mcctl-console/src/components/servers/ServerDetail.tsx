@@ -1,18 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, type ReactElement } from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
-import Chip from '@mui/material/Chip';
-import Button from '@mui/material/Button';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import IconButton from '@mui/material/IconButton';
-import TextField from '@mui/material/TextField';
-import InputAdornment from '@mui/material/InputAdornment';
-import Grid from '@mui/material/Grid';
-import Divider from '@mui/material/Divider';
-import { alpha, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,25 +14,40 @@ import CloseIcon from '@mui/icons-material/Close';
 import SpeedIcon from '@mui/icons-material/Speed';
 import SdStorageIcon from '@mui/icons-material/SdStorage';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import OpenInFullIcon from '@mui/icons-material/OpenInFull';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import TerminalIcon from '@mui/icons-material/Terminal';
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
+import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
+import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import BackupOutlinedIcon from '@mui/icons-material/BackupOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import type { ServerDetail as ServerDetailType } from '@/ports/api/IMcctlApiClient';
-import { BentoGrid, BentoMetricCard, BentoPanel } from '@/components/bento';
-import { useServerLogs } from '@/hooks/useServerLogs';
+import { BentoGrid, BentoMetricCard, BentoPanel, BentoPanelHeader } from '@/components/bento';
+import { useInstalledMods } from '@/hooks/useMods';
 import { ServerConsole } from './ServerConsole';
+import { OverviewConsole } from './OverviewConsole';
+import { OverviewPlayerList } from './OverviewPlayerList';
 import { ServerActivityTab } from './ServerActivityTab';
 import { ServerWorldTab } from './ServerWorldTab';
 import { ServerOptionsTab } from './ServerOptionsTab';
 import { ServerAccessTab } from './ServerAccessTab';
 import { ServerPlayersTab } from './ServerPlayersTab';
 import { ConnectionInfoCard } from './ConnectionInfoCard';
-import { HostnameDisplay } from '@/components/common';
 import { ServerModsTab } from './ServerModsTab';
 import { ServerFilesTab } from './files/ServerFilesTab';
 import { ServerConfigHistoryTab } from './config-history';
 import { ServerBackupTab } from './ServerBackupTab';
-import { stripAnsi, parseLogLine } from '@/utils/log';
+import {
+  formatCpuPercent,
+  formatMemoryUsage,
+  getUsageLevel,
+  parseAllocatedMemoryToMB,
+  USAGE_LEVEL_ACCENT,
+  USAGE_LEVEL_LABEL,
+} from '@/utils/format';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -46,545 +55,207 @@ interface ServerDetailProps {
 }
 
 // Tab configuration
-const TABS = ['Overview', 'Players', 'World', 'Activity', 'Mods', 'Files', 'Config History', 'Backups', 'Access', 'Options'] as const;
-type TabType = (typeof TABS)[number];
+const TABS: ReadonlyArray<{ label: string; icon: ReactElement }> = [
+  { label: 'Overview', icon: <DashboardOutlinedIcon fontSize="small" /> },
+  { label: 'Players', icon: <PeopleOutlineIcon fontSize="small" /> },
+  { label: 'World', icon: <PublicOutlinedIcon fontSize="small" /> },
+  { label: 'Activity', icon: <TimelineOutlinedIcon fontSize="small" /> },
+  { label: 'Mods', icon: <ExtensionOutlinedIcon fontSize="small" /> },
+  { label: 'Files', icon: <FolderOutlinedIcon fontSize="small" /> },
+  { label: 'Config History', icon: <HistoryOutlinedIcon fontSize="small" /> },
+  { label: 'Backups', icon: <BackupOutlinedIcon fontSize="small" /> },
+  { label: 'Access', icon: <LockOutlinedIcon fontSize="small" /> },
+  { label: 'Options', icon: <TuneOutlinedIcon fontSize="small" /> },
+];
+type TabType = (typeof TABS)[number]['label'];
+
+const tabId = (label: string) => `server-tab-${label.toLowerCase().replace(/\s+/g, '-')}`;
+const TABPANEL_ID = 'server-tabpanel';
 
 // Icon size for stat cards
-const STAT_ICON_SIZE = 28;
+const STAT_ICON_SIZE = 22;
 
-// Parse log line for console display
-// Format uptime from seconds
-function formatUptime(seconds?: number): string {
-  if (!seconds || seconds < 0) return '0s';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
+const METRIC_COLUMN = { xs: '1 / -1', sm: 'span 2', md: 'span 4' } as const;
+
+function MetricValue({ children }: { children: string }) {
+  return (
+    <Box component="span" sx={{ fontFamily: (theme) => theme.typography.mono.fontFamily }}>
+      {children}
+    </Box>
+  );
 }
 
-// Parse memory string to MB value
-function parseMemoryToMB(memStr?: string): number {
-  if (!memStr) return 0;
-  const match = memStr.match(/^([\d.]+)\s*(B|KB|MB|MiB|GB|GiB)?$/i);
-  if (!match) return 0;
-  const value = parseFloat(match[1]);
-  const unit = (match[2] || 'B').toUpperCase();
-  switch (unit) {
-    case 'GB':
-    case 'GIB':
-      return value * 1024;
-    case 'MB':
-    case 'MIB':
-      return value;
-    case 'KB':
-      return value / 1024;
-    default:
-      return value / (1024 * 1024);
-  }
-}
-
-// Parse allocated memory to MB
-function parseAllocatedMemoryToMB(memStr?: string): number {
-  if (!memStr) return 4096; // Default 4GB
-  const match = memStr.match(/^(\d+)\s*(M|G)?$/i);
-  if (!match) return 4096;
-  const value = parseInt(match[1], 10);
-  const unit = (match[2] || 'M').toUpperCase();
-  return unit === 'G' ? value * 1024 : value;
+function TabLabel({ label, count }: { label: string; count?: number }) {
+  return (
+    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75 }}>
+      <span>{label}</span>
+      {count !== undefined && (
+        <Box
+          component="span"
+          sx={{
+            typography: 'mono',
+            fontSize: '0.6875rem',
+            lineHeight: '18px',
+            minWidth: 18,
+            px: 0.75,
+            borderRadius: 9,
+            textAlign: 'center',
+            bgcolor: 'action.selected',
+            color: 'text.primary',
+          }}
+        >
+          {count}
+        </Box>
+      )}
+    </Box>
+  );
 }
 
 export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
   const [activeTab, setActiveTab] = useState<TabType>('Overview');
-  const [command, setCommand] = useState('');
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [consoleOpen, setConsoleOpen] = useState(false);
-  const consoleRef = useRef<HTMLDivElement>(null);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Reset consoleOpen when leaving Overview tab
-  useEffect(() => {
-    if (activeTab !== 'Overview') {
-      setConsoleOpen(false);
-    }
-  }, [activeTab]);
+  // Only a count that is already cached: never fetch for the badge
+  const { data: installedMods } = useInstalledMods(server.name, { enabled: false });
 
-  // Connect to server logs
-  const { logs: rawLogs, isConnected } = useServerLogs({ serverName: server.name });
-
-  // Filter out RCON logs
-  const logs = useMemo(() => {
-    return rawLogs.filter(
-      (log) => !log.includes('RCON Listener') && !log.includes('RCON Client') && !log.includes('RconClient')
-    );
-  }, [rawLogs]);
-
-  // Auto-scroll to bottom
-  useEffect(() => {
-    if (consoleRef.current && isAtBottom) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-    }
-  }, [logs, isAtBottom]);
-
-  const handleScroll = () => {
-    if (!consoleRef.current) return;
-    const { scrollTop, scrollHeight, clientHeight } = consoleRef.current;
-    setIsAtBottom(scrollHeight - scrollTop - clientHeight < 30);
+  const tabCounts: Partial<Record<TabType, number>> = {
+    Players: server.players?.online,
+    Mods: installedMods?.mods.length,
   };
 
-  const scrollToBottom = () => {
-    if (consoleRef.current) {
-      consoleRef.current.scrollTo({ top: consoleRef.current.scrollHeight, behavior: 'smooth' });
-    }
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    if (tab !== 'Overview') setConsoleOpen(false);
   };
 
-  const handleSendCommand = async () => {
-    if (!command.trim() || !onSendCommand) return;
-    await onSendCommand(command.trim());
-    setCommand('');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSendCommand();
-    }
-  };
-
-  // Parse resource stats (API returns numeric values directly)
-  const cpuPercent = server.stats?.cpuPercent ?? 0;
-  const memoryUsedMB = server.stats?.memoryUsage ? server.stats.memoryUsage / (1024 * 1024) : 0;
-  const memoryAllocatedMB = parseAllocatedMemoryToMB(server.memory);
-  const memoryPercent = server.stats?.memoryPercent ?? 0;
+  // Resource metrics
+  const stats = server.stats;
+  const cpuLevel = stats ? getUsageLevel(stats.cpuPercent) : undefined;
+  const memoryLevel = stats ? getUsageLevel(stats.memoryPercent) : undefined;
+  const allocatedMB = parseAllocatedMemoryToMB(server.memory);
 
   return (
-    <Box>
-      {/* Tabs - Pill Style */}
-      <BentoPanel
-        aria-label="Server detail navigation"
-        sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, p: 1, mb: 2.5 }}
-      >
-        {TABS.map((tab) => (
-          <Button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            sx={{
-              px: 2,
-              py: 1,
-              borderRadius: 5,
-              fontSize: 14,
-              fontWeight: 500,
-              textTransform: 'none',
-              bgcolor: activeTab === tab ? 'primary.main' : 'transparent',
-              color: activeTab === tab ? '#0a0e14' : 'text.secondary',
-              '&:hover': {
-                bgcolor: activeTab === tab ? 'primary.main' : alpha('#1bd96a', 0.1),
-              },
-            }}
-          >
-            {tab}
-          </Button>
-        ))}
-      </BentoPanel>
+    <BentoGrid aria-label="Server detail">
+      <Box sx={{ gridColumn: METRIC_COLUMN }}>
+        <BentoMetricCard
+          title="CPU usage"
+          value={<MetricValue>{stats ? formatCpuPercent(stats.cpuPercent) : '—'}</MetricValue>}
+          icon={<SpeedIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
+          accent={cpuLevel ? USAGE_LEVEL_ACCENT[cpuLevel] : 'neutral'}
+          description={cpuLevel ? USAGE_LEVEL_LABEL[cpuLevel] : 'No data'}
+        />
+      </Box>
+      <Box sx={{ gridColumn: METRIC_COLUMN }}>
+        <BentoMetricCard
+          title="Memory usage"
+          value={
+            <MetricValue>
+              {stats ? formatMemoryUsage(stats.memoryUsage, allocatedMB) : '—'}
+            </MetricValue>
+          }
+          icon={<SdStorageIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
+          accent={memoryLevel ? USAGE_LEVEL_ACCENT[memoryLevel] : 'neutral'}
+          description={
+            stats && memoryLevel
+              ? `${stats.memoryPercent.toFixed(1)}% · ${USAGE_LEVEL_LABEL[memoryLevel]}`
+              : 'No data'
+          }
+        />
+      </Box>
+      <Box sx={{ gridColumn: METRIC_COLUMN }}>
+        <BentoMetricCard
+          title="World size"
+          value={<MetricValue>{server.worldSize || '—'}</MetricValue>}
+          icon={<FolderOpenIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
+          accent="info"
+          description={server.worldName}
+        />
+      </Box>
 
-      {/* Stats Cards */}
-      <BentoGrid aria-label="Server resources" sx={{ mb: 2.5 }}>
-        <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
-          <BentoMetricCard
-            title="CPU usage"
-            value={`${cpuPercent.toFixed(2)}%`}
-            unit="/ 100%"
-            icon={<SpeedIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
-            progress={cpuPercent}
-          />
-        </Box>
-        <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
-          <BentoMetricCard
-            title="Memory usage"
-            value={`${memoryPercent.toFixed(2)}%`}
-            unit="/ 100%"
-            icon={<SdStorageIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
-            progress={memoryPercent}
-          />
-        </Box>
-        <Box sx={{ gridColumn: { xs: '1 / -1', sm: 'span 2', md: 'span 4' } }}>
-          <BentoMetricCard
-            title="World size"
-            value={server.worldSize || '0 B'}
-            unit="/ 10 GB"
-            icon={<FolderOpenIcon sx={{ fontSize: STAT_ICON_SIZE }} />}
-            progress={(parseMemoryToMB(server.worldSize) / 10240) * 100}
-          />
-        </Box>
-      </BentoGrid>
-
-      {/* Console - Overview tab only */}
-      {activeTab === 'Overview' && (
-      <BentoPanel
-        aria-label="Server console"
-        sx={{
-          overflow: 'hidden',
-        }}
-      >
-        {/* Console Header */}
-        <Box
+      {/* Tabs and their content share one panel */}
+      <BentoPanel aria-label="Server details" sx={{ gridColumn: '1 / -1' }}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, value: TabType) => handleTabChange(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          aria-label="Server detail sections"
           sx={{
-            px: 3,
-            py: 2,
+            minHeight: 48,
             borderBottom: '1px solid',
             borderColor: 'divider',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1.25,
+            '& .MuiTab-root': { minHeight: 48, textTransform: 'none', fontWeight: 600 },
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            Console
-          </Typography>
-          <Box
-            sx={{
-              width: 10,
-              height: 10,
-              borderRadius: '50%',
-              bgcolor: isConnected ? 'primary.main' : 'error.main',
-              boxShadow: isConnected
-                ? '0 0 8px rgba(27, 217, 106, 0.4)'
-                : '0 0 8px rgba(239, 68, 68, 0.4)',
-            }}
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-            {isConnected ? 'Connected' : 'Disconnected'}
-          </Typography>
-        </Box>
+          {TABS.map(({ label, icon }) => (
+            <Tab
+              key={label}
+              value={label}
+              id={tabId(label)}
+              aria-controls={TABPANEL_ID}
+              icon={icon}
+              iconPosition="start"
+              label={<TabLabel label={label} count={tabCounts[label]} />}
+            />
+          ))}
+        </Tabs>
 
-        {/* Console Body */}
-        <Box sx={{ position: 'relative' }}>
-          <Box
-            ref={consoleRef}
-            onScroll={handleScroll}
-            sx={{
-              height: { xs: 240, sm: 360 },
-              overflowY: 'auto',
-              px: 2.5,
-              py: 2,
-              fontSize: 13,
-              lineHeight: 1.85,
-              color: '#b4b6c4',
-              bgcolor: '#0a0a0a',
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#3a3d4e #0a0a0a',
-              '&::-webkit-scrollbar': {
-                width: 8,
-              },
-              '&::-webkit-scrollbar-track': {
-                bgcolor: '#0a0a0a',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: '#3a3d4e',
-                borderRadius: 4,
-              },
-            }}
-          >
-            {logs.length === 0 ? (
-              <Typography
-                sx={{
-                  color: 'text.secondary',
-                  textAlign: 'center',
-                  py: 8,
-                }}
-              >
-                Waiting for logs...
-              </Typography>
-            ) : (
-              logs.map((log, i) => {
-                const parsed = parseLogLine(log);
-                if (parsed) {
-                  return (
-                    <Box
-                      key={i}
-                      sx={{
-                        display: 'flex',
-                        gap: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      <Box component="span" sx={{ color: '#4a4d60' }}>
-                        [{parsed.time}]
-                      </Box>
-                      <Box component="span" sx={{ color: '#4a4d60' }}>
-                        &nbsp;[{parsed.thread}/
-                        <Box
-                          component="span"
-                          sx={{
-                            color: parsed.level === 'WARN' ? '#e8a848' : '#6b6e80',
-                          }}
-                        >
-                          {parsed.level}
-                        </Box>
-                        ]:&nbsp;
-                      </Box>
-                      <Box
-                        component="span"
-                        sx={{
-                          color: parsed.level === 'WARN' ? '#c4a45a' : '#b4b6c4',
-                        }}
-                      >
-                        {parsed.msg}
-                      </Box>
-                    </Box>
-                  );
-                }
-                // Raw log line (strip ANSI codes)
-                return (
-                  <Box key={i} sx={{ color: '#b4b6c4' }}>
-                    {stripAnsi(log)}
-                  </Box>
-                );
-              })
-            )}
-          </Box>
+        <Box
+          role="tabpanel"
+          id={TABPANEL_ID}
+          aria-labelledby={tabId(activeTab)}
+          sx={{ p: { xs: 2, sm: 2.5 }, minWidth: 0 }}
+        >
+          {activeTab === 'Overview' && (
+            <BentoGrid>
+              <OverviewConsole
+                serverName={server.name}
+                serverStatus={server.status}
+                onSendCommand={onSendCommand}
+                onExpand={() => setConsoleOpen(true)}
+              />
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' }, minWidth: 0 }}>
+                <ServerSettingsSummary server={server} />
+              </Box>
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 6' }, minWidth: 0 }}>
+                <OverviewPlayerList serverName={server.name} players={server.players} />
+              </Box>
+              <Box sx={{ gridColumn: '1 / -1', minWidth: 0 }}>
+                <ConnectionInfoCard serverName={server.name} hostname={server.hostname} />
+              </Box>
+            </BentoGrid>
+          )}
 
-          {/* Expand button */}
-          <IconButton
-            onClick={() => setConsoleOpen(true)}
-            sx={{
-              position: 'absolute',
-              top: 12,
-              right: 12,
-              width: 36,
-              height: 36,
-              borderRadius: 2,
-              bgcolor: '#282a3a',
-              border: '1px solid #3a3d4e',
-              color: '#8b8da0',
-              '&:hover': {
-                bgcolor: '#313440',
-              },
-            }}
-          >
-            <OpenInFullIcon sx={{ fontSize: 18 }} />
-          </IconButton>
+          {activeTab === 'Players' && <ServerPlayersTab serverName={server.name} />}
 
-          {/* Scroll to bottom button */}
-          {!isAtBottom && (
-            <IconButton
-              onClick={scrollToBottom}
-              sx={{
-                position: 'absolute',
-                bottom: 12,
-                right: 12,
-                width: 36,
-                height: 36,
-                borderRadius: 2,
-                bgcolor: '#282a3a',
-                border: '1px solid #3a3d4e',
-                color: '#8b8da0',
-                '&:hover': {
-                  bgcolor: '#313440',
-                },
-              }}
-            >
-              <KeyboardArrowDownIcon sx={{ fontSize: 18 }} />
-            </IconButton>
+          {activeTab === 'World' && (
+            <ServerWorldTab serverName={server.name} worldName={server.worldName} />
+          )}
+
+          {activeTab === 'Activity' && <ServerActivityTab serverName={server.name} />}
+
+          {activeTab === 'Mods' && <ServerModsTab serverName={server.name} />}
+
+          {activeTab === 'Files' && <ServerFilesTab serverName={server.name} />}
+
+          {activeTab === 'Config History' && (
+            <ServerConfigHistoryTab
+              serverName={server.name}
+              isServerRunning={server.status === 'running'}
+            />
+          )}
+
+          {activeTab === 'Backups' && <ServerBackupTab serverName={server.name} />}
+
+          {activeTab === 'Access' && <ServerAccessTab serverId={server.name} />}
+
+          {activeTab === 'Options' && (
+            <ServerOptionsTab serverName={server.name} isRunning={server.status === 'running'} />
           )}
         </Box>
-
-        {/* Command Input */}
-        <Box
-          sx={{
-            px: 2.5,
-            py: 1.5,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Send a command"
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={!isConnected}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <TerminalIcon sx={{ fontSize: 16, color: '#999' }} />
-                </InputAdornment>
-              ),
-              sx: {
-                bgcolor: '#13141c',
-                borderRadius: 2,
-                fontSize: 14,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#2a2d3e',
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#3a3d4e',
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: 'primary.main',
-                },
-              },
-            }}
-          />
-        </Box>
-      </BentoPanel>
-      )}
-
-      {/* Additional content based on tab */}
-      <BentoPanel
-        component="section"
-        role="region"
-        aria-label="Server detail content"
-        sx={{ mt: 2.5, p: { xs: 2, sm: 2.5 } }}
-      >
-      {activeTab === 'Overview' && (
-        <Grid container spacing={3}>
-          {/* Server Information */}
-          <Grid item xs={12} md={6}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Server Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                <InfoRow label="Name" value={server.name} />
-                <InfoRow label="Container" value={server.container} />
-                <InfoRow label="Hostname" value={server.hostname ? <HostnameDisplay hostname={server.hostname} color="text.primary" /> : undefined} />
-                <InfoRow label="Type" value={server.type} />
-                <InfoRow label="Version" value={server.version} />
-                <InfoRow label="Memory" value={server.memory} />
-                <InfoRow
-                  label="Uptime"
-                  value={server.uptime || formatUptime(server.uptimeSeconds)}
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Players */}
-          <Grid item xs={12} md={6}>
-            <Card sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom fontWeight={600}>
-                  Players
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                {server.players ? (
-                  <>
-                    <InfoRow
-                      label="Online"
-                      value={`${server.players.online} / ${server.players.max}`}
-                    />
-
-                    {server.players.players && server.players.players.length > 0 && (
-                      <>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2, mb: 1 }}>
-                          Online Players
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {server.players.players.map((player) => (
-                            <Chip key={player} label={player} size="small" />
-                          ))}
-                        </Box>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <Typography variant="body2" color="text.secondary">
-                    Player information unavailable
-                  </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Connection Information */}
-          <Grid item xs={12} md={6}>
-            <ConnectionInfoCard serverName={server.name} hostname={server.hostname} />
-          </Grid>
-        </Grid>
-      )}
-
-      {activeTab === 'Players' && (
-        <Box sx={{ mt: 3 }}>
-          <ServerPlayersTab serverName={server.name} />
-        </Box>
-      )}
-
-      {activeTab === 'World' && (
-        <Box sx={{ mt: 3 }}>
-          <Card sx={{ borderRadius: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                World
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <ServerWorldTab serverName={server.name} worldName={server.worldName} />
-            </CardContent>
-          </Card>
-        </Box>
-      )}
-
-      {activeTab === 'Activity' && (
-        <Box sx={{ mt: 3 }}>
-          <Card sx={{ borderRadius: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom fontWeight={600}>
-                Server Activity
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              <ServerActivityTab serverName={server.name} />
-            </CardContent>
-          </Card>
-        </Box>
-      )}
-
-      {activeTab === 'Mods' && (
-        <Box sx={{ mt: 3 }}>
-          <ServerModsTab serverName={server.name} />
-        </Box>
-      )}
-
-      {activeTab === 'Files' && (
-        <Box sx={{ mt: 3 }}>
-          <ServerFilesTab serverName={server.name} />
-        </Box>
-      )}
-
-      {activeTab === 'Config History' && (
-        <Box sx={{ mt: 3 }}>
-          <ServerConfigHistoryTab
-            serverName={server.name}
-            isServerRunning={server.status === 'running'}
-          />
-        </Box>
-      )}
-
-      {activeTab === 'Backups' && (
-        <Box sx={{ mt: 3 }}>
-          <ServerBackupTab serverName={server.name} />
-        </Box>
-      )}
-
-      {activeTab === 'Access' && (
-        <Box sx={{ mt: 3 }}>
-          <ServerAccessTab serverId={server.name} />
-        </Box>
-      )}
-
-      {activeTab === 'Options' && (
-        <Box>
-          <ServerOptionsTab serverName={server.name} isRunning={server.status === 'running'} />
-        </Box>
-      )}
       </BentoPanel>
 
       {/* Full-screen Console Dialog - Overview tab only */}
@@ -622,23 +293,45 @@ export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
           </DialogContent>
         </Dialog>
       )}
-    </Box>
+    </BentoGrid>
   );
 }
 
-// Info Row component for displaying key-value pairs
-function InfoRow({ label, value }: { label: string; value?: string | React.ReactNode }) {
+// Settings that the hero does not already show
+function ServerSettingsSummary({ server }: { server: ServerDetailType }) {
+  return (
+    <BentoPanel aria-label="Server settings" sx={{ height: '100%' }}>
+      <BentoPanelHeader title="Settings" />
+      <Box component="dl" sx={{ m: 0, px: 2.5, pb: 1.5 }}>
+        <SettingRow label="Container" value={server.container} />
+        <SettingRow label="Memory allocation" value={server.memory} />
+        <SettingRow label="World" value={server.worldName} />
+      </Box>
+    </BentoPanel>
+  );
+}
+
+function SettingRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null;
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, minWidth: 0, py: 1 }}>
-      <Typography variant="body2" color="text.secondary">
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        gap: 2,
+        minWidth: 0,
+        py: 1,
+      }}
+    >
+      <Typography component="dt" variant="label" color="text.secondary">
         {label}
       </Typography>
       <Typography
-        variant="body2"
-        component="div"
-        sx={{ minWidth: 0, fontWeight: 500, overflowWrap: 'anywhere', textAlign: 'right' }}
+        component="dd"
+        variant="mono"
+        sx={{ m: 0, minWidth: 0, overflowWrap: 'anywhere', textAlign: 'right' }}
       >
         {value}
       </Typography>

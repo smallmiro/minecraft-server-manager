@@ -33,4 +33,16 @@ describe('darkTheme', () => {
     expect(darkTheme.palette.text.primary).toBe('#ffffff');
     expect(darkTheme.palette.text.secondary).toBe('#9a9a9a');
   });
+
+  it('defines a monospace tabular-nums variant for technical values', () => {
+    const mono = darkTheme.typography.mono;
+    expect(mono.fontFamily).toMatch(/monospace/);
+    expect(mono.fontVariantNumeric).toBe('tabular-nums');
+  });
+
+  it('defines a small-caps label variant', () => {
+    const label = darkTheme.typography.label;
+    expect(label.textTransform).toBe('uppercase');
+    expect(label.letterSpacing).toBeDefined();
+  });
 });
