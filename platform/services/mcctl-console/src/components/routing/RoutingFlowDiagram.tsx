@@ -3,8 +3,12 @@
 import { useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { alpha, useTheme, type Theme } from '@mui/material/styles';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import type { ContainerStatus, RouteInfo, RouterDetail } from '@/ports/api/IMcctlApiClient';
 import {
   HOSTNAME_TYPE_LABEL,
@@ -76,6 +80,8 @@ interface RoutingFlowDiagramProps {
 
 export function RoutingFlowDiagram({ router, playitDomains }: RoutingFlowDiagramProps) {
   const theme = useTheme();
+  // The 660-unit SVG scales its text to ~8px on phones, so xs gets a stacked chip flow instead.
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const [expanded, setExpanded] = useState(false);
 
   const { typeCounts, servers } = useMemo(() => {
@@ -133,6 +139,43 @@ export function RoutingFlowDiagram({ router, playitDomains }: RoutingFlowDiagram
   const ariaLabel =
     `Routing flow: ${plural(typeCounts.length, 'access type')} (${typeCounts.map((t) => HOSTNAME_TYPE_LABEL[t.type]).join(', ')}) ` +
     `to mc-router (${router.status}, port ${router.port}) to ${plural(servers.length, 'server')} (${statusSummary})`;
+
+  const toggle = overflow && (
+    <Button size="small" onClick={() => setExpanded((value) => !value)} sx={{ mt: 1 }}>
+      {expanded ? 'Show fewer servers' : `Show all ${servers.length} servers`}
+    </Button>
+  );
+
+  if (isXs) {
+    const arrow = <ArrowDownwardIcon fontSize="small" sx={{ color: 'text.secondary' }} />;
+    return (
+      <Box sx={{ px: 2.5, pb: 2.5, minWidth: 0 }}>
+        <Stack role="group" aria-label={ariaLabel} spacing={1} alignItems="flex-start">
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ width: '100%', minWidth: 0 }}>
+            {typeCounts.map(({ type, count }) => (
+              <Chip key={type} size="small" variant="outlined" label={`${HOSTNAME_TYPE_LABEL[type]} · ${count}`} />
+            ))}
+          </Stack>
+          {arrow}
+          <Chip size="small" color={routerStatus} label={`mc-router · ${router.status} · ${router.port}`} />
+          {arrow}
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ width: '100%', minWidth: 0 }}>
+            {visibleServers.map((server) => (
+              <Chip
+                key={server.name}
+                size="small"
+                color={server.color}
+                label={`${server.name} · ${server.label}`}
+                sx={{ maxWidth: '100%' }}
+              />
+            ))}
+            {hiddenCount > 0 && <Chip size="small" variant="outlined" label={`+${hiddenCount} more`} />}
+          </Stack>
+        </Stack>
+        {toggle}
+      </Box>
+    );
+  }
 
   const textPrimary = theme.palette.text.primary;
   const textSecondary = theme.palette.text.secondary;
@@ -285,11 +328,7 @@ export function RoutingFlowDiagram({ router, playitDomains }: RoutingFlowDiagram
         )}
       </Box>
 
-      {overflow && (
-        <Button size="small" onClick={() => setExpanded((value) => !value)} sx={{ mt: 1 }}>
-          {expanded ? 'Show fewer servers' : `Show all ${servers.length} servers`}
-        </Button>
-      )}
+      {toggle}
     </Box>
   );
 }

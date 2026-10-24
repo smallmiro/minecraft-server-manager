@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ThemeProvider, darkTheme } from '@/theme';
 import { RoutingFlowDiagram } from './RoutingFlowDiagram';
@@ -139,5 +139,37 @@ describe('RoutingFlowDiagram', () => {
     renderDiagram([]);
     expect(screen.getByText('No routes configured.')).toBeInTheDocument();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  describe('on xs screens', () => {
+    afterEach(() => {
+      // @ts-expect-error restore jsdom default (no matchMedia)
+      delete window.matchMedia;
+    });
+
+    const mobile = () =>
+      Object.defineProperty(window, 'matchMedia', {
+        configurable: true,
+        writable: true,
+        value: (query: string) => ({
+          matches: true,
+          media: query,
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+        }),
+      });
+
+    it('stacks the flow as readable chips instead of a scaled-down SVG', () => {
+      mobile();
+      renderDiagram([route('a.local', 'alpha'), route('a.1.2.3.4.nip.io', 'alpha'), route('b.local', 'beta', 'dead')]);
+      expect(screen.queryByRole('img')).not.toBeInTheDocument();
+      const flow = screen.getByRole('group', { name: /Routing flow/ });
+      expect(within(flow).getByText('mDNS · 2')).toBeInTheDocument();
+      expect(within(flow).getByText('nip.io · 1')).toBeInTheDocument();
+      expect(within(flow).getByText('mc-router · running · 25565')).toBeInTheDocument();
+      expect(within(flow).getByText('beta · Dead').closest('.MuiChip-root')).toHaveClass('MuiChip-colorError');
+    });
   });
 });
