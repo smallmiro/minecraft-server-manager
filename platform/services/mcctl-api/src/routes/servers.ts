@@ -142,10 +142,11 @@ export const lifecycleLimits = {
   createTimeoutMs: 120_000,
   /** Create (TypeScript provisioning): how long the queue waits for it, and the container start timeout. */
   sseCreateTimeoutMs: 30 * 60_000,
-  /** Delete: with killGraceMs, how long the queue waits for a delete before the next request runs. */
-  deleteTimeoutMs: 60_000,
-  /** Added three times to deleteTimeoutMs for the delete queue limit. */
-  killGraceMs: 10_000,
+  /**
+   * Delete: how long the queue waits for it. Each container step can take a
+   * minute and a world copy to another filesystem longer, so as long as a create.
+   */
+  deleteHoldMs: 30 * 60_000,
 };
 
 
@@ -1120,7 +1121,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         message: errorMessage,
       });
     }
-  }, () => lifecycleLimits.deleteTimeoutMs + 3 * lifecycleLimits.killGraceMs));
+  }, () => lifecycleLimits.deleteHoldMs));
 };
 
 export default fp(serversPlugin, {
