@@ -324,7 +324,7 @@ mcctl update [options]
     server image tags / Docker images by default — the previous `--all` behavior. Use `--cli-only`
     to update just the CLI binary.
 
-A server's image tag follows its `VERSION` (for example `java21` for 1.21.1). A release tag such as `itzg/minecraft-server:2026.10.0-java21` or a digest (`java21@sha256:…`) in `server.yaml` is a pin and is kept, so a server can stay on a known-good image while an upstream regression is open. If the pinned Java no longer fits `VERSION`, `mcctl update` warns and still keeps it. Once the fix is released, set the tag back to the one for its `VERSION`.
+A server's image tag follows its `VERSION` (for example `java21` for 1.21.1). A release tag such as `itzg/minecraft-server:2026.10.0-java21` or a digest (`java21@sha256:…`) in `server.yaml` is a pin and is kept, so a server can stay on a known-good image while an upstream regression is open. If the pinned Java is older than `VERSION` needs, `mcctl update` warns and still keeps it. Once the fix is released, set the tag back to the one for its `VERSION`.
 
 **Examples:**
 
