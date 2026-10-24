@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ServerDetail } from './ServerDetail';
@@ -16,19 +16,38 @@ vi.mock('@/hooks/useServerLogs', () => ({
   }),
 }));
 
-// Mock useMods hooks
-vi.mock('@/hooks/useMods', () => ({
-  useServerMods: () => ({ data: { mods: {} }, isLoading: false, error: null }),
-  useModSearch: () => ({ data: null, isLoading: false }),
-  useModProjects: () => ({ data: null, isLoading: false }),
-  useAddMod: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useRemoveMod: () => ({ mutateAsync: vi.fn() }),
-  useInstalledMods: () => ({ data: { mods: [] }, isLoading: false, refetch: vi.fn() }),
-  useToggleModExclude: () => ({ mutateAsync: vi.fn(), isPending: false }),
+vi.mock('@/hooks/useServerPlayers', () => ({
+  useServerPlayers: () => ({
+    roster: [],
+    online: 0,
+    max: 0,
+    running: true,
+    isConnected: true,
+    reconnect: vi.fn(),
+    retryCount: 0,
+  }),
 }));
 
-// Files/Backups tabs are implemented components with their own data hooks;
-// stub them so this tab-navigation test stays focused on switching.
+vi.mock('@/hooks/usePlayit', () => ({
+  usePlayitStatus: () => ({ data: undefined, isLoading: false }),
+}));
+
+// Mock useMods hooks
+vi.mock('@/hooks/useMods', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/hooks/useMods')>();
+  return {
+    ...actual,
+    useServerMods: () => ({ data: { mods: {} }, isLoading: false, error: null }),
+    useModSearch: () => ({ data: null, isLoading: false }),
+    useModProjects: () => ({ data: null, isLoading: false }),
+    useAddMod: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useRemoveMod: () => ({ mutateAsync: vi.fn() }),
+    useToggleModExclude: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  };
+});
+
+// Tab bodies are implemented components with their own data hooks;
+// stub them so these tests stay focused on the detail frame.
 vi.mock('./files/ServerFilesTab', () => ({
   ServerFilesTab: () => <div>Files Tab Content</div>,
 }));
@@ -41,18 +60,27 @@ vi.mock('./ServerPlayersTab', () => ({
   ServerPlayersTab: () => <div>Players Tab Content</div>,
 }));
 
-const renderWithTheme = (component: React.ReactNode) => {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  return render(
+vi.mock('./ServerModsTab', () => ({
+  ServerModsTab: () => <div>Mods Tab Content</div>,
+}));
+
+vi.mock('./ServerActivityTab', () => ({
+  ServerActivityTab: () => <div>Activity Tab Content</div>,
+}));
+
+vi.mock('./ServerConsole', () => ({
+  ServerConsole: () => <div>Full console</div>,
+}));
+
+const makeQueryClient = () =>
+  new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+const renderWithTheme = (component: React.ReactNode, queryClient = makeQueryClient()) =>
+  render(
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        {component}
-      </QueryClientProvider>
-    </ThemeProvider>
+      <QueryClientProvider client={queryClient}>{component}</QueryClientProvider>
+    </ThemeProvider>,
   );
-};
 
 const mockServer: ServerDetailType = {
   name: 'test-server',
@@ -80,235 +108,222 @@ const mockServer: ServerDetailType = {
   worldSize: '1.2GB',
 };
 
+const TAB_LABELS = [
+  'Overview',
+  'Players',
+  'World',
+  'Activity',
+  'Mods',
+  'Files',
+  'Config History',
+  'Backups',
+  'Access',
+  'Options',
+];
+
+const tab = (name: string) => screen.getByRole('tab', { name: new RegExp(`^${name}`) });
+
 describe('ServerDetail', () => {
-  it('should render pill-style tabs navigation', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+  describe('tabs', () => {
+    it('renders every tab in one scrollable tablist, in reading order', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    expect(screen.getByRole('button', { name: /overview/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /mods/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /files/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /backups/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /options/i })).toBeInTheDocument();
-  });
+      const tablist = screen.getByRole('tablist', { name: 'Server detail sections' });
+      const tabs = within(tablist).getAllByRole('tab');
+      expect(tabs.map((t) => t.textContent?.replace(/\d+$/, ''))).toEqual(TAB_LABELS);
+      expect(document.querySelector('.MuiTabs-scrollableX')).not.toBeNull();
+      expect(tab('Overview')).toHaveAttribute('aria-selected', 'true');
+    });
 
-  it('should show overview tab content by default', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+    it('shows the online player count on the Players tab', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    // Overview content should be visible
-    expect(screen.getByText('Server Information')).toBeInTheDocument();
-    expect(screen.getByText('Container')).toBeInTheDocument();
-  });
+      expect(within(tab('Players')).getByText('3')).toBeInTheDocument();
+    });
 
-  it('should render resource stat cards', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+    it('shows a Mods count only when the installed mods are already cached', () => {
+      const { unmount } = renderWithTheme(<ServerDetail server={mockServer} />);
+      expect(tab('Mods')).toHaveTextContent(/^Mods$/);
+      unmount();
 
-    expect(screen.getByRole('article', { name: 'CPU usage' })).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'Memory usage' })).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'World size' })).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'CPU usage progress' })).toHaveAttribute(
-      'aria-valuenow',
-      '25',
-    );
-    expect(screen.getByRole('progressbar', { name: 'Memory usage progress' })).toHaveAttribute(
-      'aria-valuenow',
-      '62.5',
-    );
-  });
+      const queryClient = makeQueryClient();
+      queryClient.setQueryData(['servers', 'test-server', 'mods', 'installed'], {
+        mods: [{}, {}],
+      });
+      renderWithTheme(<ServerDetail server={mockServer} />, queryClient);
+      expect(within(tab('Mods')).getByText('2')).toBeInTheDocument();
+    });
 
-  it('should render console section with connection indicator', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+    it('shows the selected tab content directly under the tabs in the same panel', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    expect(screen.getByText('Console')).toBeInTheDocument();
-    expect(screen.getByText('Connected')).toBeInTheDocument();
-  });
+      fireEvent.click(tab('Files'));
 
-  it('keeps all tab buttons in DOM reading order', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+      const panel = screen.getByRole('region', { name: 'Server details' });
+      const tabpanel = screen.getByRole('tabpanel');
+      expect(panel).toContainElement(screen.getByRole('tablist'));
+      expect(panel).toContainElement(tabpanel);
+      expect(tabpanel).toHaveTextContent('Files Tab Content');
+      expect(tabpanel).toHaveAttribute('aria-labelledby', tab('Files').id);
+    });
 
-    const labels = [
-      'Overview',
-      'Players',
-      'World',
-      'Activity',
-      'Mods',
-      'Files',
-      'Config History',
-      'Backups',
-      'Access',
-      'Options',
-    ];
-    const buttons = labels.map((label) => screen.getByRole('button', { name: label }));
+    it.each([
+      ['Players', 'Players Tab Content'],
+      ['Mods', 'Mods Tab Content'],
+      ['Backups', 'Backup Tab Content'],
+      ['Activity', 'Activity Tab Content'],
+    ])('switches to the %s tab', (name, content) => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    buttons.slice(0, -1).forEach((button, index) => {
-      expect(
-        button.compareDocumentPosition(buttons[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING,
-      ).toBeTruthy();
+      fireEvent.click(tab(name));
+
+      expect(screen.getByRole('tabpanel')).toHaveTextContent(content);
     });
   });
 
-  it('keeps selected tab content in the full-width detail panel', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+  describe('metrics', () => {
+    it('renders the three metric cards above the tab panel', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Files' }));
+      const cpu = screen.getByRole('article', { name: 'CPU usage' });
+      expect(screen.getByRole('article', { name: 'Memory usage' })).toBeInTheDocument();
+      expect(screen.getByRole('article', { name: 'World size' })).toBeInTheDocument();
+      expect(
+        cpu.compareDocumentPosition(screen.getByRole('tablist')) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
 
-    expect(screen.getByRole('region', { name: 'Server detail content' })).toHaveTextContent(
-      'Files Tab Content',
-    );
+    it('shows CPU with one decimal and no /100% unit', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
+
+      const cpu = screen.getByRole('article', { name: 'CPU usage' });
+      expect(cpu).toHaveTextContent('25.0%');
+      expect(cpu).not.toHaveTextContent('/ 100%');
+      expect(cpu).toHaveTextContent('Normal');
+      expect(cpu).toHaveAttribute('data-accent', 'success');
+    });
+
+    it('shows memory as used / allocated GB with the percentage as description', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
+
+      const memory = screen.getByRole('article', { name: 'Memory usage' });
+      expect(memory).toHaveTextContent('2.50 / 4.00 GB');
+      expect(memory).toHaveTextContent('62.5% · Normal');
+    });
+
+    it('shows the world size without an invented cap or progress bar', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
+
+      const world = screen.getByRole('article', { name: 'World size' });
+      expect(world).toHaveTextContent('1.2GB');
+      expect(world).not.toHaveTextContent('10 GB');
+      expect(within(world).queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+
+    it('marks high usage with the warning and error accents', () => {
+      renderWithTheme(
+        <ServerDetail
+          server={{
+            ...mockServer,
+            stats: { ...mockServer.stats!, cpuPercent: 95, memoryPercent: 75 },
+          }}
+        />,
+      );
+
+      const cpu = screen.getByRole('article', { name: 'CPU usage' });
+      const memory = screen.getByRole('article', { name: 'Memory usage' });
+      expect(cpu).toHaveAttribute('data-accent', 'error');
+      expect(cpu).toHaveTextContent('Critical');
+      expect(memory).toHaveAttribute('data-accent', 'warning');
+      expect(memory).toHaveTextContent('High');
+    });
+
+    it('shows a placeholder when stats are unavailable', () => {
+      renderWithTheme(<ServerDetail server={{ ...mockServer, stats: undefined }} />);
+
+      expect(screen.getByRole('article', { name: 'CPU usage' })).toHaveTextContent('—');
+      expect(screen.getByRole('article', { name: 'Memory usage' })).toHaveTextContent('—');
+    });
   });
 
-  it('keeps a long hostname inside the overview details', () => {
-    const longHostname = 'a-very-long-minecraft-hostname-that-must-not-expand-the-page.example.local';
-    renderWithTheme(
-      <ServerDetail server={{ ...mockServer, hostname: longHostname }} />,
-    );
+  describe('overview', () => {
+    it('summarises settings that the hero does not show', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    expect(
-      screen.getByRole('region', { name: 'Server detail content' }),
-    ).toHaveTextContent(longHostname);
+      const settings = screen.getByRole('region', { name: 'Server settings' });
+      expect(settings).toHaveTextContent('mc-test-server');
+      expect(settings).toHaveTextContent('4G');
+      expect(settings).toHaveTextContent('survival-world');
+      expect(settings).not.toHaveTextContent('PAPER');
+      expect(settings).not.toHaveTextContent('1.21.1');
+      expect(screen.queryByText('Server Information')).not.toBeInTheDocument();
+    });
+
+    it('uses Bento panels only, without MUI Cards', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
+
+      expect(screen.getByRole('region', { name: 'Server console' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Players' })).toBeInTheDocument();
+      expect(screen.getByRole('region', { name: 'Connection' })).toBeInTheDocument();
+      expect(document.querySelector('.MuiCard-root')).toBeNull();
+    });
+
+    it('lists online players as rows', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
+
+      const players = screen.getByRole('region', { name: 'Players' });
+      expect(players).toHaveTextContent('3 / 20');
+      expect(within(players).getByRole('button', { name: /player1/ })).toBeInTheDocument();
+    });
+
+    it('handles missing optional fields gracefully', () => {
+      renderWithTheme(
+        <ServerDetail
+          server={{
+            name: 'minimal-server',
+            container: 'mc-minimal-server',
+            status: 'stopped',
+            health: 'none',
+            hostname: 'minimal-server.local',
+          }}
+        />,
+      );
+
+      expect(screen.getByRole('region', { name: 'Server settings' })).toHaveTextContent(
+        'mc-minimal-server',
+      );
+      expect(screen.getByText('No players online')).toBeInTheDocument();
+    });
   });
 
-  it('should switch to mods tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+  describe('console', () => {
+    it('shows the console only on the Overview tab', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-    const modsTab = screen.getByRole('button', { name: /mods/i });
-    fireEvent.click(modsTab);
+      expect(screen.getByRole('region', { name: 'Server console' })).toBeInTheDocument();
+      fireEvent.click(tab('Activity'));
+      expect(screen.queryByRole('region', { name: 'Server console' })).not.toBeInTheDocument();
+      fireEvent.click(tab('Overview'));
+      expect(screen.getByRole('region', { name: 'Server console' })).toBeInTheDocument();
+    });
 
-    expect(screen.getByText(/installed mods/i)).toBeInTheDocument();
-  });
+    it('calls onSendCommand when a command is submitted', () => {
+      const onSendCommand = vi.fn().mockResolvedValue(undefined);
+      renderWithTheme(<ServerDetail server={mockServer} onSendCommand={onSendCommand} />);
 
-  it('should switch to files tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+      const input = screen.getByRole('textbox', { name: 'Console command' });
+      fireEvent.change(input, { target: { value: 'say hello' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
 
-    const filesTab = screen.getByRole('button', { name: /files/i });
-    fireEvent.click(filesTab);
+      expect(onSendCommand).toHaveBeenCalledWith('say hello');
+    });
 
-    expect(screen.getByText('Files Tab Content')).toBeInTheDocument();
-  });
+    it('opens the full console from the toolbar', () => {
+      renderWithTheme(<ServerDetail server={mockServer} />);
 
-  it('should switch to players tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Expand console' }));
 
-    const playersTab = screen.getByRole('button', { name: /players/i });
-    fireEvent.click(playersTab);
-
-    expect(screen.getByText('Players Tab Content')).toBeInTheDocument();
-  });
-
-  it('should switch to backups tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    const backupsTab = screen.getByRole('button', { name: /backups/i });
-    fireEvent.click(backupsTab);
-
-    expect(screen.getByText('Backup Tab Content')).toBeInTheDocument();
-  });
-
-  it('should switch to options tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    const optionsTab = screen.getByRole('button', { name: /options/i });
-    fireEvent.click(optionsTab);
-
-    // Options tab now renders ServerOptionsTab component
-    // Just verify the tab switch doesn't crash
-    expect(optionsTab).toBeInTheDocument();
-  });
-
-  it('should display server type and version in overview', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    expect(screen.getByText('PAPER')).toBeInTheDocument();
-    expect(screen.getByText('1.21.1')).toBeInTheDocument();
-  });
-
-  it('should display memory allocation in overview', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    expect(screen.getByText('4G')).toBeInTheDocument();
-  });
-
-  it('should display uptime in overview', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    expect(screen.getByText('2 days')).toBeInTheDocument();
-  });
-
-  it('should display player count in overview', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    expect(screen.getByText(/3 \/ 20/)).toBeInTheDocument();
-  });
-
-  it('should display player list in overview', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    expect(screen.getByText('player1')).toBeInTheDocument();
-    expect(screen.getByText('player2')).toBeInTheDocument();
-    expect(screen.getByText('player3')).toBeInTheDocument();
-  });
-
-  it('should display CPU usage stat', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    // CPU percent is parsed and displayed as X.XX%
-    expect(screen.getByText('25.00%')).toBeInTheDocument();
-  });
-
-  it('should handle missing optional fields gracefully', () => {
-    const minimalServer: ServerDetailType = {
-      name: 'minimal-server',
-      container: 'mc-minimal-server',
-      status: 'stopped',
-      health: 'none',
-      hostname: 'minimal-server.local',
-    };
-
-    renderWithTheme(<ServerDetail server={minimalServer} />);
-
-    expect(screen.getByText('minimal-server')).toBeInTheDocument();
-  });
-
-  it('should render command input field', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    expect(screen.getByPlaceholderText('Send a command')).toBeInTheDocument();
-  });
-
-  it('should hide console when switching to non-Overview tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    // Console visible on Overview (default tab)
-    expect(screen.getByText('Console')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Send a command')).toBeInTheDocument();
-
-    // Switch to Activity tab
-    fireEvent.click(screen.getByRole('button', { name: /activity/i }));
-
-    // Console should not be visible
-    expect(screen.queryByText('Console')).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText('Send a command')).not.toBeInTheDocument();
-  });
-
-  it('should show console again when returning to Overview tab', () => {
-    renderWithTheme(<ServerDetail server={mockServer} />);
-
-    // Switch away and back
-    fireEvent.click(screen.getByRole('button', { name: /activity/i }));
-    fireEvent.click(screen.getByRole('button', { name: /overview/i }));
-
-    // Console should be visible again
-    expect(screen.getByText('Console')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Send a command')).toBeInTheDocument();
-  });
-
-  it('should call onSendCommand when command is submitted', async () => {
-    const mockOnSendCommand = vi.fn().mockResolvedValue(undefined);
-    renderWithTheme(<ServerDetail server={mockServer} onSendCommand={mockOnSendCommand} />);
-
-    const input = screen.getByPlaceholderText('Send a command');
-    fireEvent.change(input, { target: { value: 'say hello' } });
-    fireEvent.keyDown(input, { key: 'Enter' });
-
-    expect(mockOnSendCommand).toHaveBeenCalledWith('say hello');
+      expect(screen.getByRole('dialog')).toHaveTextContent('Full console');
+    });
   });
 });
