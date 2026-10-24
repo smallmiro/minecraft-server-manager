@@ -79,6 +79,13 @@ function parseVersionFromConfig(configContent: string): string | null {
 const SERVER_IMAGE = 'itzg/minecraft-server:';
 
 /**
+ * A release tag (2026.10.0-java21) or a digest is a deliberate pin, e.g.
+ * around an upstream regression (#798): mcctl update keeps it.
+ */
+const isPinnedTag = (tag: string): boolean => /^\d{4}\.\d+\.\d+/.test(tag) || tag.includes('@');
+const javaOf = (tag: string): string | undefined => /java\d+/.exec(tag)?.[0];
+
+/**
  * Extract the image tag from a docker-compose.yml content.
  * Returns null if no service uses an itzg/minecraft-server: image.
  */
@@ -147,11 +154,13 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
       continue;
     }
 
-    // A release tag (2026.10.0-java21) is a deliberate pin, e.g. around an upstream regression (#798)
-    const pinned = /^\d{4}\.\d+\.\d+/.test(currentTag);
+    const pinned = isPinnedTag(currentTag);
     const tagChange = !pinned && currentTag !== recommendedTag;
-    if (pinned) {
-      console.log(`  ${colors.dim(`- ${entry}: ${currentTag} - pinned release tag, keeping`)}`);
+    const pinnedJava = pinned ? javaOf(currentTag) : undefined;
+    if (pinnedJava && pinnedJava !== javaOf(recommendedTag)) {
+      console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} is pinned, but VERSION=${version} needs ${recommendedTag} - keeping`);
+    } else if (pinned) {
+      console.log(`  ${colors.dim(`- ${entry}: ${currentTag} - pinned tag, keeping`)}`);
     } else if (tagChange) {
       console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version})`);
     } else {
@@ -164,8 +173,9 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
     try {
       // Through the ServerSpec (#675): server.yaml image, compose rendered from it
       await updateServer(new Paths(dirname(serversDir)), entry, (doc) =>
-        tagChange && doc.image.startsWith('itzg/minecraft-server')
-          ? { ...doc, image: `itzg/minecraft-server:${recommendedTag}` }
+        // server.yaml is checked too: a pin there may not be rendered yet
+        tagChange && doc.image.startsWith(SERVER_IMAGE) && !isPinnedTag(doc.image.slice(SERVER_IMAGE.length))
+          ? { ...doc, image: `${SERVER_IMAGE}${recommendedTag}` }
           : doc
       );
       if (motdMissing) console.log(`  ${colors.green('+')} ${entry}: added loading MOTD label`);
