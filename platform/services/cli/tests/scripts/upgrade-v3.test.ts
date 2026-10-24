@@ -54,6 +54,12 @@ case "$1" in
     echo "survival  alpha, beta"
     echo "[WARN] World 'survival' is assigned to alpha, beta; only one server may use a world" >&2 ;;
   console)
+    # Like the real CLI: with api and console installed and no --api/--console,
+    # it asks which to restart, which fails without a terminal (#794)
+    case " $* " in
+      *" --api "* | *" --console "*) ;;
+      *) echo "[ERROR] Unexpected error: TTY initialization failed: uv_tty_init returned EINVAL" >&2; exit 1 ;;
+    esac
     [ -n "$FAKE_RESTART_FAIL" ] && { echo "restart failed" >&2; exit 1; }
     echo "service restarted" ;;
   backup) echo "pushed" ;;
@@ -254,7 +260,7 @@ describe('upgrade-v3.sh', () => {
     const c = calls();
     expect(c).toMatch(/mcctl update --yes/);
     expect(c).toMatch(/mcctl upgrade --non-interactive/);
-    expect(c).toMatch(/mcctl console service restart --force/);
+    expect(c).toMatch(/mcctl console service restart --console --force/);
     expect(c).toMatch(/docker compose config -q/);
     const stdin = readFileSync(join(ctx.fake, 'stdin.log'), 'utf8').trim().split('\n');
     expect(stdin.length).toBeGreaterThan(8);
@@ -528,10 +534,12 @@ describe('upgrade-v3.sh', () => {
     expect(calls()).not.toMatch(/mcctl update/);
   });
 
-  it('exits 1 when any step failed', () => {
+  it('exits 1 when any step failed and lists the restart to do by hand', () => {
     const r = run({ args: ['--yes'], env: { FAKE_RESTART_FAIL: '1' } });
     expect(r.out).toMatch(/\[failed\] Step 5/);
     expect(r.code).toBe(1);
+    const todo = r.out.slice(r.out.indexOf('Still to do by hand'), r.out.indexOf('Rollback'));
+    expect(todo).toContain('mcctl console service restart --console --force');
   });
 
   it('retries the API health check', () => {

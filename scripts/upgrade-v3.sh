@@ -23,6 +23,8 @@ set -euo pipefail
 DOCS_URL="https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts"
 PKG="@minecraft-docker/mcctl"
 KILL_TIMEOUT_MS=130000
+# --console restarts mcctl-api and the console without asking which (#794)
+RESTART_CMD="mcctl console service restart --console --force"
 
 ROOT=""
 YES=0
@@ -43,6 +45,7 @@ CUR_OLD=""
 CUR_NOW=""
 UPDATE_ACTION=""
 ECO_BAK=""
+NEED_RESTART=0
 TS=""
 BOLD=""
 YEL=""
@@ -239,13 +242,17 @@ finish() {
     say "Dry run: nothing was changed."
   else
     say "Still to do by hand:"
+    if [ "$NEED_RESTART" = 1 ]; then
+      say "  - Restart mcctl-api and the console so PM2 reads ecosystem.config.cjs again:"
+      say "      $RESTART_CMD"
+    fi
     say "  - Restart running servers so they pick up new images and settings:"
     say "      mcctl stop <server> && mcctl start <server>"
     say "  - If cron jobs, timers or your own scripts called <root>/scripts/*.sh, switch them to mcctl:"
     say "      $DOCS_URL"
   fi
   say "Rollback (the old version was ${CUR_OLD:-unknown}):"
-  say "  npm install -g $PKG@${CUR_OLD:-<previous>} && mcctl console service restart --force"
+  say "  npm install -g $PKG@${CUR_OLD:-<previous>} && $RESTART_CMD"
   if [ -n "$BACKUP_DIR" ]; then
     say "  config backup: $BACKUP_DIR (copy files back as in the runbook, step 8)"
   fi
@@ -685,19 +692,22 @@ step5_ecosystem() {
     return 0
   fi
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would run: mcctl console service restart --force"
+    say "[dry-run] would run: $RESTART_CMD"
     record 5 "ecosystem" skipped "dry-run"
     return 0
   fi
-  if confirm "Restart mcctl-api and the console now (mcctl console service restart --force)?" y; then
-    if run mcctl console service restart --force; then
+  if confirm "Restart mcctl-api and the console now ($RESTART_CMD)?" y; then
+    # shellcheck disable=SC2086 # RESTART_CMD is split into words on purpose
+    if run $RESTART_CMD; then
       record 5 "ecosystem" ok "restarted${changed:+ (file edited)}"
     else
-      add_warning "mcctl console service restart --force failed"
+      add_warning "$RESTART_CMD failed"
       record 5 "ecosystem" failed "restart failed"
+      NEED_RESTART=1
     fi
   else
     record 5 "ecosystem" skipped "not restarted${changed:+ (file edited: restart to apply)}"
+    if [ -n "$changed" ]; then NEED_RESTART=1; fi
   fi
 }
 
