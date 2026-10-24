@@ -864,11 +864,22 @@ step7_worlds() {
   fi
 }
 
+# image_current <container>: true when the container already runs the local
+# image its compose service names (run in the root); a lookup that fails
+# counts as not current, so the server stays a candidate
+image_current() {
+  local ref want
+  ref=$(capture docker compose config --images "$1" | head -n 1)
+  [ -n "$ref" ] || return 1
+  want=$(capture docker image inspect -f '{{.Id}}' "$ref")
+  [ -n "$want" ] && [ "$want" = "$(capture docker inspect --format '{{.Image}}' "$1")" ]
+}
+
 # mc-router starts a stopped server with 'docker start', which keeps the image
 # the container was created from; recreating it picks up the pulled image.
 step7b_images() {
   step 7b "Stopped servers and new images"
-  local d name st stopped="" running="" s old failed="" made="" started=""
+  local d name st stopped="" current="" running="" s old failed="" made="" started=""
   if ! command -v docker >/dev/null 2>&1; then
     say "docker not found: skipped"
     record 7b "Server images" skipped "no docker"
@@ -880,16 +891,28 @@ step7b_images() {
     [ "$name" = _template ] && continue
     st=$(capture docker inspect --format '{{.State.Status}}' "mc-$name")
     case "$st" in
-      exited | created) stopped="$stopped $name" ;;
+      exited | created)
+        if image_current "mc-$name"; then current="$current $name"; else stopped="$stopped $name"; fi
+        ;;
       running | restarting | paused) running="$running $name" ;;
     esac
   done
   if [ -n "$running" ]; then
     say "Running:$running (restart each at a quiet time: mcctl stop <server> && mcctl start <server>)"
   fi
+  if [ -n "$current" ]; then
+    say "Up to date:$current (stopped, already on the image their service names)"
+  fi
+  if [ "$DRY" = 1 ] && [ "$UPDATE_ACTION" = run ]; then
+    say "(Compared before the update: the images it pulls can add servers to recreate.)"
+  fi
   if [ -z "$stopped" ]; then
-    say "No stopped server containers."
-    record 7b "Server images" skipped "no stopped servers"
+    if [ -n "$current" ]; then
+      record 7b "Server images" ok "up to date:$current"
+    else
+      say "No stopped server containers."
+      record 7b "Server images" skipped "no stopped servers"
+    fi
     return 0
   fi
   say "Stopped:$stopped"
