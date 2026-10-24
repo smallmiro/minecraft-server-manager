@@ -96,14 +96,15 @@ describe('delete: servers/<n>/ is removed after the include entry, outside the l
     expect(existsSync(at('servers', 'alpha'))).toBe(false);
   });
 
-  it('a server directory that cannot be fully removed: out of the include, clean up the rest with sudo rm -rf', async () => {
+  it('a server directory that cannot be fully removed is a warning: the server is out of the include, clean up the rest', async () => {
     vi.mocked(rm).mockRejectedValueOnce(Object.assign(new Error('EACCES: permission denied'), { code: 'EACCES' }));
 
-    const error = await rejection(repo.delete('alpha'));
-    expect(error.code).toBe('conflict');
-    expect(error.message).toMatch(/servers\/alpha\/ was removed from servers\/compose.yml but could not be fully deleted \(EACCES/);
-    expect(error.message).toContain(`sudo rm -rf '${at('servers', 'alpha')}'`);
-    expect(error.message).toContain(MOVED);
+    const result = await repo.delete('alpha');
+    expect(result).toMatchObject({ level: 'alpha', movedWorlds: ['alpha'], deletedWorlds: [] });
+    expect(result.warning).toBe(
+      'servers/alpha/ was removed from servers/compose.yml but could not be fully deleted (EACCES: permission denied); ' +
+        `remove what is left with: sudo rm -rf '${at('servers', 'alpha')}'`
+    );
     expect(includeEntries(compose())).toEqual(['beta/docker-compose.yml']);
     expect(existsSync(at('worlds', 'alpha', 'level.dat'))).toBe(true);
   });

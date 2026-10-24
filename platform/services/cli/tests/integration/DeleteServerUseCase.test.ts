@@ -337,6 +337,19 @@ describe('DeleteServerUseCase Integration', () => {
       assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
       assert.ok(promptAdapter.messages.includes('warn: mDNS hostname server2.local was not removed: sudo authentication failed; check the sudo password'));
     });
+
+    it('warns about a server directory left behind, still deletes and removes the hostname (#735 review)', async () => {
+      const leftover = "servers/server2/ was removed from servers/compose.yml but could not be fully deleted (EACCES); remove what is left with: sudo rm -rf '/srv/servers/server2'";
+      fake.state.result = { level: 'server2', movedWorlds: ['server2'], deletedWorlds: [], warning: leftover };
+      fake.state.hostname = { status: 'skipped', reason: 'sudo authentication failed' };
+      const audit = { log: vi.fn(async () => undefined) } as unknown as IAuditLogPort;
+      useCase = build({ audit });
+
+      assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
+      assert.ok(promptAdapter.messages.includes(`warn: ${leftover}`));
+      assert.ok(promptAdapter.messages.includes('warn: mDNS hostname server2.local was not removed: sudo authentication failed'));
+      assert.deepStrictEqual(vi.mocked(audit.log).mock.calls.map((c) => (c[0] as { status: string }).status), ['success']);
+    });
   });
 
   describe('deprovision failure handling', () => {

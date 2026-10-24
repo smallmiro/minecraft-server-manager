@@ -191,6 +191,29 @@ describe('DELETE /api/servers/:name (#735)', () => {
     expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
   });
 
+  describe('a server directory left behind is a warning on a 200 (#735 review)', () => {
+    const leftover = "servers/alpha/ was removed from servers/compose.yml but could not be fully deleted (EACCES); remove what is left with: sudo rm -rf '/srv/servers/alpha'";
+    const stub = (hostname: { status: 'changed' } | { status: 'skipped'; reason: string }) => {
+      serverProvision.deleteUseCase = () => ({
+        deprovision: async () => ({ level: 'alpha', movedWorlds: ['alpha'], deletedWorlds: [], warning: leftover, hostname }),
+      });
+    };
+
+    it('alone', async () => {
+      stub({ status: 'changed' });
+      const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ success: true, server: 'alpha', message: 'Server deleted successfully', warning: leftover });
+    });
+
+    it('with a hostname that could not be removed: both are in the warning', async () => {
+      stub({ status: 'skipped', reason: 'sudo authentication failed' });
+      const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
+      expect(response.statusCode).toBe(200);
+      expect(response.json().warning).toBe(`${leftover}; mDNS hostname alpha.local was not removed: sudo authentication failed`);
+    });
+  });
+
   it('an invalid_spec refusal is 400, like create', async () => {
     serverProvision.deleteUseCase = () => ({
       deprovision: () => Promise.reject(new ServerSpecError('invalid_spec', 'servers/alpha/server.yaml: bad', 'alpha')),
