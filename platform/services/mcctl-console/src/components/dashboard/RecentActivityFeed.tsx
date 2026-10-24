@@ -1,9 +1,6 @@
 'use client';
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
   Box,
   Typography,
   List,
@@ -18,6 +15,7 @@ import Link from 'next/link';
 import { AuditLogActionChip } from '@/components/audit-logs/AuditLogActionChip';
 import { AuditLogStatusChip } from '@/components/audit-logs/AuditLogStatusChip';
 import { useRecentActivity } from '@/hooks/useAuditLogs';
+import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 
 export interface RecentActivityFeedProps {
   maxItems?: number;
@@ -65,8 +63,8 @@ export function RecentActivityFeed({ maxItems = 5 }: RecentActivityFeedProps) {
   const logs = data?.logs ?? [];
 
   return (
-    <Card>
-      <CardHeader
+    <BentoPanel sx={{ height: '100%' }}>
+      <BentoPanelHeader
         title="Recent Activity"
         action={
           <Button
@@ -80,7 +78,7 @@ export function RecentActivityFeed({ maxItems = 5 }: RecentActivityFeedProps) {
           </Button>
         }
       />
-      <CardContent sx={{ pt: 0 }}>
+      <Box sx={{ px: 2.5, pb: 2.5 }}>
         {isLoading ? (
           <List sx={{ py: 0 }}>
             {[...Array(maxItems)].map((_, i) => (
@@ -147,7 +145,7 @@ export function RecentActivityFeed({ maxItems = 5 }: RecentActivityFeedProps) {
             ))}
           </List>
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
