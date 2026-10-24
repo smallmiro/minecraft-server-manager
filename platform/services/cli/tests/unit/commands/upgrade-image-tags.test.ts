@@ -89,7 +89,14 @@ beforeEach(() => {
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
+  log.mockRestore();
 });
+
+let log: ReturnType<typeof vi.spyOn>;
+beforeEach(() => {
+  log = vi.spyOn(console, 'log').mockImplementation(() => {});
+});
+const output = () => log.mock.calls.flat().join('\n');
 
 describe('upgradeServerImageTags', () => {
   it('returns 0 when the servers directory does not exist', async () => {
@@ -119,6 +126,63 @@ describe('upgradeServerImageTags', () => {
     expect(await upgradeServerImageTags(servers())).toBe(1);
     expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
     expect(read('alpha', 'docker-compose.yml')).toContain('image: "itzg/minecraft-server:java25"');
+  });
+
+  it('keeps a pinned release tag (#798)', async () => {
+    server('alpha', { version: '1.21.1', tag: '2026.10.0-java21' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(read('alpha', 'docker-compose.yml')).toContain('itzg/minecraft-server:2026.10.0-java21');
+    expect(output()).toContain('pinned tag, keeping');
+  });
+
+  it('keeps a pinned tag whose Java does not fit VERSION, with a warning (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: '2026.10.0-java21' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(read('alpha', 'docker-compose.yml')).toContain('itzg/minecraft-server:2026.10.0-java21');
+    expect(output()).toContain('alpha: 2026.10.0-java21 is pinned, but VERSION=LATEST needs java25');
+  });
+
+  it('keeps a digest pin (#798)', async () => {
+    server('alpha', { version: '1.21.1', tag: 'java17@sha256:' + 'a'.repeat(64) });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(read('alpha', 'docker-compose.yml')).toContain('java17@sha256:');
+  });
+
+  it('keeps a pin made in server.yaml that the compose file does not show yet (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: 'java21' });
+    await updateServer(new Paths(root), 'alpha', (doc) => doc); // writes server.yaml
+    writeFileSync(
+      join(servers(), 'alpha', 'server.yaml'),
+      read('alpha', 'server.yaml').replace('image: itzg/minecraft-server:java21', 'image: itzg/minecraft-server:2026.10.0-java21')
+    );
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:2026.10.0-java21');
+    expect(output()).toContain('is pinned, but VERSION=LATEST needs java25');
+    expect(output()).not.toContain('→');
+  });
+
+  it('moves a tag unpinned in server.yaml that the compose file still shows pinned (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: '2026.10.0-java21' });
+    await updateServer(new Paths(root), 'alpha', (doc) => doc);
+    writeFileSync(
+      join(servers(), 'alpha', 'server.yaml'),
+      read('alpha', 'server.yaml').replace('image: itzg/minecraft-server:2026.10.0-java21', 'image: itzg/minecraft-server:java21')
+    );
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
+  });
+
+  it('does not warn about a pin on a newer Java than VERSION needs (#798)', async () => {
+    server('alpha', { version: '1.21.1', tag: '2026.10.0-java25' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(output()).toContain('pinned tag, keeping');
+  });
+
+  it('adds the loading MOTD label to a pinned server without moving its tag (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: '2026.10.0-java21', noLoadingMotd: true });
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:2026.10.0-java21');
+    expect(read('alpha', 'docker-compose.yml')).toContain('mc-router.auto-scale-loading-motd');
   });
 
   it('leaves a compatible server alone', async () => {
