@@ -9,10 +9,9 @@ import {
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 import { useServersSSE } from '@/hooks/useServersSSE';
-import { BentoGrid, BentoPanel, BentoPanelHeader, PageHero } from '@/components/bento';
+import { BentoGrid, BentoMetricCard, BentoPanel, BentoPanelHeader, PageHero } from '@/components/bento';
 import {
   DashboardHero,
-  StatCard,
   ServerOverview,
   ChangelogFeed,
   RecentActivityFeed,
@@ -68,8 +67,9 @@ export default function DashboardPage() {
 
   const totalWorlds = worldsData?.total || 0;
 
-  // TODO: Calculate total players from server details (requires player data)
-  const totalPlayers = 0;
+  // Player counts are not exposed by the list endpoint yet (see #764). Keep null so the
+  // card renders "—" instead of a misleading 0; #764 only has to supply a number here.
+  const totalPlayers: number | null = null;
 
   // Derived metrics for the compact stat cards (computed values only — no history)
   const stoppedServers = totalServers - onlineServers;
@@ -181,44 +181,44 @@ export default function DashboardPage() {
       )}
 
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Total Servers"
-            value={serversUnavailable ? 'Unavailable' : totalServers}
-            icon={<ServerIcon fontSize="small" />}
-            color="primary"
-            progress={!serversUnavailable && totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
-            description={serversUnavailable ? 'Server data unavailable' : `${onlineServers} running · ${stoppedServers} stopped`}
-          />
+        <BentoMetricCard
+          title="Total Servers"
+          value={serversUnavailable ? 'Unavailable' : totalServers}
+          icon={<ServerIcon fontSize="small" />}
+          accent="primary"
+          progress={!serversUnavailable && totalServers > 0 ? (onlineServers / totalServers) * 100 : undefined}
+          description={serversUnavailable ? 'Server data unavailable' : `${onlineServers} running · ${stoppedServers} stopped`}
+        />
       </Box>
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Online Servers"
-            value={serversUnavailable ? 'Unavailable' : onlineServers}
-            unit={!serversUnavailable && totalServers > 0 ? `/ ${totalServers}` : undefined}
-            icon={<OnlineIcon fontSize="small" />}
-            color="success"
-            progress={!serversUnavailable && totalServers > 0 ? onlinePercent : undefined}
-            description={serversUnavailable ? 'Server data unavailable' : `${onlinePercent}% running`}
-          />
+        <BentoMetricCard
+          title="Online Servers"
+          value={serversUnavailable ? 'Unavailable' : onlineServers}
+          unit={!serversUnavailable && totalServers > 0 ? `/ ${totalServers}` : undefined}
+          icon={<OnlineIcon fontSize="small" />}
+          accent="success"
+          progress={!serversUnavailable && totalServers > 0 ? onlinePercent : undefined}
+          description={serversUnavailable ? 'Server data unavailable' : `${onlinePercent}% running`}
+        />
       </Box>
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Total Players"
-            value={totalPlayers}
-            icon={<PlayersIcon fontSize="small" />}
-            color="info"
-            description="Across all servers"
-          />
+        <BentoMetricCard
+          title="Online Players"
+          value={totalPlayers ?? '—'}
+          icon={<PlayersIcon fontSize="small" />}
+          accent="info"
+          description={totalPlayers === null ? 'Player data unavailable' : 'Across all servers'}
+        />
       </Box>
       <Box sx={metricItemSx}>
-          <StatCard
-            title="Total Worlds"
-            value={worldsUnavailable ? 'Unavailable' : totalWorlds}
-            icon={<WorldIcon fontSize="small" />}
-            color="secondary"
-            progress={!worldsUnavailable && totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
-            description={worldsUnavailable ? 'World data unavailable' : `${assignedWorlds} assigned · ${freeWorlds} free`}
-          />
+        <BentoMetricCard
+          title="Total Worlds"
+          value={worldsUnavailable ? 'Unavailable' : totalWorlds}
+          icon={<WorldIcon fontSize="small" />}
+          accent="secondary"
+          progress={!worldsUnavailable && totalWorlds > 0 ? (assignedWorlds / totalWorlds) * 100 : undefined}
+          description={worldsUnavailable ? 'World data unavailable' : `${assignedWorlds} assigned · ${freeWorlds} free`}
+        />
       </Box>
 
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' } }}>

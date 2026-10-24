@@ -328,4 +328,30 @@ describe('DashboardPage', () => {
       expect(screen.getByText('Recent Activity')).toBeInTheDocument();
     });
   });
+
+  it('shows an em dash instead of a fake zero for online players until player data exists', () => {
+    vi.mocked(useServers).mockReturnValue({
+      data: {
+        servers: [
+          { name: 'survival', status: 'running', health: 'healthy', container: 'mc-survival', hostname: 'survival.local' },
+        ],
+        total: 1,
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useWorlds).mockReturnValue({
+      data: { worlds: [], total: 0 },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderWithProviders(<DashboardPage />);
+
+    const card = screen.getByText('Online Players').closest('article')!;
+    expect(card).toHaveTextContent('—');
+    expect(card).toHaveTextContent('Player data unavailable');
+    expect(within(card).queryByText('0')).not.toBeInTheDocument();
+    expect(card).toHaveAttribute('data-accent', 'info');
+  });
 });
