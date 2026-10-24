@@ -1,5 +1,4 @@
 import { join, posix } from 'node:path';
-import { isDeepStrictEqual } from 'node:util';
 import yaml from 'js-yaml';
 import { applyEnvChanges, parseEnvDocument } from '../../../utils/env-file.js';
 import { ServerSpecError, routerHosts, type ServerSpecDocument } from '../../../domain/server-spec/ServerSpecDocument.js';
@@ -136,11 +135,6 @@ export function handWrittenIncludeEntries(current: string, name: string): unknow
   return own.length === 1 && own[0] === `${name}/docker-compose.yml` ? [] : own;
 }
 
-/** Whether servers/compose.yml text includes any file inside servers/<name>/. */
-export function includesServer(text: string | undefined, name: string): boolean {
-  return includeEntries(text).some((p) => insideServer(p, name));
-}
-
 /** servers/compose.yml text parsed for adding entries; 'conflict' when it cannot be rewritten safely. */
 function readInclude(current: string | undefined, name: string): { parsed: Record<string, unknown>; list: unknown[] } {
   if (current === undefined) return { parsed: {}, list: [] };
@@ -164,34 +158,6 @@ export function renderInclude(name: string, current: string | undefined): string
   const { parsed, list } = readInclude(current, name);
   if (list.some((e) => includePaths(e).includes(entry))) return current!;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
-}
-
-/**
- * `current` with the entries naming files inside servers/<name>/ back as
- * `before` had them (the delete restore, #735): an entry that only lost those
- * paths is replaced by its original, a removed entry is put back whole near its
- * old position. Other entries of `current` stay; refuses a file it cannot read.
- */
-export function restoreIncludeEntry(current: string | undefined, before: string, name: string): string {
-  const { parsed, list } = readInclude(current, name);
-  const restored = [...list];
-  readInclude(before, name).list.forEach((e, index) => {
-    if (!namesServer(e, name)) return;
-    const reduced = withoutServer(e, name);
-    const at = reduced === undefined ? -1 : restored.findIndex((x) => isDeepStrictEqual(x, reduced));
-    if (at >= 0) restored[at] = e;
-    else {
-      const ours = reduced === undefined ? e : { ...(e as object), path: includePaths(e).filter((p) => insideServer(p, name)) };
-      restored.splice(Math.min(index, restored.length), 0, ours);
-    }
-  });
-  return INCLUDE_HEADER + yaml.dump({ ...parsed, include: restored }, DUMP_OPTIONS);
-}
-
-/** An include entry without its paths inside servers/<name>/: undefined when no path is left. */
-function withoutServer(e: unknown, name: string): unknown {
-  const others = isMapping(e) && Array.isArray(e['path']) ? e['path'].filter((p) => !insideServer(p, name)) : [];
-  return others.length > 0 ? { ...(e as Record<string, unknown>), path: others } : undefined;
 }
 
 /**
