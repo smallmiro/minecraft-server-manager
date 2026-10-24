@@ -1,6 +1,6 @@
 /**
  * Backup routes on the world backup port (#732).
- * The routes no longer look for <root>/scripts/backup.sh (#7); the port does the
+ * The routes no longer look for the old backup.sh script (#7); the port does the
  * work, so these tests inject a fake port.
  */
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
@@ -122,7 +122,7 @@ describe('Backup routes on the world backup port (#732)', () => {
     });
   });
 
-  it('builds the adapter for the platform root, with no scripts/backup.sh lookup (#7)', () => {
+  it('builds the adapter for the platform root, with no backup.sh script lookup (#7)', () => {
     expect(adapterOptions.length).toBeGreaterThan(0);
     for (const options of adapterOptions) expect(options.root).toBe(config.mcctlRoot);
     expect(existsSync(join(config.mcctlRoot, 'scripts', 'backup.sh'))).toBe(false);

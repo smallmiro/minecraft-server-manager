@@ -1244,7 +1244,7 @@ mcctl player online --all
 
 월드는 `servers/<name>/config.env`의 `LEVEL`로 서버에 할당됩니다. `LEVEL`이 없으면 레거시 `WORLD_NAME`을 읽고, 둘 다 없으면 서버는 itzg 기본값인 `world`를 사용합니다.
 
-- **잠금 파일 없음.** `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않습니다(`mcctl init`도 만들지 않습니다). 기존 `worlds/.locks` 디렉토리는 무해하며 `rm -rf worlds/.locks`로 지워도 안전합니다. `platform/scripts/lock.sh`와 `mcctl.sh`는 제거되었습니다.
+- **잠금 파일 없음.** `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않습니다(`mcctl init`도 만들지 않습니다). 기존 `worlds/.locks` 디렉토리는 무해하며 `rm -rf worlds/.locks`로 지워도 안전합니다. `lock.sh`와 `mcctl.sh` 스크립트는 제거되었습니다(#670, #734).
 - **월드 하나는 서버 하나.** 월드와 그 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 취급합니다. 다른 서버가 사용 중인 월드는 할당할 수 없습니다. `mcctl world assign`, `mcctl create --world`, 새 서버의 기본 월드 `<name>`, `mcctl config <server> LEVEL <world>`가 거부됩니다. 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다.
 - **중지된 서버만.** 서버 컨테이너가 running, paused, restarting, created 상태이면 `world assign`, `world release`, `world new --server`, `config LEVEL`은 거부됩니다. 서버를 자동으로 중지하지 않습니다(`world new --server`는 예전에 서버 중지를 시도했지만, 이제는 거부합니다).
 - **안전 우선(fail-closed).** 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면, 문제를 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 안전하지 않은 값은 경로 구분자, `.` 또는 `..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}` 같은 Compose 보간, 지원하지 않는 `--universe` 위치입니다. `My World` 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, `-`, `_`만 쓸 수 있습니다.

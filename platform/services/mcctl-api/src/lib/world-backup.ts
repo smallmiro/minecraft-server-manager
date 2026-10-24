@@ -1,6 +1,6 @@
 /**
  * World backup port for the API (ADR-0001 "Backup Port", #732).
- * Replaces the old <root>/scripts/backup.sh and raw git calls.
+ * Replaces the old backup.sh script and raw git calls.
  */
 import {
   GitWorldBackupAdapter,
