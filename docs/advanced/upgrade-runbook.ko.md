@@ -40,28 +40,33 @@ bash upgrade-v3.sh --dry-run
 
 | 단계 | 하는 일 | 종류(기본 답) |
 |---|---|---|
-| 0 사전 점검 | 루트 파일, `which -a mcctl`, PM2와 셸의 Node 메이저, 백업용 git 2.31, `scripts/*.sh`·`player lookup\|uuid`를 부르는 cron·타이머, macOS의 `mcctl console` 안내 | 자동(읽기 전용) |
+| 0 사전 점검 | 루트 파일, `which -a mcctl`과 첫 번째가 `npm prefix -g` 아래인지, PM2와 셸의 Node 메이저, 백업용 git 2.31, `scripts/*.sh`·`player lookup\|uuid`를 부르는 cron·타이머, macOS의 `mcctl console` 안내 | 자동(읽기 전용) |
 | 1 백업 | [1단계](#1-백업)의 파일과 `<root>/scripts`를 `<root>/backups/upgrade-v3-<시각>/`에 복사. 선택: `mcctl backup push` | 선택(예, push는 아니요) |
-| 2 업데이트 | `mcctl update --yes` 후 버전이 3.x인지 확인 | 선택(예) |
+| 2 업데이트 | `mcctl update --yes`(서버 이미지도 받음) 후 버전이 3.x인지 확인 | 선택(예) |
 | 3 업그레이드 | `mcctl upgrade --dry-run`을 보여 주고 `mcctl upgrade --non-interactive` 실행 | 선택(예) |
 | 4 `<root>/scripts` | 폴더 유지 또는 삭제(백업한 뒤에만, 링크면 링크만 제거) | 선택(유지) |
-| 5 `ecosystem.config.cjs` | v2.32.0 미만이면 옛 `AUTH_MODE` 값 수정([4-1](#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633)), mcctl-api에 `kill_timeout` 추가([4-2](#pm2-kill-timeout)), 이어서 `mcctl console service restart --force` | 선택(AUTH_MODE 아니요, kill_timeout은 `BACKUP_AUTO_ON_STOP=true`면 예, 재시작 예) |
+| 5 `ecosystem.config.cjs` | v2.32.0 미만이면 옛 `AUTH_MODE` 값 수정([4-1](#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633)), mcctl-api에 `kill_timeout` 추가([4-2](#pm2-kill-timeout)), 이어서 `mcctl console service restart --console --force` | 선택(AUTH_MODE 아니요, kill_timeout은 `BACKUP_AUTO_ON_STOP=true`면 예, 재시작 예) |
 | 6 ServerSpec | `mcctl migrate spec --all --dry-run`을 보여 주고 선택 시 실행 | 선택(아니요) |
 | 7 월드 | `mcctl world list`를 보여 주고 중복·경고 줄을 강조 | 자동 |
-| 8 검증 | `mcctl --version`, `docker compose config -q`, PM2 상태, API `/health`(`ecosystem.config.cjs`가 있을 때만) | 자동 |
-| 9 요약 | 단계별 결과, 남은 일, 롤백, 로그 위치 | 자동 |
+| 7b 중지된 서버 | 실행 중인 서버를 알려 주고(재시작은 직접), 중지된 서버는 `docker compose up --no-start --no-deps mc-<server>`로 다시 만들어 다음 기동 때 받은 이미지를 쓰게 함 | 선택(예) |
+| 8 검증 | `mcctl --version`, `docker compose config -q`, PM2 상태, PM2의 mcctl-api `kill_timeout`이 `ecosystem.config.cjs`와 같은지, API `/health`(`ecosystem.config.cjs`가 있을 때만) | 자동 |
+| 9 요약 | 단계별 결과, 남은 일(이전 버전으로 남은 mcctl 설치 포함), 롤백, 로그 위치 | 자동 |
 
 2단계를 건너뛰거나(아니요로 답하거나 터미널도 `--yes`도 없을 때) 실패하면 이후 단계는 실행하지 않고 "The upgrade did not finish"로 멈춥니다. 이후 단계는 v3 CLI가 있어야 하기 때문입니다. 원인을 해결하고 다시 실행하세요. 백업이나 `mcctl upgrade` 실패도 같습니다. 실패한 단계가 하나라도 있으면 종료 코드는 1입니다.
 
+업데이트를 실행할 차례인데 `PATH`에서 처음 잡히는 `mcctl`이 `npm prefix -g` 아래에 없으면 0단계에서 아무것도 바꾸기 전에 멈춥니다. `mcctl update`는 `npm install -g`로 설치하므로 다른 설치를 올리게 되기 때문입니다. PM2가 쓰는 Node의 bin 디렉터리를 `PATH` 앞에 두고(예: `nvm use 22`, 또는 `ecosystem.config.cjs`의 `interpreter`가 있는 디렉터리) 다시 실행하세요. `--skip-update`면 이 확인을 하지 않습니다.
+
 v2 CLI에서 드라이런하면 `mcctl upgrade --dry-run` 미리보기는 지금 설치된 v2 CLI의 계획입니다. v3 계획은 업데이트 후에 나옵니다.
 
-5단계는 `ecosystem.config.cjs`를 `node`로 읽어(PM2처럼 파일을 실행합니다) 판단하고, mcctl-api의 `name:` 줄이 한 줄에 `name: 'mcctl-api',`만 있을 때만 수정합니다. 수정 뒤 다시 읽어 결과를 확인하고, 어긋나면 원본으로 되돌리며 재시작하지 않습니다. 심볼릭 링크이거나 앱 객체가 한 줄이면 수정하지 않고 직접 추가할 내용을 안내합니다.
+5단계는 `ecosystem.config.cjs`를 `node`로 읽어(PM2처럼 파일을 실행합니다) 판단하고, mcctl-api의 `name:` 줄이 한 줄에 `name: 'mcctl-api',`만 있을 때만 수정합니다. 수정 뒤 다시 읽어 결과를 확인하고, 어긋나면 원본으로 되돌리며 재시작하지 않습니다. 심볼릭 링크이거나 앱 객체가 한 줄이면 수정하지 않고 직접 추가할 내용을 안내합니다. 재시작에는 `--console`을 붙입니다. `--console`이나 `--api`가 없으면 CLI가 재시작할 서비스를 묻는데, 스크립트는 명령에 입력을 주지 않기 때문입니다.
+
+7b단계가 있는 이유: mc-router는 중지된 서버를 `docker start`로 띄우므로 컨테이너를 만들 때의 이미지를 그대로 씁니다. 다시 만들어도 월드와 설정은 유지되고(바인드 마운트와 볼륨) 서버는 중지 상태로 남습니다. 대신 이미지 회귀가 다음 기동 때 바로 드러나므로, 요약은 다시 만든 서버마다 되돌리는 명령 `docker tag <이전 이미지 ID> <이미지> && docker compose up --no-start --no-deps mc-<server>`를 보여 줍니다.
 
 **스크립트가 하지 않는 일**(요약에도 다시 나옵니다):
 
 - **실행 중인 서버 재시작.** 한가한 때 `mcctl stop <server> && mcctl start <server>`로 하세요.
 - **cron·타이머·직접 만든 스크립트 교체.** `<root>/scripts/*.sh`를 부르는 곳은 경고만 합니다. [3-1의 대응표](#v300-scripts)로 바꾸세요.
-- **롤백.** 요약이 `npm install -g @minecraft-docker/mcctl@<이전 버전> && mcctl console service restart --force`와 파일을 되돌릴 백업 폴더를 알려 줍니다([8단계](#8-롤백)).
+- **롤백.** 요약이 [8단계](#8-롤백)를 이번 실행의 값으로 보여 줍니다. 백업 폴더에서 되돌릴 파일(이어서 `docker compose up -d router`), `npm install -g @minecraft-docker/mcctl@<이전 버전>`, `.services/`(옛 설치는 루트)에서 설치된 mcctl-api·mcctl-console·shared의 이전 버전 `npm install`, `mcctl console service restart --console --force`입니다.
 
 테스트용 환경 변수: `MCCTL_UPGRADE_TTY`는 `/dev/tty`를 대신합니다(읽을 수 있는 파일이면 그 내용이 답, 열 수 없는 경로면 "터미널 없음").
 
@@ -170,8 +175,8 @@ v3.0.0은 Bash 스크립트를 모두 없앱니다(#715). `mcctl`은 더 이상 
 ```bash
 mcctl console service restart
 # 새 빌드가 안 뜨거나 ABI 오류(NODE_MODULE_VERSION)가 나면
-mcctl console service restart --force
-cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --force
+mcctl console service restart --console --force
+cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --console --force
 ```
 
 ### 4-1. v2.32.0 이상으로 올릴 때: 콘솔 접근 모드 확인 (#633)
@@ -200,7 +205,7 @@ sed -i \
   -e "s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/" \
   ecosystem.config.cjs
 grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" ecosystem.config.cjs
-mcctl console service restart --force               # 일반 restart는 옛 env를 그대로 씀
+mcctl console service restart --console --force     # 일반 restart는 옛 env를 그대로 씀
 ```
 
 `sed`는 다른 모드는 건드리지 않습니다. 파일을 고치는 대신 `mcctl console init --force`를 다시 실행해도 되지만, 이 경우 파일 전체를 다시 쓰고 설정 질문을 모두 다시 묻습니다.
@@ -218,7 +223,7 @@ cd $ROOT
 grep -n "kill_timeout" ecosystem.config.cjs || echo "없음: 추가하세요"
 # mcctl-api 앱의 max_memory_restart 옆에 다음 줄을 추가:
 #       kill_timeout: 130000,
-mcctl console service restart --force               # 파일에서 앱을 다시 등록
+mcctl console service restart --console --force     # 파일에서 앱을 다시 등록
 ```
 
 파일을 고치는 대신 `mcctl console init --force`를 다시 실행해도 되지만, 이 경우 파일 전체를 다시 쓰고 설정 질문을 모두 다시 묻습니다.
@@ -312,8 +317,9 @@ docker compose up -d router
 [ -n "$(ls ecosystem.config.cjs.bak-* 2>/dev/null)" ] && echo "3단계에서 BETTER_AUTH_*를 옮겼다면 최신 ecosystem.config.cjs.bak-*를 복원"
 # 패키지를 이전 버전 OLD로 (PM2 Node 셸에서)
 npm install -g @minecraft-docker/mcctl@$OLD
+cd $ROOT/.services 2>/dev/null || cd $ROOT     # mcctl-api·mcctl-console 설치 위치
 npm install @minecraft-docker/mcctl-api@$OLD @minecraft-docker/mcctl-console@$OLD @minecraft-docker/shared@$OLD
-mcctl console service restart --force
+mcctl console service restart --console --force
 ```
 
 !!! note

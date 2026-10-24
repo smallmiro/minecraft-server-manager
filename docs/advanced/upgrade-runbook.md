@@ -40,28 +40,33 @@ Before the first step the script reads `mcctl --version` and `npm view @minecraf
 
 | Step | What it does | Kind (default answer) |
 |---|---|---|
-| 0 Pre-flight | Root files, `which -a mcctl`, PM2 vs shell Node, git 2.31 for backups, cron and timers that call `scripts/*.sh` or `player lookup\|uuid`, macOS `mcctl console` note | automatic, read only |
+| 0 Pre-flight | Root files, `which -a mcctl` and whether the first one is under `npm prefix -g`, PM2 vs shell Node, git 2.31 for backups, cron and timers that call `scripts/*.sh` or `player lookup\|uuid`, macOS `mcctl console` note | automatic, read only |
 | 1 Backup | Copies the files of [step 1](#1-backup) and `<root>/scripts` to `<root>/backups/upgrade-v3-<time>/`; optional `mcctl backup push` | optional (yes; push: no) |
-| 2 Update | `mcctl update --yes`, then checks the version is 3.x | optional (yes) |
+| 2 Update | `mcctl update --yes` (also pulls server images), then checks the version is 3.x | optional (yes) |
 | 3 Upgrade | Shows `mcctl upgrade --dry-run`, then `mcctl upgrade --non-interactive` | optional (yes) |
 | 4 `<root>/scripts` | Keeps or removes the folder (only after the backup; a link is unlinked) | optional (keep) |
-| 5 `ecosystem.config.cjs` | Before v2.32.0, rewrites old `AUTH_MODE` values ([4-1](#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633)); adds `kill_timeout` to mcctl-api ([4-2](#pm2-kill-timeout)); then `mcctl console service restart --force` | optional (AUTH_MODE: no; kill_timeout: yes if `BACKUP_AUTO_ON_STOP=true`; restart: yes) |
+| 5 `ecosystem.config.cjs` | Before v2.32.0, rewrites old `AUTH_MODE` values ([4-1](#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633)); adds `kill_timeout` to mcctl-api ([4-2](#pm2-kill-timeout)); then `mcctl console service restart --console --force` | optional (AUTH_MODE: no; kill_timeout: yes if `BACKUP_AUTO_ON_STOP=true`; restart: yes) |
 | 6 ServerSpec | Shows `mcctl migrate spec --all --dry-run`, optionally runs it | optional (no) |
 | 7 Worlds | Shows `mcctl world list`, highlights duplicate or warning lines | automatic |
-| 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
-| 9 Summary | Result of each step, what is left, rollback, log path | automatic |
+| 7b Stopped servers | Lists running servers (restart them yourself) and recreates each stopped one with `docker compose up --no-start --no-deps mc-<server>`, so its next start uses the pulled image | optional (yes) |
+| 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, PM2's mcctl-api `kill_timeout` equals the one in `ecosystem.config.cjs`, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
+| 9 Summary | Result of each step, what is left (including mcctl installs still on the old version), rollback, log path | automatic |
 
 If step 2 is skipped (you answer no, or there is no terminal and no `--yes`) or fails, the script runs no later step and stops with "The upgrade did not finish": the later steps need the v3 CLI. Fix the cause and run the script again. A failed backup or `mcctl upgrade` stops it the same way. Any failed step makes the exit code 1.
 
+Step 0 also stops, before anything changes, when the update would run and the first `mcctl` on `PATH` is not under `npm prefix -g`: `mcctl update` installs with `npm install -g`, so it would update another install. Put the bin directory of PM2's Node first on `PATH` (for example `nvm use 22`, or the directory of `interpreter` in `ecosystem.config.cjs`) and run the script again. With `--skip-update` this check is skipped.
+
 On a dry run with a v2 CLI, the `mcctl upgrade --dry-run` preview is the plan of the v2 CLI installed now; the v3 plan appears after the update.
 
-Step 5 loads `ecosystem.config.cjs` with `node` (so it runs the file, like PM2 does), edits it only if the mcctl-api `name:` line is `name: 'mcctl-api',` alone on its line, loads it again to check the result and puts the original back if the check fails (no restart then). A symbolic link or a one-line app object is not edited; the script tells you what to add by hand.
+Step 5 loads `ecosystem.config.cjs` with `node` (so it runs the file, like PM2 does), edits it only if the mcctl-api `name:` line is `name: 'mcctl-api',` alone on its line, loads it again to check the result and puts the original back if the check fails (no restart then). A symbolic link or a one-line app object is not edited; the script tells you what to add by hand. The restart uses `--console`: without `--console` or `--api` the CLI asks which services to restart, and the script gives commands no input.
+
+Step 7b is there because mc-router starts a stopped server with `docker start`, which keeps the image the container was created from. Recreating keeps worlds and config (bind mounts and volumes) and leaves the server stopped. An image regression then shows on the next start, so the summary prints, for each recreated server, `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>` to go back.
 
 **What the script does not do** (the summary repeats these):
 
 - **Restart running servers.** Do it at a quiet time: `mcctl stop <server> && mcctl start <server>`.
 - **Replace cron jobs, timers or your own scripts** that called `<root>/scripts/*.sh`. It only warns; use the [table in 3-1](#v300-scripts).
-- **Roll back.** The summary prints the command: `npm install -g @minecraft-docker/mcctl@<old version> && mcctl console service restart --force`, plus the backup folder to copy files back from ([step 8](#8-rollback)).
+- **Roll back.** The summary prints [step 8](#8-rollback) with this run's values: the files to copy back from the backup folder (then `docker compose up -d router`), `npm install -g @minecraft-docker/mcctl@<old version>`, `npm install` of the installed mcctl-api, mcctl-console and shared at the old version in `.services/` (or the root on older installs), and `mcctl console service restart --console --force`.
 
 Test hook: `MCCTL_UPGRADE_TTY` replaces `/dev/tty` (a readable file gives the answers, a path that cannot be opened means "no terminal").
 
@@ -169,8 +174,8 @@ v3.0.0 removes every Bash script (#715). `mcctl` no longer reads `<root>/scripts
 ```bash
 mcctl console service restart
 # if the new build does not come up or you see an ABI error (NODE_MODULE_VERSION)
-mcctl console service restart --force
-cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --force
+mcctl console service restart --console --force
+cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --console --force
 ```
 
 ### 4-1. Upgrading to v2.32.0 or later: check the console access mode (#633)
@@ -199,7 +204,7 @@ sed -i \
   -e "s/AUTH_MODE: 'open',/AUTH_MODE: 'disabled',/" \
   ecosystem.config.cjs
 grep -nE "AUTH_MODE|AUTH_IP_WHITELIST" ecosystem.config.cjs
-mcctl console service restart --force               # plain restart keeps the old env
+mcctl console service restart --console --force     # plain restart keeps the old env
 ```
 
 The `sed` leaves the other modes untouched. Instead of editing the file, you can re-run `mcctl console init --force`, which rewrites the whole file and asks every setup question again.
@@ -217,7 +222,7 @@ cd $ROOT
 grep -n "kill_timeout" ecosystem.config.cjs || echo "missing: add it"
 # add the line to the mcctl-api app, next to max_memory_restart:
 #       kill_timeout: 130000,
-mcctl console service restart --force               # re-registers the apps from the file
+mcctl console service restart --console --force     # re-registers the apps from the file
 ```
 
 Instead of editing the file, you can re-run `mcctl console init --force`, which rewrites the whole file and asks every setup question again.
@@ -311,8 +316,9 @@ docker compose up -d router
 [ -n "$(ls ecosystem.config.cjs.bak-* 2>/dev/null)" ] && echo "restore the latest ecosystem.config.cjs.bak-* if step 3 moved BETTER_AUTH_*"
 # packages back to $OLD (in the PM2-Node shell)
 npm install -g @minecraft-docker/mcctl@$OLD
+cd $ROOT/.services 2>/dev/null || cd $ROOT     # where mcctl-api and mcctl-console are installed
 npm install @minecraft-docker/mcctl-api@$OLD @minecraft-docker/mcctl-console@$OLD @minecraft-docker/shared@$OLD
-mcctl console service restart --force
+mcctl console service restart --console --force
 ```
 
 !!! note

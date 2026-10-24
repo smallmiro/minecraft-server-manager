@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **`upgrade-v3.sh` fixes from a real host upgrade** (#794) - Step 5 restarted with `mcctl console service restart --force`, which asks which services to restart and always failed in the script on hosts with both mcctl-api and the console, so PM2 kept the old `kill_timeout`. It now uses `--console --force`, and a failed restart is listed under "Still to do by hand". Step 8 compares PM2's `kill_timeout` for mcctl-api with `ecosystem.config.cjs` and fails on a difference. The summary rollback now follows runbook step 8: the files backed up in this run, the CLI, the mcctl-api, console and shared packages in `.services/` (or the root), and the restart. New step 7b asks (default yes; `--dry-run` only shows the plan) to recreate stopped servers with `docker compose up --no-start --no-deps mc-<server>`, because auto-scale starts the old container with its old image; the summary prints how to go back to each old image. Step 0 stops before any change when the first `mcctl` on `PATH` is not under `npm prefix -g` (the update would land in another install), and the summary shows how to update installs left on the old version. Warnings in the summary keep their details (paths, cron lines), the step 2 question says that server images are pulled, and `upgrade.log` no longer contains escape sequences.
+
 ## [3.0.0] - 2026-10-24
 
 > **Upgrade notes (v3.0.0, BREAKING).** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts). All Bash scripts are gone (#715, #736).
