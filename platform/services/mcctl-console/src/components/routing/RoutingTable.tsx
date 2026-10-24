@@ -189,15 +189,15 @@ function HostnameCell({ hostname }: { hostname: string }) {
   );
 }
 
-function TargetCell({ row }: { row: RouteRow }) {
+function TargetCell({ serverName, detail }: { serverName: string; detail: string }) {
   return (
     <>
       <Typography variant="body2" sx={{ fontWeight: 600, ...wrapSx }}>
-        {row.serverName}
+        {serverName}
       </Typography>
-      {row.detail && (
+      {detail && (
         <Typography variant="caption" color="text.secondary" sx={wrapSx}>
-          {row.detail}
+          {detail}
         </Typography>
       )}
     </>
@@ -283,7 +283,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                   <StatusCell route={row.route} />
                 </Stack>
                 <Box sx={{ mt: 1, minWidth: 0 }}>
-                  <TargetCell row={row} />
+                  <TargetCell serverName={row.serverName} detail={row.detail} />
                 </Box>
                 <Box sx={{ mt: 1 }}>
                   <RowActions route={row.route} serverName={row.serverName} />
@@ -317,7 +317,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                   </TableCell>
                   <TableCell sx={wrapSx}>
                     <Stack>
-                      <TargetCell row={row} />
+                      <TargetCell serverName={row.serverName} detail={row.detail} />
                     </Stack>
                   </TableCell>
                   <TableCell>
