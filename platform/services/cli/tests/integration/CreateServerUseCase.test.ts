@@ -1,12 +1,43 @@
 import { describe, it, beforeEach, vi } from 'vitest';
 import assert from 'node:assert';
-import { CreateServerUseCase } from '@minecraft-docker/shared';
+import {
+  CreateServerUseCase,
+  type ServerSpecDocument,
+  type IServerSpecRepository,
+  type IContainerRuntimePort,
+} from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
   MockShellAdapter,
   MockServerRepository,
   MockWorldAssignmentPort,
 } from '../mocks/index.js';
+
+/** Provisioning fakes (#675): the spec the use case writes, and the starts. */
+let specWrites: ServerSpecDocument[] = [];
+let started: unknown[] = [];
+let writeError: Error | undefined;
+const provision = () => ({
+  specRepo: {
+    write: async (doc: ServerSpecDocument) => {
+      if (writeError) throw writeError;
+      specWrites.push(doc);
+    },
+  } as unknown as IServerSpecRepository,
+  runtime: {
+    start: async (name: unknown) => {
+      started.push(name);
+      return { success: true };
+    },
+  } as unknown as IContainerRuntimePort,
+});
+const lastSpec = () => specWrites[specWrites.length - 1]!;
+const created = () => specWrites.length > 0;
+/** The whitelist settings a spec carries (ENABLE_WHITELIST / WHITELIST). */
+const whitelistOf = (doc: ServerSpecDocument) => ({
+  enableWhitelist: doc.env['ENABLE_WHITELIST'] === 'TRUE',
+  whitelistPlayers: doc.env['WHITELIST']?.split(','),
+});
 
 describe('CreateServerUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
@@ -24,10 +55,14 @@ describe('CreateServerUseCase Integration', () => {
       undefined,
       undefined,
       undefined,
-      assignments
+      assignments,
+      provision()
     );
 
   beforeEach(() => {
+    specWrites = [];
+    started = [];
+    writeError = undefined;
     promptAdapter = new MockPromptAdapter({
       serverName: 'testserver',
       serverType: 'PAPER',
@@ -51,12 +86,11 @@ describe('CreateServerUseCase Integration', () => {
       assert.strictEqual(server.memory.value, '4G');
     });
 
-    it('should call shell createServer with correct arguments', async () => {
+    it('should write the server spec with the prompted name (#675)', async () => {
       await useCase.execute();
 
-      assert.ok(shellAdapter.wasCommandCalled('createServer'));
-      const log = shellAdapter.lastCommand;
-      assert.strictEqual(log?.args[0], 'testserver');
+      assert.ok(created());
+      assert.strictEqual(lastSpec().name, 'testserver');
     });
 
     it('reads platform settings through the injected port (#665)', async () => {
@@ -69,7 +103,8 @@ describe('CreateServerUseCase Integration', () => {
         undefined,
         undefined,
         undefined,
-        assignments
+        assignments,
+        provision()
       ).execute();
 
       assert.strictEqual(settings.load.mock.calls.length, 1);
@@ -109,17 +144,11 @@ describe('CreateServerUseCase Integration', () => {
       useCase = makeUseCase();
 
       await assert.rejects(useCase.execute(), { code: 'conflict' });
-      assert.ok(!shellAdapter.wasCommandCalled('createServer'));
+      assert.ok(!created());
     });
 
-    it('should handle shell failure', async () => {
-      shellAdapter = new MockShellAdapter({
-        createServerResult: {
-          success: false,
-          stderr: 'Failed to create server',
-        },
-      });
-      useCase = makeUseCase();
+    it('should handle a provisioning failure', async () => {
+      writeError = new Error('Failed to create server');
 
       await assert.rejects(async () => {
         await useCase.execute();
@@ -193,14 +222,14 @@ describe('CreateServerUseCase Integration', () => {
       );
     });
 
-    it('should pass autoStart option to shell', async () => {
+    it('should not start the server for autoStart false', async () => {
       await useCase.executeWithConfig({
         name: 'nostart',
         autoStart: false,
       });
 
-      const log = shellAdapter.lastCommand;
-      assert.strictEqual((log?.args[1] as { autoStart: boolean }).autoStart, false);
+      assert.ok(created());
+      assert.deepStrictEqual(started, []);
     });
 
     it('should create MODRINTH modpack server', async () => {
@@ -241,7 +270,7 @@ describe('CreateServerUseCase Integration', () => {
       assert.strictEqual(server.memory.value, '6G');
     });
 
-    it('should pass modpack options to shell', async () => {
+    it('should write the modpack options into the spec', async () => {
       await useCase.executeWithConfig({
         name: 'modpack',
         type: 'MODRINTH',
@@ -250,11 +279,9 @@ describe('CreateServerUseCase Integration', () => {
         modLoader: 'fabric',
       });
 
-      const log = shellAdapter.lastCommand;
-      const options = log?.args[1] as any;
-      assert.strictEqual(options.modpackSlug, 'test-pack');
-      assert.strictEqual(options.modpackVersion, '1.0.0');
-      assert.strictEqual(options.modLoader, 'fabric');
+      assert.strictEqual(lastSpec().env['MODRINTH_MODPACK'], 'test-pack');
+      assert.strictEqual(lastSpec().env['MODRINTH_VERSION'], '1.0.0');
+      assert.strictEqual(lastSpec().env['MODRINTH_LOADER'], 'fabric');
     });
 
     it('should throw error when MODRINTH type without modpack slug', async () => {
@@ -274,8 +301,7 @@ describe('CreateServerUseCase Integration', () => {
     it('should call promptWhitelistPlayers in interactive mode', async () => {
       await useCase.execute();
 
-      const log = shellAdapter.lastCommand;
-      const options = log?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, true);
     });
 
@@ -292,8 +318,7 @@ describe('CreateServerUseCase Integration', () => {
 
       await useCase.execute();
 
-      const log = shellAdapter.lastCommand;
-      const options = log?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, true);
       assert.deepStrictEqual(options.whitelistPlayers, ['player1', 'player2']);
     });
@@ -303,8 +328,7 @@ describe('CreateServerUseCase Integration', () => {
         name: 'wlserver',
       });
 
-      const log = shellAdapter.lastCommand;
-      const options = log?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, false);
     });
 
@@ -314,7 +338,7 @@ describe('CreateServerUseCase Integration', () => {
         enableWhitelist: true,
       });
 
-      const options = shellAdapter.lastCommand?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, true);
       assert.strictEqual(options.whitelistPlayers, undefined);
     });
@@ -326,7 +350,7 @@ describe('CreateServerUseCase Integration', () => {
         whitelistPlayers: ['steve'],
       });
 
-      const options = shellAdapter.lastCommand?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, false);
     });
 
@@ -347,7 +371,7 @@ describe('CreateServerUseCase Integration', () => {
 
       await useCase.execute();
 
-      const options = shellAdapter.lastCommand?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(playersSpy.mock.calls.length, 0);
       assert.strictEqual(options.enableWhitelist, false);
       assert.deepStrictEqual(options.whitelistPlayers ?? [], []);
@@ -359,8 +383,7 @@ describe('CreateServerUseCase Integration', () => {
         enableWhitelist: false,
       });
 
-      const log = shellAdapter.lastCommand;
-      const options = log?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, false);
     });
 
@@ -370,8 +393,7 @@ describe('CreateServerUseCase Integration', () => {
         whitelistPlayers: ['steve', 'alex'],
       });
 
-      const log = shellAdapter.lastCommand;
-      const options = log?.args[1] as any;
+      const options = whitelistOf(lastSpec());
       assert.strictEqual(options.enableWhitelist, true);
       assert.deepStrictEqual(options.whitelistPlayers, ['steve', 'alex']);
     });

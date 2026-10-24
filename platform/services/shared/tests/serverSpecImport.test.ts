@@ -122,10 +122,23 @@ describe('importDockerServer: config.env parsing', () => {
     expect((await imp('plain')).document!.world.level).toBe('world');
   });
 
-  it('treats empty typed values as absent and defaults a missing TYPE to VANILLA with a warning', async () => {
-    templateServer('e', { config: (c) => setLine('VERSION', 'VERSION=')(c).replace(/^TYPE=.*\n/m, '') });
+  it('keeps empty VERSION, MEMORY and PLAYIT_DOMAIN as explicit empty values without warnings', async () => {
+    // `KEY=` in config.env still overrides servers/global.env, like an empty EXTRA_ARGS (ADR-0002).
+    templateServer('empty', {
+      config: (c) => setLine('MEMORY', 'MEMORY=')(setLine('VERSION', 'VERSION=')(c)) + 'PLAYIT_DOMAIN=\n',
+    });
+    mkdirSync(join(root, 'worlds', 'empty'), { recursive: true });
+    const result = await imp('empty');
+    expect(result.status).toBe('imported');
+    expect(result.document!.version).toBe('');
+    expect(result.document!.memory).toBe('');
+    expect(result.document!.routing.playitDomain).toBe('');
+    expect(result.warnings).toEqual([]);
+  });
+
+  it('defaults a missing TYPE to VANILLA with a warning', async () => {
+    templateServer('e', { config: (c) => c.replace(/^TYPE=.*\n/m, '') });
     const result = await imp('e');
-    expect(result.document!.version).toBeUndefined();
     expect(result.document!.type).toBe('VANILLA');
     expect(result.warnings.join('\n')).toMatch(/TYPE/);
   });

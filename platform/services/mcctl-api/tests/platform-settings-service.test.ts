@@ -184,13 +184,13 @@ describe('PlatformSettingsService', () => {
       const err = await svc
         .update({
           revision,
-          set: { HOST_IP: '999.1.1.1', RCON_PORT: '0', LOG_LEVEL: 'loud', MINECRAFT_NETWORK: 'x', 'bad key': 'v', MY_CUSTOM: "it's", BACKUP_GITHUB_REPO: 'nope', TZ: 'Not/AZone', DOCKER_GID: '70000', BACKUP_AUTO_ON_STOP: 'yes', HOST_IPS: '1.1.1.1,abc' },
+          set: { HOST_IP: '999.1.1.1', RCON_PORT: '0', LOG_LEVEL: 'loud', MINECRAFT_NETWORK: 'x', 'bad key': 'v', MY_CUSTOM: "it's", MY_PATH: 'C:\\new dir\\', BACKUP_GITHUB_REPO: 'nope', TZ: 'Not/AZone', DOCKER_GID: '70000', BACKUP_AUTO_ON_STOP: 'yes', HOST_IPS: '1.1.1.1,abc' },
           remove: ['COMPOSE_PROJECT_NAME'],
         })
         .catch((e) => e);
       expect(err).toBeInstanceOf(PlatformSettingsValidationError);
       const keys = err.errors.map((e: any) => e.key).sort();
-      expect(keys).toEqual(['BACKUP_AUTO_ON_STOP', 'BACKUP_GITHUB_REPO', 'COMPOSE_PROJECT_NAME', 'DOCKER_GID', 'HOST_IPS', 'HOST_IP', 'LOG_LEVEL', 'MINECRAFT_NETWORK', 'MY_CUSTOM', 'RCON_PORT', 'TZ', 'bad key'].sort());
+      expect(keys).toEqual(['BACKUP_AUTO_ON_STOP', 'BACKUP_GITHUB_REPO', 'COMPOSE_PROJECT_NAME', 'DOCKER_GID', 'HOST_IPS', 'HOST_IP', 'LOG_LEVEL', 'MINECRAFT_NETWORK', 'MY_CUSTOM', 'MY_PATH', 'RCON_PORT', 'TZ', 'bad key'].sort());
       expect(JSON.stringify(err.errors)).not.toContain("it's");
       expect(readFileSync(envPath, 'utf8')).toBe(ENV);
     });

@@ -179,6 +179,23 @@ describe('op command', () => {
     });
   });
 
+  describe('a refused config write (#675)', () => {
+    it.each([
+      ['add', 'newplayer', { ...mockConfig, OPS: '' }],
+      ['remove', 'player1', mockConfig],
+    ] as const)('%s exits 1 and logs a failure audit entry', async (subCommand, playerName, config) => {
+      vi.mocked(ShellExecutor.prototype.readConfig).mockReturnValue(config);
+      vi.mocked(ShellExecutor.prototype.writeConfigValue).mockResolvedValue(false);
+      const log = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(getContainer).mockReturnValue({ auditLogPort: { log } } as any);
+
+      const exitCode = await opCommand({ root: '/tmp/test', serverName: 'test-server', subCommand, playerName, level: 4 });
+
+      expect(exitCode).toBe(1);
+      expect(log).toHaveBeenCalledWith(expect.objectContaining({ status: 'failure' }));
+    });
+  });
+
   describe('remove', () => {
     it('should remove operator', async () => {
       const options: OpCommandOptions = {

@@ -99,18 +99,22 @@ export {
 // ServerSpec (#675, ADR-0003)
 export {
   ServerSpecError,
+  unrestoredFiles,
   SERVER_SPEC_VERSION,
   SERVER_SPEC_MANAGED_ENV_KEYS,
   validateServerSpecDocument,
   assertServerSpecDocument,
   validateHostname,
   routerHosts,
+  MC_VERSION_INPUT_PATTERN,
   type ServerSpecDocument,
   type ServerSpecErrorCode,
   type ServerSpecIssue,
   type ServerSpecRules,
   type WorldStorage,
 } from './server-spec/ServerSpecDocument.js';
+export { buildCreateSpec, DEFAULT_SERVER_IMAGE, type CreateSpecInput } from './server-spec/buildCreateSpec.js';
+export { setEnvKeys, type SpecEnvChanges } from './server-spec/setEnvKeys.js';
 
 // Entities
 export {

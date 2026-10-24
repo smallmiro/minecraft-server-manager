@@ -1,4 +1,4 @@
-export type { ICreateServerUseCase, CreateServerConfig } from './ICreateServerUseCase.js';
+export type { ICreateServerUseCase, CreateServerConfig, CreateServerRunOptions } from './ICreateServerUseCase.js';
 export type { IDeleteServerUseCase, DeleteServerResult, DeleteServerOptions } from './IDeleteServerUseCase.js';
 export type { IServerStatusUseCase, ServerStatusResult } from './IServerStatusUseCase.js';
 export type {

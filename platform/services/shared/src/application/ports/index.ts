@@ -2,6 +2,7 @@
 export type {
   ICreateServerUseCase,
   CreateServerConfig,
+  CreateServerRunOptions,
   IDeleteServerUseCase,
   DeleteServerResult,
   DeleteServerOptions,
@@ -104,6 +105,7 @@ export type {
   IPlayitAgentPort,
   IHostnameRegistrarPort,
   HostnameRegistrarStatus,
+  HostnameChangeResult,
   IRuntimeEnvironmentPort,
   ToolVersion,
   IServerSpecRepository,

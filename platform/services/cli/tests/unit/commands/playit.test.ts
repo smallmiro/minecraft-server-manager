@@ -22,6 +22,10 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   };
 });
 
+// Domain writes go through the ServerSpec (#675)
+vi.mock('../../../src/lib/server-config.js', () => ({ writeServerConfig: vi.fn(async () => ({})) }));
+import { writeServerConfig } from '../../../src/lib/server-config.js';
+
 describe('mcctl playit subcommand', () => {
   const testRoot = join(process.cwd(), 'platform', 'services', 'cli', 'tests', '.tmp-playit-cmd');
 
@@ -465,11 +469,7 @@ describe('mcctl playit subcommand', () => {
       });
 
       expect(exitCode).toBe(0);
-      expect(shared.setServerPlayitDomain).toHaveBeenCalledWith(
-        'factory',
-        'possible-tracks.gl.joinmc.link',
-        expect.any(String),
-      );
+      expect(writeServerConfig).toHaveBeenCalledWith(expect.anything(), 'factory', { set: { PLAYIT_DOMAIN: 'possible-tracks.gl.joinmc.link' } });
     });
 
     it('should hint stop/start to apply the domain', async () => {
@@ -506,11 +506,7 @@ describe('mcctl playit subcommand', () => {
       });
 
       expect(exitCode).toBe(0);
-      expect(shared.setServerPlayitDomain).toHaveBeenCalledWith(
-        'factory',
-        null,
-        expect.any(String),
-      );
+      expect(writeServerConfig).toHaveBeenCalledWith(expect.anything(), 'factory', { remove: ['PLAYIT_DOMAIN'] });
     });
 
     it('should fail when server does not exist', async () => {
@@ -525,7 +521,7 @@ describe('mcctl playit subcommand', () => {
       });
 
       expect(exitCode).toBe(1);
-      expect(shared.setServerPlayitDomain).not.toHaveBeenCalled();
+      expect(writeServerConfig).not.toHaveBeenCalled();
     });
 
     it('should prompt interactively when no args given', async () => {
@@ -545,11 +541,7 @@ describe('mcctl playit subcommand', () => {
       });
 
       expect(exitCode).toBe(0);
-      expect(shared.setServerPlayitDomain).toHaveBeenCalledWith(
-        'factory',
-        'interactive.domain.com',
-        expect.any(String),
-      );
+      expect(writeServerConfig).toHaveBeenCalledWith(expect.anything(), 'factory', { set: { PLAYIT_DOMAIN: 'interactive.domain.com' } });
     });
   });
 

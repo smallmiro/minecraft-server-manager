@@ -7,9 +7,9 @@
  *  - worldName already mapped to a server → 409
  *  - default world <name> used by another server, or an unreadable config → 409 (#670)
  *
- * Uses the real app + a temp platform dir (servers.test.ts mocks shared, which
- * is unrelated and currently broken). Only the validation paths that return
- * BEFORE create-server.sh is spawned are exercised, so no Docker is needed.
+ * Uses the real app + a temp platform dir (servers.test.ts mocks shared). Only
+ * the validation paths that return BEFORE provisioning starts are exercised,
+ * so no server files are written and no Docker is needed.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';

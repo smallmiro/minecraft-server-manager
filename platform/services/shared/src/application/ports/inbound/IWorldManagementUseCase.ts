@@ -1,4 +1,5 @@
 import type { WorldAssignmentErrorCode } from '../../../domain/services/worldAssignment.js';
+import type { ServerSpecErrorCode } from '../../../domain/server-spec/ServerSpecDocument.js';
 
 /**
  * World creation options
@@ -22,6 +23,8 @@ export interface WorldCreateResult {
   error?: string;
   /** Set when an assignment rule refused the request (#670). */
   errorCode?: WorldAssignmentErrorCode;
+  /** Set when the ServerSpec write of LEVEL/SEED was refused (#675). */
+  specErrorCode?: ServerSpecErrorCode;
 }
 
 /**
@@ -130,6 +133,8 @@ export interface WorldAssignResult {
   serverName: string;
   error?: string;
   errorCode?: WorldAssignmentErrorCode;
+  /** Set when the ServerSpec write of LEVEL was refused (#675). */
+  specErrorCode?: ServerSpecErrorCode;
 }
 
 /**
@@ -145,6 +150,8 @@ export interface WorldReleaseResult {
   fallbackExists?: boolean;
   error?: string;
   errorCode?: WorldAssignmentErrorCode;
+  /** Set when the ServerSpec write of LEVEL was refused (#675). */
+  specErrorCode?: ServerSpecErrorCode;
 }
 
 /**

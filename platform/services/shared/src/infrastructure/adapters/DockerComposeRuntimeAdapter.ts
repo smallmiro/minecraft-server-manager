@@ -131,7 +131,13 @@ function parseDockerStats(result: string): ContainerStats | null {
  * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart only.
  */
 export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
-  constructor(private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv } = {}) {}
+  /**
+   * @param options.startTimeoutMs how long `start` (docker compose up) may take; default 60 s.
+   *   A first start can pull the image (#675: create passes a longer one).
+   */
+  constructor(
+    private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv; startTimeoutMs?: number } = {}
+  ) {}
 
   getStatus(name: ServerName | string): ContainerStatus {
     const container = workloadNameOf(name);
@@ -286,7 +292,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /** Create the container if missing, then run it (`docker compose up -d`) */
   start(name: ServerName | string): Promise<RuntimeActionResult> {
     const container = workloadNameOf(name);
-    return this.compose(['compose', 'up', '-d', container]);
+    return this.compose(['compose', 'up', '-d', container], this.options.startTimeoutMs);
   }
 
   stop(name: ServerName | string): Promise<RuntimeActionResult> {
@@ -359,10 +365,10 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /** Copied from mcctl-api executeServerAction */
-  private compose(args: string[]): Promise<RuntimeActionResult> {
+  private compose(args: string[], timeout = 60000): Promise<RuntimeActionResult> {
     return this.run(args, {
       cwd: this.options.root ?? resolveMcctlRoot(),
-      timeout: 60000, // 60 second timeout
+      timeout,
       // Ensure Docker Compose uses the correct compose file
       env: { ...this.env(), COMPOSE_FILE: 'docker-compose.yml' },
     });

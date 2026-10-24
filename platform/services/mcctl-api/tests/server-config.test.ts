@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vites
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
+import { ServerSpecError } from '@minecraft-docker/shared';
 import { ServerConfigSchema } from '../src/schemas/config.js';
 import { ConfigService } from '../src/services/ConfigService.js';
 
@@ -76,6 +77,22 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     getContainerStatus: vi.fn(),
     getContainerHealth: vi.fn(),
     stopContainer: vi.fn(),
+  };
+});
+
+// ServerSpec writes (#675) land on the mocked file writer, as the direct writes did
+vi.mock('../src/lib/server-spec.js', async (importOriginal) => {
+  const utils = await import('@minecraft-docker/shared/utils');
+  const fs = await import('fs');
+  const { join } = await import('path');
+  return {
+    ...(await importOriginal<typeof import('../src/lib/server-spec.js')>()),
+    writeServerConfig: vi.fn(async (root: string, server: string, changes: { set?: Record<string, string>; remove?: string[] }) => {
+      const file = join(root, 'servers', server, 'config.env');
+      const content = fs.existsSync(file) ? String(fs.readFileSync(file, 'utf-8')) : '';
+      utils.atomicWriteFileSync(file, utils.applyEnvChanges(content, changes, { raw: true }));
+      return {};
+    }),
   };
 });
 
@@ -604,6 +621,30 @@ GID=1000
         expect(mockWriteFileSync).not.toHaveBeenCalled();
       });
 
+      it.each([
+        ['edit_conflict', 409],
+        ['locked', 409],
+        ['invalid_spec', 400],
+      ])('answers a ServerSpec refusal %s of the level write with %i (#675)', async (specErrorCode, status) => {
+        mockedServerExists.mockReturnValue(true);
+        worldUseCase.assignWorldByName.mockResolvedValueOnce({
+          success: false,
+          worldName: 'new_world',
+          serverName: 'testserver',
+          error: 'spec refused',
+          specErrorCode,
+        });
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { level: 'new_world' },
+        });
+
+        expect(response.statusCode).toBe(status);
+        expect(JSON.parse(response.body).message).toBe('spec refused');
+      });
+
       it('keeps saving when an existing legacy level is sent back unchanged', async () => {
         mockedServerExists.mockReturnValue(true);
         mockReadFileSync.mockReturnValue(sampleConfigContent.replace('LEVEL=world', 'LEVEL=My World'));
@@ -696,6 +737,27 @@ GID=1000
         spy.mockRestore();
         expect(response.statusCode).toBe(400);
         expect(response.json()).toMatchObject({ error: 'BadRequest' });
+      });
+
+      it.each([
+        ['invalid_spec', 400],
+        ['locked', 409],
+        ['undetermined', 409],
+      ] as const)('maps a refused ServerSpec write (%s) to %i (#675)', async (code, status) => {
+        mockedServerExists.mockReturnValue(true);
+        const spy = vi
+          .spyOn(ConfigService.prototype, 'updateConfig')
+          .mockRejectedValueOnce(new ServerSpecError(code, `spec ${code}`, 'testserver'));
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { motd: 'Updated MOTD' },
+        });
+
+        spy.mockRestore();
+        expect(response.statusCode).toBe(status);
+        expect(response.json().message).toContain(`spec ${code}`);
       });
     });
   });

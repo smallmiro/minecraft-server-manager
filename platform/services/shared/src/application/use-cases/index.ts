@@ -1,4 +1,4 @@
-export { CreateServerUseCase } from './CreateServerUseCase.js';
+export { CreateServerUseCase, ServerStartError, parseCreateServerConfig, type ServerProvisionDeps } from './CreateServerUseCase.js';
 export { DeleteServerUseCase } from './DeleteServerUseCase.js';
 export { ServerStatusUseCase } from './ServerStatusUseCase.js';
 export { WorldManagementUseCase } from './WorldManagementUseCase.js';
@@ -19,3 +19,4 @@ export {
   API_PM2_KILL_TIMEOUT_MS,
   type AutoBackupOnStopResult,
 } from './autoBackupOnStop.js';
+export { updateServerSpec } from './updateServerSpec.js';

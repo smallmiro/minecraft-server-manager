@@ -11,6 +11,8 @@ export interface IShellPort {
 
   /**
    * Create a new server
+   * @deprecated create-server.sh was removed in #675: implementations reject.
+   * Use CreateServerUseCase with ServerSpec provisioning. Removed in v3.0.0 (#736).
    */
   createServer(
     name: ServerName,
