@@ -13,14 +13,9 @@ export interface IDeleteServerUseCase {
 
   /**
    * Execute server deletion with provided name
-   * Used when server name is passed via CLI
-   *
-   * Without an options object (omitted, undefined, or the deprecated boolean
-   * `force`) it deletes without asking, as in v2.x before #652. Pass
-   * `DeleteServerOptions` for the confirmation; the other forms are removed
-   * in v3.0.0 (#736).
+   * Used when server name is passed via CLI. Asks for confirmation unless `yes`.
    */
-  executeWithName(name: string, options?: DeleteServerOptions | boolean): Promise<boolean>;
+  executeWithName(name: string, options: DeleteServerOptions): Promise<boolean>;
 }
 
 export interface DeleteServerOptions {

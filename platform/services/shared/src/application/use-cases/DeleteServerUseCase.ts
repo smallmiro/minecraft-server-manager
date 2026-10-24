@@ -169,14 +169,8 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
    * Execute server deletion with provided name
    */
-  async executeWithName(name: string, options?: DeleteServerOptions | boolean): Promise<boolean> {
-    // Omitted, undefined or the deprecated boolean `force`: the v2.x behaviour
-    // without a question (#715). Only an options object asks.
-    const opts =
-      options === undefined || typeof options === 'boolean'
-        ? { force: options ?? false, yes: true }
-        : options;
-    const { force = false, yes = false, deleteWorld = false } = opts;
+  async executeWithName(name: string, options: DeleteServerOptions): Promise<boolean> {
+    const { force = false, yes = false, deleteWorld = false } = options;
     // Check if server exists
     const server = await this.serverRepo.findByName(name);
 

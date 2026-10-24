@@ -124,7 +124,7 @@ describe('DeleteServerUseCase Integration', () => {
 
   describe('executeWithName (CLI mode)', () => {
     it('should delete server by name', async () => {
-      const result = await useCase.executeWithName('server1');
+      const result = await useCase.executeWithName('server1', { yes: true });
 
       assert.strictEqual(result, true);
       assert.deepStrictEqual(deleted(), ['server1']);
@@ -133,7 +133,7 @@ describe('DeleteServerUseCase Integration', () => {
     it('should throw when server not found', async () => {
       await assert.rejects(
         async () => {
-          await useCase.executeWithName('nonexistent');
+          await useCase.executeWithName('nonexistent', { yes: true });
         },
         { message: "Server 'nonexistent' not found" }
       );
@@ -147,7 +147,7 @@ describe('DeleteServerUseCase Integration', () => {
 
       await assert.rejects(
         async () => {
-          await useCase.executeWithName('busy');
+          await useCase.executeWithName('busy', { yes: true });
         },
         /5 player\(s\) online/
       );
@@ -159,29 +159,9 @@ describe('DeleteServerUseCase Integration', () => {
       ]);
       useCase = build();
 
-      const result = await useCase.executeWithName('busy', { force: true });
+      const result = await useCase.executeWithName('busy', { force: true, yes: true });
 
       assert.strictEqual(result, true);
-    });
-
-    // v2.x keeps the boolean form as deprecated (#715 release policy)
-    it('still accepts the deprecated boolean force without asking', async () => {
-      serverRepo = new MockServerRepository([
-        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
-      ]);
-      promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = build();
-
-      assert.strictEqual(await useCase.executeWithName('busy', true), true);
-    });
-
-    it('keeps the players guard for the deprecated boolean false', async () => {
-      serverRepo = new MockServerRepository([
-        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
-      ]);
-      useCase = build();
-
-      await assert.rejects(useCase.executeWithName('busy', false), /5 player\(s\) online/);
     });
   });
 
@@ -223,39 +203,6 @@ describe('DeleteServerUseCase Integration', () => {
       useCase = build({ console: consoleWith(3) });
 
       assert.strictEqual(await useCase.executeWithName('server2', { yes: true }), true);
-    });
-  });
-
-  // v2.x: only an explicit options object opts into the new confirmation (#715)
-  describe('second-argument compatibility (#652 review)', () => {
-    beforeEach(() => {
-      promptAdapter = new MockPromptAdapter({ confirm: false });
-      useCase = build();
-    });
-
-    it.each([
-      ['omitted', [] as unknown[]],
-      ['undefined', [undefined]],
-      ['false', [false]],
-      ['true', [true]],
-    ])('%s deletes without asking, as before', async (_label, rest) => {
-      const call = useCase.executeWithName as (name: string, ...rest: unknown[]) => Promise<boolean>;
-      assert.strictEqual(await call.call(useCase, 'server2', ...rest), true);
-      assert.deepStrictEqual(deleted(), ['server2']);
-    });
-
-    it('{} asks (declined here) and keeps the server', async () => {
-      assert.strictEqual(await useCase.executeWithName('server2', {}), false);
-      assert.deepStrictEqual(deleted(), []);
-    });
-
-    it('omitted still applies the players guard', async () => {
-      serverRepo = new MockServerRepository([
-        { name: 'busy', status: ServerStatus.RUNNING, playerCount: 5 },
-      ]);
-      useCase = build();
-
-      await assert.rejects(useCase.executeWithName('busy'), /5 player\(s\) online/);
     });
   });
 
