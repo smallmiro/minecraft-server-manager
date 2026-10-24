@@ -45,7 +45,7 @@ function SkeletonMetricCard() {
 }
 
 export default function DashboardPage() {
-  const { data: serversData, isLoading: serversLoading, error: serversError } = useServers();
+  const { data: serversData, isLoading: serversLoading, error: serversError } = useServers({ include: 'summary' });
   const { data: worldsData, isLoading: worldsLoading, error: worldsError } = useWorlds();
 
   // Real-time server status updates
@@ -68,9 +68,17 @@ export default function DashboardPage() {
 
   const totalWorlds = worldsData?.total || 0;
 
-  // Player counts are not exposed by the list endpoint yet (see #764). Keep null so the
-  // card renders "—" instead of a misleading 0; #764 only has to supply a number here.
-  const totalPlayers: number | null = null;
+  // Player totals come from the summary include; null (totals absent) renders "—" rather than a fake 0
+  const totalPlayers: number | null = serversData?.totals?.playersOnline ?? null;
+  const playersMax = serversData?.totals?.playersMax ?? 0;
+  const runningCount = serversData?.totals?.running ?? onlineServers;
+  const silentServers =
+    serversData?.servers.filter((server) => server.status === 'running' && server.players === null).length ?? 0;
+  const playersDescription =
+    totalPlayers === null
+      ? 'Player data unavailable'
+      : `Across ${runningCount} running ${runningCount === 1 ? 'server' : 'servers'}` +
+        (silentServers > 0 ? ` · ${silentServers} ${silentServers === 1 ? 'server' : 'servers'} not responding` : '');
 
   // Derived metrics for the compact stat cards (computed values only — no history)
   const stoppedServers = totalServers - onlineServers;
@@ -193,9 +201,10 @@ export default function DashboardPage() {
         <BentoMetricCard
           title="Online Players"
           value={totalPlayers ?? '—'}
+          unit={totalPlayers !== null && playersMax > 0 ? `/ ${playersMax}` : undefined}
           icon={<PlayersIcon fontSize="small" />}
           accent="info"
-          description={totalPlayers === null ? 'Player data unavailable' : 'Across all servers'}
+          description={playersDescription}
         />
       </Box>
       <Box sx={metricItemSx}>
