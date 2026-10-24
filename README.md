@@ -1016,6 +1016,16 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [3.0.0] - 2026-10-24
+
+**BREAKING:** all Bash scripts are removed (#715). Run the [upgrade script](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-upgrade-script) (`curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run` first), or follow the [runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts).
+
+**Added:** `server.yaml` (ServerSpec) and `mcctl migrate spec`; `mcctl delete --delete-world`; router live log and status SSE, `POST /api/router/restart`, `GET /api/servers?include=summary`.
+
+**Changed:** servers are created, deleted and backed up from TypeScript; deleting keeps the world by default; console dashboard, server detail and Routing page rebuilt on Bento with a hostname routing table.
+
+**Removed:** `scripts/` and the script-based `@minecraft-docker/shared` exports. See [CHANGELOG.md](CHANGELOG.md).
+
 ### [2.33.0] - 2026-10-18
 
 **Upgrade:** run `mcctl upgrade`, then `mcctl console service restart --console`. From 2.31.x or earlier, upgrade straight to this version (#699).
