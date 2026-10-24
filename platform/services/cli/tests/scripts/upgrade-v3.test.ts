@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process';
 import {
   chmodSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -41,14 +42,20 @@ case "$1" in
       *) echo "upgraded" ;;
     esac ;;
   migrate) echo "migrate spec: alpha would be imported" ;;
-  world) echo "survival  used by alpha"; echo "WARNING: world survival is used by 2 servers" ;;
-  console) echo "service restarted" ;;
+  world)
+    [ -n "$FAKE_WORLD_FAIL" ] && { echo "world list failed" >&2; exit 1; }
+    echo "survival  alpha, beta"
+    echo "[WARN] World 'survival' is assigned to alpha, beta; only one server may use a world" >&2 ;;
+  console)
+    [ -n "$FAKE_RESTART_FAIL" ] && { echo "restart failed" >&2; exit 1; }
+    echo "service restarted" ;;
   backup) echo "pushed" ;;
 esac
 exit 0
 `;
 
 const FAKE_LOGGER = (extra: string) => `#!/bin/sh
+echo "$(wc -c | tr -d ' ')" >> "$FAKE_DIR/stdin.log"
 echo "$(basename "$0") $*" >> "$FAKE_DIR/calls.log"
 ${extra}
 exit 0
@@ -110,7 +117,13 @@ beforeEach(() => {
     0o755,
   );
   put(join(bin, 'docker'), FAKE_LOGGER(''), 0o755);
-  put(join(bin, 'curl'), FAKE_LOGGER("echo '{\"status\":\"ok\"}'"), 0o755);
+  put(
+    join(bin, 'curl'),
+    FAKE_LOGGER(
+      `n=$(grep -c '^curl ' "$FAKE_DIR/calls.log"); if [ "$n" -le "\${FAKE_CURL_FAIL_FIRST:-0}" ]; then exit 22; fi; echo '{"status":"ok"}'`,
+    ),
+    0o755,
+  );
   put(join(bin, 'git'), FAKE_LOGGER('echo "git version 2.43.0"'), 0o755);
   put(join(bin, 'systemctl'), FAKE_LOGGER(''), 0o755);
   put(
@@ -156,6 +169,7 @@ function run(opts: RunOpts = {}) {
       FAKE_DIR: ctx.fake,
       FAKE_NPM_LATEST: '3.0.0',
       MCCTL_UPGRADE_TTY: join(ctx.base, 'no-such-tty'),
+      MCCTL_UPGRADE_HEALTH_WAIT: '0',
       ...opts.env,
     },
     timeout: 60000,
@@ -234,7 +248,7 @@ describe('upgrade-v3.sh', () => {
     expect(c).toMatch(/mcctl console service restart --force/);
     expect(c).toMatch(/docker compose config -q/);
     const stdin = readFileSync(join(ctx.fake, 'stdin.log'), 'utf8').trim().split('\n');
-    expect(stdin.length).toBeGreaterThan(3);
+    expect(stdin.length).toBeGreaterThan(8);
     expect(stdin.every((n) => n === '0')).toBe(true);
     // default answers: nothing is removed or imported
     expect(existsSync(join(ctx.root, 'scripts/a.sh'))).toBe(true);
@@ -418,6 +432,139 @@ describe('upgrade-v3.sh', () => {
 
   it('highlights duplicate world warnings', () => {
     const r = run({ args: ['--yes'] });
-    expect(r.out).toContain('WARNING: world survival is used by 2 servers');
+    expect(r.out).toContain("World 'survival' is assigned to alpha, beta");
+    expect(r.out).toMatch(/world list shows warnings/);
+  });
+  it('every fake command, not only mcctl, got empty stdin', () => {
+    run({ args: ['--yes'] });
+    const lines = readFileSync(join(ctx.fake, 'stdin.log'), 'utf8').trim().split('\n');
+    expect(lines.length).toBeGreaterThan(15);
+    expect(lines.every((n) => n === '0')).toBe(true);
+    expect(calls()).toMatch(/^docker /m);
+    expect(calls()).toMatch(/^curl /m);
+  });
+
+  it('shows world warnings written to stderr in the real wording', () => {
+    const r = run({ args: ['--yes'] });
+    expect(r.out).toMatch(/! world list shows warnings/);
+    const u = run({ args: ['--yes'], env: { FAKE_WORLD_FAIL: '1' } });
+    expect(u.out).toMatch(/! mcctl world list failed/);
+  });
+
+  it('leaves a one-line ecosystem object alone and says to add it by hand', () => {
+    const one = "module.exports = { apps: [{ name: 'mcctl-api', script: 'x' }] };\n";
+    put(join(ctx.root, 'ecosystem.config.cjs'), one);
+    const r = run({ args: ['--yes'] });
+    expect(readFileSync(join(ctx.root, 'ecosystem.config.cjs'), 'utf8')).toBe(one);
+    expect(r.out).toMatch(/add .*kill_timeout.* by hand/);
+  });
+
+  it('handles a double-quoted name and ignores kill_timeout of another app', () => {
+    put(
+      join(ctx.root, 'ecosystem.config.cjs'),
+      'module.exports = {\n  apps: [\n    {\n      name: "mcctl-api",\n      script: "a.js",\n    },\n    {\n      name: "mcctl-console",\n      kill_timeout: 5,\n    },\n  ],\n};\n',
+    );
+    run({ args: ['--yes'] });
+    const after = readFileSync(join(ctx.root, 'ecosystem.config.cjs'), 'utf8');
+    expect(after).toMatch(/name: "mcctl-api",\n {6}kill_timeout: 130000,/);
+    expect(after.match(/kill_timeout/g)).toHaveLength(2);
+  });
+
+  it('ignores a commented name line', () => {
+    put(
+      join(ctx.root, 'ecosystem.config.cjs'),
+      "module.exports = {\n  apps: [\n    // name: 'mcctl-api',\n    {\n      name: 'mcctl-api',\n      script: 'a.js',\n    },\n  ],\n};\n",
+    );
+    run({ args: ['--yes'] });
+    const after = readFileSync(join(ctx.root, 'ecosystem.config.cjs'), 'utf8');
+    expect(after).toMatch(/name: 'mcctl-api',\n {6}kill_timeout: 130000,/);
+    expect(after.match(/kill_timeout/g)).toHaveLength(1);
+  });
+
+  it('restores the file and does not restart when the edit fails verification', () => {
+    // the first name line is inside a block comment, so the edit lands in the comment
+    const eco =
+      "module.exports = {\n  apps: [\n    /*\n      name: 'mcctl-api',\n    */\n    {\n      name: 'mcctl-api',\n      script: 'a.js',\n    },\n  ],\n};\n";
+    put(join(ctx.root, 'ecosystem.config.cjs'), eco);
+    const r = run({ args: ['--yes'] });
+    expect(readFileSync(join(ctx.root, 'ecosystem.config.cjs'), 'utf8')).toBe(eco);
+    expect(calls()).not.toMatch(/console service restart/);
+    expect(r.out).toMatch(/\[failed\] Step 5/);
+    expect(r.code).toBe(1);
+  });
+
+  it('does not edit an ecosystem file that is a symbolic link', () => {
+    const real = join(ctx.base, 'real-eco.cjs');
+    put(real, ECOSYSTEM);
+    rmSync(join(ctx.root, 'ecosystem.config.cjs'));
+    spawnSync('ln', ['-s', real, join(ctx.root, 'ecosystem.config.cjs')]);
+    const r = run({ args: ['--yes'] });
+    expect(readFileSync(real, 'utf8')).toBe(ECOSYSTEM);
+    expect(r.out).toMatch(/symbolic link/);
+  });
+
+  it('skips the ecosystem step when the file cannot be loaded', () => {
+    put(join(ctx.root, 'ecosystem.config.cjs'), 'module.exports = {{{\n');
+    const r = run({ args: ['--yes'] });
+    expect(r.out).toMatch(/cannot load ecosystem\.config\.cjs/);
+    expect(calls()).not.toMatch(/console service restart/);
+  });
+
+  it('stops when the folder is not a platform root', () => {
+    rmSync(join(ctx.root, 'docker-compose.yml'));
+    rmSync(join(ctx.root, '.env'));
+    const r = run({ args: ['--yes'] });
+    expect(r.code).not.toBe(0);
+    expect(r.out).toMatch(/not a platform root/);
+    expect(calls()).not.toMatch(/mcctl update/);
+  });
+
+  it('exits 1 when any step failed', () => {
+    const r = run({ args: ['--yes'], env: { FAKE_RESTART_FAIL: '1' } });
+    expect(r.out).toMatch(/\[failed\] Step 5/);
+    expect(r.code).toBe(1);
+  });
+
+  it('retries the API health check', () => {
+    const r = run({ args: ['--yes'], env: { FAKE_CURL_FAIL_FIRST: '2' } });
+    expect(r.code).toBe(0);
+    expect(calls().match(/^curl /gm)).toHaveLength(3);
+    const f = run({ args: ['--yes', '--skip-update'], env: { FAKE_CURL_FAIL_FIRST: '99' } });
+    expect(f.code).toBe(1);
+  });
+
+  it('copies a broken symbolic link as a link and goes on', () => {
+    rmSync(join(ctx.root, 'servers/compose.yml'));
+    spawnSync('ln', ['-s', '/no/such/target', join(ctx.root, 'servers/compose.yml')]);
+    const r = run({ args: ['--yes'] });
+    expect(r.code).toBe(0);
+    const copy = join(backupDir(), 'servers/compose.yml');
+    expect(lstatSync(copy).isSymbolicLink()).toBe(true);
+  });
+
+  it('runs nothing when the download is cut inside the last line', () => {
+    const text = readFileSync(SCRIPT, 'utf8');
+    const lastLine = text.trimEnd().split('\n').pop()!;
+    const head = text.slice(0, text.lastIndexOf(lastLine));
+    for (const cut of ['{ main', '{ main "$@"', '{ main "$@";', '{ main "$@"; exit $?;']) {
+      const r = spawnSync('bash', ['-s', '--', '--yes', '--root', ctx.root], {
+        input: head + cut,
+        encoding: 'utf8',
+        env: { PATH: `${join(ctx.fake, 'bin')}:${process.env.PATH}`, HOME: ctx.home, TMPDIR: ctx.tmp, FAKE_DIR: ctx.fake },
+      });
+      expect(r.status, cut).not.toBe(0);
+    }
+    expect(calls()).toBe('');
+  });
+
+  it('says the upgrade did not finish when it stopped early', () => {
+    const r = run({ args: ['--yes'], env: { FAKE_UPDATE_FAIL: '1' } });
+    expect(r.out).toMatch(/did not finish/);
+    expect(r.out).not.toContain('Still to do by hand');
+  });
+
+  it('labels the dry-run preview as the v2 CLI plan', () => {
+    const r = run({ args: ['--dry-run'] });
+    expect(r.out).toContain('plan of the v2 CLI installed now');
   });
 });
