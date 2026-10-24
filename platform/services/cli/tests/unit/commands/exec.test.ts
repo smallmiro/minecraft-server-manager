@@ -19,8 +19,15 @@ beforeEach(() => {
   writeFileSync(join(root, 'docker-compose.yml'), 'services: {}\n');
   out = '';
   err = '';
-  vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => ((out += String(chunk)), true));
-  vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => ((err += String(chunk)), true));
+  // Like a terminal: take the chunk and call back
+  const capture = (append: (s: string) => void) =>
+    ((chunk: unknown, cb?: () => void) => {
+      append(String(chunk));
+      cb?.();
+      return true;
+    }) as typeof process.stdout.write;
+  vi.spyOn(process.stdout, 'write').mockImplementation(capture((s) => (out += s)));
+  vi.spyOn(process.stderr, 'write').mockImplementation(capture((s) => (err += s)));
 });
 
 afterEach(() => {
@@ -44,6 +51,35 @@ describe('execCommand', () => {
     expect((server as ServerName).value).toBe('alpha');
     expect(args).toEqual(['list']);
     expect(out).toBe('There are 0 of a max 20 players online:\n');
+  });
+
+  it('returns only after the output is written, so process.exit does not cut a piped reply (#760 review)', async () => {
+    const consolePort = consoleReturning({ exitCode: 0, stdout: 'big reply\n', stderr: 'warn\n' });
+    const flush: Array<() => void> = [];
+    // A pipe: write() queues the chunk and calls back later
+    vi.mocked(process.stdout.write).mockImplementation(((_chunk: unknown, cb?: () => void) => {
+      if (cb) flush.push(cb);
+      return false;
+    }) as typeof process.stdout.write);
+    vi.mocked(process.stderr.write).mockImplementation(((_chunk: unknown, cb?: () => void) => {
+      if (cb) flush.push(cb);
+      return false;
+    }) as typeof process.stderr.write);
+
+    let done = false;
+    const running = execCommand({ root, serverName: 'alpha', command: ['banlist'], console: consolePort }).then((code) => {
+      done = true;
+      return code;
+    });
+    await vi.waitFor(() => expect(flush.length).toBeGreaterThan(0));
+    await new Promise((r) => setTimeout(r, 10));
+    expect(done).toBe(false);
+
+    while (!done) {
+      flush.splice(0).forEach((cb) => cb());
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    expect(await running).toBe(0);
   });
 
   it('accepts the container name form (mc-<server>)', async () => {

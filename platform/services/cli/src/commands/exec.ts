@@ -38,7 +38,12 @@ export async function execCommand(options: ExecCommandOptions): Promise<number> 
 
   const consolePort = options.console ?? getContainer(options.root).serverConsolePort;
   const result = await consolePort.command(serverOfContainer(getContainerName(options.serverName)), options.command);
-  if (result.stdout) process.stdout.write(result.stdout);
-  if (result.stderr) process.stderr.write(result.stderr);
+  // The caller exits right after; wait until a pipe has taken the whole reply
+  if (result.stdout) await write(process.stdout, result.stdout);
+  if (result.stderr) await write(process.stderr, result.stderr);
   return result.exitCode;
+}
+
+function write(stream: NodeJS.WriteStream, text: string): Promise<void> {
+  return new Promise((resolve) => stream.write(text, () => resolve()));
 }

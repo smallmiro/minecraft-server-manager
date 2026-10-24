@@ -116,8 +116,8 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 |-----------|---------|
 | `lib/rcon.ts` `isContainerRunning` | `runtime.getStatusAsync`. `paused`, `restarting`도 실행 중으로 본다(`{{.State.Running}}`와 같은 의미) |
 | `lib/rcon.ts` `execRconWithOutput` | `console.command`. 출력은 `stdout \|\| stderr` 그대로, argv에 `--`가 붙는다 |
-| `mcctl exec` (`ShellExecutor.execRcon`) | `console.command`. 출력을 스트리밍하지 않고 명령이 끝난 뒤 출력한다. `execRcon`은 지웠다 |
-| `lib/prompts/server-select.ts` | `runtime.list()`와 서버별 `getStatus`. paused는 계속 실행 중으로 본다. 선택지는 이름순으로 나온다 |
+| `mcctl exec` (`ShellExecutor.execRcon`) | `console.command`. 출력을 스트리밍하지 않고 명령이 끝난 뒤 stdout, stderr 순으로 출력하며, 다 쓴 뒤에 종료한다. 시그널로 끝난 `docker exec`는 이제 1로 끝난다(예전 0). `execRcon`은 지웠다 |
+| `lib/prompts/server-select.ts` | `runtime.list()`와 서버별 `getStatus`. paused는 계속 실행 중으로 본다. 선택지는 이름순으로 나오고, 정확히 `mc-router`만 뺀다(예전에는 `router2` 같은 서버도 숨겨졌다) |
 | `commands/migrate.ts` `docker stop` | `runtime.stop`. 실패하면 같은 메시지로 throw한다 |
 | `lib/shell.ts`(`ShellExecutor`), `init.ts` 네트워크·라우터 재시작, `upgrade.ts` 라우터 재생성 | 런타임 포트 대상이 아니다. 동작을 바꾸지 않고 `infrastructure/ShellExecutor.ts`(`lib/shell.ts`가 다시 export), `infrastructure/compose-project.ts`로 옮겼다 |
 | `update.ts`, `console/init.ts`의 npm, `pm2-utils.ts`, `console/service.ts`의 pm2 | `infrastructure/npm.ts`, `infrastructure/pm2-cli.ts`로 옮겼다 |

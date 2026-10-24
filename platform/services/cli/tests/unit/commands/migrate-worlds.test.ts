@@ -43,9 +43,16 @@ afterEach(() => {
 describe('migrate worlds (runtime port)', () => {
   it('stops a running server through the runtime port before moving its world', async () => {
     runtime.getStatusAsync.mockResolvedValue('running');
-    runtime.stop.mockResolvedValue({ success: true });
+    let finishStop!: () => void;
+    runtime.stop.mockReturnValue(new Promise((resolve) => (finishStop = () => resolve({ success: true }))));
 
-    const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+    const migrating = migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+    await vi.waitFor(() => expect(runtime.stop).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 20));
+    // Not moved while the stop is still running
+    expect(existsSync(join(root, 'servers', 'alpha', 'data', 'world', 'level.dat'))).toBe(true);
+    finishStop();
+    const code = await migrating;
 
     expect(code).toBe(0);
     const stopped = runtime.stop.mock.calls[0]![0] as ServerName;
