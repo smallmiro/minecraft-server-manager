@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import { HostnameDisplay } from '@/components/common';
+import { startLoading } from '@/components/providers';
 import { BentoPanel, type BentoAccent } from '@/components/bento';
 import { useCopy } from '@/hooks/useCopy';
 import { useRestartServer, useStartServer, useStopServer } from '@/hooks/useMcctl';
@@ -227,6 +228,7 @@ export function ServerOverviewRow({
                   size="small"
                   component={NextLink}
                   href={`/servers/${encodeURIComponent(name)}/console`}
+                  onClick={() => startLoading()}
                   aria-label={`Console ${name}`}
                 >
                   <ConsoleIcon fontSize="small" />
@@ -275,11 +277,12 @@ export function ServerOverviewRow({
         </Box>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, minWidth: 0 }}>
+      {/* Clicks here (incl. HostnameDisplay's popover, which bubbles through the portal) must not open the server */}
+      <Box onClick={stopPropagation} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, minWidth: 0 }}>
         <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
           <HostnameDisplay hostname={server.hostname} fontSize={12} />
         </Box>
-        {hostname && (
+        {hostname !== '-' && (
           <Tooltip title={copyLabel}>
             <IconButton
               size="small"

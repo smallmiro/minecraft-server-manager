@@ -25,6 +25,9 @@ vi.mock('@/hooks/useMcctl', () => ({
   useRestartServer: () => hooks.restart,
 }));
 
+const providers = vi.hoisted(() => ({ startLoading: vi.fn() }));
+vi.mock('@/components/providers', () => providers);
+
 vi.mock('@/hooks/useCopy', () => ({
   useCopy: () => hooks.copy,
 }));
@@ -41,6 +44,7 @@ beforeEach(() => {
   }
   hooks.copy.status = 'idle';
   hooks.copy.copy.mockReset();
+  providers.startLoading.mockReset();
 });
 
 const mockServers: ServerSummary[] = [
@@ -191,6 +195,19 @@ describe('ServerOverview', () => {
       expect(screen.queryByText('server1')).not.toBeInTheDocument();
     });
 
+    it('leaves unknown (e.g. restarting) servers out of Running and Stopped', () => {
+      const servers: ServerSummary[] = [
+        ...mockServers,
+        { name: 'server6', container: 'mc-server6', status: 'unknown', health: 'unknown', hostname: 'server6.local' },
+      ];
+      renderWithTheme(<ServerOverview servers={servers} isLoading={false} />);
+
+      expect(screen.getByRole('button', { name: 'All 4' })).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Stopped 1' }));
+
+      expect(screen.queryByText('server6')).not.toBeInTheDocument();
+    });
+
     it('uses the SSE status overlay for counts and filtering', () => {
       const statusMap = {
         server2: { status: 'running', health: 'healthy', timestamp: '2026-01-01T00:00:00.000Z' },
@@ -295,6 +312,7 @@ describe('ServerOverview', () => {
       fireEvent.click(screen.getByRole('link', { name: 'Console server1' }));
 
       expect(onServerClick).not.toHaveBeenCalled();
+      expect(providers.startLoading).toHaveBeenCalled();
     });
 
     it.each([
@@ -413,6 +431,25 @@ describe('ServerOverview', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Copy hostname of server1' }));
 
       expect(hooks.copy.copy).toHaveBeenCalledWith('server1.local');
+      expect(onServerClick).not.toHaveBeenCalled();
+    });
+
+    it('offers no copy button when the server has no hostname', () => {
+      renderWithTheme(
+        <ServerOverview servers={[{ ...mockServers[0], hostname: '-' }]} isLoading={false} />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Copy hostname of server1' })).not.toBeInTheDocument();
+    });
+
+    it('does not navigate when the hostname area is clicked', () => {
+      const onServerClick = vi.fn();
+      renderWithTheme(
+        <ServerOverview servers={[mockServers[0]]} isLoading={false} onServerClick={onServerClick} />
+      );
+
+      fireEvent.click(screen.getByText('server1.local'));
+
       expect(onServerClick).not.toHaveBeenCalled();
     });
 
