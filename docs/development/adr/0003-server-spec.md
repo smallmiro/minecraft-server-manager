@@ -141,7 +141,7 @@ export interface ServerSpecRenderer {
 }
 ```
 
-`FileServerSpecRepository` (the `IServerSpecRepository` adapter) takes a renderer in its constructor. Application code never calls a renderer, so it is not a port. `DockerComposeRenderer` is implemented now. `KubernetesManifestRenderer` (StatefulSet, Service, PVC from `world.storage`) is only this interface until #641, which adds the renderer plus whatever storing the spec and applying manifests need in a k8s repository adapter; ADR-0001's `apply(spec)` is not needed. Removal (#735) drops every include path inside `servers/<n>/` with `removeIncludeEntry` (and `include:` itself when no entry is left) before moving its world, and deletes `servers/<n>` after; see [ADR-0001 S7](0001-container-runtime-ports.md#script-removal-s7-delete-serversh-735).
+`FileServerSpecRepository` (the `IServerSpecRepository` adapter) takes a renderer in its constructor. Application code never calls a renderer, so it is not a port. `DockerComposeRenderer` is implemented now. `KubernetesManifestRenderer` (StatefulSet, Service, PVC from `world.storage`) is only this interface until #641, which adds the renderer plus whatever storing the spec and applying manifests need in a k8s repository adapter; ADR-0001's `apply(spec)` is not needed. Removal (#735) drops the generated include entry `<n>/docker-compose.yml` with `removeIncludeEntry` (and `include:` itself when no entry is left) before moving its world, refusing a hand-written entry for the server, and deletes `servers/<n>` after; see [ADR-0001 S7](0001-container-runtime-ports.md#script-removal-s7-delete-serversh-735).
 
 **Docker outputs**
 
