@@ -41,10 +41,11 @@
 |------|--------|-----------|
 | `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `list({running?})`, `getLogs`, `getStats`, `getUptime` (docker/index.ts 리프) | 동기 |
 | | `getStatusAsync(name)` (#665, 요청 경로용 `getStatus`) | 비동기 |
+| | `getStatsAsync(name)` (#764, 요청 경로용 `getStats`, 실패나 타임아웃이면 `null`) | 비동기 |
 | | `start`, `stop`, `restart` → `RuntimeActionResult` (API `executeServerAction`, `mcctl.sh`) | 비동기, reject하지 않음 |
 | | `remove(name)`(#735): 워크로드를 정지하고 삭제한다. 없으면 성공, 런타임을 조회할 수 없으면 실패. 서버 데이터는 런타임 담당이 아니다 (`delete-server.sh` 1단계) | 비동기, reject하지 않음 |
 | | `readLogs(name, {since, tail})` (API 세션 수집기), `followLogs(name, onChunk, signal, {tail?, follow?, onExit?})` (API SSE 로그) | 비동기 |
-| `IServerConsolePort` | `listPlayers` (`getOnlinePlayers`), `command(name, args)` (rcon-cli 호출 4곳), `getEndpoint` (CLI `mcctl rcon`) | 비동기 |
+| `IServerConsolePort` | `listPlayers` (`getOnlinePlayers`, #764부터 `execFile`을 기다려 이벤트 루프를 막지 않음, 타임아웃 5초 그대로), `command(name, args)` (rcon-cli 호출 4곳), `getEndpoint` (CLI `mcctl rcon`) | 비동기 |
 | `IRouterStatusPort` | `getHealth()` (`getRouterHealthViaApi`), `getHostnames(name)` (`getContainerHostname`) | 동기 |
 | `IPlayitAgentPort` | `start()`, `stop()` | 비동기 |
 | `IHostnameRegistrarPort` | `getStatus()` (`getAvahiStatus`) | 동기 |
@@ -178,7 +179,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 
 | 포트 | 이전(D1) | 이후(#665) |
 |------|----------|-----------|
-| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs`가 `name: string`을 받음 | `name: ServerName \| string`. `list()`는 그대로이고 여전히 컨테이너 이름을 돌려준다. `getStatusAsync(name): Promise<ContainerStatus>`를 추가했다(아래 저장소 항목) |
+| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs`가 `name: string`을 받음 | `name: ServerName \| string`. `list()`는 그대로이고 여전히 컨테이너 이름을 돌려준다. `getStatusAsync(name): Promise<ContainerStatus>`를 추가했고, #764에서 `getStatsAsync(name): Promise<ContainerStats \| null>`를 추가했다 |
 | `IServerConsolePort` | `listPlayers`, `command`, `getEndpoint`가 `name: string`을 받음 | `name: ServerName \| string` |
 | `IRouterStatusPort` | `getHostnames(name: string)` | `getHostnames(name: ServerName \| string)` |
 | `IRconPort` | `getEntityPosition(container: string, player)` | `getEntityPosition(server: ServerName \| string, player)` |

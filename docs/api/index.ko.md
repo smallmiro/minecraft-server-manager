@@ -218,7 +218,7 @@ curl -H "X-API-Key: $(cat ~/minecraft-servers/api.key)" \
 
 | 메소드 | 엔드포인트 | 설명 |
 |--------|-----------|------|
-| GET | `/api/servers` | 전체 서버 목록 |
+| GET | `/api/servers` | 전체 서버 목록 (`?include=summary`로 플레이어, stats, 합계 추가) |
 | GET | `/api/servers/:name` | 서버 상세 정보 |
 | GET | `/api/servers/:name/logs` | 서버 로그 (SSE 지원) |
 | POST | `/api/servers/:name/exec` | RCON 명령 실행 |

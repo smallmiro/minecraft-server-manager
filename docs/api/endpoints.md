@@ -27,6 +27,12 @@ Check API server health status.
 
 List all Minecraft servers.
 
+**Query Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `include` | string | Optional. `summary` adds `type`, `version`, `memory`, `players`, `stats` per server and a top-level `totals`. Any other value returns `400`. |
+
 **Response:**
 
 ```json
@@ -43,6 +49,49 @@ List all Minecraft servers.
   "total": 1
 }
 ```
+
+**Response with `include=summary`:**
+
+The default response above is unchanged when `include` is omitted.
+
+```json
+{
+  "servers": [
+    {
+      "name": "survival",
+      "container": "mc-survival",
+      "status": "running",
+      "health": "healthy",
+      "hostname": "survival.192.168.1.100.nip.io",
+      "type": "PAPER",
+      "version": "1.21.1",
+      "memory": "4G",
+      "players": {
+        "online": 3,
+        "max": 20,
+        "players": ["Player1", "Player2", "Player3"]
+      },
+      "stats": {
+        "memoryUsage": 2254857830,
+        "memoryLimit": 4294967296
+      }
+    }
+  ],
+  "total": 1,
+  "totals": {
+    "playersOnline": 3,
+    "playersMax": 20,
+    "running": 1
+  }
+}
+```
+
+!!! note "Summary behavior"
+    - `type`, `version`, and `memory` come from the server's `config.env`.
+    - `players` and `stats` are returned only for running servers. `players` is `null` when the RCON query fails or times out. `stats` (`memoryUsage`, `memoryLimit`, in bytes) is omitted when `docker stats` does not answer in time.
+    - RCON and stats run in parallel for running servers with a timeout of about 2 seconds each, so one slow server only gets `players: null`.
+    - Results are cached for about 10 seconds per server.
+    - `totals.playersOnline` and `totals.playersMax` sum only the servers whose players are known. `totals.running` is the number of running servers.
 
 **Status Values:**
 
