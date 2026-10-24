@@ -1,8 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -11,14 +9,15 @@ import Skeleton from '@mui/material/Skeleton';
 import PublicIcon from '@mui/icons-material/Public';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { usePlayitStatus } from '@/hooks/usePlayit';
+import { BentoPanel } from '@/components/bento';
 
 export function PlayitSummaryCard() {
   const { data, isLoading } = usePlayitStatus();
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent>
+      <BentoPanel sx={{ height: '100%' }}>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Skeleton variant="circular" width={20} height={20} />
@@ -28,15 +27,15 @@ export function PlayitSummaryCard() {
           </Box>
           <Skeleton variant="text" width="50%" height={32} />
           <Skeleton variant="text" width="70%" />
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   if (!data?.enabled) {
     return (
-      <Card>
-        <CardContent>
+      <BentoPanel sx={{ height: '100%' }}>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <PublicIcon sx={{ fontSize: 20, color: 'text.secondary' }} />
@@ -58,8 +57,8 @@ export function PlayitSummaryCard() {
           >
             Manage
           </Button>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
@@ -68,8 +67,8 @@ export function PlayitSummaryCard() {
   const configuredServers = data.servers.filter((s) => s.playitDomain).length;
 
   return (
-    <Card>
-      <CardContent>
+    <BentoPanel accent={isRunning ? 'success' : 'neutral'} sx={{ height: '100%' }}>
+      <Box sx={{ p: 2.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <PublicIcon sx={{ fontSize: 20, color: 'primary.main' }} />
@@ -99,7 +98,7 @@ export function PlayitSummaryCard() {
         >
           Manage
         </Button>
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
