@@ -192,7 +192,15 @@ describe('RoutingTable', () => {
     it('starts the server by name when clicked', () => {
       renderTable();
       fireEvent.click(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' }));
-      expect(mockStart).toHaveBeenCalledWith('creative');
+      expect(mockStart).toHaveBeenCalledWith('creative', expect.anything());
+    });
+
+    it('shows why a start failed instead of failing silently', async () => {
+      mockStart.mockImplementation((_name, opts) => opts?.onError?.(new Error('Forbidden: manage permission required')));
+      renderTable();
+      fireEvent.click(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' }));
+      expect(await within(rowOf('creative.local')).findByText('Start failed')).toBeInTheDocument();
+      expect(within(rowOf('creative.local')).getByLabelText(/Forbidden: manage permission required/)).toBeInTheDocument();
     });
 
     it('does not bubble the click to the row', () => {
@@ -252,7 +260,7 @@ describe('RoutingTable', () => {
       expect(within(item).getByRole('link', { name: 'Open a' })).toBeInTheDocument();
       expect(within(item).getByText('Not routed')).toBeInTheDocument();
       fireEvent.click(within(item).getByRole('button', { name: 'Wake a' }));
-      expect(mockStart).toHaveBeenCalledWith('a');
+      expect(mockStart).toHaveBeenCalledWith('a', expect.anything());
     });
   });
 });

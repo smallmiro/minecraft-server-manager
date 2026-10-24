@@ -136,6 +136,8 @@ export function useStartServer() {
     onSuccess: (_, name) => {
       queryClient.invalidateQueries({ queryKey: ['servers'] });
       queryClient.invalidateQueries({ queryKey: ['servers', name] });
+      // Routing rows show the server status too (Sleeping -> Running)
+      queryClient.invalidateQueries({ queryKey: ['router-status'] });
     },
   });
 }

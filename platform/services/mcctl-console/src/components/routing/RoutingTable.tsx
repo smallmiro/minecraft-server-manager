@@ -118,6 +118,7 @@ function StatusCell({ route }: { route: RouteInfo }) {
 // One hook instance per row, so only the row being started shows a pending state.
 function RowActions({ route, serverName }: { route: RouteInfo; serverName: string }) {
   const startServer = useStartServer();
+  const [startError, setStartError] = useState<string | null>(null);
   const label = route.autoScaleUp === true ? 'Wake' : 'Start';
   const stop = (event: { stopPropagation: () => void }) => event.stopPropagation();
 
@@ -133,11 +134,23 @@ function RowActions({ route, serverName }: { route: RouteInfo; serverName: strin
           startIcon={startServer.isPending ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />}
           onClick={(event) => {
             stop(event);
-            startServer.mutate(serverName);
+            setStartError(null);
+            startServer.mutate(serverName, { onError: (error) => setStartError(error.message) });
           }}
         >
           {label}
         </Button>
+      )}
+      {startError && (
+        <Tooltip title={startError}>
+          <Chip
+            label="Start failed"
+            size="small"
+            color="error"
+            variant="outlined"
+            aria-label={`Start failed: ${startError}`}
+          />
+        </Tooltip>
       )}
       <Tooltip title="Edit hostnames">
         <IconButton
