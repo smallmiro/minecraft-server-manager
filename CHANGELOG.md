@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Console: sudo password when deleting a server** (#761) - The server delete dialog has the same optional **Sudo Password** field as the create dialog. When filled in, it is sent in the `DELETE /api/servers/:name` body so the API can remove the server's `<name>.local` entry from `/etc/avahi/hosts` on hosts without passwordless sudo; left empty, no body is sent and the API tries `sudo -n`. If the hostname could not be removed, the dialog shows the API's warning before going back to the server list. The password is kept only in the dialog and cleared when it closes.
+
 ## [3.0.2] - 2026-10-24
 
 > **Upgrade notes (v3.0.2).** From v3.0.x run `mcctl update`; from v2.x use `upgrade-v3.sh` (served from `main`).
