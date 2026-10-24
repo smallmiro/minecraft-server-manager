@@ -381,7 +381,8 @@ describe('createWorld with a server', () => {
     expect(shell.setServerConfig).not.toHaveBeenCalled();
   });
 
-  test.each(['x\nMODS=http://evil/x.jar', '"" MODS=x', 'a\u2028b'])(
+  // seed$VAR\ needs quotes, and 'seed$VAR\' never closes for Compose (#675)
+  test.each(['x\nMODS=http://evil/x.jar', '"" MODS=x', 'a\u2028b', 'seed$VAR\\'])(
     'refuses seed %j before creating the directory (#726)',
     async (seed) => {
       const { useCase, port, worldRepo } = setup();

@@ -194,7 +194,7 @@ export class PlatformSettingsService {
       try {
         serializeEnvValue(value);
       } catch {
-        errors.push({ key, message: 'Value contains unsupported characters (quote, CR, LF or NUL)' });
+        errors.push({ key, message: 'Value contains unsupported characters (quote, CR, LF or NUL) or ends with a backslash' });
         continue;
       }
       if (values.get(key) !== value) {

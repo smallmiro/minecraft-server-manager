@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CreateServerUseCase, ServerStartError } from '../src/application/use-cases/CreateServerUseCase.js';
-import { Paths, parseEnvDocument } from '../src/utils/index.js';
+import { EnvValueError, Paths, parseEnvDocument } from '../src/utils/index.js';
 import { McVersion, Memory, ServerName, ServerType, WorldOptions } from '../src/domain/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ConfigEnvWorldAssignmentAdapter } from '../src/infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.js';
@@ -134,6 +134,15 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
     writeFileSync(file('compose.yml'), 'include: []\n');
     await useCase().executeWithConfig({ name: 'beta', version: '1.21.1' }, run);
     expect(started).toEqual(['mc-beta']);
+  });
+
+  it('refuses a seed config.env cannot hold and leaves nothing behind (#675)', async () => {
+    // Needs quotes for the $, and 'seed$VAR\' would not close for Compose
+    await expect(
+      useCase().executeWithConfig({ name: 'beta', version: '1.21.1', seed: 'seed$VAR\\' }, run)
+    ).rejects.toBeInstanceOf(EnvValueError);
+    expect(existsSync(file('beta'))).toBe(false);
+    expect(existsSync(file('compose.yml'))).toBe(false);
   });
 
   it.each(['24w14a', '1.20.5-rc1'])('writes a snapshot or pre-release version (%s) as given', async (version) => {

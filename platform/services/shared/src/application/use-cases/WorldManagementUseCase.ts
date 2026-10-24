@@ -17,7 +17,7 @@ import type {
 } from '../ports/index.js';
 import { checkConfigEnvChange, checkPlatformEnvChange, checkServerStopped } from './checkServerStopped.js';
 import { formatWorldBytes } from '../../utils/index.js';
-import { assertEnvFileValue } from '../../utils/env-file.js';
+import { applyEnvChanges, assertEnvFileValue } from '../../utils/env-file.js';
 import {
   ServerName,
   WORLD_NAME_PATTERN,
@@ -38,7 +38,10 @@ const NO_ASSIGNMENTS: WorldAssignmentSnapshot = { assignments: [], undetermined:
 /** Why `seed` cannot be a config.env SEED value, or null. */
 function invalidSeed(seed: string | undefined): Error | null {
   try {
-    if (seed) assertEnvFileValue('SEED', seed);
+    if (seed) {
+      assertEnvFileValue('SEED', seed);
+      applyEnvChanges('', { set: { SEED: seed } }, { raw: true }); // what the config.env writer refuses
+    }
     return null;
   } catch (error) {
     return error as Error;
