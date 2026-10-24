@@ -472,14 +472,41 @@ Get mc-router status and routing information.
       {
         "hostname": "survival.192.168.1.100.nip.io",
         "target": "mc-survival:25565",
-        "serverStatus": "running"
+        "serverStatus": "running",
+        "autoScaleUp": true,
+        "autoScaleDown": true,
+        "discoveredByRouter": true
       },
       {
         "hostname": "creative.192.168.1.100.nip.io",
         "target": "mc-creative:25565",
-        "serverStatus": "exited"
+        "serverStatus": "exited",
+        "autoScaleUp": true,
+        "autoScaleDown": false,
+        "discoveredByRouter": true
       }
-    ]
+    ],
+    "image": "itzg/mc-router:1.47.1",
+    "autoScale": {
+      "up": true,
+      "down": true,
+      "downAfter": "10m",
+      "asleepMotd": "§e§lServer is sleeping§r\\n§7Connect to wake up!"
+    },
+    "resolver": {
+      "hostIp": "192.168.1.100",
+      "hostIps": ["192.168.1.100"]
+    }
+  },
+  "avahi": {
+    "name": "avahi-daemon",
+    "status": "running",
+    "type": "system"
+  },
+  "playit": {
+    "enabled": false,
+    "agentRunning": false,
+    "secretKeyConfigured": false
   }
 }
 ```
@@ -489,10 +516,177 @@ Get mc-router status and routing information.
 | `status` | Router container status |
 | `health` | Health check status |
 | `port` | External listening port |
+| `uptime` / `uptimeSeconds` | Router uptime as a display string and in seconds (optional) |
 | `mode` | Routing mode (auto-scale enabled) |
 | `routes` | List of hostname-to-server mappings |
+| `image` | Router container image (optional) |
+| `autoScale` | Global auto-scale settings of the router container (optional) |
+| `resolver` | Host addresses used for `<server>.<ip>.nip.io` hostnames (optional) |
+| `avahi` | `avahi-daemon` status (optional) |
+| `playit` | playit.gg summary: `enabled`, `agentRunning`, `secretKeyConfigured`. Omitted when the playit status cannot be read |
+
+**`router.autoScale`:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `up` | boolean | Global `AUTO_SCALE_UP`: start a stopped server when a client connects. A missing or invalid value is `false` |
+| `down` | boolean | Global `AUTO_SCALE_DOWN`: stop an idle server. A missing or invalid value is `false` |
+| `downAfter` | string | `AUTO_SCALE_DOWN_AFTER` as written (Go duration, for example `10m`). Absent when not set |
+| `asleepMotd` | string | `AUTO_SCALE_ASLEEP_MOTD` as written; may contain a literal `\n` and `§` color codes. Absent when not set |
+
+**`router.resolver`:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `hostIps` | string[] | Host addresses, using the same rule as server creation: the comma-separated `HOST_IPS` / `HOST_IP` lists in `.env`, else the probed host address |
+| `hostIp` | string | The first entry of `hostIps`. Absent when no address is known |
+
+**`router.routes[]` optional fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `autoScaleUp` | boolean | The server's `mc-router.auto-scale-up` label if it parses as a boolean, else the router global. Always `false` while the global `AUTO_SCALE_UP` is off, because mc-router ignores stopped containers then |
+| `autoScaleDown` | boolean | The server's `mc-router.auto-scale-down` label if it parses as a boolean, else the router global |
+| `discoveredByRouter` | boolean | Whether mc-router lists this hostname in its management API (`127.0.0.1:25580` `/routes`) |
+
+When a field can be absent:
+
+- `discoveredByRouter` is absent for every route when mc-router is not running or its management API cannot be read.
+- While the global `AUTO_SCALE_UP` is off, stopped routes are not judged and have no `discoveredByRouter`, because mc-router ignores stopped containers in that mode. Running routes are still judged.
+- `autoScaleUp` / `autoScaleDown` are absent when they cannot be determined (no usable label and no known router global).
 
 ---
+
+### Router Restart
+
+#### POST /api/router/restart
+
+Restart the mc-router container by running `docker compose restart router`. Active player connections through the router are dropped while it restarts.
+
+Authentication follows the global API authentication. The request has no body.
+
+**Example:**
+
+```bash
+curl -X POST "http://localhost:5001/api/router/restart" \
+  -H "X-API-Key: mctk_xxx"
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "mc-router restarted"
+}
+```
+
+**Response (500):**
+
+```json
+{
+  "error": "InternalServerError",
+  "message": "Failed to restart mc-router"
+}
+```
+
+`message` carries the error reported by `docker compose` when it failed.
+
+An audit log entry is written for every request: action `router.restart`, status `success` or `failure`, target type `service`, target name `mc-router`.
+
+!!! note "Admin only in the console"
+    In the Web Console, `POST /api/router/restart` is a BFF route that requires the admin role (`requireAdmin`), and the restart button on the router page is shown to admins only.
+
+---
+
+### Router Log Stream (SSE)
+
+#### GET /api/router/logs/stream
+
+Follow the mc-router logs in real time (`docker logs -f mc-router`). Each log line becomes one `router-log` event.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `tail` | integer | 100 | Number of recent log lines to replay first. Clamped to 1..500; an empty or non-numeric value falls back to 100 |
+
+**Example:**
+
+```bash
+curl -N "http://localhost:5001/api/router/logs/stream?tail=50" \
+  -H "X-API-Key: mctk_xxx"
+```
+
+**Events:**
+
+| Event | Data | Description |
+|-------|------|-------------|
+| `connected` | `{ "timestamp": "..." }` | Sent once when the stream opens |
+| `router-log` | `RouterLogEvent` | One per log line |
+| `end` | `{ "code": 0, "error"?: "..." }` | The log process exited (`code` is `null` when it could not be run); the stream is closed after it |
+
+A `: heartbeat` comment is sent every 30 seconds. When the client disconnects, the server-side `docker logs -f mc-router` process is killed.
+
+```
+event: connected
+data: {"timestamp":"2026-10-24T09:12:03.418Z"}
+
+event: router-log
+data: {"ts":"2026-10-24T09:12:01Z","kind":"connect","hostname":"survival.192.168.1.100.nip.io","target":"mc-survival:25565","player":"Steve","raw":"time=\"2026-10-24T09:12:01Z\" level=info msg=\"Connecting to backend\" backendHostPort=\"mc-survival:25565\" player=Steve/069a79f4-44e9-4726-a5be-fca90e38aaf5 server=survival.192.168.1.100.nip.io"}
+```
+
+**`RouterLogEvent`:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `ts` | string | The log line's `time` field. Absent when the line is not in logfmt |
+| `kind` | string | `connect`, `wake`, `error` or `info` |
+| `hostname` | string | Hostname the client asked for. Only on `connect`, `wake` and `error` events, when present in the line |
+| `target` | string | Backend `host:port` the connection was routed to. Same conditions as `hostname` |
+| `player` | string | Player name. Only on login connections, not on status pings |
+| `raw` | string | The original log line |
+
+Kind mapping:
+
+| Condition | `kind` |
+|-----------|--------|
+| Log level `warning` or higher (`warning`, `error`, `fatal`, `panic`) | `error` |
+| Message `Connecting to backend` | `connect` |
+| Message `Scaling up backend server` or `Woke up backend server` | `wake` |
+| Any other line, including lines that cannot be parsed | `info` (only `raw`, plus `ts` when known) |
+
+---
+
+### Router Status Stream (SSE)
+
+#### GET /api/router/status/stream
+
+Stream the same payload as `GET /api/router/status`.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `interval` | integer | 5000 | Poll interval in milliseconds (1000..60000) |
+
+**Events:**
+
+| Event | Data | Description |
+|-------|------|-------------|
+| `router-status` | Same payload as `GET /api/router/status` | Sent immediately on connect, then only when the status changes |
+| `router-status-error` | `{ "timestamp": "..." }` | A poll failed. Clients should fall back to polling `GET /api/router/status`; the next good payload is sent again even if unchanged |
+
+- Changes that only affect `uptimeSeconds` are ignored. The displayed `uptime` string does count as a change.
+- Connections that use the same `interval` share one poll.
+- A `: heartbeat` comment is sent every 30 seconds.
+
+**Example:**
+
+```bash
+curl -N "http://localhost:5001/api/router/status/stream?interval=5000" \
+  -H "X-API-Key: mctk_xxx"
+```
 
 ### Player Management
 

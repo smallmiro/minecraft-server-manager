@@ -472,14 +472,41 @@ mc-router 상태와 라우팅 정보를 조회합니다.
       {
         "hostname": "survival.192.168.1.100.nip.io",
         "target": "mc-survival:25565",
-        "serverStatus": "running"
+        "serverStatus": "running",
+        "autoScaleUp": true,
+        "autoScaleDown": true,
+        "discoveredByRouter": true
       },
       {
         "hostname": "creative.192.168.1.100.nip.io",
         "target": "mc-creative:25565",
-        "serverStatus": "exited"
+        "serverStatus": "exited",
+        "autoScaleUp": true,
+        "autoScaleDown": false,
+        "discoveredByRouter": true
       }
-    ]
+    ],
+    "image": "itzg/mc-router:1.47.1",
+    "autoScale": {
+      "up": true,
+      "down": true,
+      "downAfter": "10m",
+      "asleepMotd": "§e§lServer is sleeping§r\\n§7Connect to wake up!"
+    },
+    "resolver": {
+      "hostIp": "192.168.1.100",
+      "hostIps": ["192.168.1.100"]
+    }
+  },
+  "avahi": {
+    "name": "avahi-daemon",
+    "status": "running",
+    "type": "system"
+  },
+  "playit": {
+    "enabled": false,
+    "agentRunning": false,
+    "secretKeyConfigured": false
   }
 }
 ```
@@ -489,10 +516,177 @@ mc-router 상태와 라우팅 정보를 조회합니다.
 | `status` | 라우터 컨테이너 상태 |
 | `health` | 헬스 체크 상태 |
 | `port` | 외부 리스닝 포트 |
+| `uptime` / `uptimeSeconds` | 라우터 가동 시간(표시용 문자열과 초 단위, 선택) |
 | `mode` | 라우팅 모드 (자동 스케일 활성화) |
 | `routes` | 호스트명-서버 매핑 목록 |
+| `image` | 라우터 컨테이너 이미지 (선택) |
+| `autoScale` | 라우터 컨테이너의 전역 자동 스케일 설정 (선택) |
+| `resolver` | `<server>.<ip>.nip.io` 호스트명에 쓰는 호스트 주소 (선택) |
+| `avahi` | `avahi-daemon` 상태 (선택) |
+| `playit` | playit.gg 요약: `enabled`, `agentRunning`, `secretKeyConfigured`. playit 상태를 읽지 못하면 생략됩니다 |
+
+**`router.autoScale`:**
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `up` | boolean | 전역 `AUTO_SCALE_UP`: 클라이언트가 접속하면 중지된 서버를 시작합니다. 값이 없거나 잘못되면 `false` |
+| `down` | boolean | 전역 `AUTO_SCALE_DOWN`: 유휴 서버를 중지합니다. 값이 없거나 잘못되면 `false` |
+| `downAfter` | string | `AUTO_SCALE_DOWN_AFTER`를 적은 그대로(Go duration, 예: `10m`). 설정하지 않으면 없음 |
+| `asleepMotd` | string | `AUTO_SCALE_ASLEEP_MOTD`를 적은 그대로. 문자 그대로의 `\n`과 `§` 색상 코드가 들어갈 수 있습니다. 설정하지 않으면 없음 |
+
+**`router.resolver`:**
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `hostIps` | string[] | 호스트 주소 목록. 서버 생성과 같은 규칙을 씁니다: `.env`의 `HOST_IPS` / `HOST_IP`(쉼표로 구분한 목록), 없으면 탐지한 호스트 주소 |
+| `hostIp` | string | `hostIps`의 첫 번째 항목. 알려진 주소가 없으면 없음 |
+
+**`router.routes[]` 선택 필드:**
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `autoScaleUp` | boolean | 서버의 `mc-router.auto-scale-up` 레이블이 boolean으로 해석되면 그 값, 아니면 라우터 전역 값. 전역 `AUTO_SCALE_UP`이 꺼져 있으면 mc-router가 중지된 컨테이너를 무시하므로 항상 `false` |
+| `autoScaleDown` | boolean | 서버의 `mc-router.auto-scale-down` 레이블이 boolean으로 해석되면 그 값, 아니면 라우터 전역 값 |
+| `discoveredByRouter` | boolean | mc-router가 관리 API(`127.0.0.1:25580` `/routes`)에 이 호스트명을 나열하는지 여부 |
+
+필드가 없을 수 있는 경우:
+
+- mc-router가 실행 중이 아니거나 관리 API를 읽을 수 없으면 모든 route에서 `discoveredByRouter`가 없습니다.
+- 전역 `AUTO_SCALE_UP`이 꺼져 있는 동안에는 mc-router가 중지된 컨테이너를 무시하므로, 중지된 route는 판정하지 않아 `discoveredByRouter`가 없습니다. 실행 중인 route는 계속 판정합니다.
+- `autoScaleUp` / `autoScaleDown`은 값을 알 수 없으면(쓸 수 있는 레이블도 없고 라우터 전역 값도 모르는 경우) 없습니다.
 
 ---
+
+### 라우터 재시작
+
+#### POST /api/router/restart
+
+`docker compose restart router`를 실행해 mc-router 컨테이너를 재시작합니다. 재시작하는 동안 라우터를 거치는 플레이어 연결이 끊어집니다.
+
+인증은 전역 API 인증을 따릅니다. 요청 본문은 없습니다.
+
+**예시:**
+
+```bash
+curl -X POST "http://localhost:5001/api/router/restart" \
+  -H "X-API-Key: mctk_xxx"
+```
+
+**응답 (200):**
+
+```json
+{
+  "success": true,
+  "message": "mc-router restarted"
+}
+```
+
+**응답 (500):**
+
+```json
+{
+  "error": "InternalServerError",
+  "message": "Failed to restart mc-router"
+}
+```
+
+실패했을 때 `message`에는 `docker compose`가 보고한 오류가 담깁니다.
+
+모든 요청에 감사 로그가 남습니다: action `router.restart`, status `success` 또는 `failure`, target type `service`, target name `mc-router`.
+
+!!! note "콘솔에서는 관리자 전용"
+    웹 콘솔에서 `POST /api/router/restart`는 관리자 역할을 요구하는(`requireAdmin`) BFF 라우트이며, 라우터 페이지의 재시작 버튼은 관리자에게만 보입니다.
+
+---
+
+### 라우터 로그 스트림 (SSE)
+
+#### GET /api/router/logs/stream
+
+mc-router 로그를 실시간으로 따라갑니다(`docker logs -f mc-router`). 로그 한 줄이 `router-log` 이벤트 하나가 됩니다.
+
+**쿼리 파라미터:**
+
+| 파라미터 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `tail` | integer | 100 | 먼저 재생할 최근 로그 줄 수. 1..500으로 보정되며, 비어 있거나 숫자가 아니면 100 |
+
+**예시:**
+
+```bash
+curl -N "http://localhost:5001/api/router/logs/stream?tail=50" \
+  -H "X-API-Key: mctk_xxx"
+```
+
+**이벤트:**
+
+| 이벤트 | 데이터 | 설명 |
+|--------|--------|------|
+| `connected` | `{ "timestamp": "..." }` | 스트림이 열릴 때 한 번 전송 |
+| `router-log` | `RouterLogEvent` | 로그 한 줄마다 하나 |
+| `end` | `{ "code": 0, "error"?: "..." }` | 로그 프로세스가 종료됨(실행하지 못하면 `code`는 `null`). 이후 스트림이 닫힙니다 |
+
+30초마다 `: heartbeat` 주석이 전송됩니다. 클라이언트가 연결을 끊으면 서버 쪽 `docker logs -f mc-router` 프로세스를 종료합니다.
+
+```
+event: connected
+data: {"timestamp":"2026-10-24T09:12:03.418Z"}
+
+event: router-log
+data: {"ts":"2026-10-24T09:12:01Z","kind":"connect","hostname":"survival.192.168.1.100.nip.io","target":"mc-survival:25565","player":"Steve","raw":"time=\"2026-10-24T09:12:01Z\" level=info msg=\"Connecting to backend\" backendHostPort=\"mc-survival:25565\" player=Steve/069a79f4-44e9-4726-a5be-fca90e38aaf5 server=survival.192.168.1.100.nip.io"}
+```
+
+**`RouterLogEvent`:**
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `ts` | string | 로그 줄의 `time` 필드. logfmt가 아닌 줄에는 없음 |
+| `kind` | string | `connect`, `wake`, `error`, `info` 중 하나 |
+| `hostname` | string | 클라이언트가 요청한 호스트명. `connect`, `wake`, `error` 이벤트에서 줄에 값이 있을 때만 |
+| `target` | string | 연결을 보낸 백엔드 `host:port`. `hostname`과 같은 조건 |
+| `player` | string | 플레이어 이름. 상태 핑이 아닌 로그인 연결에만 있음 |
+| `raw` | string | 원본 로그 줄 |
+
+`kind` 결정 규칙:
+
+| 조건 | `kind` |
+|------|--------|
+| 로그 레벨이 `warning` 이상(`warning`, `error`, `fatal`, `panic`) | `error` |
+| 메시지 `Connecting to backend` | `connect` |
+| 메시지 `Scaling up backend server` 또는 `Woke up backend server` | `wake` |
+| 그 밖의 줄(해석할 수 없는 줄 포함) | `info` (`raw`만, 알 수 있으면 `ts` 추가) |
+
+---
+
+### 라우터 상태 스트림 (SSE)
+
+#### GET /api/router/status/stream
+
+`GET /api/router/status`와 같은 페이로드를 스트리밍합니다.
+
+**쿼리 파라미터:**
+
+| 파라미터 | 타입 | 기본값 | 설명 |
+|----------|------|--------|------|
+| `interval` | integer | 5000 | 폴링 간격(밀리초, 1000..60000) |
+
+**이벤트:**
+
+| 이벤트 | 데이터 | 설명 |
+|--------|--------|------|
+| `router-status` | `GET /api/router/status`와 같은 페이로드 | 연결 즉시 전송하고, 이후에는 상태가 바뀔 때만 전송 |
+| `router-status-error` | `{ "timestamp": "..." }` | 폴링에 실패함. 클라이언트는 `GET /api/router/status` 폴링으로 전환해야 하며, 다음 정상 페이로드는 바뀌지 않았어도 다시 전송됩니다 |
+
+- `uptimeSeconds`만 바뀐 경우는 무시합니다. 표시용 `uptime` 문자열은 변경으로 칩니다.
+- 같은 `interval`을 쓰는 연결은 폴링 하나를 공유합니다.
+- 30초마다 `: heartbeat` 주석이 전송됩니다.
+
+**예시:**
+
+```bash
+curl -N "http://localhost:5001/api/router/status/stream?interval=5000" \
+  -H "X-API-Key: mctk_xxx"
+```
 
 ### 플레이어 관리
 
