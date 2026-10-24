@@ -43,6 +43,8 @@ export interface ServerSpecDeleteResult {
   deletedWorlds: string[];
   /** worlds/<level> exists and was left alone; it is no longer assigned. */
   keptWorld?: string;
+  /** servers/<n>/ is out of servers/compose.yml but could not be fully removed: what to clean up. */
+  warning?: string;
 }
 
 /**

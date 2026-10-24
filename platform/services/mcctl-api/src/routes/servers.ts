@@ -1097,7 +1097,12 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
 
       const warning =
-        hostname?.status === 'skipped' ? `mDNS hostname ${name}.local was not removed: ${hostname.reason}` : undefined;
+        [
+          world.warning,
+          hostname?.status === 'skipped' ? `mDNS hostname ${name}.local was not removed: ${hostname.reason}` : undefined,
+        ]
+          .filter(Boolean)
+          .join('; ') || undefined;
       return reply.send({
         success: true,
         server: name,

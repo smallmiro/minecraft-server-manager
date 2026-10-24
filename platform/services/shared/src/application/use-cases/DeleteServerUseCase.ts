@@ -258,6 +258,7 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
     spinner.stop('Server removed');
 
     for (const line of describeWorldOutcome(result, deleteWorld)) this.prompt.info(line);
+    if (result.warning) this.prompt.warn(result.warning);
     if (result.hostname?.status === 'skipped') {
       this.prompt.warn(`mDNS hostname ${name}.local was not removed: ${result.hostname.reason}`);
     }
