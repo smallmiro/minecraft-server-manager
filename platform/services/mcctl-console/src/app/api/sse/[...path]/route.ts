@@ -3,40 +3,91 @@
  * BFF layer for proxying SSE requests to mcctl-api
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { requireAuth, AuthError } from '@/lib/auth-utils';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Re-stream the upstream SSE body to the client.
+ * Build the mcctl-api URL: keep the client's query string (tail, interval, ...)
+ * and always force follow=true.
  */
-function createProxyStream(response: Response): ReadableStream<Uint8Array> {
+function buildTargetUrl(request: NextRequest, path: string[]): string {
+  const apiUrl = process.env.MCCTL_API_URL || 'http://localhost:5001';
+  const target = new URL(`${apiUrl}/api/${path.join('/')}`);
+  request.nextUrl.searchParams.forEach((value, key) => {
+    if (key !== 'follow') target.searchParams.append(key, value);
+  });
+  target.searchParams.set('follow', 'true');
+  return target.toString();
+}
+
+/**
+ * Link the client request to an upstream AbortController, so that a client
+ * disconnect closes the mcctl-api connection (which in turn stops e.g. the
+ * server side `docker logs -f`).
+ */
+function linkAbort(request: NextRequest): AbortController {
+  const upstream = new AbortController();
+  if (request.signal.aborted) {
+    upstream.abort();
+  } else {
+    request.signal.addEventListener('abort', () => upstream.abort(), { once: true });
+  }
+  return upstream;
+}
+
+function authErrorResponse(error: unknown): Response | null {
+  if (error instanceof AuthError) {
+    return NextResponse.json({ error: 'Unauthorized', message: error.message }, { status: error.statusCode });
+  }
+  return null;
+}
+
+/**
+ * Re-stream the upstream SSE body to the client. Cancelling the returned
+ * stream (client went away) cancels the upstream reader and aborts the fetch.
+ */
+function createProxyStream(response: Response, upstream: AbortController): ReadableStream<Uint8Array> {
+  const reader = response.body?.getReader();
+  let cancelled = false;
+
   return new ReadableStream({
     async start(controller) {
-      const reader = response.body?.getReader();
       if (!reader) {
         controller.close();
         return;
       }
 
       const decoder = new TextDecoder();
+      const encoder = new TextEncoder();
 
       try {
         while (true) {
           const { done, value } = await reader.read();
+          if (cancelled) return;
 
           if (done) {
             controller.close();
             break;
           }
 
-          // Decode and forward chunk
-          const chunk = decoder.decode(value, { stream: true });
-          controller.enqueue(new TextEncoder().encode(chunk));
+          controller.enqueue(encoder.encode(decoder.decode(value, { stream: true })));
         }
       } catch (error) {
+        if (cancelled || upstream.signal.aborted) return;
         console.error('SSE stream error:', error);
         controller.error(error);
+      }
+    },
+    async cancel() {
+      cancelled = true;
+      upstream.abort();
+      try {
+        await reader?.cancel();
+      } catch {
+        // upstream already gone
       }
     },
   });
@@ -52,10 +103,16 @@ export async function GET(
 ) {
   const { path } = params;
 
-  // Build target URL
-  const apiUrl = process.env.MCCTL_API_URL || 'http://localhost:5001';
-  const apiPath = path.join('/');
-  const targetUrl = `${apiUrl}/api/${apiPath}?follow=true`;
+  // Router logs contain player names and IPs: never stream without a session
+  try {
+    await requireAuth(await headers());
+  } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+    throw error;
+  }
+
+  const targetUrl = buildTargetUrl(request, path);
 
   // Get API key
   const apiKey = process.env.MCCTL_API_KEY || '';
@@ -63,19 +120,15 @@ export async function GET(
     return new Response('API key not configured', { status: 500 });
   }
 
-  // TODO: Get user context from session
-  // For now, we'll just proxy without user context
-  // const session = await auth.api.getSession({ headers: request.headers });
+  const upstream = linkAbort(request);
 
   try {
     // Fetch SSE stream from mcctl-api
     const response = await fetch(targetUrl, {
       headers: {
         'X-API-Key': apiKey,
-        // Add user context headers when auth is implemented
-        // 'X-User': session.user.name,
-        // 'X-Role': session.user.role,
       },
+      signal: upstream.signal,
     });
 
     if (!response.ok) {
@@ -91,7 +144,7 @@ export async function GET(
       return new Response('Invalid SSE response', { status: 500 });
     }
 
-    const stream = createProxyStream(response);
+    const stream = createProxyStream(response, upstream);
 
     return new Response(stream, {
       headers: {
@@ -117,16 +170,24 @@ export async function POST(
 ) {
   const { path } = params;
 
+  try {
+    await requireAuth(await headers());
+  } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+    throw error;
+  }
+
   // Build target URL with follow=true to enable SSE mode
-  const apiUrl = process.env.MCCTL_API_URL || 'http://localhost:5001';
-  const apiPath = path.join('/');
-  const targetUrl = `${apiUrl}/api/${apiPath}?follow=true`;
+  const targetUrl = buildTargetUrl(request, path);
 
   // Get API key
   const apiKey = process.env.MCCTL_API_KEY || '';
   if (!apiKey) {
     return new Response('API key not configured', { status: 500 });
   }
+
+  const upstream = linkAbort(request);
 
   try {
     // Read request body
@@ -141,6 +202,7 @@ export async function POST(
         'Accept': 'text/event-stream',
       },
       body,
+      signal: upstream.signal,
     });
 
     if (!response.ok) {
@@ -164,7 +226,7 @@ export async function POST(
       });
     }
 
-    const stream = createProxyStream(response);
+    const stream = createProxyStream(response, upstream);
 
     return new Response(stream, {
       headers: {
