@@ -58,6 +58,8 @@ export interface IContainerRuntimePort {
   getStatus(name: ServerName | string): ContainerStatus;
   /** Added by #665: getStatus as an awaited child process, for request paths. */
   getStatusAsync(name: ServerName | string): Promise<ContainerStatus>;
+  /** Added by #764: getStats as an awaited child process (null on failure or timeout), for request paths. */
+  getStatsAsync(name: ServerName | string): Promise<ContainerStats | null>;
   /** 'none' without a healthcheck, 'unknown' on failure. */
   getHealth(name: ServerName | string): HealthStatus;
   exists(name: ServerName | string): boolean;
@@ -281,7 +283,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
 | `start` / `stop` / `restart` | async | `{ success: false, error }`, never rejects | API `executeServerAction` |
 | `readLogs` | async | **rejects** | API `player-session-collector.ts` |
 | `followLogs` | async | resolves on close or spawn error | API `servers.ts:581` (adds the missing `error` handler; `signal` is passed to `spawn`, which kills the child on abort, and chunks after abort are dropped) |
-| `listPlayers` | async (blocking `execFileSync` inside, as today) | `null` | `getOnlinePlayers` |
+| `listPlayers` | async (non-blocking since #764: awaits `execFile`, same 5 s timeout) | `null` | `getOnlinePlayers` |
 | `command` | async | `{ exitCode: 1, stderr }`, never rejects | API `lib/rcon.ts` `execRcon` |
 | `getEndpoint` | async | `null` | CLI `commands/rcon.ts` (the copy uses `execFile` and returns `null` on a spawn error; the original has no `error` handler) |
 | router `getHealth` | sync | `'unknown'` / `'unhealthy'` | `getRouterHealthViaApi` |
@@ -448,7 +450,7 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 
 | Port | Before (D1) | After (#665) |
 |------|-------------|--------------|
-| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs` take `name: string` | `name: ServerName \| string`. `list()` is unchanged and still returns container names. Added `getStatusAsync(name): Promise<ContainerStatus>` (see repositories below) |
+| `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `getLogs`, `getStats`, `getUptime`, `start`, `stop`, `restart`, `readLogs`, `followLogs` take `name: string` | `name: ServerName \| string`. `list()` is unchanged and still returns container names. Added `getStatusAsync(name): Promise<ContainerStatus>` (see repositories below) and, in #764, `getStatsAsync(name): Promise<ContainerStats \| null>` |
 | `IServerConsolePort` | `listPlayers`, `command`, `getEndpoint` take `name: string` | `name: ServerName \| string` |
 | `IRouterStatusPort` | `getHostnames(name: string)` | `getHostnames(name: ServerName \| string)` |
 | `IRconPort` | `getEntityPosition(container: string, player)` | `getEntityPosition(server: ServerName \| string, player)` |
