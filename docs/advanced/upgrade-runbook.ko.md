@@ -48,7 +48,7 @@ bash upgrade-v3.sh --dry-run
 | 5 `ecosystem.config.cjs` | v2.32.0 미만이면 옛 `AUTH_MODE` 값 수정([4-1](#4-1-v2320-이상으로-올릴-때-콘솔-접근-모드-확인-633)), mcctl-api에 `kill_timeout` 추가([4-2](#pm2-kill-timeout)), 이어서 `mcctl console service restart --console --force` | 선택(AUTH_MODE 아니요, kill_timeout은 `BACKUP_AUTO_ON_STOP=true`면 예, 재시작 예) |
 | 6 ServerSpec | `mcctl migrate spec --all --dry-run`을 보여 주고 선택 시 실행 | 선택(아니요) |
 | 7 월드 | `mcctl world list`를 보여 주고 중복·경고 줄을 강조 | 자동 |
-| 7b 중지된 서버 | 실행 중인 서버를 알려 주고(재시작은 직접), 중지된 서버는 `docker compose up --no-start --no-deps mc-<server>`로 다시 만들어 다음 기동 때 받은 이미지를 쓰게 함 | 선택(예) |
+| 7b 중지된 서버 | 실행 중인 서버를 알려 줌(재시작은 직접). 예라고 답하면 중지된 서버를 `docker compose up --no-start --no-deps mc-<server>`로 다시 만들어 다음 기동 때 받은 이미지를 쓰게 하고, 아니면 요약에 그 명령을 보여 줌 | 선택(아니요) |
 | 8 검증 | `mcctl --version`, `docker compose config -q`, PM2 상태, PM2의 mcctl-api `kill_timeout`이 `ecosystem.config.cjs`와 같은지, API `/health`(`ecosystem.config.cjs`가 있을 때만) | 자동 |
 | 9 요약 | 단계별 결과, 남은 일(이전 버전으로 남은 mcctl 설치 포함), 롤백, 로그 위치 | 자동 |
 
@@ -60,7 +60,7 @@ v2 CLI에서 드라이런하면 `mcctl upgrade --dry-run` 미리보기는 지금
 
 5단계는 `ecosystem.config.cjs`를 `node`로 읽어(PM2처럼 파일을 실행합니다) 판단하고, mcctl-api의 `name:` 줄이 한 줄에 `name: 'mcctl-api',`만 있을 때만 수정합니다. 수정 뒤 다시 읽어 결과를 확인하고, 어긋나면 원본으로 되돌리며 재시작하지 않습니다. 심볼릭 링크이거나 앱 객체가 한 줄이면 수정하지 않고 직접 추가할 내용을 안내합니다. 재시작에는 `--console`을 붙입니다. `--console`이나 `--api`가 없으면 CLI가 재시작할 서비스를 묻는데, 스크립트는 명령에 입력을 주지 않기 때문입니다.
 
-7b단계가 있는 이유: mc-router는 중지된 서버를 `docker start`로 띄우므로 컨테이너를 만들 때의 이미지를 그대로 씁니다. 다시 만들어도 월드와 설정은 유지되고(바인드 마운트와 볼륨) 서버는 중지 상태로 남습니다. 대신 이미지 회귀가 다음 기동 때 바로 드러나므로, 요약은 다시 만든 서버마다 되돌리는 명령 `docker tag <이전 이미지 ID> <이미지> && docker compose up --no-start --no-deps mc-<server>`를 보여 줍니다.
+7b단계가 있는 이유: mc-router는 중지된 서버를 `docker start`로 띄우므로 컨테이너를 만들 때의 이미지를 그대로 씁니다. 다시 만들어도 월드와 설정은 유지되고(바인드 마운트와 볼륨) 서버는 중지 상태로 남지만, 새 이미지에 회귀가 있으면 다음 기동 때 바로 드러나므로 기본값은 아니요입니다(`--yes`도 같음). 다시 만들지 않으면 요약이 중지된 서버마다 플랫폼 디렉터리에서 실행할 `docker compose up --no-start --no-deps mc-<server>`를 보여 줍니다. 그 전까지 auto-scale은 옛 이미지로 깨웁니다. 다시 만들었으면 요약이 서버마다 되돌리는 명령 `docker tag <이전 이미지 ID> <이미지> && docker compose up --no-start --no-deps mc-<server>`를 보여 줍니다.
 
 **스크립트가 하지 않는 일**(요약에도 다시 나옵니다):
 

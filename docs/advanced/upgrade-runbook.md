@@ -48,7 +48,7 @@ Before the first step the script reads `mcctl --version` and `npm view @minecraf
 | 5 `ecosystem.config.cjs` | Before v2.32.0, rewrites old `AUTH_MODE` values ([4-1](#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633)); adds `kill_timeout` to mcctl-api ([4-2](#pm2-kill-timeout)); then `mcctl console service restart --console --force` | optional (AUTH_MODE: no; kill_timeout: yes if `BACKUP_AUTO_ON_STOP=true`; restart: yes) |
 | 6 ServerSpec | Shows `mcctl migrate spec --all --dry-run`, optionally runs it | optional (no) |
 | 7 Worlds | Shows `mcctl world list`, highlights duplicate or warning lines | automatic |
-| 7b Stopped servers | Lists running servers (restart them yourself) and recreates each stopped one with `docker compose up --no-start --no-deps mc-<server>`, so its next start uses the pulled image | optional (yes) |
+| 7b Stopped servers | Lists running servers (restart them yourself). On yes, recreates each stopped one with `docker compose up --no-start --no-deps mc-<server>`, so its next start uses the pulled image; otherwise the summary lists those commands | optional (no) |
 | 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, PM2's mcctl-api `kill_timeout` equals the one in `ecosystem.config.cjs`, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
 | 9 Summary | Result of each step, what is left (including mcctl installs still on the old version), rollback, log path | automatic |
 
@@ -60,7 +60,7 @@ On a dry run with a v2 CLI, the `mcctl upgrade --dry-run` preview is the plan of
 
 Step 5 loads `ecosystem.config.cjs` with `node` (so it runs the file, like PM2 does), edits it only if the mcctl-api `name:` line is `name: 'mcctl-api',` alone on its line, loads it again to check the result and puts the original back if the check fails (no restart then). A symbolic link or a one-line app object is not edited; the script tells you what to add by hand. The restart uses `--console`: without `--console` or `--api` the CLI asks which services to restart, and the script gives commands no input.
 
-Step 7b is there because mc-router starts a stopped server with `docker start`, which keeps the image the container was created from. Recreating keeps worlds and config (bind mounts and volumes) and leaves the server stopped. An image regression then shows on the next start, so the summary prints, for each recreated server, `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>` to go back.
+Step 7b is there because mc-router starts a stopped server with `docker start`, which keeps the image the container was created from. Recreating keeps worlds and config (bind mounts and volumes) and leaves the server stopped, but a regression in the new image then shows on the next start, so the default is no (also with `--yes`). Without recreating, the summary lists `docker compose up --no-start --no-deps mc-<server>` for each stopped server to run in the platform directory when you are ready; until then auto-scale wakes them on the old image. After recreating, the summary prints, for each recreated server, `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>` to go back.
 
 **What the script does not do** (the summary repeats these):
 
