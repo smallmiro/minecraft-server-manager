@@ -1361,7 +1361,10 @@ curl -u admin:password http://localhost:5001/api/servers
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/router/status` | Get mc-router status and routes |
+| GET | `/api/router/status` | Get mc-router status and routes. Router adds optional `image`, `autoScale { up, down, downAfter?, asleepMotd? }`, `resolver { hostIp?, hostIps[] }`; each route adds `autoScaleUp`, `autoScaleDown`, `discoveredByRouter` (absent when mc-router or its management API `127.0.0.1:25580/routes` is unreadable; stopped routes are not judged while global `AUTO_SCALE_UP` is off) |
+| POST | `/api/router/restart` | Restart mc-router (`docker compose restart router`); no body; 200 `{ success, message }`, 500 `{ error, message }`; audit action `router.restart`; admin-only in the console |
+| GET | `/api/router/status/stream` | SSE: `router-status` (same payload as `/status`; sent on connect, then only on change, `uptimeSeconds` ignored), `router-status-error` `{ timestamp }`; `?interval=` 1000..60000 ms (default 5000); heartbeat every 30s |
+| GET | `/api/router/logs/stream` | SSE: `connected`, `router-log` (`{ ts?, kind: connect/wake/error/info, hostname?, target?, player?, raw }`), `end` `{ code, error? }`; `?tail=` 1..500 (default 100); heartbeat every 30s |
 
 **Players:**
 
