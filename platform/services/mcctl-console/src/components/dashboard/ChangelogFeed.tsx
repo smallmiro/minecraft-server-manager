@@ -10,7 +10,7 @@ interface ChangelogFeedProps {
 }
 
 const GITHUB_CHANGELOG_PAGE =
-  'https://github.com/smallmiro/minecraft-server-manager/blob/develop/CHANGELOG.md';
+  'https://github.com/smallmiro/minecraft-server-manager/blob/main/CHANGELOG.md';
 
 const SECTIONS: { type: ChangelogItem['type']; label: string; color: 'success' | 'warning' | 'info' }[] = [
   { type: 'added', label: 'Added', color: 'success' },

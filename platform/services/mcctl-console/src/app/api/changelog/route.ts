@@ -9,8 +9,11 @@ export const dynamic = 'force-dynamic';
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
 const CHANGELOG_URL =
-  'https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/develop/CHANGELOG.md';
+  // main carries released versions only; develop can list a version not yet published
+  'https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/CHANGELOG.md';
 const CACHE_TTL_MS = 60 * 60 * 1000;
+/** After a failed fetch, wait this long before trying GitHub again (offline hosts would otherwise wait out the timeout on every load). */
+const FAILURE_BACKOFF_MS = 5 * 60 * 1000;
 const FETCH_TIMEOUT_MS = 5000;
 
 interface CacheEntry {
@@ -21,6 +24,7 @@ interface CacheEntry {
 // Server-memory cache (per Node process). Lost on restart, which is acceptable.
 let cache: CacheEntry | null = null;
 let inflight: Promise<CacheEntry> | null = null;
+let lastFailureAt: number | null = null;
 
 async function fetchLatest(): Promise<CacheEntry> {
   const response = await fetch(CHANGELOG_URL, {
@@ -43,7 +47,12 @@ function refresh(): Promise<CacheEntry> {
     inflight = fetchLatest()
       .then((entry) => {
         cache = entry;
+        lastFailureAt = null;
         return entry;
+      })
+      .catch((error: unknown) => {
+        lastFailureAt = Date.now();
+        throw error;
       })
       .finally(() => {
         inflight = null;
@@ -87,7 +96,9 @@ export async function GET() {
     return NextResponse.json(payload(cache, false), { headers: NO_STORE });
   }
 
+  const backingOff = lastFailureAt !== null && Date.now() - lastFailureAt < FAILURE_BACKOFF_MS;
   try {
+    if (backingOff) throw new Error('Backing off after a failed fetch');
     return NextResponse.json(payload(await refresh(), false), { headers: NO_STORE });
   } catch {
     if (cache) {

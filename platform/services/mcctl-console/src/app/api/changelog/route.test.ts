@@ -135,4 +135,35 @@ describe('GET /api/changelog', () => {
     await GET();
     expect(fetchMock.mock.calls[0][1].signal).toBeInstanceOf(AbortSignal);
   });
+
+  it('reads the released changelog from main', async () => {
+    fetchMock.mockResolvedValue(okResponse(CHANGELOG('2.34.0')));
+    await GET();
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/main/CHANGELOG.md');
+  });
+
+  it('backs off after a failed fetch instead of retrying on every request', async () => {
+    fetchMock.mockRejectedValue(new Error('offline'));
+    expect((await GET()).status).toBe(502);
+    vi.advanceTimersByTime(60 * 1000);
+    expect((await GET()).status).toBe(502);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(5 * 60 * 1000);
+    fetchMock.mockResolvedValue(okResponse(CHANGELOG('2.34.0')));
+    expect((await GET()).status).toBe(200);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('serves the stale value without refetching while backing off', async () => {
+    fetchMock.mockResolvedValueOnce(okResponse(CHANGELOG('2.34.0')));
+    await GET();
+    vi.advanceTimersByTime(TTL + 1000);
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    expect((await (await GET()).json()).stale).toBe(true);
+    const body = await (await GET()).json();
+    expect(body.stale).toBe(true);
+    expect(body.latest.version).toBe('2.34.0');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
 });
