@@ -43,16 +43,7 @@ import {
   useStopServer,
 } from '@/hooks/useMcctl';
 import { useServerStatus } from '@/hooks/useServerStatus';
-
-function formatUptime(seconds?: number): string {
-  if (!seconds || seconds < 0) return '0s';
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = seconds % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
-  return `${remainingSeconds}s`;
-}
+import { formatUptime } from '@/utils/format';
 
 function getServerTypeIcon(type?: string): string {
   const normalizedType = type?.toUpperCase();

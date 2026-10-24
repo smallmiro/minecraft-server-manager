@@ -39,6 +39,7 @@ import { ServerFilesTab } from './files/ServerFilesTab';
 import { ServerConfigHistoryTab } from './config-history';
 import { ServerBackupTab } from './ServerBackupTab';
 import { stripAnsi, parseLogLine } from '@/utils/log';
+import { formatUptime } from '@/utils/format';
 
 interface ServerDetailProps {
   server: ServerDetailType;
@@ -51,18 +52,6 @@ type TabType = (typeof TABS)[number];
 
 // Icon size for stat cards
 const STAT_ICON_SIZE = 28;
-
-// Parse log line for console display
-// Format uptime from seconds
-function formatUptime(seconds?: number): string {
-  if (!seconds || seconds < 0) return '0s';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
-}
 
 // Parse memory string to MB value
 function parseMemoryToMB(memStr?: string): number {
