@@ -139,14 +139,15 @@ beforeEach(() => {
 fi`),
     0o755,
   );
-  // inspect answers from $FAKE_DIR/<container>.state and .image; compose up gives a new image
+  // inspect answers from $FAKE_DIR/<container>.state, .image and .ref; compose up gives
+  // a new image under a new tag (as when step 2 moved the server from java21 to java25)
   put(
     join(bin, 'docker'),
     FAKE_LOGGER(`case "$1" in
   inspect)
     case "$3" in
       *State.Status*) cat "$FAKE_DIR/$4.state" 2>/dev/null ;;
-      *Config.Image*) echo "itzg/minecraft-server:java21" ;;
+      *Config.Image*) cat "$FAKE_DIR/$4.ref" 2>/dev/null || echo "itzg/minecraft-server:java21" ;;
       *) cat "$FAKE_DIR/$4.image" 2>/dev/null ;;
     esac ;;
   compose)
@@ -154,7 +155,8 @@ fi`),
       *"up --no-start"*)
         [ -n "$FAKE_COMPOSE_FAIL" ] && exit 1
         for a; do :; done
-        echo "sha256:new" > "$FAKE_DIR/$a.image" ;;
+        echo "sha256:new" > "$FAKE_DIR/$a.image"
+        echo "itzg/minecraft-server:java25" > "$FAKE_DIR/$a.ref" ;;
     esac ;;
 esac`),
     0o755,
@@ -699,17 +701,38 @@ describe('upgrade-v3.sh', () => {
       put(join(ctx.fake, `mc-${name}.image`), 'sha256:old\n');
     };
 
-    it('recreates stopped servers with --yes and leaves running ones to the user', () => {
+    const yesToAll = (): string => {
+      const answers = join(ctx.base, 'answers');
+      put(answers, 'y\n'.repeat(30));
+      return answers;
+    };
+    const todo = (out: string): string => out.slice(out.indexOf('Still to do by hand'), out.indexOf('Rollback'));
+
+    it('does not recreate with --yes (default no) and lists the commands to do by hand', () => {
       server('alpha', 'exited');
       server('beta', 'running');
       const r = run({ args: ['--yes'] });
+      expect(calls()).not.toMatch(/compose up/);
+      expect(r.out).toMatch(/Running: beta .*mcctl stop <server> && mcctl start <server>/);
+      expect(r.out).toMatch(/\? Recreate the stopped server containers .*\[y\/N\] -> n \(--yes\)/);
+      expect(r.out).toMatch(/\[skipped\] Step 7b .* - not chosen/);
+      expect(r.code).toBe(0);
+      expect(todo(r.out)).toMatch(/auto-scale wakes them on the old image/);
+      expect(todo(r.out)).toContain(`in ${ctx.root}:\n      docker compose up --no-start --no-deps mc-alpha\n`);
+      expect(todo(r.out)).not.toContain('mc-beta');
+    });
+
+    it('recreates stopped servers only after a typed yes, with a way back to the old image', () => {
+      server('alpha', 'exited');
+      server('beta', 'running');
+      const r = run({ env: { MCCTL_UPGRADE_TTY: yesToAll() } });
       expect(calls()).toMatch(/^docker compose up --no-start --no-deps mc-alpha$/m);
       expect(calls()).not.toMatch(/up --no-start --no-deps mc-beta/);
-      expect(r.out).toMatch(/Running: beta .*mcctl stop <server> && mcctl start <server>/);
       expect(r.out).toMatch(/\[ok\] Step 7b .* - recreated: alpha$/m);
-      expect(r.code).toBe(0);
+      expect(todo(r.out)).not.toContain('mc-alpha');
+      // the tag goes back onto the reference the recreated container uses
       expect(r.out.slice(r.out.indexOf('Rollback'))).toContain(
-        'docker tag sha256:old itzg/minecraft-server:java21 && docker compose up --no-start --no-deps mc-alpha',
+        'docker tag sha256:old itzg/minecraft-server:java25 && docker compose up --no-start --no-deps mc-alpha',
       );
     });
 
@@ -717,7 +740,7 @@ describe('upgrade-v3.sh', () => {
       server('alpha', 'exited');
       const r = run({ args: ['--dry-run'] });
       expect(r.out).toContain('Stopped: alpha');
-      expect(r.out).toMatch(/\[dry-run\] would ask .*docker compose up --no-start --no-deps/);
+      expect(r.out).toMatch(/\[dry-run\] would ask \(default: no\).*docker compose up --no-start --no-deps/);
       expect(calls()).not.toMatch(/compose up/);
       expect(readFileSync(join(ctx.fake, 'mc-alpha.image'), 'utf8')).toBe('sha256:old\n');
     });
@@ -731,9 +754,10 @@ describe('upgrade-v3.sh', () => {
 
     it('fails the step when recreating a server fails', () => {
       server('alpha', 'exited');
-      const r = run({ args: ['--yes'], env: { FAKE_COMPOSE_FAIL: '1' } });
+      const r = run({ env: { MCCTL_UPGRADE_TTY: yesToAll(), FAKE_COMPOSE_FAIL: '1' } });
       expect(r.out).toMatch(/\[failed\] Step 7b .* - failed for: alpha$/m);
       expect(r.code).toBe(1);
+      expect(todo(r.out)).toContain('docker compose up --no-start --no-deps mc-alpha');
     });
   });
 

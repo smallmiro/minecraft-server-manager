@@ -50,6 +50,7 @@ UPDATE_ACTION=""
 ECO_BAK=""
 NEED_RESTART=0
 IMAGE_UNDO=""
+RECREATE_TODO=""
 TS=""
 BOLD=""
 YEL=""
@@ -264,6 +265,10 @@ finish() {
     if [ "$NEED_RESTART" = 1 ]; then
       say "  - Restart mcctl-api and the console so PM2 reads ecosystem.config.cjs again:"
       say "      $RESTART_CMD"
+    fi
+    if [ -n "$RECREATE_TODO" ]; then
+      say "  - Stopped servers keep their old image: until their containers are recreated, auto-scale wakes them on the old image. When you are ready, run in $ROOT:"
+      say "$(printf '%s' "$RECREATE_TODO")"
     fi
     others=$(other_installs)
     if [ -n "$others" ]; then
@@ -858,7 +863,7 @@ step7_worlds() {
 # the container was created from; recreating it picks up the pulled image.
 step7b_images() {
   step 7b "Stopped servers and new images"
-  local d name st stopped="" running="" s old ref failed=""
+  local d name st stopped="" running="" s old failed=""
   if ! command -v docker >/dev/null 2>&1; then
     say "docker not found: skipped"
     record 7b "Server images" skipped "no docker"
@@ -883,25 +888,29 @@ step7b_images() {
     return 0
   fi
   say "Stopped:$stopped"
-  say "An auto-scale start reuses the old container and its image. Recreating the container (it stays stopped; worlds and config are kept) makes the next start use the image the update pulled."
+  say "An auto-scale start reuses the old container and its image. Recreating the container (it stays stopped; worlds and config are kept) makes the next start use the image the update pulled, so a broken new image shows at once."
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would ask (default: yes), then run for each: docker compose up --no-start --no-deps mc-<server>"
+    say "[dry-run] would ask (default: no), then run for each: docker compose up --no-start --no-deps mc-<server>"
     record 7b "Server images" skipped "dry-run"
     return 0
   fi
-  if ! confirm "Recreate the stopped server containers with the new images?" y; then
-    record 7b "Server images" skipped "not chosen (auto-scale starts them on the old image)"
+  if ! confirm "Recreate the stopped server containers with the new images?" n; then
+    for s in $stopped; do
+      RECREATE_TODO="${RECREATE_TODO}      docker compose up --no-start --no-deps mc-$s"$'\n'
+    done
+    record 7b "Server images" skipped "not chosen (commands in the summary)"
     return 0
   fi
   for s in $stopped; do
     old=$(capture docker inspect --format '{{.Image}}' "mc-$s")
-    ref=$(capture docker inspect --format '{{.Config.Image}}' "mc-$s")
     if run docker compose up --no-start --no-deps "mc-$s"; then
       if [ -n "$old" ] && [ "$(capture docker inspect --format '{{.Image}}' "mc-$s")" != "$old" ]; then
-        IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $ref && docker compose up --no-start --no-deps mc-$s"$'\n'
+        # the reference after recreating: step 2 may have moved the tag (java21 -> java25)
+        IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $(capture docker inspect --format '{{.Config.Image}}' "mc-$s") && docker compose up --no-start --no-deps mc-$s"$'\n'
       fi
     else
       failed="$failed $s"
+      RECREATE_TODO="${RECREATE_TODO}      docker compose up --no-start --no-deps mc-$s"$'\n'
     fi
   done
   if [ -n "$failed" ]; then
