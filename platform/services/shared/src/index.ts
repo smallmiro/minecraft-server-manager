@@ -130,7 +130,6 @@ export {
   parseGoBool,
   parseRouterAutoScaleEnv,
   resolveRouteAutoScale,
-  parseResolverEnv,
   markDiscoveredRoutes,
   AUTO_SCALE_UP_LABEL,
   AUTO_SCALE_DOWN_LABEL,

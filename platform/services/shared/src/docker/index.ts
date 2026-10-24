@@ -30,7 +30,6 @@ import { McRouterApiAdapter } from '../infrastructure/adapters/McRouterApiAdapte
 import type { IMcRouterApiPort } from '../application/ports/outbound/IMcRouterApiPort.js';
 import {
   parseRouterAutoScaleEnv,
-  parseResolverEnv,
   resolveRouteAutoScale,
   markDiscoveredRoutes,
   type RouterResolver,

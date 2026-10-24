@@ -7,7 +7,6 @@ import {
   parseGoBool,
   parseRouterAutoScaleEnv,
   resolveRouteAutoScale,
-  parseResolverEnv,
   markDiscoveredRoutes,
 } from '../src/domain/services/routerDetail.js';
 
@@ -75,33 +74,6 @@ describe('resolveRouteAutoScale', () => {
       up: true,
       down: undefined,
     });
-  });
-});
-
-describe('parseResolverEnv', () => {
-  it('splits, trims, drops empty and de-duplicates HOST_IPS', () => {
-    expect(parseResolverEnv({ HOST_IP: '192.168.1.10', HOST_IPS: ' 192.168.1.10, ,100.64.0.5,192.168.1.10 ' })).toEqual({
-      hostIp: '192.168.1.10',
-      hostIps: ['192.168.1.10', '100.64.0.5'],
-    });
-  });
-
-  it('falls back to [HOST_IP] when HOST_IPS is absent or empty', () => {
-    expect(parseResolverEnv({ HOST_IP: ' 10.0.0.2 ' })).toEqual({ hostIp: '10.0.0.2', hostIps: ['10.0.0.2'] });
-    expect(parseResolverEnv({ HOST_IP: '10.0.0.2', HOST_IPS: ' , ' })).toEqual({
-      hostIp: '10.0.0.2',
-      hostIps: ['10.0.0.2'],
-    });
-  });
-
-  it('has no hostIp and an empty list when neither is set', () => {
-    const result = parseResolverEnv({ HOST_IP: '  ' });
-    expect(result).toEqual({ hostIps: [] });
-    expect('hostIp' in result).toBe(false);
-  });
-
-  it('keeps HOST_IPS when HOST_IP is absent', () => {
-    expect(parseResolverEnv({ HOST_IPS: 'a,b' })).toEqual({ hostIps: ['a', 'b'] });
   });
 });
 

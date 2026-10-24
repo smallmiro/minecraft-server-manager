@@ -3,8 +3,7 @@
  *
  * Pure functions that compute what mc-router does from its inputs: the router
  * container env (global auto-scale), a server's container labels (per-server
- * override), the platform `.env` (nip.io resolver addresses) and the routes the
- * management API reports. Adapters supply the raw inputs.
+ * override) and the routes the management API reports. Adapters supply the raw inputs.
  */
 
 /** Global auto-scale settings of the mc-router container. */
@@ -21,9 +20,9 @@ export interface RouterAutoScale {
 
 /** Host addresses used for `<server>.<ip>.nip.io` router hosts. */
 export interface RouterResolver {
-  /** `.env` HOST_IP, trimmed; absent when unset or blank. */
+  /** The primary address (first of hostIps); absent when none is known. */
   hostIp?: string;
-  /** `.env` HOST_IPS (comma list), else [HOST_IP]; trimmed, de-duplicated. */
+  /** resolveHostIps: `.env` HOST_IPS / HOST_IP comma lists, else the probed host address. */
   hostIps: string[];
 }
 
@@ -74,17 +73,6 @@ export function resolveRouteAutoScale(labels: EnvValues, global: RouterAutoScale
     up,
     down: parseGoBool(labels[AUTO_SCALE_DOWN_LABEL]?.trim()) ?? global?.down,
   };
-}
-
-/** Resolver addresses from the platform `.env` values. */
-export function parseResolverEnv(env: EnvValues): RouterResolver {
-  const hostIp = env['HOST_IP']?.trim();
-  const listed = (env['HOST_IPS'] ?? '')
-    .split(',')
-    .map((ip) => ip.trim())
-    .filter(Boolean);
-  const hostIps = listed.length > 0 ? [...new Set(listed)] : hostIp ? [hostIp] : [];
-  return hostIp ? { hostIp, hostIps } : { hostIps };
 }
 
 /**
