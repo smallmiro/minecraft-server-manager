@@ -167,13 +167,13 @@ CI checks on PRs against `develop` must pass before merge. `ci.yml` runs on ever
 
 ```bash
 pnpm build                                   # build everything
-pnpm test                                    # all unit tests
+pnpm test                                    # all unit tests (excludes e2e, same as CI)
 pnpm lint                                    # lint everything
 
 pnpm --filter @minecraft-docker/shared test  # a single package
 pnpm --filter @minecraft-docker/mcctl test
 
-pnpm test:e2e                                # Management Console E2E: mcctl-api + mcctl-console (Playwright)
+E2E_BASE_URL=<console> E2E_API_URL=<api> pnpm test:e2e   # Management Console E2E (Playwright); both URLs required, use a disposable instance, never a live host
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 ```
 

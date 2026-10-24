@@ -30,6 +30,7 @@ jobs:
       - run: pnpm typecheck
       # e2e needs live api/console; it runs in e2e.yml
       - run: pnpm -r --filter '!e2e' test
+      - run: pnpm --filter e2e test:unit
       # the cli tarball ships docker/bluemap/Dockerfile and no scripts/ (#648, #736)
       - run: pnpm --filter @minecraft-docker/mcctl run --if-present verify:package
 

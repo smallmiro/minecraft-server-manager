@@ -2,6 +2,7 @@ import { FullConfig } from '@playwright/test';
 import { spawn, spawnSync, execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { resolveTargets } from './env';
 
 /**
  * Global setup for E2E tests.
@@ -11,9 +12,9 @@ import { join } from 'path';
  * - Waiting for services to be ready
  * - Creating test users if needed
  */
-async function globalSetup(config: FullConfig): Promise<void> {
-  const baseURL = config.projects[0]?.use?.baseURL || 'http://localhost:5000';
-  const apiURL = process.env.E2E_API_URL || 'http://localhost:5001';
+async function globalSetup(_config: FullConfig): Promise<void> {
+  // Fails before any request or PM2 start if the targets are not explicit (#797).
+  const { baseURL, apiURL } = resolveTargets(process.env);
 
   console.log('[Global Setup] Starting E2E test setup...');
   console.log(`[Global Setup] Console URL: ${baseURL}`);

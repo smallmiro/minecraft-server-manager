@@ -9,7 +9,7 @@
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "clean": "pnpm -r clean",
-    "test": "pnpm -r test",
+    "test": "pnpm -r --filter '!e2e' test",
     "test:e2e": "pnpm --filter e2e test",
     "test:e2e:ui": "pnpm --filter e2e test:ui"
   },
