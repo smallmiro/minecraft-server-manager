@@ -74,4 +74,50 @@ describe('RouterGatewayCard', () => {
     expect(grid).not.toBeNull();
     expect(getComputedStyle(grid as Element).gridTemplateColumns).toContain('auto-fit');
   });
+
+  describe('router details (#768)', () => {
+    const detailed: RouterDetail = {
+      ...router,
+      image: 'itzg/mc-router:latest',
+      autoScale: { up: true, down: false, downAfter: '10m', asleepMotd: '§eSleeping\\n§7Connect to wake' },
+    };
+
+    it('shows image, auto-scale flags and idle time', () => {
+      renderCard(detailed);
+      expect(screen.getByText('itzg/mc-router:latest')).toBeInTheDocument();
+      expect(screen.getByLabelText('Auto-scale up')).toHaveTextContent('On');
+      expect(screen.getByLabelText('Auto-scale down')).toHaveTextContent('Off');
+      expect(screen.getByText('10m')).toBeInTheDocument();
+    });
+
+    it('previews the asleep MOTD as plain text with line breaks and no formatting codes', () => {
+      renderCard(detailed);
+      const motd = screen.getByLabelText('Asleep MOTD preview');
+      expect(motd.textContent).toBe('Sleeping\nConnect to wake');
+      expect(getComputedStyle(motd).whiteSpace).toBe('pre-line');
+    });
+
+    it('does not interpret markup in the MOTD', () => {
+      renderCard({ ...router, autoScale: { up: true, down: true, asleepMotd: '<b>bold</b>' } });
+      const motd = screen.getByLabelText('Asleep MOTD preview');
+      expect(motd.textContent).toBe('<b>bold</b>');
+      expect(motd.querySelector('b')).toBeNull();
+    });
+
+    it('omits each item when its field is absent', () => {
+      renderCard(router);
+      expect(screen.queryByText('Image')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Auto-scale up')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Auto-scale down')).not.toBeInTheDocument();
+      expect(screen.queryByText('Idle time')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Asleep MOTD preview')).not.toBeInTheDocument();
+    });
+
+    it('omits idle time and MOTD when autoScale has only the flags', () => {
+      renderCard({ ...router, autoScale: { up: false, down: false } });
+      expect(screen.getByLabelText('Auto-scale up')).toHaveTextContent('Off');
+      expect(screen.queryByText('Idle time')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Asleep MOTD preview')).not.toBeInTheDocument();
+    });
+  });
 });

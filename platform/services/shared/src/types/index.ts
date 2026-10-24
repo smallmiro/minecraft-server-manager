@@ -1,3 +1,5 @@
+import type { RouterAutoScale, RouterResolver } from '../domain/services/routerDetail.js';
+
 /**
  * Server status types
  */
@@ -169,6 +171,12 @@ export interface RouterDetailInfo extends RouterInfo {
   uptimeSeconds?: number;
   routes: RouteInfo[];
   mode?: string;
+  /** mc-router container image, e.g. `itzg/mc-router:1.47.1` (#768). */
+  image?: string;
+  /** Global auto-scale settings from the mc-router env; absent when unreadable (#768). */
+  autoScale?: RouterAutoScale;
+  /** nip.io resolver addresses from the platform `.env`; absent when unreadable (#768). */
+  resolver?: RouterResolver;
 }
 
 export interface RouteInfo {
@@ -177,6 +185,15 @@ export interface RouteInfo {
   serverStatus: ContainerStatus;
   serverType?: string;
   serverVersion?: string;
+  /** Effective auto-scale up: `mc-router.auto-scale-up` label, else the router global (#768). */
+  autoScaleUp?: boolean;
+  /** Effective auto-scale down: `mc-router.auto-scale-down` label, else the router global (#768). */
+  autoScaleDown?: boolean;
+  /**
+   * Whether mc-router's management API lists this hostname (#768). Only set by
+   * getRouterDetailInfoAsync; absent when the API could not be read.
+   */
+  discoveredByRouter?: boolean;
 }
 
 /**

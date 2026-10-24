@@ -3,7 +3,9 @@
 import { useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
@@ -13,19 +15,24 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
+import DnsIcon from '@mui/icons-material/Dns';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RouterIcon from '@mui/icons-material/Router';
 import SearchIcon from '@mui/icons-material/Search';
 import { BentoPanelHeader } from '@/components/bento';
 import { CopyButton } from '@/components/common';
+import { useStartServer } from '@/hooks/useMcctl';
 import type { RouteInfo } from '@/ports/api/IMcctlApiClient';
 import {
   HOSTNAME_TYPE_LABEL,
   classifyRouteHostname,
   extractServerName,
+  isRouteStartable,
   routeStatusDisplay,
   type HostnameType,
 } from './hostnameType';
@@ -73,7 +80,7 @@ function TypeBadge({ type }: { type: HostnameType }) {
 }
 
 function StatusBadge({ route }: { route: RouteInfo }) {
-  const { color, label } = routeStatusDisplay(route.serverStatus);
+  const { color, label } = routeStatusDisplay(route.serverStatus, route.autoScaleUp);
   return (
     <Chip
       label={label}
@@ -87,17 +94,87 @@ function StatusBadge({ route }: { route: RouteInfo }) {
   );
 }
 
-function ServerLink({ serverName }: { serverName: string }) {
+const NOT_ROUTED_HINT =
+  'mc-router has not registered this hostname, so connections to it will not reach the server. ' +
+  'Check the server container labels and restart mc-router.';
+
+function NotRoutedChip() {
   return (
-    <IconButton
-      component={NextLink}
-      href={`/servers/${serverName}`}
-      size="small"
-      aria-label={`Open ${serverName}`}
-      title={`Open ${serverName}`}
-    >
-      <OpenInNewIcon fontSize="small" />
-    </IconButton>
+    <Tooltip title={NOT_ROUTED_HINT}>
+      <Chip label="Not routed" size="small" color="warning" variant="outlined" />
+    </Tooltip>
+  );
+}
+
+function StatusCell({ route }: { route: RouteInfo }) {
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
+      <StatusBadge route={route} />
+      {route.discoveredByRouter === false && <NotRoutedChip />}
+    </Stack>
+  );
+}
+
+// One hook instance per row, so only the row being started shows a pending state.
+function RowActions({ route, serverName }: { route: RouteInfo; serverName: string }) {
+  const startServer = useStartServer();
+  const [startError, setStartError] = useState<string | null>(null);
+  const label = route.autoScaleUp === true ? 'Wake' : 'Start';
+  const stop = (event: { stopPropagation: () => void }) => event.stopPropagation();
+
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" justifyContent="flex-end" flexWrap="wrap" useFlexGap>
+      {isRouteStartable(route.serverStatus) && (
+        <Button
+          size="small"
+          variant="outlined"
+          color={route.autoScaleUp === true ? 'warning' : 'primary'}
+          aria-label={`${label} ${serverName}`}
+          disabled={startServer.isPending}
+          startIcon={startServer.isPending ? <CircularProgress size={14} color="inherit" /> : <PlayArrowIcon />}
+          onClick={(event) => {
+            stop(event);
+            setStartError(null);
+            startServer.mutate(serverName, { onError: (error) => setStartError(error.message) });
+          }}
+        >
+          {label}
+        </Button>
+      )}
+      {startError && (
+        <Tooltip title={startError}>
+          <Chip
+            label="Start failed"
+            size="small"
+            color="error"
+            variant="outlined"
+            aria-label={`Start failed: ${startError}`}
+          />
+        </Tooltip>
+      )}
+      <Tooltip title="Edit hostnames">
+        <IconButton
+          component={NextLink}
+          href={`/servers/${encodeURIComponent(serverName)}?tab=Options#hostnames`}
+          size="small"
+          aria-label={`Edit hostnames of ${serverName}`}
+          onClick={stop}
+        >
+          <DnsIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Open server">
+        <IconButton
+          component={NextLink}
+          href={`/servers/${encodeURIComponent(serverName)}`}
+          size="small"
+          aria-label={`Open ${serverName}`}
+          onClick={stop}
+        >
+          <OpenInNewIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Stack>
   );
 }
 
@@ -203,14 +280,14 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                 <HostnameCell hostname={row.hostname} />
                 <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
                   <TypeBadge type={row.type} />
-                  <StatusBadge route={row.route} />
+                  <StatusCell route={row.route} />
                 </Stack>
-                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1 }}>
-                  <Box sx={{ minWidth: 0 }}>
-                    <TargetCell row={row} />
-                  </Box>
-                  <ServerLink serverName={row.serverName} />
-                </Stack>
+                <Box sx={{ mt: 1, minWidth: 0 }}>
+                  <TargetCell row={row} />
+                </Box>
+                <Box sx={{ mt: 1 }}>
+                  <RowActions route={row.route} serverName={row.serverName} />
+                </Box>
               </Box>
             ))}
           </Stack>
@@ -222,7 +299,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                 <TableCell>Type</TableCell>
                 <TableCell>Target</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell align="right" sx={{ width: 48 }}>
+                <TableCell align="right">
                   <Box component="span" sx={visuallyHiddenSx}>
                     Actions
                   </Box>
@@ -244,10 +321,10 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <StatusBadge route={row.route} />
+                    <StatusCell route={row.route} />
                   </TableCell>
                   <TableCell align="right">
-                    <ServerLink serverName={row.serverName} />
+                    <RowActions route={row.route} serverName={row.serverName} />
                   </TableCell>
                 </TableRow>
               ))}

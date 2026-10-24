@@ -9,6 +9,7 @@ import RouterIcon from '@mui/icons-material/Router';
 import { BentoMetricCard, BentoPanelHeader } from '@/components/bento';
 import type { ContainerStatus, HealthStatus, RouterDetail } from '@/ports/api/IMcctlApiClient';
 import type { StatusColor } from './hostnameType';
+import { formatAsleepMotd } from './motd';
 
 interface RouterGatewayCardProps {
   router: RouterDetail;
@@ -47,9 +48,9 @@ function getModeLabel(mode?: string): string {
   return mode;
 }
 
-function Metric({ label, children }: { label: string; children: React.ReactNode }) {
+function Metric({ label, children, ...rest }: { label: string; children: React.ReactNode; 'aria-label'?: string }) {
   return (
-    <Box sx={{ minWidth: 0 }}>
+    <Box sx={{ minWidth: 0 }} {...rest}>
       <Typography variant="caption" color="text.secondary" component="div">
         {label}
       </Typography>
@@ -64,6 +65,8 @@ export function RouterGatewayCard({ router }: RouterGatewayCardProps) {
   const activeRoutes = router.routes.filter((r) => r.serverStatus === 'running').length;
   const totalRoutes = router.routes.length;
   const statusColor = getRouterStatusColor(router.status);
+  const autoScale = router.autoScale;
+  const motd = autoScale?.asleepMotd ? formatAsleepMotd(autoScale.asleepMotd) : '';
 
   return (
     <>
@@ -99,7 +102,44 @@ export function RouterGatewayCard({ router }: RouterGatewayCardProps) {
           <Metric label="Container">{router.name}</Metric>
           <Metric label="Mode">{getModeLabel(router.mode)}</Metric>
           <Metric label="Uptime">{router.uptime || '-'}</Metric>
+          {router.image && <Metric label="Image">{router.image}</Metric>}
+          {autoScale && (
+            <>
+              <Metric label="Auto-scale up" aria-label="Auto-scale up">
+                {autoScale.up ? 'On' : 'Off'}
+              </Metric>
+              <Metric label="Auto-scale down" aria-label="Auto-scale down">
+                {autoScale.down ? 'On' : 'Off'}
+              </Metric>
+              {autoScale.downAfter && <Metric label="Idle time">{autoScale.downAfter}</Metric>}
+            </>
+          )}
         </Stack>
+        {motd && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary" component="div">
+              Asleep MOTD
+            </Typography>
+            <Box
+              aria-label="Asleep MOTD preview"
+              sx={{
+                mt: 0.5,
+                px: 1.5,
+                py: 1,
+                borderRadius: 1,
+                border: 1,
+                borderColor: 'divider',
+                bgcolor: 'action.hover',
+                fontFamily: 'monospace',
+                fontSize: '0.875rem',
+                whiteSpace: 'pre-line',
+                wordBreak: 'break-word',
+              }}
+            >
+              {motd}
+            </Box>
+          </Box>
+        )}
       </Box>
     </>
   );

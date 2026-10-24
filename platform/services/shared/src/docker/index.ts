@@ -13,7 +13,8 @@ import type {
   RouteInfo,
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
-import { resolveMcctlRoot } from '../utils/index.js';
+import { resolveMcctlRoot, Paths } from '../utils/index.js';
+import { resolveHostIps } from '../infrastructure/hostIps.js';
 import { parseEnvDocument } from '../utils/env-file.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
@@ -24,6 +25,14 @@ import {
   DockerRuntimeEnvironmentAdapter,
 } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
 import { AvahiHostnameRegistrarAdapter } from '../infrastructure/adapters/AvahiHostnameRegistrarAdapter.js';
+import { McRouterApiAdapter } from '../infrastructure/adapters/McRouterApiAdapter.js';
+import type { IMcRouterApiPort } from '../application/ports/outbound/IMcRouterApiPort.js';
+import {
+  parseRouterAutoScaleEnv,
+  resolveRouteAutoScale,
+  markDiscoveredRoutes,
+  type RouterResolver,
+} from '../domain/services/routerDetail.js';
 
 export { execCommand, execCommandAsync } from '../infrastructure/process.js';
 export { parseRconPlayerList } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
@@ -35,6 +44,7 @@ const router = new DockerRouterStatusAdapter();
 const playit = new DockerPlayitAgentAdapter();
 const environment = new DockerRuntimeEnvironmentAdapter();
 const hostnameRegistrar = new AvahiHostnameRegistrarAdapter();
+const routerApi = new McRouterApiAdapter();
 
 /**
  * Check if Docker is available
@@ -292,11 +302,21 @@ export function getRouterDetailInfo(): RouterDetailInfo {
     }
   }
 
-  // Get routes from all mc-* containers
+  // Image and global auto-scale from the router container (#768)
+  const routerConfig = basic.status === 'not_found' ? null : router.inspectRouter();
+  if (routerConfig) {
+    if (routerConfig.image) detailed.image = routerConfig.image;
+    detailed.autoScale = parseRouterAutoScaleEnv(routerConfig.env);
+  }
+
+  detailed.resolver = readRouterResolver();
+
+  // Get routes from all mc-* containers; one label inspect gives hostnames and auto-scale overrides
   const containers = getMcContainers();
   for (const container of containers) {
-    const hostname = getContainerHostname(container);
-    if (hostname && hostname !== '-') {
+    const labels = router.getLabels(container);
+    const hostname = labels['mc-router.host']?.trim();
+    if (hostname) {
       // hostname might be comma-separated (e.g., "server.local,server.192.168.1.10.nip.io")
       const hostnames = hostname.split(',').map((h) => h.trim());
       const serverStatus = getContainerStatus(container);
@@ -306,20 +326,52 @@ export function getRouterDetailInfo(): RouterDetailInfo {
       const configEnv = readServerConfigEnv(serverName);
       const serverType = configEnv['TYPE'] || undefined;
       const serverVersion = configEnv['VERSION'] || undefined;
+      const autoScale = resolveRouteAutoScale(labels, detailed.autoScale);
 
       for (const h of hostnames) {
-        detailed.routes.push({
+        const route: RouteInfo = {
           hostname: h,
           target: `${container}:25565`,
           serverStatus,
           serverType,
           serverVersion,
-        });
+        };
+        if (autoScale.up !== undefined) route.autoScaleUp = autoScale.up;
+        if (autoScale.down !== undefined) route.autoScaleDown = autoScale.down;
+        detailed.routes.push(route);
       }
     }
   }
 
   return detailed;
+}
+
+/**
+ * getRouterDetailInfo plus `discoveredByRouter` per route from the mc-router
+ * management API (#768). The field stays absent when the router is not
+ * running or the API cannot be read.
+ */
+export async function getRouterDetailInfoAsync(
+  options: { routerApi?: IMcRouterApiPort } = {}
+): Promise<RouterDetailInfo> {
+  const detailed = getRouterDetailInfo();
+  if (detailed.status !== 'running') return detailed;
+
+  const listed = await (options.routerApi ?? routerApi).listRoutes();
+  detailed.routes = markDiscoveredRoutes(detailed.routes, listed ? listed.keys() : null, {
+    stoppedRoutesListed: detailed.autoScale?.up !== false,
+  });
+  return detailed;
+}
+
+/**
+ * Resolver addresses (#768), resolved the way create-server.sh picks nip.io
+ * hosts: `.env` HOST_IPS / HOST_IP comma lists, else the probed host address.
+ * The first one is the primary, as for avahi.
+ */
+function readRouterResolver(): RouterResolver {
+  const hostIps = resolveHostIps(new Paths());
+  return hostIps.length > 0 ? { hostIp: hostIps[0], hostIps } : { hostIps };
 }
 
 /**

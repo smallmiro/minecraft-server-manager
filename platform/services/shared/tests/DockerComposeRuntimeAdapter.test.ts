@@ -661,6 +661,55 @@ describe('DockerRouterStatusAdapter', () => {
     vi.mocked(spawnSync).mockReturnValue(exited(1));
     expect(router.getHostnames('mc-a')).toBe('-');
   });
+
+  it('inspectRouter reads the mc-router image and env from one inspect (#768)', () => {
+    const config = {
+      Image: 'itzg/mc-router:1.47.1',
+      Env: ['AUTO_SCALE_UP=true', 'AUTO_SCALE_ASLEEP_MOTD=a=b\\nc', 'EMPTY=', 'NOEQUALS', 'PATH=/usr/bin'],
+      Labels: { x: 'y' },
+    };
+    vi.mocked(spawnSync).mockReturnValue(exited(0, `${JSON.stringify(config)}\n`));
+    expect(router.inspectRouter()).toEqual({
+      image: 'itzg/mc-router:1.47.1',
+      env: { AUTO_SCALE_UP: 'true', AUTO_SCALE_ASLEEP_MOTD: 'a=b\\nc', EMPTY: '', PATH: '/usr/bin' },
+    });
+    expect(spawnSync).toHaveBeenCalledWith('docker', ['inspect', '--format', '{{json .Config}}', '--', 'mc-router'], PIPE);
+  });
+
+  it('inspectRouter tolerates a missing Image/Env', () => {
+    vi.mocked(spawnSync).mockReturnValue(exited(0, '{"Env":null}'));
+    expect(router.inspectRouter()).toEqual({ image: undefined, env: {} });
+  });
+
+  it('inspectRouter is null when the container is missing or the output is not a JSON object', () => {
+    vi.mocked(spawnSync).mockReturnValue(exited(1));
+    expect(router.inspectRouter()).toBeNull();
+    vi.mocked(spawnSync).mockReturnValue(exited(0, 'not json'));
+    expect(router.inspectRouter()).toBeNull();
+    vi.mocked(spawnSync).mockReturnValue(exited(0, 'null'));
+    expect(router.inspectRouter()).toBeNull();
+  });
+
+  it('getLabels reads all labels of a server workload in one inspect (#768)', () => {
+    vi.mocked(spawnSync).mockReturnValue(
+      exited(0, '{"mc-router.host":"a.local","mc-router.auto-scale-up":"false","n":1}\n')
+    );
+    expect(router.getLabels('mc-a')).toEqual({ 'mc-router.host': 'a.local', 'mc-router.auto-scale-up': 'false' });
+    expect(spawnSync).toHaveBeenCalledWith('docker', ['inspect', '--format', '{{json .Config.Labels}}', '--', 'mc-a'], PIPE);
+
+    vi.mocked(spawnSync).mockReturnValue(exited(0, 'null'));
+    expect(router.getLabels(ServerName.fromExisting('a'))).toEqual({});
+    expect(spawnSync).toHaveBeenLastCalledWith(
+      'docker',
+      ['inspect', '--format', '{{json .Config.Labels}}', '--', 'mc-a'],
+      PIPE
+    );
+
+    vi.mocked(spawnSync).mockReturnValue(exited(1));
+    expect(router.getLabels('mc-a')).toEqual({});
+    vi.mocked(spawnSync).mockReturnValue(exited(0, '{bad'));
+    expect(router.getLabels('mc-a')).toEqual({});
+  });
 });
 
 describe('DockerPlayitAgentAdapter', () => {

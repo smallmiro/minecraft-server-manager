@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactElement } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
@@ -112,7 +113,11 @@ function TabLabel({ label, count }: { label: string; count?: number }) {
 }
 
 export function ServerDetail({ server, onSendCommand }: ServerDetailProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('Overview');
+  // `?tab=Options` deep-links into a tab (e.g. the Routing page links to the hostname editor).
+  const requestedTab = useSearchParams()?.get('tab');
+  const [activeTab, setActiveTab] = useState<TabType>(
+    TABS.find((tab) => tab.label === requestedTab)?.label ?? 'Overview'
+  );
   const [consoleOpen, setConsoleOpen] = useState(false);
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));

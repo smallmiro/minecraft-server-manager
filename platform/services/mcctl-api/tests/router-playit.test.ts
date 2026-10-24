@@ -5,7 +5,7 @@ import { buildApp } from '../src/app.js';
 // Mock @minecraft-docker/shared module
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  getRouterDetailInfo: vi.fn(),
+  getRouterDetailInfoAsync: vi.fn(),
   getAvahiStatus: vi.fn(),
   getPlayitAgentStatus: vi.fn(),
   getAllServers: vi.fn(),
@@ -52,9 +52,9 @@ describe('Router Routes - Playit Integration', () => {
 
   describe('GET /api/router/status - with playit field', () => {
     it('should include playit status in router response', async () => {
-      const { getRouterDetailInfo, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
+      const { getRouterDetailInfoAsync, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
 
-      vi.mocked(getRouterDetailInfo).mockReturnValue({
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue({
         name: 'mc-router',
         status: 'running',
         health: 'healthy',
@@ -96,9 +96,9 @@ describe('Router Routes - Playit Integration', () => {
     });
 
     it('should omit playit field when playit status fails', async () => {
-      const { getRouterDetailInfo, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
+      const { getRouterDetailInfoAsync, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
 
-      vi.mocked(getRouterDetailInfo).mockReturnValue({
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue({
         name: 'mc-router',
         status: 'running',
         health: 'healthy',
@@ -124,9 +124,9 @@ describe('Router Routes - Playit Integration', () => {
     });
 
     it('should include playit status when agent is disabled', async () => {
-      const { getRouterDetailInfo, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
+      const { getRouterDetailInfoAsync, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
 
-      vi.mocked(getRouterDetailInfo).mockReturnValue({
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue({
         name: 'mc-router',
         status: 'running',
         health: 'healthy',

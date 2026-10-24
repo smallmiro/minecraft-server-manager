@@ -1,9 +1,18 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { ThemeProvider } from '@/theme';
 import { RoutingTable } from './RoutingTable';
+import { useStartServer } from '@/hooks/useMcctl';
 import type { RouteInfo } from '@/ports/api/IMcctlApiClient';
+
+vi.mock('@/hooks/useMcctl', () => ({
+  useStartServer: vi.fn(),
+}));
+
+const mockStart = vi.fn();
+const mockStartHook = (isPending = false) =>
+  vi.mocked(useStartServer).mockReturnValue({ mutate: mockStart, isPending } as any);
 
 const routes: RouteInfo[] = [
   { hostname: 'survival.local', target: 'mc-survival:25565', serverStatus: 'running', serverType: 'PAPER', serverVersion: '1.21.1' },
@@ -33,6 +42,11 @@ const renderTable = (r: RouteInfo[] = routes, playit: Array<string | null> = ['a
       <RoutingTable routes={r} playitDomains={playit} />
     </ThemeProvider>
   );
+
+beforeEach(() => {
+  mockStart.mockReset();
+  mockStartHook();
+});
 
 afterEach(() => {
   // @ts-expect-error restore jsdom default (no matchMedia)
@@ -149,5 +163,104 @@ describe('RoutingTable', () => {
     );
     expect(html).toContain('aria-label="Routes"');
     expect(html).not.toContain('<table');
+  });
+
+  describe('row actions (#768)', () => {
+    const rowOf = (host: string) => screen.getByText(host).closest('tr') as HTMLElement;
+
+    it('offers Start for stopped routes when auto-scale-up is off or unknown, and nothing for running ones', () => {
+      renderTable();
+      expect(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' })).toBeInTheDocument();
+      expect(within(rowOf('survival.local')).queryByRole('button', { name: /^(Start|Wake)/ })).not.toBeInTheDocument();
+      expect(within(rowOf('mc.example.com')).queryByRole('button', { name: /^(Start|Wake)/ })).not.toBeInTheDocument();
+    });
+
+    it('labels the action Wake and the status Sleeping when auto-scale-up is on', () => {
+      renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: true }]);
+      const row = rowOf('a.local');
+      expect(within(row).getByRole('button', { name: 'Wake a' })).toHaveTextContent('Wake');
+      expect(within(row).getByText('Sleeping · wakes on connect')).toBeInTheDocument();
+    });
+
+    it('labels the action Start and the status Stopped when auto-scale-up is off', () => {
+      renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: false }]);
+      const row = rowOf('a.local');
+      expect(within(row).getByRole('button', { name: 'Start a' })).toHaveTextContent('Start');
+      expect(within(row).getByText('Stopped')).toBeInTheDocument();
+    });
+
+    it('starts the server by name when clicked', () => {
+      renderTable();
+      fireEvent.click(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' }));
+      expect(mockStart).toHaveBeenCalledWith('creative', expect.anything());
+    });
+
+    it('shows why a start failed instead of failing silently', async () => {
+      mockStart.mockImplementation((_name, opts) => opts?.onError?.(new Error('Forbidden: manage permission required')));
+      renderTable();
+      fireEvent.click(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' }));
+      expect(await within(rowOf('creative.local')).findByText('Start failed')).toBeInTheDocument();
+      expect(within(rowOf('creative.local')).getByLabelText(/Forbidden: manage permission required/)).toBeInTheDocument();
+    });
+
+    it('does not bubble the click to the row', () => {
+      const onClick = vi.fn();
+      render(
+        <ThemeProvider>
+          <div onClick={onClick}>
+            <RoutingTable routes={[routes[3]]} playitDomains={[]} />
+          </div>
+        </ThemeProvider>
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Start creative' }));
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('disables the action and shows a spinner while starting', () => {
+      mockStartHook(true);
+      renderTable();
+      const button = within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' });
+      expect(button).toBeDisabled();
+      expect(within(button).getByRole('progressbar')).toBeInTheDocument();
+    });
+
+    it('links straight to the hostnames section of the server', () => {
+      renderTable();
+      expect(within(rowOf('creative.local')).getByRole('link', { name: 'Edit hostnames of creative' })).toHaveAttribute(
+        'href',
+        '/servers/creative?tab=Options#hostnames'
+      );
+    });
+
+    it('shows a Not routed warning only when discoveredByRouter is false', () => {
+      renderTable([
+        { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false },
+        { hostname: 'b.local', target: 'mc-b:25565', serverStatus: 'running', discoveredByRouter: true },
+        { hostname: 'c.local', target: 'mc-c:25565', serverStatus: 'running' },
+      ]);
+      const chip = within(rowOf('a.local')).getByText('Not routed').closest('.MuiChip-root');
+      expect(chip).toHaveClass('MuiChip-colorWarning');
+      expect(within(rowOf('b.local')).queryByText('Not routed')).not.toBeInTheDocument();
+      expect(within(rowOf('c.local')).queryByText('Not routed')).not.toBeInTheDocument();
+    });
+
+    it('explains Not routed in a tooltip', async () => {
+      renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false }]);
+      expect(screen.getByLabelText(/mc-router has not registered this hostname/i)).toBeInTheDocument();
+    });
+
+    it('renders the same actions in the xs card list', () => {
+      setMobile(true);
+      renderTable([
+        { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: true, discoveredByRouter: false },
+      ]);
+      const item = within(screen.getByRole('list', { name: 'Routes' })).getByRole('listitem');
+      expect(within(item).getByRole('button', { name: 'Wake a' })).toBeInTheDocument();
+      expect(within(item).getByRole('link', { name: 'Edit hostnames of a' })).toBeInTheDocument();
+      expect(within(item).getByRole('link', { name: 'Open a' })).toBeInTheDocument();
+      expect(within(item).getByText('Not routed')).toBeInTheDocument();
+      fireEvent.click(within(item).getByRole('button', { name: 'Wake a' }));
+      expect(mockStart).toHaveBeenCalledWith('a', expect.anything());
+    });
   });
 });

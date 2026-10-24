@@ -36,16 +36,24 @@ export function extractServerName(target: string): string {
   return target.replace(/^mc-/, '').replace(/:25565$/, '');
 }
 
+/** Containers that `docker start` can bring up (the Wake/Start action is offered for these). */
+export function isRouteStartable(status: ContainerStatus): boolean {
+  return status === 'exited' || status === 'created';
+}
+
 /**
  * Stopped servers (exited/created) are the normal auto-scale state, so they are
  * a warning rather than an error; only dead/missing containers are errors.
  */
-export function routeStatusDisplay(status: ContainerStatus): RouteStatusDisplay {
+export function routeStatusDisplay(status: ContainerStatus, autoScaleUp?: boolean): RouteStatusDisplay {
   switch (status) {
     case 'running':
       return { color: 'success', label: 'Running' };
     case 'exited':
     case 'created':
+      // autoScaleUp is only known when container labels could be read; otherwise keep the #767 wording.
+      if (autoScaleUp === true) return { color: 'warning', label: 'Sleeping · wakes on connect' };
+      if (autoScaleUp === false) return { color: 'default', label: 'Stopped' };
       return { color: 'warning', label: 'Stopped · wakes on connect' };
     case 'restarting':
       return { color: 'warning', label: 'Restarting' };

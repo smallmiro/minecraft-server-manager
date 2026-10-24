@@ -18,6 +18,7 @@ import {
   useAssignWorld,
   useReleaseWorld,
   useDeleteWorld,
+  useRestartRouter,
 } from '../useMcctl';
 
 // Mock fetch
@@ -247,6 +248,42 @@ describe('useMcctl hooks', () => {
       await waitFor(() => {
         expect(result.current.isSuccess).toBe(true);
       });
+    });
+  });
+
+  describe('useStartServer router refresh (#768)', () => {
+    it('invalidates router-status so a woken route leaves Sleeping at once', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(QueryClientProvider, { client: queryClient }, children);
+
+      const { result } = renderHook(() => useStartServer(), { wrapper });
+      result.current.mutate('alpha');
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['router-status'] });
+    });
+  });
+
+  describe('useRestartRouter (#768)', () => {
+    it('should POST /api/router/restart and invalidate router-status', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ success: true, message: 'restarted' }),
+      });
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+      const wrapper = ({ children }: { children: React.ReactNode }) =>
+        React.createElement(QueryClientProvider, { client: queryClient }, children);
+
+      const { result } = renderHook(() => useRestartRouter(), { wrapper });
+      result.current.mutate();
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(mockFetch).toHaveBeenCalledWith('/api/router/restart', expect.objectContaining({ method: 'POST' }));
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: ['router-status'] });
     });
   });
 

@@ -25,6 +25,7 @@ import {
   UpdateServerConfigResponse,
   WorldResetResponse,
   RouterStatusResponse,
+  RouterActionResponse,
   BackupStatusResponse,
   BackupPushResponse,
   BackupHistoryResponse,
@@ -352,6 +353,10 @@ export class McctlApiAdapter implements IMcctlApiClient {
 
   async getRouterStatus(): Promise<RouterStatusResponse> {
     return this.fetch<RouterStatusResponse>('/api/router/status');
+  }
+
+  async restartRouter(): Promise<RouterActionResponse> {
+    return this.fetch<RouterActionResponse>('/api/router/restart', { method: 'POST' });
   }
 
   // ============================================================

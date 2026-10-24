@@ -17,7 +17,10 @@ import type {
   ConsoleCommandResult,
   ConsoleEndpoint,
 } from '../../application/ports/outbound/IServerConsolePort.js';
-import type { IRouterStatusPort } from '../../application/ports/outbound/IRouterStatusPort.js';
+import type {
+  IRouterStatusPort,
+  RouterContainerConfig,
+} from '../../application/ports/outbound/IRouterStatusPort.js';
 import type { IPlayitAgentPort } from '../../application/ports/outbound/IPlayitAgentPort.js';
 import type { IRuntimeEnvironmentPort, ToolVersion } from '../../application/ports/outbound/IRuntimeEnvironmentPort.js';
 
@@ -596,6 +599,51 @@ export class DockerRouterStatusAdapter implements IRouterStatusPort {
     ]);
 
     return result || '-';
+  }
+
+  /**
+   * Image and env of mc-router from one `docker inspect` (#768)
+   */
+  inspectRouter(): RouterContainerConfig | null {
+    const config = parseJsonObject(execCommand('docker', ['inspect', '--format', '{{json .Config}}', '--', 'mc-router']));
+    if (!config) return null;
+
+    const env: Record<string, string> = {};
+    if (Array.isArray(config['Env'])) {
+      for (const entry of config['Env']) {
+        if (typeof entry !== 'string') continue;
+        const eq = entry.indexOf('=');
+        if (eq > 0) env[entry.slice(0, eq)] = entry.slice(eq + 1);
+      }
+    }
+    const image = typeof config['Image'] === 'string' ? config['Image'] : undefined;
+    return { image, env };
+  }
+
+  /**
+   * All string labels of a container from one `docker inspect` (#768)
+   */
+  getLabels(name: ServerName | string): Record<string, string> {
+    const container = workloadNameOf(name);
+    const labels = parseJsonObject(
+      execCommand('docker', ['inspect', '--format', '{{json .Config.Labels}}', '--', container])
+    );
+    const result: Record<string, string> = {};
+    for (const [key, value] of Object.entries(labels ?? {})) {
+      if (typeof value === 'string') result[key] = value;
+    }
+    return result;
+  }
+}
+
+/** A JSON object from `docker inspect --format '{{json ...}}'`, or null. */
+function parseJsonObject(text: string): Record<string, unknown> | null {
+  if (!text) return null;
+  try {
+    const value: unknown = JSON.parse(text);
+    return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+  } catch {
+    return null;
   }
 }
 

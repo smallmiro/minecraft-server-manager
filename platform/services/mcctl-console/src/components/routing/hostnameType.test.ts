@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { ContainerStatus } from '@/ports/api/IMcctlApiClient';
-import { classifyRouteHostname, routeStatusDisplay, extractServerName } from './hostnameType';
+import { classifyRouteHostname, routeStatusDisplay, extractServerName, isRouteStartable } from './hostnameType';
 
 describe('classifyRouteHostname', () => {
   it('classifies *.local as mDNS', () => {
@@ -61,5 +61,34 @@ describe('routeStatusDisplay', () => {
 
   it('falls back to default for unknown statuses', () => {
     expect(routeStatusDisplay('stopped' as ContainerStatus)).toEqual({ color: 'default', label: 'stopped' });
+  });
+});
+
+describe('routeStatusDisplay with auto-scale (#768)', () => {
+  it.each<ContainerStatus>(['exited', 'created'])('shows %s + autoScaleUp as Sleeping (warning)', (status) => {
+    expect(routeStatusDisplay(status, true)).toEqual({ color: 'warning', label: 'Sleeping · wakes on connect' });
+  });
+
+  it.each<ContainerStatus>(['exited', 'created'])('shows %s + no autoScaleUp as Stopped (default)', (status) => {
+    expect(routeStatusDisplay(status, false)).toEqual({ color: 'default', label: 'Stopped' });
+  });
+
+  it('keeps the #767 mapping when autoScaleUp is unknown', () => {
+    expect(routeStatusDisplay('exited', undefined)).toEqual({ color: 'warning', label: 'Stopped · wakes on connect' });
+  });
+
+  it('does not change non-stopped statuses', () => {
+    expect(routeStatusDisplay('running', true)).toEqual({ color: 'success', label: 'Running' });
+    expect(routeStatusDisplay('dead', false)).toEqual({ color: 'error', label: 'Dead' });
+  });
+});
+
+describe('isRouteStartable', () => {
+  it('is true only for exited/created containers', () => {
+    expect(isRouteStartable('exited')).toBe(true);
+    expect(isRouteStartable('created')).toBe(true);
+    expect(isRouteStartable('running')).toBe(false);
+    expect(isRouteStartable('dead')).toBe(false);
+    expect(isRouteStartable('not_found')).toBe(false);
   });
 });
