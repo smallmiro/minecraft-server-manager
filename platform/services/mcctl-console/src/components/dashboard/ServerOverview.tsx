@@ -1,9 +1,6 @@
 'use client';
 
 import {
-  Card,
-  CardContent,
-  CardHeader,
   Box,
   Typography,
   CircularProgress,
@@ -15,6 +12,7 @@ import { useAppRouter } from '@/hooks/useAppRouter';
 import type { ServerSummary } from '@/ports/api/IMcctlApiClient';
 import type { ServerStatusMap } from '@/hooks/useServersSSE';
 import { HostnameDisplay } from '@/components/common';
+import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 
 export interface ServerOverviewProps {
   servers: ServerSummary[];
@@ -74,33 +72,33 @@ export function ServerOverview({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader title="Servers" />
-        <CardContent>
+      <BentoPanel sx={{ height: '100%' }}>
+        <BentoPanelHeader title="Servers" />
+        <Box sx={{ px: 2.5, pb: 2.5 }}>
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress />
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   if (servers.length === 0) {
     return (
-      <Card>
-        <CardHeader title="Servers" />
-        <CardContent>
+      <BentoPanel sx={{ height: '100%' }}>
+        <BentoPanelHeader title="Servers" />
+        <Box sx={{ px: 2.5, pb: 2.5 }}>
           <Typography color="text.secondary" align="center">
             No servers found. Create your first server to get started.
           </Typography>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   return (
-    <Card>
-      <CardHeader
+    <BentoPanel sx={{ height: '100%' }}>
+      <BentoPanelHeader
         title="Servers"
         action={
           showViewAll && servers.length > (maxItems || 0) ? (
@@ -114,7 +112,7 @@ export function ServerOverview({
           ) : null
         }
       />
-      <CardContent>
+      <Box sx={{ px: 2.5, pb: 2.5 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {displayedServers.map((server) => {
             // Use SSE status if available
@@ -167,7 +165,7 @@ export function ServerOverview({
             );
           })}
         </Box>
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
