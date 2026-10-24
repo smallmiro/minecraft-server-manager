@@ -1,12 +1,11 @@
-// Packs the CLI and checks the tarball ships the same scripts as platform/scripts (minus tests/),
-// plus the BlueMap Dockerfile the map renderer builds from. Exits non-zero on any mismatch.
+// Packs the CLI and checks the tarball ships the BlueMap Dockerfile the map renderer builds from
+// and no scripts/ directory (removed in v3.0.0, #736). Exits non-zero on any mismatch.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const cliRoot = resolve(import.meta.dirname, '..');
-const platformScripts = resolve(cliRoot, '..', '..', 'scripts');
 const tmp = mkdtempSync(join(tmpdir(), 'mcctl-verify-'));
 const errors = [];
 
@@ -16,13 +15,8 @@ try {
   execFileSync('tar', ['-xzf', join(tmp, tgz), '-C', tmp]);
   const pkg = join(tmp, 'package');
 
-  if (existsSync(join(pkg, 'scripts', 'tests'))) errors.push('package contains scripts/tests/');
+  if (existsSync(join(pkg, 'scripts'))) errors.push('package contains scripts/');
   if (!existsSync(join(pkg, 'docker/bluemap/Dockerfile'))) errors.push('package is missing docker/bluemap/Dockerfile');
-  try {
-    execFileSync('diff', ['-r', '-x', 'tests', '-x', '.gitkeep', platformScripts, join(pkg, 'scripts')], { encoding: 'utf8' });
-  } catch (e) {
-    errors.push(`packaged scripts differ from platform/scripts:\n${e.stdout ?? e.message}`);
-  }
 } finally {
   rmSync(tmp, { recursive: true, force: true });
 }

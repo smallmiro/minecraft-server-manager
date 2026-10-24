@@ -47,7 +47,7 @@ describe('resolveBlueMapDockerDir', () => {
 
     const dataRoot = mkdtempSync(join(tmpdir(), 'mcctl-data-'));
     try {
-      // Bundled copy (only after sync-scripts/prepack) or the repo source, never the empty data root.
+      // Bundled copy (only after sync-docker/prepack) or the repo source, never the empty data root.
       const dir = resolveBlueMapDockerDir(dataRoot);
       expect(dir.startsWith(dataRoot)).toBe(false);
       expect(existsSync(join(dir, 'Dockerfile'))).toBe(true);

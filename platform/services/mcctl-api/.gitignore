@@ -1,3 +1,2 @@
-# Bundled platform scripts/docker context (generated from ../../scripts and ../../docker by sync-scripts at pack time)
-/scripts/
+# Bundled docker context (generated from ../../docker by sync-docker at pack time)
 /docker/
