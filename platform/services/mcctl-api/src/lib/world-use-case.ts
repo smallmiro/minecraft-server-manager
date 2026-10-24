@@ -5,6 +5,7 @@ import {
   ServerRepository,
   ConfigEnvWorldAssignmentAdapter,
   DockerComposeRuntimeAdapter,
+  FileServerSpecRepository,
   Paths,
   type WorldAssignmentErrorCode,
 } from '@minecraft-docker/shared';
@@ -27,8 +28,10 @@ export function createWorldUseCase(options?: {
     confirmValue: options?.confirmValue ?? true,
   });
   // #670: assignments come from each server's LEVEL; D2 moves these into its container plugin
-  const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
   const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
+  // LEVEL and SEED writes go through the ServerSpec repository (#675), which checks the server is stopped
+  const specRepo = new FileServerSpecRepository(paths, undefined, runtime);
+  const assignments = new ConfigEnvWorldAssignmentAdapter(paths, specRepo);
   const worldRepo = new WorldRepository(paths, assignments);
   const serverRepo = new ServerRepository(paths);
 

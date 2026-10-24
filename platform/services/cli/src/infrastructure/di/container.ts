@@ -142,7 +142,8 @@ export class Container {
 
   get worldAssignmentPort(): IWorldAssignmentPort {
     if (!this._worldAssignmentPort) {
-      this._worldAssignmentPort = new ConfigEnvWorldAssignmentAdapter(this.paths);
+      // LEVEL and SEED writes go through the ServerSpec repository (#675), which checks the server is stopped
+      this._worldAssignmentPort = new ConfigEnvWorldAssignmentAdapter(this.paths, this.serverSpecRepository);
     }
     return this._worldAssignmentPort;
   }
