@@ -12,9 +12,13 @@ vi.mock('next/navigation', () => ({
 }));
 
 // Mock the hooks
+const idleMutation = { mutate: vi.fn(), isPending: false };
 vi.mock('@/hooks/useMcctl', () => ({
   useServers: vi.fn(),
   useWorlds: vi.fn(),
+  useStartServer: () => idleMutation,
+  useStopServer: () => idleMutation,
+  useRestartServer: () => idleMutation,
 }));
 
 // Mock useServersSSE to avoid EventSource dependency

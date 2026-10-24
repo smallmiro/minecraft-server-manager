@@ -5,6 +5,8 @@ import {
   Box,
   Typography,
   CircularProgress,
+  Snackbar,
+  Alert,
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
@@ -44,6 +46,7 @@ export function ServerOverview({
   const router = useAppRouter();
 
   const [filter, setFilter] = useState<StatusFilter>('all');
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Overlay live SSE status on top of the fetched snapshot
   const resolved = servers.map((server) => {
@@ -148,11 +151,22 @@ export function ServerOverview({
                 status={status}
                 health={health}
                 onClick={handleServerClick}
+                onActionError={setActionError}
               />
             ))}
           </Box>
         )}
       </Box>
+      <Snackbar
+        open={actionError !== null}
+        autoHideDuration={6000}
+        onClose={() => setActionError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setActionError(null)} severity="error" sx={{ width: '100%' }}>
+          {actionError}
+        </Alert>
+      </Snackbar>
     </BentoPanel>
   );
 }
