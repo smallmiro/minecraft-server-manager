@@ -863,7 +863,7 @@ step7_worlds() {
 # the container was created from; recreating it picks up the pulled image.
 step7b_images() {
   step 7b "Stopped servers and new images"
-  local d name st stopped="" running="" s old failed=""
+  local d name st stopped="" running="" s old failed="" made="" started=""
   if ! command -v docker >/dev/null 2>&1; then
     say "docker not found: skipped"
     record 7b "Server images" skipped "no docker"
@@ -902,8 +902,20 @@ step7b_images() {
     return 0
   fi
   for s in $stopped; do
+    # auto-scale may have started it while the question waited; compose would
+    # stop a running server to recreate it, so look again right before
+    st=$(capture docker inspect --format '{{.State.Status}}' "mc-$s")
+    case "$st" in
+      exited | created) ;;
+      *)
+        say "$s: started meanwhile, skipped (restart it later to pick up the new image)"
+        started="$started $s"
+        continue
+        ;;
+    esac
     old=$(capture docker inspect --format '{{.Image}}' "mc-$s")
     if run docker compose up --no-start --no-deps "mc-$s"; then
+      made="$made $s"
       if [ -n "$old" ] && [ "$(capture docker inspect --format '{{.Image}}' "mc-$s")" != "$old" ]; then
         # the reference after recreating: step 2 may have moved the tag (java21 -> java25)
         IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $(capture docker inspect --format '{{.Config.Image}}' "mc-$s") && docker compose up --no-start --no-deps mc-$s"$'\n'
@@ -917,7 +929,7 @@ step7b_images() {
     add_warning "recreating failed for:$failed (see the docker output above)"
     record 7b "Server images" failed "failed for:$failed"
   else
-    record 7b "Server images" ok "recreated:$stopped"
+    record 7b "Server images" ok "recreated:${made:- none}${started:+; started meanwhile, skipped:$started}"
   fi
 }
 

@@ -146,7 +146,10 @@ fi`),
     FAKE_LOGGER(`case "$1" in
   inspect)
     case "$3" in
-      *State.Status*) cat "$FAKE_DIR/$4.state" 2>/dev/null ;;
+      *State.Status*)
+        cat "$FAKE_DIR/$4.state" 2>/dev/null
+        # a later read sees the next state (a player connected meanwhile)
+        [ -f "$FAKE_DIR/$4.state.next" ] && mv "$FAKE_DIR/$4.state.next" "$FAKE_DIR/$4.state" ;;
       *Config.Image*) cat "$FAKE_DIR/$4.ref" 2>/dev/null || echo "itzg/minecraft-server:java21" ;;
       *) cat "$FAKE_DIR/$4.image" 2>/dev/null ;;
     esac ;;
@@ -750,6 +753,18 @@ describe('upgrade-v3.sh', () => {
       const r = run({ args: ['--yes'] });
       expect(calls()).not.toMatch(/compose up/);
       expect(r.out).toMatch(/\[skipped\] Step 7b .* - no stopped servers/);
+    });
+
+    it('skips a server that auto-scale started while the question waited', () => {
+      server('alpha', 'exited');
+      put(join(ctx.fake, 'mc-alpha.state.next'), 'running\n');
+      server('gamma', 'exited');
+      const r = run({ env: { MCCTL_UPGRADE_TTY: yesToAll() } });
+      expect(calls()).not.toMatch(/up --no-start --no-deps mc-alpha/);
+      expect(calls()).toMatch(/^docker compose up --no-start --no-deps mc-gamma$/m);
+      expect(r.out).toContain('alpha: started meanwhile, skipped');
+      expect(r.out).toMatch(/\[ok\] Step 7b .* - recreated: gamma; started meanwhile, skipped: alpha$/m);
+      expect(todo(r.out)).not.toContain('mc-alpha');
     });
 
     it('fails the step when recreating a server fails', () => {
