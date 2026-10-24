@@ -172,7 +172,7 @@ export interface IServerSpecRepository {
   // v2 (D1) signatures, unchanged
   /** One `{ name }` per server directory with server.yaml or config.env. */
   list(): Promise<ServerSpec[]>;
-  /** The document, typed as the v2 ServerSpec. @deprecated Use load(). Removed in v3.0.0 (#736). */
+  /** The document, typed as the v2 ServerSpec. @deprecated Use load(). Deleted in v3.0.0 (#736): `get` → `load(name)`. */
   get(name: string): Promise<ServerSpec | null>;
   /** write(spec) after checking that `spec` is a full document; a bare { name } → 'invalid_spec' listing the missing fields. */
   save(spec: ServerSpec): Promise<void>;
@@ -194,8 +194,8 @@ Created in D1 as type-only files with the sketch from the hardening plan §9.1, 
 
 | Port | Owner | D1 signature | Why provisional |
 |------|-------|--------------|-----------------|
-| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>`, `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | **Settled by [ADR-0003](0003-server-spec.md)**, see [IServerSpecRepository (#675)](#iserverspecrepository-675) above. |
-| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>`, `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | **Superseded, final below.** |
+| `IServerSpecRepository` | D5 (#675) | `list(): Promise<ServerSpec[]>`, `get(name): Promise<ServerSpec \| null>` (deleted in v3.0.0, #736: use `load(name)`), `save(spec): Promise<void>`, `delete(name): Promise<void>`; `ServerSpec` is a placeholder `{ name: string }` | **Settled by [ADR-0003](0003-server-spec.md)**, see [IServerSpecRepository (#675)](#iserverspecrepository-675) above. |
+| `IWorldAssignmentPort` | A4 (#670) | `getAssignment(world): Promise<string \| null>` (deleted in v3.0.0, #736: use `snapshot()` + `holdersOf`), `listAssignments(): Promise<WorldAssignment[]>` (`{ world, server }`), `assign(world, server): Promise<void>` (rejects on an R1 violation) | **Superseded, final below.** |
 
 **`IWorldAssignmentPort`, final (#670, [ADR-0002](0002-world-server-assignment.md))**. Assignments are derived from each server's `LEVEL` in `config.env`; there is no separate record. It stays a port (#715: no new ports), and the rules live in pure domain functions (`shared/src/domain/services/worldAssignment.ts`) that adapters reuse.
 
@@ -204,7 +204,7 @@ interface WorldAssignment { world: string; server: string; internal?: boolean } 
 interface WorldAssignmentSnapshot { assignments: WorldAssignment[]; undetermined: string[] }
 
 export interface IWorldAssignmentPort {
-  /** @deprecated (v2) The holder of the world's folders, or null. Use snapshot() + holdersOf. */
+  /** @deprecated (v2) The holder of the world's folders, or null. Use snapshot() + holdersOf. Deleted in v3.0.0 (#736): `getAssignment` → `snapshot()` + `holdersOf`. */
   getAssignment(world: string): Promise<string | null>;
   /** v2 shape: the readable assignments. */
   listAssignments(): Promise<WorldAssignment[]>;
@@ -221,7 +221,7 @@ export interface IWorldAssignmentPort {
 }
 ```
 
-The v2 members `getAssignment` (now deprecated) and `listAssignments` (`WorldAssignment[]`) keep their shape (#715, #736); `snapshot`, `preview` and `release` were added. Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
+The v2 members `getAssignment` (deprecated here; deleted in v3.0.0, #736, in favour of `snapshot()` + `holdersOf`) and `listAssignments` (`WorldAssignment[]`) keep their shape (#715, #736); `snapshot`, `preview` and `release` were added. Adapter: `ConfigEnvWorldAssignmentAdapter` (`infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.ts`), built by the CLI `Container` and, until D2, by the API routes.
 
 ## Adapters and the Legacy Facade
 
@@ -445,7 +445,7 @@ Structural change only (Tidy First). Docker argv, return values and error sentin
 | `serverHostnameOf(server: ServerName \| string)` | `<server>.local` |
 | `workloadNameOf(name: ServerName \| string)` | a ServerName → its container; a string → unchanged (the container name) |
 
-The module has no runtime imports, so `@minecraft-docker/shared/naming` stays browser-safe. `ServerName.containerName`/`hostname` and `Server.containerName`/`hostname` remain as `@deprecated` getters that delegate here; that is the only domain → infrastructure import, and it goes away with the getters in #736. The reserved-name message (`conflicts with the mc-router container`) is built the same way, so its text is unchanged.
+The module has no runtime imports, so `@minecraft-docker/shared/naming` stays browser-safe. `ServerName.containerName`/`hostname` and `Server.containerName`/`hostname` remained as `@deprecated` getters that delegate here (state at #665); that was the only domain → infrastructure import. The getters were deleted in v3.0.0 (#736); use `containerNameOf` / `serverHostnameOf`. The reserved-name message (`conflicts with the mc-router container`) is built the same way, so its text is unchanged.
 
 ### Port signature changes
 
@@ -491,7 +491,7 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 
 - The composites query service (open question 3): not needed for the acceptance criteria.
 - `PrerequisiteChecker` (direct call site row 19) and the shared lint error flip.
-- `ServerStatusUseCase` (deprecated as a whole) and the "Connect via" message in `CreateServerUseCase` still read the deprecated getters. #675 rewrites the creation path; #736 deletes both getters.
+- `ServerStatusUseCase` (deprecated as a whole) and the "Connect via" message in `CreateServerUseCase` still read the deprecated getters (state at #665). #675 rewrote the creation path, and both getters were deleted in v3.0.0 (#736).
 
 ### Deprecated in #665 (removed in v3.0.0, #736)
 

@@ -49,7 +49,7 @@
 | `IPlayitAgentPort` | `start()`, `stop()` | 비동기 |
 | `IHostnameRegistrarPort` | `getStatus()` (`getAvahiStatus`) | 동기 |
 | | `register(hostname, ip)`(#675), `unregister(hostname)`(#735) → `HostnameChangeResult { status: 'changed' \| 'unchanged' \| 'skipped'; reason? }`. 정확히 일치하는 이름만 다룬다(#660). `unregister`는 README sudoers 모양(#751)인 `sudo -n sed -i <expr> /etc/avahi/hosts`를 셸 없이 argv로 실행한다. `<expr>`은 검증된 호스트명을 정규식 이스케이프하고 필드 경계로 앵커를 건다. 비밀번호가 있으면 먼저 `sudo -S -p '' -v` | 비동기, reject하지 않음 |
-| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete(name, { deleteWorld?, dryRun? })`(#735, [S7](#스크립트-제거-s7-delete-serversh735); v2 호출 `delete(name)`도 컴파일됨). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
+| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용. v3.0.0(#736)에서 삭제), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete(name, { deleteWorld?, dryRun? })`(#735, [S7](#스크립트-제거-s7-delete-serversh735); v2 호출 `delete(name)`도 컴파일됨). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
 | `IRuntimeEnvironmentPort` | `isAvailable()`, `getEngineVersion()`, `getComposeVersion()` | 동기 |
 
 **수명주기 구현**:
@@ -71,7 +71,7 @@
 
 | 메서드 | 동작 |
 |--------|------|
-| `getAssignment(world): Promise<string \| null>` | v2, deprecated. 월드 폴더를 가진 서버 또는 null. 판단 불가 서버가 있으면 null 대신 reject한다 |
+| `getAssignment(world): Promise<string \| null>` | v2, deprecated(v3.0.0 #736에서 `snapshot()` + `holdersOf`로 대체하고 삭제). 월드 폴더를 가진 서버 또는 null. 판단 불가 서버가 있으면 null 대신 reject한다 |
 | `listAssignments(): Promise<WorldAssignment[]>` | v2 형태. 읽을 수 있는 서버의 배정(`internal`은 선택 필드) |
 | `snapshot(): Promise<WorldAssignmentSnapshot>` | `{ assignments, undetermined }`. `servers/`를 읽지 못할 때만 reject한다 |
 | `preview(server, configEnv): Promise<WorldAssignmentSnapshot>` | 한 서버의 `config.env`를 바꿨을 때의 스냅숏(스냅숏 복원, migrate). 아무것도 쓰지 않는다 |
@@ -79,7 +79,7 @@
 | `assign(world, server): Promise<void>` | `LEVEL=<world>`를 쓴다. 위반하거나 판단할 수 없으면 `WorldAssignmentError`로 reject한다(R7) |
 | `release(world): Promise<{ server, fallback }>` | 배정 해제(#715). 가진 서버의 `LEVEL`을 그 서버의 기본 월드 `<서버이름>`으로 바꾼다 |
 
-v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유지하고(#715, #736), `snapshot`, `preview`, `release`를 추가했다. 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
+v2 멤버인 `getAssignment`(deprecated, v3.0.0 #736에서 `snapshot()` + `holdersOf`로 대체하고 삭제)와 `listAssignments`는 형태를 유지하고(#715, #736), `snapshot`, `preview`, `release`를 추가했다. 어댑터는 `ConfigEnvWorldAssignmentAdapter`이고, CLI `Container`와 D2 전까지는 API 라우트가 만든다.
 
 ## 48개 함수 분류
 
@@ -172,7 +172,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 | `serverHostnameOf(server: ServerName \| string)` | `<server>.local` |
 | `workloadNameOf(name: ServerName \| string)` | ServerName이면 그 컨테이너, 문자열이면 그대로(컨테이너 이름) |
 
-이 모듈은 런타임 import가 없어서 `@minecraft-docker/shared/naming`이 브라우저에서도 안전하다. `ServerName.containerName`/`hostname`과 `Server.containerName`/`hostname`은 `@deprecated` getter로 남기고 이 함수에 위임한다. 도메인이 인프라를 import하는 곳은 이것 하나이고, #736에서 getter와 함께 사라진다. 예약 이름 오류 메시지(`conflicts with the mc-router container`)도 같은 함수로 만들어 문구가 그대로다.
+이 모듈은 런타임 import가 없어서 `@minecraft-docker/shared/naming`이 브라우저에서도 안전하다. `ServerName.containerName`/`hostname`과 `Server.containerName`/`hostname`은 `@deprecated` getter로 남기고 이 함수에 위임했다(#665 당시). 도메인이 인프라를 import하는 곳은 이것 하나였고, getter는 v3.0.0(#736)에서 삭제했다. `containerNameOf` / `serverHostnameOf`를 쓴다. 예약 이름 오류 메시지(`conflicts with the mc-router container`)도 같은 함수로 만들어 문구가 그대로다.
 
 ### 포트 시그니처 변경
 
@@ -218,7 +218,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 
 - 합성 함수 query service(쟁점 3): 완료 조건에 필요하지 않다.
 - `PrerequisiteChecker`(직접 호출 지점 19행)와 shared lint의 error 전환.
-- `ServerStatusUseCase`(클래스 전체가 deprecated)와 `CreateServerUseCase`의 "Connect via" 메시지는 아직 deprecated getter를 읽는다. 생성 경로는 #675가 다시 쓰고, getter는 #736이 지운다.
+- `ServerStatusUseCase`(클래스 전체가 deprecated)와 `CreateServerUseCase`의 "Connect via" 메시지는 아직 deprecated getter를 읽었다(#665 당시). 생성 경로는 #675가 다시 썼고, getter는 v3.0.0(#736)에서 삭제했다.
 
 ### #665에서 deprecated한 것(v3.0.0, #736에서 삭제)
 
