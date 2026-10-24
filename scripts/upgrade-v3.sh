@@ -47,6 +47,7 @@ CUR_NOW=""
 UPDATE_ACTION=""
 ECO_BAK=""
 NEED_RESTART=0
+IMAGE_UNDO=""
 TS=""
 BOLD=""
 YEL=""
@@ -274,6 +275,11 @@ rollback_hint() {
   if [ -n "$pkgs" ]; then
     say "  cd $svc && npm install$pkgs"
     say "  $RESTART_CMD"
+  fi
+  if [ -n "$IMAGE_UNDO" ]; then
+    say "  A recreated server that fails on its new image goes back to the old one with"
+    say "  (this moves the tag for every server using it, until the next pull):"
+    say "$(printf '%s' "$IMAGE_UNDO")"
   fi
 }
 
@@ -788,6 +794,64 @@ step7_worlds() {
   fi
 }
 
+# mc-router starts a stopped server with 'docker start', which keeps the image
+# the container was created from; recreating it picks up the pulled image.
+step7b_images() {
+  step 7b "Stopped servers and new images"
+  local d name st stopped="" running="" s old ref failed=""
+  if ! command -v docker >/dev/null 2>&1; then
+    say "docker not found: skipped"
+    record 7b "Server images" skipped "no docker"
+    return 0
+  fi
+  for d in "$ROOT"/servers/*/; do
+    [ -d "$d" ] || continue
+    name=$(basename "$d")
+    [ "$name" = _template ] && continue
+    st=$(capture docker inspect --format '{{.State.Status}}' "mc-$name")
+    case "$st" in
+      exited | created) stopped="$stopped mc-$name" ;;
+      running | restarting | paused) running="$running $name" ;;
+    esac
+  done
+  if [ -n "$running" ]; then
+    say "Running:$running (restart each at a quiet time: mcctl stop <server> && mcctl start <server>)"
+  fi
+  if [ -z "$stopped" ]; then
+    say "No stopped server containers."
+    record 7b "Server images" skipped "no stopped servers"
+    return 0
+  fi
+  say "Stopped:$stopped"
+  say "An auto-scale start reuses the old container and its image. Recreating the container (it stays stopped; worlds and config are kept) makes the next start use the image the update pulled."
+  if [ "$DRY" = 1 ]; then
+    say "[dry-run] would ask (default: yes), then run for each: docker compose up --no-start --no-deps <container>"
+    record 7b "Server images" skipped "dry-run"
+    return 0
+  fi
+  if ! confirm "Recreate the stopped server containers with the new images?" y; then
+    record 7b "Server images" skipped "not chosen (auto-scale starts them on the old image)"
+    return 0
+  fi
+  for s in $stopped; do
+    old=$(capture docker inspect --format '{{.Image}}' "$s")
+    ref=$(capture docker inspect --format '{{.Config.Image}}' "$s")
+    if run docker compose up --no-start --no-deps "$s"; then
+      if [ -n "$old" ] && [ "$(capture docker inspect --format '{{.Image}}' "$s")" != "$old" ]; then
+        IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $ref && docker compose up --no-start --no-deps $s"$'\n'
+      fi
+    else
+      failed="$failed $s"
+    fi
+  done
+  if [ -n "$failed" ]; then
+    add_warning "recreating failed for:$failed (see the docker output above)"
+    record 7b "Server images" failed "failed for:$failed"
+  else
+    record 7b "Server images" ok "recreated:$stopped"
+  fi
+}
+
 step8_verify() {
   step 8 "Verification"
   local bad=0 v out port apps line tries want have
@@ -950,6 +1014,7 @@ main() {
   step5_ecosystem
   step6_spec
   step7_worlds
+  step7b_images
   step8_verify
   finish
 }
