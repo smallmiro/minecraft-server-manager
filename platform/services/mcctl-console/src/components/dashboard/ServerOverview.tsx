@@ -57,15 +57,16 @@ export function ServerOverview({
       health: sseStatus?.health || server.health,
     };
   });
-  const runningCount = resolved.filter((item) => item.status === 'running').length;
+  // 'unknown' (SSE maps restarting there) is neither running nor stopped; it only shows under All
+  const isStopped = (status: string) => status !== 'running' && status !== 'unknown';
   const counts: Record<StatusFilter, number> = {
     all: resolved.length,
-    running: runningCount,
-    stopped: resolved.length - runningCount,
+    running: resolved.filter((item) => item.status === 'running').length,
+    stopped: resolved.filter((item) => isStopped(item.status)).length,
   };
   const filtered = resolved.filter((item) => {
     if (filter === 'running') return item.status === 'running';
-    if (filter === 'stopped') return item.status !== 'running';
+    if (filter === 'stopped') return isStopped(item.status);
     return true;
   });
   const displayedServers = maxItems ? filtered.slice(0, maxItems) : filtered;
