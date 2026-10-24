@@ -120,7 +120,7 @@ hash -r && mcctl --version    # = $NEW
 - `Updated (restart manually)`가 보이면 4단계를 수행합니다.
 - `mcctl update`가 서버 compose의 이미지 태그를 바꾸면 `⚠ <server>: A → B` 출력을 기록합니다. mc-router auto-scale은 기존 컨테이너를 `docker start`만 하고 다시 만들지 않으므로, 중지된 서버는 컨테이너를 다시 만들기 전까지 옛 이미지로 뜹니다. `mcctl update`를 시작한 CLI가 v3.0.1 이상이면 중지된 서버마다 컨테이너를 다시 만들고 서버별로 `recreated` 또는 `up to date`를 출력합니다(5단계 참고).
 
-**롤백 지점:** `npm install -g @minecraft-docker/mcctl@<이전버전>` 후 `mcctl console service restart --force`.
+**롤백 지점:** `npm install -g @minecraft-docker/mcctl@<이전버전>` 후 `mcctl console service restart --console --force`.
 
 ## 3. 설정 마이그레이션
 

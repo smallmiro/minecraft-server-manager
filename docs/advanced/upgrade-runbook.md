@@ -119,7 +119,7 @@ hash -r && mcctl --version    # = $NEW
 - If you see `Updated (restart manually)`, do step 4.
 - If `mcctl update` retags a server's compose image, note the `⚠ <server>: A → B` output. mc-router auto-scale only starts existing containers and never recreates them, so a stopped server keeps its old image until its container is recreated. `mcctl update` does that for every stopped server when the CLI that starts it is v3.0.1 or later, and prints `recreated` or `up to date` per server (see step 5).
 
-**Rollback point:** `npm install -g @minecraft-docker/mcctl@<previous>` then `mcctl console service restart --force`.
+**Rollback point:** `npm install -g @minecraft-docker/mcctl@<previous>` then `mcctl console service restart --console --force`.
 
 ## 3. Migrate configuration
 
