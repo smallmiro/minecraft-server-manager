@@ -24,10 +24,10 @@ import type {
 import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImport } from './importDockerServer.js';
 import {
   DockerComposeRenderer,
+  handWrittenIncludeEntries,
   includeEntries,
-  includesServer,
   removeIncludeEntry,
-  restoreIncludeEntry,
+  renderInclude,
   type RenderContext,
   type RenderedFile,
   type ServerSpecRenderer,
@@ -241,10 +241,11 @@ export class FileServerSpecRepository implements IServerSpecRepository {
 
   /** delete() once the server directory is known to exist. */
   private async deleteServer(name: string, dir: string, options: DeleteServerSpecOptions): Promise<ServerSpecDeleteResult> {
+    const includePath = join(this.paths.servers, 'compose.yml');
+    // An unreadable file or a hand-written entry for the server refuses before any change.
+    this.includeWithout(name, readOptionalSync(includePath));
     const deleteWorld = options.deleteWorld === true;
     const plan = await planServerWorlds(this.paths, name, deleteWorld);
-    const includePath = join(this.paths.servers, 'compose.yml');
-    this.includeWithout(name, readOptionalSync(includePath)); // an unreadable file refuses before any change
     const result: ServerSpecDeleteResult = {
       level: plan.level,
       movedWorlds: deleteWorld ? [] : plan.internal,
@@ -285,9 +286,9 @@ export class FileServerSpecRepository implements IServerSpecRepository {
 
   /**
    * Put the server's servers/compose.yml entry back after a failed move: the
-   * text delete replaced when nobody changed the file since, else its original
-   * entry merged in; not when servers/<n>/docker-compose.yml is gone. '' when done (or
-   * already back), else what happened or how to add it by hand.
+   * text delete replaced when nobody changed the file since, else the entry
+   * added unless one names it; not when servers/<n>/docker-compose.yml is gone.
+   * '' when done, else what happened or how to add it by hand.
    */
   private async restoreInclude(name: string, removed: { before: string; after: string }): Promise<string> {
     const includePath = join(this.paths.servers, 'compose.yml');
@@ -298,9 +299,8 @@ export class FileServerSpecRepository implements IServerSpecRepository {
           return ` servers/${name}/docker-compose.yml no longer exists, so its servers/compose.yml entry was not put back`;
         }
         const current = readOptionalSync(includePath);
-        if (includesServer(current, name)) return '';
-        const text = current === removed.after ? removed.before : restoreIncludeEntry(current, removed.before, name);
-        await atomicWriteFile(includePath, text);
+        const text = current === removed.after ? removed.before : renderInclude(name, current);
+        if (text !== current) await atomicWriteFile(includePath, text);
         return '';
       });
     } catch (err) {
@@ -312,11 +312,15 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     }
   }
 
-  /** servers/compose.yml text without the server's entry; 'conflict' when it does not parse. */
+  /**
+   * servers/compose.yml text without the server's generated entry; 'conflict'
+   * when it does not parse or has a hand-written entry for the server (#735).
+   */
   private includeWithout(name: string, current: string | undefined): string | undefined {
     if (current === undefined) return undefined;
+    let handWritten: unknown[];
     try {
-      return removeIncludeEntry(current, name);
+      handWritten = handWrittenIncludeEntries(current, name);
     } catch (e) {
       throw new ServerSpecError(
         'conflict',
@@ -324,6 +328,15 @@ export class FileServerSpecRepository implements IServerSpecRepository {
         name
       );
     }
+    if (handWritten.length > 0) {
+      throw new ServerSpecError(
+        'conflict',
+        `servers/compose.yml has a hand-written include entry for ${name} (${handWritten.map((e) => JSON.stringify(e)).join(', ')}); ` +
+          `remove it by hand, then run mcctl delete ${name} again (nothing was deleted)`,
+        name
+      );
+    }
+    return removeIncludeEntry(current, name);
   }
 
   /** Move servers/<n>/data/<world> to worlds/<world>, adding each to `moved`; on failure report what already moved. */
@@ -777,7 +790,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     );
   }
 
-  /** Remove the server's servers/compose.yml entries (every file inside servers/<n>/) under the lock. */
+  /** Remove the server's generated servers/compose.yml entry under the lock. */
   private async removeInclude(name: string): Promise<void> {
     await this.withIncludeLock(name, async () => {
       const path = join(this.paths.servers, 'compose.yml');

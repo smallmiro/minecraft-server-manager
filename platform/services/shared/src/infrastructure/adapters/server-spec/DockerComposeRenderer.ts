@@ -125,6 +125,17 @@ function insideServer(path: unknown, name: string): boolean {
 
 const namesServer = (e: unknown, name: string): boolean => includePaths(e).some((p) => insideServer(p, name));
 
+/**
+ * The include entries pointing inside servers/<name>/ that mcctl did not
+ * write: all of them unless they are one string `<name>/docker-compose.yml`
+ * (#735). Throws when the text does not parse.
+ */
+export function handWrittenIncludeEntries(current: string, name: string): unknown[] {
+  const list = (yaml.load(current) as { include?: unknown } | null)?.include;
+  const own = Array.isArray(list) ? list.filter((e) => namesServer(e, name)) : [];
+  return own.length === 1 && own[0] === `${name}/docker-compose.yml` ? [] : own;
+}
+
 /** Whether servers/compose.yml text includes any file inside servers/<name>/. */
 export function includesServer(text: string | undefined, name: string): boolean {
   return includeEntries(text).some((p) => insideServer(p, name));
@@ -148,7 +159,7 @@ function readInclude(current: string | undefined, name: string): { parsed: Recor
 }
 
 /** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
-function renderInclude(name: string, current: string | undefined): string {
+export function renderInclude(name: string, current: string | undefined): string {
   const entry = `${name}/docker-compose.yml`;
   const { parsed, list } = readInclude(current, name);
   if (list.some((e) => includePaths(e).includes(entry))) return current!;
@@ -184,20 +195,16 @@ function withoutServer(e: unknown, name: string): unknown {
 }
 
 /**
- * servers/compose.yml text without the files inside servers/<name>/, which a
- * delete removes; unchanged when no entry names one. An entry whose `path`
- * lists other servers' files keeps them; one left with no path goes.
+ * servers/compose.yml text without the entry mcctl writes for the server, the
+ * string `<name>/docker-compose.yml`; unchanged without one. Every other entry
+ * stays as written (delete refuses hand-written ones for the server first, #735).
  */
 export function removeIncludeEntry(current: string, name: string): string {
+  const entry = `${name}/docker-compose.yml`;
   const parsed = yaml.load(current) as Record<string, unknown> | null;
   const list = parsed?.['include'];
-  if (!Array.isArray(list) || !list.some((e) => namesServer(e, name))) return current;
-  const kept = list.flatMap((e) => {
-    if (!namesServer(e, name)) return [e];
-    const reduced = withoutServer(e, name);
-    return reduced === undefined ? [] : [reduced];
-  });
-  const doc: Record<string, unknown> = { ...parsed, include: kept };
+  if (!Array.isArray(list) || !list.includes(entry)) return current;
+  const doc: Record<string, unknown> = { ...parsed, include: list.filter((e) => e !== entry) };
   // No entry left: no include: key, like a fresh servers/compose.yml (#660)
   if ((doc['include'] as unknown[]).length === 0) delete doc['include'];
   return INCLUDE_HEADER + (Object.keys(doc).length > 0 ? yaml.dump(doc, DUMP_OPTIONS) : '');
