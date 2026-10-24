@@ -216,6 +216,10 @@ export {
   parsePlayerSessionEvent,
   parseDockerLogTimestamp,
   type PlayerSessionEvent,
+  // mc-router log lines (#769)
+  parseRouterLogLine,
+  type RouterLogEvent,
+  type RouterLogKind,
 } from './domain/index.js';
 
 // Re-export mod domain models
