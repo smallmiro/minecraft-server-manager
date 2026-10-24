@@ -93,7 +93,7 @@ Internal REST API service for Minecraft server management. Provides the same fun
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
 │                 INFRASTRUCTURE LAYER                         │
-│   ApiPromptAdapter, ShellAdapter, Repositories               │
+│   ApiPromptAdapter, Repositories                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 

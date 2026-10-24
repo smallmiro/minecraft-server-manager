@@ -13,7 +13,7 @@
 **Responsibilities**:
 - Domain Layer: Entities, Value Objects
 - Application Layer: Use Cases, Ports (Interfaces)
-- Infrastructure Layer: Common Adapters (ShellAdapter, Repositories)
+- Infrastructure Layer: Common Adapters (Repositories, runtime adapters)
 - Shared utilities and type definitions
 
 **Collaboration**:
@@ -75,13 +75,11 @@ Core package providing shared domain logic, use cases, and adapters for CLI, API
 │  │  - CreateServerUseCase                                 │  │
 │  │  - DeleteServerUseCase                                 │  │
 │  │  - WorldManagementUseCase                              │  │
-│  │  - PlayerLookupUseCase                                 │  │
 │  │  - BackupUseCase                                       │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  Ports (Interfaces)                                    │  │
 │  │  - IPromptPort (inbound)                               │  │
-│  │  - IShellPort (outbound)                               │  │
 │  │  - IServerRepository (outbound)                        │  │
 │  │  - IWorldRepository (outbound)                         │  │
 │  │  - IUserRepository (outbound) ← NEW                    │  │
@@ -110,7 +108,6 @@ Core package providing shared domain logic, use cases, and adapters for CLI, API
 │                 INFRASTRUCTURE LAYER                         │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │  Adapters (Common)                                     │  │
-│  │  - ShellAdapter                                        │  │
 │  │  - ServerRepository                                    │  │
 │  │  - WorldRepository                                     │  │
 │  │  - YamlUserRepository ← NEW                            │  │
@@ -153,7 +150,6 @@ platform/services/shared/
 │   │   │   ├── inbound/        # Use Case interfaces
 │   │   │   └── outbound/       # Repository interfaces
 │   │   │       ├── IPromptPort.ts
-│   │   │       ├── IShellPort.ts
 │   │   │       ├── IServerRepository.ts
 │   │   │       ├── IWorldRepository.ts
 │   │   │       └── IUserRepository.ts  ← NEW
@@ -164,7 +160,6 @@ platform/services/shared/
 │   │
 │   ├── infrastructure/         # Infrastructure layer
 │   │   ├── adapters/
-│   │   │   ├── ShellAdapter.ts
 │   │   │   ├── ServerRepository.ts
 │   │   │   ├── WorldRepository.ts
 │   │   │   ├── YamlUserRepository.ts    ← NEW
