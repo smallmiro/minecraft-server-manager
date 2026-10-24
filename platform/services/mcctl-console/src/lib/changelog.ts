@@ -14,7 +14,8 @@ export function parseChangelog(content: string, maxVersions: number): ChangelogV
   const lines = content.split('\n');
 
   let currentVersion: ChangelogVersion | null = null;
-  let currentType: 'added' | 'fixed' | 'changed' = 'added';
+  // null outside a recognized section: items under Removed, Security etc. are skipped, not mislabelled
+  let currentType: ChangelogItem['type'] | null = null;
 
   for (const line of lines) {
     // Match version header: ## [1.7.11] - 2026-02-04
@@ -29,19 +30,21 @@ export function parseChangelog(content: string, maxVersions: number): ChangelogV
         date: versionMatch[2],
         items: [],
       };
+      currentType = null;
       continue;
     }
 
-    // Match section header: ### Added, ### Fixed, ### Changed
-    const sectionMatch = line.match(/^### (Added|Fixed|Changed)/i);
+    // Section header: only ### Added, ### Fixed, ### Changed are shown
+    const sectionMatch = line.match(/^### (\S+)/);
     if (sectionMatch) {
-      currentType = sectionMatch[1].toLowerCase() as 'added' | 'fixed' | 'changed';
+      const name = sectionMatch[1].toLowerCase();
+      currentType = name === 'added' || name === 'fixed' || name === 'changed' ? name : null;
       continue;
     }
 
     // Match list item: - **Feature** - Description
     const itemMatch = line.match(/^- \*\*([^*]+)\*\*\s*[-–]?\s*(.*)$/);
-    if (itemMatch && currentVersion) {
+    if (itemMatch && currentVersion && currentType) {
       currentVersion.items.push({
         type: currentType,
         message: itemMatch[1].trim(),
@@ -74,7 +77,22 @@ export function compareVersions(a: string, b: string): number {
   if (pa.pre === pb.pre) return 0;
   if (!pa.pre) return 1;
   if (!pb.pre) return -1;
-  return pa.pre > pb.pre ? 1 : -1;
+  return comparePrerelease(pa.pre.split('.'), pb.pre.split('.'));
+}
+
+/** semver §11: numeric identifiers compare numerically and rank below alphanumeric ones; a shorter list ranks lower. */
+function comparePrerelease(a: string[], b: string[]): number {
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    if (a[i] === undefined) return -1;
+    if (b[i] === undefined) return 1;
+    if (a[i] === b[i]) continue;
+    const na = /^\d+$/.test(a[i]);
+    const nb = /^\d+$/.test(b[i]);
+    if (na && nb) return Number(a[i]) > Number(b[i]) ? 1 : -1;
+    if (na !== nb) return na ? -1 : 1;
+    return a[i] > b[i] ? 1 : -1;
+  }
+  return 0;
 }
 
 /** True only when `latest` is strictly newer than `installed`; false if either is unparseable. */
