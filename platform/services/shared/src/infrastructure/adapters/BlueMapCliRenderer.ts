@@ -26,33 +26,6 @@ const MAPS: Record<Dimension, { dimension: string; name: string; sorting: number
   [Dimension.End]: { dimension: 'minecraft:the_end', name: 'End', sorting: 2 },
 };
 
-/**
- * Process options (working directory / environment) for the deprecated
- * script-path constructor.
- *
- * @deprecated Use `new BlueMapCliRenderer({ worldsDir, mapsDir, dockerDir })`.
- * Removed in v3.0.0 (#736).
- */
-export interface RenderSpawnOptions {
-  cwd?: string;
-  env?: NodeJS.ProcessEnv;
-}
-
-/**
- * Process runner accepted by the deprecated script-path constructor. It now
- * receives the `docker` calls (render-map.sh is gone) and is handed complete
- * stdout and stderr lines.
- *
- * @deprecated Use `new BlueMapCliRenderer({ worldsDir, mapsDir, dockerDir })`.
- * Removed in v3.0.0 (#736).
- */
-export type RenderSpawn = (
-  file: string,
-  args: string[],
-  onStderr: (line: string) => void,
-  options?: RenderSpawnOptions
-) => Promise<{ code: number; stdout: string; stderr: string }>;
-
 /** Thrown when a world cannot be rendered. */
 export class MapRenderError extends Error {
   constructor(message: string) {
@@ -79,23 +52,6 @@ export function parseProgressLine(line: string): MapRenderProgress | null {
   };
 }
 
-/**
- * Extract the `--json` summary render-map.sh printed on stdout. The script
- * could print log lines before the JSON object, so the single brace-delimited
- * block is sliced out.
- *
- * @deprecated render-map.sh is gone; {@link BlueMapCliRenderer.renderWorld}
- * returns the {@link MapRenderResult} itself. Removed in v3.0.0 (#736).
- */
-export function parseResultJson(stdout: string): MapRenderResult {
-  const start = stdout.indexOf('{');
-  const end = stdout.lastIndexOf('}');
-  if (start === -1 || end === -1 || end < start) {
-    throw new MapRenderError(`No JSON summary found in render output`);
-  }
-  return JSON.parse(stdout.slice(start, end + 1)) as MapRenderResult;
-}
-
 /** Directories the renderer reads from and writes to. */
 export interface BlueMapCliRendererPaths {
   /** Directory holding the worlds (`<root>/worlds`). */
@@ -120,36 +76,7 @@ export interface BlueMapCliRendererPaths {
  * world name such as `-lobby` only ever appears inside mount paths (#728).
  */
 export class BlueMapCliRenderer implements IMapRenderer {
-  private readonly paths: BlueMapCliRendererPaths;
-
-  constructor(paths: BlueMapCliRendererPaths);
-  /**
-   * @deprecated Pass `{ worldsDir, mapsDir, dockerDir }` instead. Removed in
-   * v3.0.0 (#736). The paths are derived the way render-map.sh did: the
-   * platform root is `MCCTL_ROOT` or the script's parent directory, and the
-   * build context is `${MCCTL_DOCKER:-<script dir>/../docker}/bluemap`.
-   * `run`, when given, now runs the `docker` calls.
-   */
-  constructor(scriptPath: string, run?: RenderSpawn, spawnOptions?: RenderSpawnOptions);
-  constructor(
-    pathsOrScript: BlueMapCliRendererPaths | string,
-    private readonly run: RenderSpawn = execCommandStreaming,
-    private readonly spawnOptions: RenderSpawnOptions = {}
-  ) {
-    if (typeof pathsOrScript !== 'string') {
-      this.paths = pathsOrScript;
-      return;
-    }
-    // Same env the docker child gets: spawnOptions.env, else inherited process.env.
-    const env = spawnOptions.env ?? process.env;
-    const pkgDir = dirname(dirname(pathsOrScript));
-    const root = env['MCCTL_ROOT'] || pkgDir;
-    this.paths = {
-      worldsDir: join(root, 'worlds'),
-      mapsDir: join(root, 'maps'),
-      dockerDir: join(env['MCCTL_DOCKER'] || join(pkgDir, 'docker'), 'bluemap'),
-    };
-  }
+  constructor(private readonly paths: BlueMapCliRendererPaths) {}
 
   async renderWorld(
     worldName: string,
@@ -272,6 +199,6 @@ export class BlueMapCliRenderer implements IMapRenderer {
   }
 
   private docker(args: string[], onLine: (line: string) => void = () => {}) {
-    return this.run('docker', args, onLine, this.spawnOptions);
+    return execCommandStreaming('docker', args, onLine);
   }
 }
