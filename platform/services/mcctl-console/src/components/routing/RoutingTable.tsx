@@ -61,7 +61,8 @@ interface ServerRow {
   route: RouteInfo;
   hosts: HostRow[];
   primary: HostRow;
-  unrouted: number;
+  /** Unrouted hostnames other than the primary, which carries its own warning. */
+  hiddenUnrouted: number;
 }
 
 const TYPE_COLOR: Record<HostnameType, 'info' | 'secondary' | 'primary' | 'default'> = {
@@ -132,7 +133,7 @@ function StatusCell({ server }: { server: ServerRow }) {
   return (
     <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
       <StatusBadge route={server.route} />
-      {server.unrouted > 0 && <UnroutedSummaryChip count={server.unrouted} />}
+      {server.hiddenUnrouted > 0 && <UnroutedSummaryChip count={server.hiddenUnrouted} />}
     </Stack>
   );
 }
@@ -211,12 +212,15 @@ function HostnameCell({ hostname }: { hostname: string }) {
   );
 }
 
+// Targets look like `mc-a:25565`; keep the id selector-safe.
+const hostnameListId = (server: ServerRow) => `hostnames-${server.key.replace(/[^\w-]/g, '-')}`;
+
 function ExpandToggle({ server, open, onToggle }: { server: ServerRow; open: boolean; onToggle: () => void }) {
   return (
     <IconButton
       size="small"
       aria-expanded={open}
-      aria-controls={`hostnames-${server.key}`}
+      aria-controls={open ? hostnameListId(server) : undefined}
       aria-label={`${open ? 'Hide' : 'Show'} hostnames of ${server.serverName}`}
       onClick={onToggle}
     >
@@ -231,6 +235,7 @@ function PrimaryHostname({ server }: { server: ServerRow }) {
     <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
       <TypeBadge type={server.primary.type} />
       <HostnameCell hostname={server.primary.hostname} />
+      {server.primary.discoveredByRouter === false && <NotRoutedChip />}
       {others > 0 && (
         <Typography variant="caption" color="text.secondary">
           +{others}
@@ -263,7 +268,7 @@ function HostnameList({ server }: { server: ServerRow }) {
   return (
     <Stack
       component="ul"
-      id={`hostnames-${server.key}`}
+      id={hostnameListId(server)}
       aria-label={`Hostnames of ${server.serverName}`}
       spacing={0.75}
       sx={{ listStyle: 'none', m: 0, p: 0 }}
@@ -302,14 +307,19 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
   // Rendered only on the client after data loads, so read the query on the first pass.
   const isXs = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const [query, setQuery] = useState('');
-  const [toggled, setToggled] = useState<ReadonlySet<string>>(() => new Set());
+  // Rows the user opened or closed by hand; cleared on every search so it starts from the search's own state.
+  const [manual, setManual] = useState<ReadonlyMap<string, boolean>>(() => new Map());
 
   const servers = useMemo<ServerRow[]>(() => {
     const byTarget = new Map<string, { route: RouteInfo; detail: string; hosts: HostRow[] }>();
     for (const route of routes) {
       const group = byTarget.get(route.target) ?? { route, detail: '', hosts: [] };
       group.detail ||= [route.serverType, route.serverVersion].filter(Boolean).join(' ');
-      if (!group.hosts.some((h) => h.hostname === route.hostname)) {
+      // mc-router matches hostnames case-insensitively, so one unrouted copy marks the hostname unrouted.
+      const existing = group.hosts.find((h) => h.hostname.toLowerCase() === route.hostname.toLowerCase());
+      if (existing) {
+        if (route.discoveredByRouter === false) existing.discoveredByRouter = false;
+      } else {
         group.hosts.push({
           hostname: route.hostname,
           type: classifyRouteHostname(route.hostname, playitDomains),
@@ -318,15 +328,18 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
       }
       byTarget.set(route.target, group);
     }
-    return Array.from(byTarget, ([target, group]) => ({
-      key: target,
-      serverName: extractServerName(target),
-      detail: group.detail,
-      route: group.route,
-      hosts: group.hosts,
-      primary: pickPrimaryHostname(group.hosts),
-      unrouted: group.hosts.filter((h) => h.discoveredByRouter === false).length,
-    }));
+    return Array.from(byTarget, ([target, group]) => {
+      const primary = pickPrimaryHostname(group.hosts);
+      return {
+        key: target,
+        serverName: extractServerName(target),
+        detail: group.detail,
+        route: group.route,
+        hosts: group.hosts,
+        primary,
+        hiddenUnrouted: group.hosts.filter((h) => h !== primary && h.discoveredByRouter === false).length,
+      };
+    });
   }, [routes, playitDomains]);
 
   const hostnameCount = servers.reduce((sum, server) => sum + server.hosts.length, 0);
@@ -338,13 +351,8 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
     if (server.hosts.some((h) => h.hostname.toLowerCase().includes(needle))) return [{ server, forcedOpen: true }];
     return [];
   });
-  const isOpen = (server: ServerRow, forcedOpen: boolean) => toggled.has(server.key) !== forcedOpen;
-  const toggle = (key: string) =>
-    setToggled((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(key)) next.add(key);
-      return next;
-    });
+  const isOpen = (server: ServerRow, forcedOpen: boolean) => manual.get(server.key) ?? forcedOpen;
+  const toggle = (server: ServerRow, open: boolean) => setManual((prev) => new Map(prev).set(server.key, !open));
 
   return (
     <>
@@ -360,7 +368,10 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
           size="small"
           placeholder="Search hostname or server"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setManual(new Map());
+          }}
           inputProps={{ 'aria-label': 'Search routes' }}
           InputProps={{
             startAdornment: (
@@ -391,7 +402,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                     minWidth: 0,
                   }}
                 >
-                  <TargetCell server={server} open={open} onToggle={() => toggle(server.key)} />
+                  <TargetCell server={server} open={open} onToggle={() => toggle(server, open)} />
                   <StatusCell server={server} />
                   {open && <HostnameList server={server} />}
                   <RowActions route={server.route} serverName={server.serverName} />
@@ -419,7 +430,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                   <Fragment key={server.key}>
                     <TableRow hover>
                       <TableCell sx={{ ...wrapSx, ...(open && { borderBottom: 0 }) }}>
-                        <TargetCell server={server} open={open} onToggle={() => toggle(server.key)} />
+                        <TargetCell server={server} open={open} onToggle={() => toggle(server, open)} />
                       </TableCell>
                       <TableCell sx={open ? { borderBottom: 0 } : undefined}>
                         <StatusCell server={server} />

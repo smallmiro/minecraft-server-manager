@@ -120,3 +120,21 @@ describe('pickPrimaryHostname', () => {
     expect(pickPrimaryHostname(hosts).hostname).toBe('x.192.168.0.2.nip.io');
   });
 });
+
+describe('pickPrimaryHostname with router discovery', () => {
+  it('skips hostnames mc-router has not registered when a routed one exists', () => {
+    const hosts = [
+      { hostname: 'x.10.0.0.1.nip.io', type: 'nipio' as const, discoveredByRouter: false },
+      { hostname: 'x.local', type: 'mdns' as const, discoveredByRouter: true },
+    ];
+    expect(pickPrimaryHostname(hosts).hostname).toBe('x.local');
+  });
+
+  it('falls back to type order when every hostname is unrouted', () => {
+    const hosts = [
+      { hostname: 'x.local', type: 'mdns' as const, discoveredByRouter: false },
+      { hostname: 'x.10.0.0.1.nip.io', type: 'nipio' as const, discoveredByRouter: false },
+    ];
+    expect(pickPrimaryHostname(hosts).hostname).toBe('x.10.0.0.1.nip.io');
+  });
+});

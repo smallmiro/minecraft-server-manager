@@ -193,6 +193,48 @@ describe('RoutingTable', () => {
     expect(html).not.toContain('<table');
   });
 
+  it('keeps a server opened before a hostname search open', () => {
+    renderTable();
+    expand('survival');
+    fireEvent.change(screen.getByLabelText('Search routes'), { target: { value: 'playit' } });
+    expect(within(screen.getByRole('list', { name: 'Hostnames of survival' })).getByText('aa-bb.craft.playit.gg')).toBeInTheDocument();
+  });
+
+  it('collapses everything again once the search is cleared', () => {
+    renderTable();
+    const search = screen.getByLabelText('Search routes');
+    fireEvent.change(search, { target: { value: 'playit' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Hide hostnames of survival' }));
+    expect(screen.queryByRole('list', { name: 'Hostnames of survival' })).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: '' } });
+    expect(screen.queryByRole('list', { name: 'Hostnames of survival' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show hostnames of survival' })).toBeInTheDocument();
+  });
+
+  it('merges hostnames that differ only in case and keeps the unrouted flag', () => {
+    renderTable([
+      { hostname: 'A.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: true },
+      { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false },
+    ]);
+    expect(screen.getByText('1 server · 1 hostname')).toBeInTheDocument();
+    expect(within(rowOf('a')).getByText('Not routed')).toBeInTheDocument();
+  });
+
+  it('marks the representative hostname when it is not routed', () => {
+    renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false }]);
+    expect(within(rowOf('a')).getByText('Not routed')).toBeInTheDocument();
+  });
+
+  it('points aria-controls at the hostname list only while it is rendered', () => {
+    renderTable();
+    const toggle = screen.getByRole('button', { name: 'Show hostnames of survival' });
+    expect(toggle).not.toHaveAttribute('aria-controls');
+    fireEvent.click(toggle);
+    const id = screen.getByRole('button', { name: 'Hide hostnames of survival' }).getAttribute('aria-controls');
+    expect(id).toMatch(/^[\w-]+$/);
+    expect(document.getElementById(id as string)).toBe(screen.getByRole('list', { name: 'Hostnames of survival' }));
+  });
+
   describe('row actions (#768)', () => {
     it('offers Start for stopped servers when auto-scale-up is off or unknown, and nothing for running ones', () => {
       renderTable();
@@ -290,7 +332,7 @@ describe('RoutingTable', () => {
       expect(within(item).getByRole('button', { name: 'Wake a' })).toBeInTheDocument();
       expect(within(item).getByRole('link', { name: 'Edit hostnames of a' })).toBeInTheDocument();
       expect(within(item).getByRole('link', { name: 'Open a' })).toBeInTheDocument();
-      expect(within(item).getByText('1 not routed')).toBeInTheDocument();
+      expect(within(item).getByText('Not routed')).toBeInTheDocument();
       fireEvent.click(within(item).getByRole('button', { name: 'Wake a' }));
       expect(mockStart).toHaveBeenCalledWith('a', expect.anything());
     });
