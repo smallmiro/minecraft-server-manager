@@ -231,11 +231,21 @@ export class FileServerSpecRepository implements IServerSpecRepository {
 
     const moved: string[] = [];
     await this.moveWorlds(name, result.movedWorlds, moved);
-    await this.withIncludeLock(name, async () => {
-      const current = readOptionalSync(includePath);
-      const next = this.includeWithout(name, current);
-      if (next !== current) await atomicWriteFile(includePath, next!);
-    });
+    // The move stays outside the lock: a long cross-device copy would make
+    // other writers give up with 'locked'. A failure from here on says what moved.
+    try {
+      await this.withIncludeLock(name, async () => {
+        const current = readOptionalSync(includePath);
+        const next = this.includeWithout(name, current);
+        if (next !== current) await atomicWriteFile(includePath, next!);
+      });
+    } catch (err) {
+      throw new ServerSpecError(
+        err instanceof ServerSpecError ? err.code : 'conflict',
+        `${(err as Error).message}. servers/${name}/ was kept.${alreadyMoved(name, moved)}`,
+        name
+      );
+    }
     try {
       await rm(dir, { recursive: true, force: true });
     } catch (err) {
