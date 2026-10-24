@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -48,7 +49,7 @@ function SkeletonPanel({ featured = false }: { featured?: boolean }) {
 export default function RoutingPage() {
   const { data, isLoading, error } = useRouterStatus();
   const { data: playit } = usePlayitStatus();
-  const playitDomains = (playit?.servers ?? []).map((server) => server.playitDomain);
+  const playitDomains = useMemo(() => (playit?.servers ?? []).map((server) => server.playitDomain), [playit?.servers]);
   const router = data?.router;
   const statusLabel = isLoading ? 'Checking' : router?.status ?? 'Unavailable';
   const statusColor = isLoading ? 'default' : router?.status === 'running' ? 'success' : router ? 'warning' : 'error';
