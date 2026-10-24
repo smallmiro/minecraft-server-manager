@@ -155,8 +155,27 @@ describe('upgradeServerImageTags', () => {
       join(servers(), 'alpha', 'server.yaml'),
       read('alpha', 'server.yaml').replace('image: itzg/minecraft-server:java21', 'image: itzg/minecraft-server:2026.10.0-java21')
     );
-    await upgradeServerImageTags(servers());
+    expect(await upgradeServerImageTags(servers())).toBe(0);
     expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:2026.10.0-java21');
+    expect(output()).toContain('is pinned, but VERSION=LATEST needs java25');
+    expect(output()).not.toContain('→');
+  });
+
+  it('moves a tag unpinned in server.yaml that the compose file still shows pinned (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: '2026.10.0-java21' });
+    await updateServer(new Paths(root), 'alpha', (doc) => doc);
+    writeFileSync(
+      join(servers(), 'alpha', 'server.yaml'),
+      read('alpha', 'server.yaml').replace('image: itzg/minecraft-server:2026.10.0-java21', 'image: itzg/minecraft-server:java21')
+    );
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java25');
+  });
+
+  it('does not warn about a pin on a newer Java than VERSION needs (#798)', async () => {
+    server('alpha', { version: '1.21.1', tag: '2026.10.0-java25' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(output()).toContain('pinned tag, keeping');
   });
 
   it('adds the loading MOTD label to a pinned server without moving its tag (#798)', async () => {
