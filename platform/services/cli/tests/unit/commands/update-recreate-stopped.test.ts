@@ -6,7 +6,8 @@ import { recreateStoppedServers } from '../../../src/commands/update.js';
 
 type State = { id: string; status: string; imageId?: string; imageRef?: string } | null;
 
-// No real docker: the shell is a fake (#756). Each containerState call shifts the next state.
+// No real docker: the shell is a fake (#756). Each containerState call shifts the next state:
+// a recreated server is read three times (classify, re-check before compose, after compose).
 describe('recreateStoppedServers (#796)', () => {
   let dir: string;
   let out: string[];
@@ -40,9 +41,9 @@ describe('recreateStoppedServers (#796)', () => {
 
   it('runs compose up --no-start --no-deps only for stopped servers and guides for running ones', async () => {
     states = {
-      'mc-a': [{ id: 'old', status: 'exited' }, { id: 'new', status: 'created' }],
+      'mc-a': [{ id: 'old', status: 'exited' }, { id: 'old', status: 'exited' }, { id: 'new', status: 'created' }],
       'mc-b': [{ id: 'b', status: 'running' }],
-      'mc-c': [{ id: 'x', status: 'created' }, { id: 'x', status: 'created' }],
+      'mc-c': [{ id: 'x', status: 'created' }, { id: 'x', status: 'created' }, { id: 'x', status: 'created' }],
     };
     await recreateStoppedServers(dir, shell(), yes);
 
@@ -70,7 +71,7 @@ describe('recreateStoppedServers (#796)', () => {
     states = {
       'mc-a': [null],
       'mc-b': [{ id: 'b', status: 'running' }],
-      'mc-c': [{ id: '1', status: 'exited' }, { id: '2', status: 'created' }],
+      'mc-c': [{ id: '1', status: 'exited' }, { id: '1', status: 'exited' }, { id: '2', status: 'created' }],
     };
     await recreateStoppedServers(dir, shell(), yes);
     expect(compose.mock.calls).toEqual([[['up', '--no-start', '--no-deps', 'mc-c']]]);
@@ -79,9 +80,9 @@ describe('recreateStoppedServers (#796)', () => {
 
   it('reports a failing server and still handles the others', async () => {
     states = {
-      'mc-a': [{ id: '1', status: 'exited' }],
+      'mc-a': [{ id: '1', status: 'exited' }, { id: '1', status: 'exited' }],
       'mc-b': [{ id: 'b', status: 'running' }],
-      'mc-c': [{ id: '3', status: 'exited' }, { id: '4', status: 'created' }],
+      'mc-c': [{ id: '3', status: 'exited' }, { id: '3', status: 'exited' }, { id: '4', status: 'created' }],
     };
     compose.mockImplementation(async (args: string[]) => (args[3] === 'mc-a' ? 1 : 0));
     await expect(recreateStoppedServers(dir, shell(), yes)).resolves.toBeUndefined();
@@ -91,7 +92,7 @@ describe('recreateStoppedServers (#796)', () => {
 
   it('reports a container that is gone after compose up as a failure', async () => {
     states = {
-      'mc-a': [{ id: '1', status: 'exited' }, null],
+      'mc-a': [{ id: '1', status: 'exited' }, { id: '1', status: 'exited' }, null],
       'mc-b': [{ id: 'b', status: 'running' }],
       'mc-c': [{ id: 'c', status: 'running' }],
     };
@@ -102,8 +103,8 @@ describe('recreateStoppedServers (#796)', () => {
 
   it('survives a thrown error for one server', async () => {
     states = {
-      'mc-b': [{ id: '1', status: 'exited' }, { id: '2', status: 'created' }],
-      'mc-c': [{ id: '3', status: 'exited' }, { id: '3', status: 'exited' }],
+      'mc-b': [{ id: '1', status: 'exited' }, { id: '1', status: 'exited' }, { id: '2', status: 'created' }],
+      'mc-c': [{ id: '3', status: 'exited' }, { id: '3', status: 'exited' }, { id: '3', status: 'exited' }],
     };
     const s = shell();
     const real = s.containerState;
@@ -116,10 +117,22 @@ describe('recreateStoppedServers (#796)', () => {
     expect(compose).toHaveBeenCalledTimes(2);
   });
 
+  it('re-checks right before compose: a server auto-scale started while the prompt waited is not touched', async () => {
+    states = {
+      'mc-a': [{ id: 'a', status: 'exited' }, { id: 'a', status: 'running' }],
+      'mc-b': [{ id: 'b', status: 'running' }],
+      'mc-c': [{ id: 'c', status: 'exited' }, { id: 'c', status: 'exited' }, { id: 'c2', status: 'created' }],
+    };
+    await recreateStoppedServers(dir, shell(), yes);
+    expect(compose.mock.calls).toEqual([[['up', '--no-start', '--no-deps', 'mc-c']]]);
+    expect(text()).toContain('a: skipped (running now)');
+  });
+
   describe('opt-in (default No)', () => {
     const stoppedAndRunning = () => {
       states = {
         'mc-a': [
+          { id: 'old', status: 'exited', imageId: 'sha256:oldimg' },
           { id: 'old', status: 'exited', imageId: 'sha256:oldimg' },
           { id: 'new', status: 'created', imageId: 'sha256:newimg', imageRef: 'itzg/minecraft-server:java25' },
         ],
