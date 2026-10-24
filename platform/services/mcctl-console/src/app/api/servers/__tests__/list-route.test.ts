@@ -101,7 +101,7 @@ describe('GET /api/servers (#764)', () => {
 
   it('does not add totals for non-admins without include', async () => {
     (requireAuth as ReturnType<typeof vi.fn>).mockResolvedValue(userSession);
-    mockGetServers.mockResolvedValue({ servers: summaryResponse.servers.map(({ players, ...s }) => s), total: 4 });
+    mockGetServers.mockResolvedValue({ servers: [base('a'), base('b'), base('c'), base('d', 'stopped')], total: 4 });
     mockFindByUser.mockResolvedValue([{ serverId: 'a' }]);
 
     const body = await (await GET(req())).json();
