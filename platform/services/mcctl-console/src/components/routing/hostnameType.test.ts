@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import type { ContainerStatus } from '@/ports/api/IMcctlApiClient';
-import { classifyRouteHostname, routeStatusDisplay, extractServerName, isRouteStartable } from './hostnameType';
+import {
+  classifyRouteHostname,
+  routeStatusDisplay,
+  extractServerName,
+  isRouteStartable,
+  pickPrimaryHostname,
+} from './hostnameType';
 
 describe('classifyRouteHostname', () => {
   it('classifies *.local as mDNS', () => {
@@ -90,5 +96,27 @@ describe('isRouteStartable', () => {
     expect(isRouteStartable('running')).toBe(false);
     expect(isRouteStartable('dead')).toBe(false);
     expect(isRouteStartable('not_found')).toBe(false);
+  });
+});
+
+describe('pickPrimaryHostname', () => {
+  it('prefers nip.io, then mDNS, then WAN, then custom', () => {
+    const hosts = [
+      { hostname: 'x.example.com', type: 'custom' as const },
+      { hostname: 'aa.playit.gg', type: 'wan' as const },
+      { hostname: 'x.local', type: 'mdns' as const },
+      { hostname: 'x.10.0.0.1.nip.io', type: 'nipio' as const },
+    ];
+    expect(pickPrimaryHostname(hosts).hostname).toBe('x.10.0.0.1.nip.io');
+    expect(pickPrimaryHostname(hosts.slice(0, 3)).hostname).toBe('x.local');
+    expect(pickPrimaryHostname(hosts.slice(0, 2)).hostname).toBe('aa.playit.gg');
+  });
+
+  it('keeps the first hostname among the same type', () => {
+    const hosts = [
+      { hostname: 'x.192.168.0.2.nip.io', type: 'nipio' as const },
+      { hostname: 'x.100.64.0.1.nip.io', type: 'nipio' as const },
+    ];
+    expect(pickPrimaryHostname(hosts).hostname).toBe('x.192.168.0.2.nip.io');
   });
 });

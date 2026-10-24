@@ -31,6 +31,16 @@ export function classifyRouteHostname(
   return 'custom';
 }
 
+// nip.io first: it works from any LAN client without mDNS support.
+const PRIMARY_ORDER: readonly HostnameType[] = ['nipio', 'mdns', 'wan', 'custom'];
+
+/** The hostname a server row shows while collapsed; ties keep the route order. */
+export function pickPrimaryHostname<T extends { type: HostnameType }>(hosts: readonly T[]): T {
+  return hosts.reduce((best, host) =>
+    PRIMARY_ORDER.indexOf(host.type) < PRIMARY_ORDER.indexOf(best.type) ? host : best
+  );
+}
+
 /** mc-router target (`mc-<name>:25565`) to server name. */
 export function extractServerName(target: string): string {
   return target.replace(/^mc-/, '').replace(/:25565$/, '');

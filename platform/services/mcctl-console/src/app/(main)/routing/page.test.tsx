@@ -149,7 +149,7 @@ describe('RoutingPage', () => {
     });
   });
 
-  it('lists every hostname in the routing table without expanding anything', () => {
+  it('shows each server with its main hostname in the routing table', () => {
     vi.mocked(useRouterStatus).mockReturnValue({
       data: mockRouterStatusData,
       isLoading: false,

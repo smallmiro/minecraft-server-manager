@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -20,6 +20,8 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import DnsIcon from '@mui/icons-material/Dns';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RouterIcon from '@mui/icons-material/Router';
@@ -33,6 +35,7 @@ import {
   classifyRouteHostname,
   extractServerName,
   isRouteStartable,
+  pickPrimaryHostname,
   routeStatusDisplay,
   type HostnameType,
 } from './hostnameType';
@@ -43,14 +46,22 @@ interface RoutingTableProps {
   playitDomains: ReadonlyArray<string | null | undefined>;
 }
 
-interface RouteRow {
-  /** hostname alone can repeat across servers. */
-  key: string;
+interface HostRow {
   hostname: string;
+  type: HostnameType;
+  discoveredByRouter?: boolean;
+}
+
+interface ServerRow {
+  /** mc-router target; hostnames alone can repeat across servers. */
+  key: string;
   serverName: string;
   detail: string;
-  type: HostnameType;
+  /** Status and actions are per server, so the first route stands for all of them. */
   route: RouteInfo;
+  hosts: HostRow[];
+  primary: HostRow;
+  unrouted: number;
 }
 
 const TYPE_COLOR: Record<HostnameType, 'info' | 'secondary' | 'primary' | 'default'> = {
@@ -106,11 +117,22 @@ function NotRoutedChip() {
   );
 }
 
-function StatusCell({ route }: { route: RouteInfo }) {
+function UnroutedSummaryChip({ count }: { count: number }) {
+  const hint =
+    `mc-router has not registered ${count} ${count === 1 ? 'hostname' : 'hostnames'} of this server, ` +
+    'so connections to them will not reach it. Expand the row to see which ones.';
+  return (
+    <Tooltip title={hint}>
+      <Chip label={`${count} not routed`} size="small" color="warning" variant="outlined" />
+    </Tooltip>
+  );
+}
+
+function StatusCell({ server }: { server: ServerRow }) {
   return (
     <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
-      <StatusBadge route={route} />
-      {route.discoveredByRouter === false && <NotRoutedChip />}
+      <StatusBadge route={server.route} />
+      {server.unrouted > 0 && <UnroutedSummaryChip count={server.unrouted} />}
     </Stack>
   );
 }
@@ -189,18 +211,80 @@ function HostnameCell({ hostname }: { hostname: string }) {
   );
 }
 
-function TargetCell({ row }: { row: RouteRow }) {
+function ExpandToggle({ server, open, onToggle }: { server: ServerRow; open: boolean; onToggle: () => void }) {
   return (
-    <>
-      <Typography variant="body2" sx={{ fontWeight: 600, ...wrapSx }}>
-        {row.serverName}
-      </Typography>
-      {row.detail && (
-        <Typography variant="caption" color="text.secondary" sx={wrapSx}>
-          {row.detail}
+    <IconButton
+      size="small"
+      aria-expanded={open}
+      aria-controls={`hostnames-${server.key}`}
+      aria-label={`${open ? 'Hide' : 'Show'} hostnames of ${server.serverName}`}
+      onClick={onToggle}
+    >
+      {open ? <ExpandMoreIcon fontSize="small" /> : <KeyboardArrowRightIcon fontSize="small" />}
+    </IconButton>
+  );
+}
+
+function PrimaryHostname({ server }: { server: ServerRow }) {
+  const others = server.hosts.length - 1;
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" sx={{ minWidth: 0 }}>
+      <TypeBadge type={server.primary.type} />
+      <HostnameCell hostname={server.primary.hostname} />
+      {others > 0 && (
+        <Typography variant="caption" color="text.secondary">
+          +{others}
         </Typography>
       )}
-    </>
+    </Stack>
+  );
+}
+
+function TargetCell({ server, open, onToggle }: { server: ServerRow; open: boolean; onToggle: () => void }) {
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="flex-start" sx={{ minWidth: 0 }}>
+      <ExpandToggle server={server} open={open} onToggle={onToggle} />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body2" sx={{ fontWeight: 600, ...wrapSx }}>
+          {server.serverName}
+        </Typography>
+        {server.detail && (
+          <Typography variant="caption" color="text.secondary" component="div" sx={wrapSx}>
+            {server.detail}
+          </Typography>
+        )}
+        <PrimaryHostname server={server} />
+      </Box>
+    </Stack>
+  );
+}
+
+function HostnameList({ server }: { server: ServerRow }) {
+  return (
+    <Stack
+      component="ul"
+      id={`hostnames-${server.key}`}
+      aria-label={`Hostnames of ${server.serverName}`}
+      spacing={0.75}
+      sx={{ listStyle: 'none', m: 0, p: 0 }}
+    >
+      {server.hosts.map((host) => (
+        <Stack
+          component="li"
+          key={host.hostname}
+          direction="row"
+          spacing={1}
+          alignItems="center"
+          flexWrap="wrap"
+          useFlexGap
+          sx={{ minWidth: 0 }}
+        >
+          <TypeBadge type={host.type} />
+          <HostnameCell hostname={host.hostname} />
+          {host.discoveredByRouter === false && <NotRoutedChip />}
+        </Stack>
+      ))}
+    </Stack>
   );
 }
 
@@ -218,30 +302,57 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
   // Rendered only on the client after data loads, so read the query on the first pass.
   const isXs = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const [query, setQuery] = useState('');
+  const [toggled, setToggled] = useState<ReadonlySet<string>>(() => new Set());
 
-  const rows = useMemo<RouteRow[]>(
-    () =>
-      routes.map((route, index) => ({
-        key: `${route.hostname}|${route.target}|${index}`,
-        hostname: route.hostname,
-        serverName: extractServerName(route.target),
-        detail: [route.serverType, route.serverVersion].filter(Boolean).join(' '),
-        type: classifyRouteHostname(route.hostname, playitDomains),
-        route,
-      })),
-    [routes, playitDomains],
-  );
+  const servers = useMemo<ServerRow[]>(() => {
+    const byTarget = new Map<string, { route: RouteInfo; detail: string; hosts: HostRow[] }>();
+    for (const route of routes) {
+      const group = byTarget.get(route.target) ?? { route, detail: '', hosts: [] };
+      group.detail ||= [route.serverType, route.serverVersion].filter(Boolean).join(' ');
+      if (!group.hosts.some((h) => h.hostname === route.hostname)) {
+        group.hosts.push({
+          hostname: route.hostname,
+          type: classifyRouteHostname(route.hostname, playitDomains),
+          discoveredByRouter: route.discoveredByRouter,
+        });
+      }
+      byTarget.set(route.target, group);
+    }
+    return Array.from(byTarget, ([target, group]) => ({
+      key: target,
+      serverName: extractServerName(target),
+      detail: group.detail,
+      route: group.route,
+      hosts: group.hosts,
+      primary: pickPrimaryHostname(group.hosts),
+      unrouted: group.hosts.filter((h) => h.discoveredByRouter === false).length,
+    }));
+  }, [routes, playitDomains]);
 
+  const hostnameCount = servers.reduce((sum, server) => sum + server.hosts.length, 0);
   const needle = query.trim().toLowerCase();
-  const visible = needle
-    ? rows.filter((r) => r.hostname.toLowerCase().includes(needle) || r.serverName.toLowerCase().includes(needle))
-    : rows;
+  // A server matched only through a hostname opens, so the matching hostname is visible.
+  const visible = servers.flatMap((server) => {
+    if (!needle) return [{ server, forcedOpen: false }];
+    if (server.serverName.toLowerCase().includes(needle)) return [{ server, forcedOpen: false }];
+    if (server.hosts.some((h) => h.hostname.toLowerCase().includes(needle))) return [{ server, forcedOpen: true }];
+    return [];
+  });
+  const isOpen = (server: ServerRow, forcedOpen: boolean) => toggled.has(server.key) !== forcedOpen;
+  const toggle = (key: string) =>
+    setToggled((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
 
   return (
     <>
       <BentoPanelHeader
         title="Routing Table"
-        subtitle={`${rows.length} ${rows.length === 1 ? 'hostname' : 'hostnames'}`}
+        subtitle={`${servers.length} ${servers.length === 1 ? 'server' : 'servers'} · ${hostnameCount} ${
+          hostnameCount === 1 ? 'hostname' : 'hostnames'
+        }`}
         icon={<RouterIcon fontSize="small" />}
       />
       <Box sx={{ px: 2.5, pb: 2.5 }}>
@@ -262,41 +373,36 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
         />
 
         {visible.length === 0 ? (
-          <EmptyState message={rows.length === 0 ? 'No routes configured' : `No routes match "${query.trim()}"`} />
+          <EmptyState message={servers.length === 0 ? 'No routes configured' : `No routes match "${query.trim()}"`} />
         ) : isXs ? (
           <Stack component="ul" aria-label="Routes" spacing={1.5} sx={{ listStyle: 'none', m: 0, p: 0 }}>
-            {visible.map((row) => (
-              <Box
-                component="li"
-                key={row.key}
-                sx={{
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                  p: 1.5,
-                  minWidth: 0,
-                }}
-              >
-                <HostnameCell hostname={row.hostname} />
-                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-                  <TypeBadge type={row.type} />
-                  <StatusCell route={row.route} />
+            {visible.map(({ server, forcedOpen }) => {
+              const open = isOpen(server, forcedOpen);
+              return (
+                <Stack
+                  component="li"
+                  key={server.key}
+                  spacing={1}
+                  sx={{
+                    border: 1,
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    p: 1.5,
+                    minWidth: 0,
+                  }}
+                >
+                  <TargetCell server={server} open={open} onToggle={() => toggle(server.key)} />
+                  <StatusCell server={server} />
+                  {open && <HostnameList server={server} />}
+                  <RowActions route={server.route} serverName={server.serverName} />
                 </Stack>
-                <Box sx={{ mt: 1, minWidth: 0 }}>
-                  <TargetCell row={row} />
-                </Box>
-                <Box sx={{ mt: 1 }}>
-                  <RowActions route={row.route} serverName={row.serverName} />
-                </Box>
-              </Box>
-            ))}
+              );
+            })}
           </Stack>
         ) : (
           <Table size="small" sx={{ width: '100%', tableLayout: 'auto' }}>
             <TableHead>
               <TableRow>
-                <TableCell>Hostname</TableCell>
-                <TableCell>Type</TableCell>
                 <TableCell>Target</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="right">
@@ -307,27 +413,31 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {visible.map((row) => (
-                <TableRow key={row.key} hover>
-                  <TableCell sx={wrapSx}>
-                    <HostnameCell hostname={row.hostname} />
-                  </TableCell>
-                  <TableCell>
-                    <TypeBadge type={row.type} />
-                  </TableCell>
-                  <TableCell sx={wrapSx}>
-                    <Stack>
-                      <TargetCell row={row} />
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <StatusCell route={row.route} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <RowActions route={row.route} serverName={row.serverName} />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {visible.map(({ server, forcedOpen }) => {
+                const open = isOpen(server, forcedOpen);
+                return (
+                  <Fragment key={server.key}>
+                    <TableRow hover>
+                      <TableCell sx={{ ...wrapSx, ...(open && { borderBottom: 0 }) }}>
+                        <TargetCell server={server} open={open} onToggle={() => toggle(server.key)} />
+                      </TableCell>
+                      <TableCell sx={open ? { borderBottom: 0 } : undefined}>
+                        <StatusCell server={server} />
+                      </TableCell>
+                      <TableCell align="right" sx={open ? { borderBottom: 0 } : undefined}>
+                        <RowActions route={server.route} serverName={server.serverName} />
+                      </TableCell>
+                    </TableRow>
+                    {open && (
+                      <TableRow>
+                        <TableCell colSpan={3} sx={{ pl: 6.5, pt: 0, ...wrapSx }}>
+                          <HostnameList server={server} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
+                );
+              })}
             </TableBody>
           </Table>
         )}
