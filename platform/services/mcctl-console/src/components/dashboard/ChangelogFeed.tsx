@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
   Box,
   Typography,
   Skeleton,
   Link,
   Chip,
 } from '@mui/material';
+import { BentoPanel, BentoPanelHeader } from '@/components/bento';
 
 interface ChangelogItem {
   type: 'added' | 'fixed' | 'changed';
@@ -113,9 +111,9 @@ export function ChangelogFeed({ maxVersions = 2, title = 'Recent Updates' }: Cha
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader title={title} />
-        <CardContent>
+      <BentoPanel sx={{ height: '100%' }}>
+        <BentoPanelHeader title={title} />
+        <Box sx={{ px: 2.5, pb: 2.5 }}>
           <Skeleton variant="text" width="60%" height={28} />
           <Skeleton variant="text" width="80%" />
           <Skeleton variant="text" width="70%" />
@@ -123,40 +121,40 @@ export function ChangelogFeed({ maxVersions = 2, title = 'Recent Updates' }: Cha
             <Skeleton variant="text" width="60%" height={28} />
             <Skeleton variant="text" width="75%" />
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader title={title} />
-        <CardContent>
+      <BentoPanel sx={{ height: '100%' }}>
+        <BentoPanelHeader title={title} />
+        <Box sx={{ px: 2.5, pb: 2.5 }}>
           <Typography color="text.secondary" align="center">
             Unable to load updates
           </Typography>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   return (
-    <Card>
-      <CardHeader
+    <BentoPanel sx={{ height: '100%' }}>
+      <BentoPanelHeader
         title={title}
         action={
           <Link
             href="https://github.com/smallmiro/minecraft-server-manager/blob/develop/CHANGELOG.md"
             target="_blank"
             rel="noopener"
-            sx={{ fontSize: 13, mr: 1 }}
+            sx={{ fontSize: 13 }}
           >
             View all
           </Link>
         }
       />
-      <CardContent sx={{ pt: 0 }}>
+      <Box sx={{ px: 2.5, pb: 2.5 }}>
         {versions.map((ver, vIndex) => {
           // Group items by type
           const added = ver.items.filter((i) => i.type === 'added');
@@ -249,7 +247,7 @@ export function ChangelogFeed({ maxVersions = 2, title = 'Recent Updates' }: Cha
             </Box>
           );
         })}
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
