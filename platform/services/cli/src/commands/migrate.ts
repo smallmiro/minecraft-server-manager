@@ -514,13 +514,19 @@ async function migrateServer(
     // server.yaml with them, and mcctl migrate spec renders whatever spec is left: place the world
     // where that spec puts it, so the world and the files match once it is run.
     const left = unrestoredFiles(error).length > 0;
-    const spec = left ? await specNow(paths, server.name, before, intended) : 'earlier';
+    const { spec, storageClash } = left
+      ? await specNow(paths, server.name, before, intended)
+      : { spec: 'earlier' as const, storageClash: false };
     const where = `servers/${server.name}`;
-    const rerender = `run mcctl migrate spec ${server.name} before you start the server`;
+    // mcctl migrate spec refuses a storage change, so it cannot settle a server.yaml whose storage
+    // the absorbed config.env contradicts: that server.yaml has to go and the migration run again.
+    const rerender = storageClash
+      ? `${where}/server.yaml was written by this run and disagrees with ${where}/config.env; ` +
+        `remove it, then run mcctl migrate worlds again`
+      : `fix the cause and run mcctl migrate spec ${server.name} before you start the server`;
     let note: string;
     if (spec === 'migrated') {
-      note = `${where}/server.yaml keeps the new world settings, so the world stays in worlds/${server.name}; ` +
-        `fix the cause and ${rerender}`;
+      note = `${where}/server.yaml keeps the new world settings, so the world stays in worlds/${server.name}; ${rerender}`;
     } else if (spec === 'unknown') {
       note = `could not tell which world the spec of ${server.name} now uses, so the world was left in worlds/${server.name}; ` +
         `check world in ${where}/server.yaml and LEVEL and EXTRA_ARGS in ${where}/config.env and move the world to match by hand`;
@@ -545,24 +551,29 @@ async function migrateServer(
 /**
  * Which world the spec mcctl migrate spec would render for `server` puts it
  * in (load(): server.yaml with hand edits absorbed): the migrated one, the
- * earlier one, or neither / unreadable ('unknown').
+ * earlier one, or neither / unreadable ('unknown'). `storageClash`: that spec
+ * and server.yaml as written keep the world in different places, which
+ * mcctl migrate spec refuses (storage_change).
  */
 async function specNow(
   paths: Paths,
   server: string,
   before: WorldAssignmentSnapshot,
   intended: WorldAssignmentSnapshot
-): Promise<'migrated' | 'earlier' | 'unknown'> {
+): Promise<{ spec: 'migrated' | 'earlier' | 'unknown'; storageClash: boolean }> {
   const assigned = (s: WorldAssignmentSnapshot) => {
     if (s.undetermined.includes(server)) return undefined;
     const a = s.assignments.find((x) => x.server === server);
     return a ? `${a.world}\0${!!a.internal}` : undefined;
   };
-  const doc = await serverSpecRepository(paths).load(server).then((l) => l?.document, () => undefined);
-  if (!doc) return 'unknown';
+  const repo = serverSpecRepository(paths);
+  const doc = await repo.load(server).then((l) => l?.document, () => undefined);
+  const file = await repo.loadFile(server).then((l) => l?.document, () => undefined);
+  const storageClash = !!doc && !!file && doc.world.storage !== file.world.storage;
+  if (!doc) return { spec: 'unknown', storageClash };
   const now = `${doc.world.level}\0${doc.world.storage === 'data'}`;
-  if (now === assigned(intended)) return 'migrated';
-  return now === assigned(before) ? 'earlier' : 'unknown';
+  if (now === assigned(intended)) return { spec: 'migrated', storageClash };
+  return { spec: now === assigned(before) ? 'earlier' : 'unknown', storageClash };
 }
 
 /**

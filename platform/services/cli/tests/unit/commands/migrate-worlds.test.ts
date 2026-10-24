@@ -3,7 +3,7 @@
  * runtime port (#668, ADR-0001 row 14) instead of `docker inspect` / `docker stop`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -164,6 +164,37 @@ describe('migrate worlds (runtime port)', () => {
 
       // The guided command renders config.env from the new spec: it then names the world in worlds/
       expect(await migrateSpec(plain, { serverName: 'alpha' })).toBe(0);
+      const config = readFileSync(join(alpha(), 'config.env'), 'utf-8');
+      expect(config).toMatch(/^LEVEL=alpha$/m);
+      expect(config).toMatch(/^EXTRA_ARGS=--universe \/worlds\/$/m);
+    });
+
+    it('says to remove a new server.yaml that mcctl migrate spec would refuse, and a rerun then migrates', async () => {
+      // alpha has no server.yaml and a config.env without an mcctl header. The repository rule:
+      // config.env put back, compose not, so the new server.yaml (storage: universe) stays.
+      failingWrite(['servers/alpha/docker-compose.yml', 'servers/alpha/server.yaml'], async (write, doc) => {
+        await write(doc, { allowStorageChange: true });
+        writeFileSync(join(alpha(), 'config.env'), 'TYPE=PAPER\n');
+      });
+
+      const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+
+      expect(code).toBe(1);
+      // load() absorbs the earlier config.env: the world goes back where it says
+      expect(existsSync(join(alpha(), 'data', 'world', 'level.dat'))).toBe(true);
+      expect(existsSync(join(root, 'worlds', 'alpha'))).toBe(false);
+      const failure = logged().split('\n').find((l) => l.includes('Migration failed'))!;
+      expect(failure).toMatch(/servers\/alpha\/server\.yaml was written by this run and disagrees with servers\/alpha\/config\.env.*remove it, then run mcctl migrate worlds again/);
+      expect(failure).not.toContain('mcctl migrate spec');
+      // Why: mcctl migrate spec absorbs the same config.env and refuses the storage change
+      const plain = new FileServerSpecRepository(new Paths(root), undefined, stopped, () => []);
+      expect(await migrateSpec(plain, { serverName: 'alpha' })).toBe(1);
+
+      // As told: remove server.yaml and migrate again
+      unlinkSync(join(alpha(), 'server.yaml'));
+      serverSpecRepositories.create = () => plain;
+      expect(await migrateCommand({ root, subCommand: 'worlds', all: true, force: true })).toBe(0);
+      expect(existsSync(join(root, 'worlds', 'alpha', 'level.dat'))).toBe(true);
       const config = readFileSync(join(alpha(), 'config.env'), 'utf-8');
       expect(config).toMatch(/^LEVEL=alpha$/m);
       expect(config).toMatch(/^EXTRA_ARGS=--universe \/worlds\/$/m);
