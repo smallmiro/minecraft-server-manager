@@ -74,15 +74,19 @@ export class ShellExecutor {
   }
 
   /**
-   * The container's ID and state (`docker inspect`), or null when it cannot be
-   * inspected (no such container, or docker failed). The ID lets callers tell
-   * whether compose recreated it, without parsing compose output.
+   * The container's ID, state, image ID and image reference (`docker inspect`),
+   * or null when it cannot be inspected (no such container, or docker failed).
+   * The ID lets callers tell whether compose recreated it, without parsing
+   * compose output; the image ID/reference let them print a rollback command.
    */
-  containerState(container: string): Promise<{ id: string; status: string } | null> {
+  containerState(
+    container: string
+  ): Promise<{ id: string; status: string; imageId: string; imageRef: string } | null> {
     return new Promise((resolve) => {
-      execFile('docker', ['inspect', '-f', '{{.Id}} {{.State.Status}}', '--', container], (err, stdout) => {
-        const [id, status] = stdout.trim().split(' ');
-        resolve(err || !id || !status ? null : { id, status });
+      const format = '{{.Id}} {{.State.Status}} {{.Image}} {{.Config.Image}}';
+      execFile('docker', ['inspect', '-f', format, '--', container], (err, stdout) => {
+        const [id, status, imageId, imageRef] = stdout.trim().split(' ');
+        resolve(err || !id || !status || !imageId || !imageRef ? null : { id, status, imageId, imageRef });
       });
     });
   }
