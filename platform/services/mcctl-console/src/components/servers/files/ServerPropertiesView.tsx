@@ -2,8 +2,6 @@
 
 import { useState, useCallback, useRef } from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -15,6 +13,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import CodeIcon from '@mui/icons-material/Code';
 import SaveIcon from '@mui/icons-material/Save';
+import { BentoPanel } from '@/components/bento';
 import { ServerPropertiesEditor } from './ServerPropertiesEditor';
 import { RawPropertiesEditor } from './RawPropertiesEditor';
 import type { RawPropertiesEditorHandle } from './RawPropertiesEditor';
@@ -73,7 +72,7 @@ export function ServerPropertiesView({ serverName, onBack }: ServerPropertiesVie
 
   return (
     <>
-      <Card sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+      <BentoPanel sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
         {/* Header */}
         <Box
           sx={{
@@ -124,7 +123,7 @@ export function ServerPropertiesView({ serverName, onBack }: ServerPropertiesVie
         </Box>
 
         {/* Content */}
-        <CardContent sx={{ flex: 1, overflow: 'auto', p: 0, '&:last-child': { pb: 0 } }}>
+        <Box sx={{ flex: 1, overflow: 'auto', p: 0 }}>
           {viewMode === 'form' ? (
             <ServerPropertiesEditor serverName={serverName} />
           ) : (
@@ -137,8 +136,8 @@ export function ServerPropertiesView({ serverName, onBack }: ServerPropertiesVie
               />
             </Box>
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Discard Confirmation Dialog */}
       <Dialog open={confirmAction !== null} onClose={() => setConfirmAction(null)} maxWidth="xs" fullWidth>

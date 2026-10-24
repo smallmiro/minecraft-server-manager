@@ -1,7 +1,5 @@
 'use client';
 
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -11,6 +9,7 @@ import CodeIcon from '@mui/icons-material/Code';
 import PeopleIcon from '@mui/icons-material/People';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import BlockIcon from '@mui/icons-material/Block';
+import { BentoPanel } from '@/components/bento';
 import { WhitelistManager } from '@/components/players/WhitelistManager';
 import { OpManager } from '@/components/players/OpManager';
 import { BanManager } from '@/components/players/BanManager';
@@ -54,7 +53,7 @@ export function PlayerEditorDialog({
   const config = editorConfig[editorType];
 
   return (
-    <Card sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+    <BentoPanel sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
       {/* Header */}
       <Box
         sx={{
@@ -89,11 +88,11 @@ export function PlayerEditorDialog({
       </Box>
 
       {/* Content */}
-      <CardContent sx={{ flex: 1, overflow: 'auto', p: { xs: 1, sm: 2 }, '&:last-child': { pb: 2 } }}>
+      <Box sx={{ flex: 1, overflow: 'auto', p: { xs: 1, sm: 2 } }}>
         {editorType === 'whitelist' && <WhitelistManager serverName={serverName} />}
         {editorType === 'ops' && <OpManager serverName={serverName} />}
         {editorType === 'bans' && <BanManager serverName={serverName} />}
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }

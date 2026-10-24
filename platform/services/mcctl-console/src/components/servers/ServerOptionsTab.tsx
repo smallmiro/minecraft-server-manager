@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -18,6 +16,7 @@ import Snackbar from '@mui/material/Snackbar';
 import WarningIcon from '@mui/icons-material/Warning';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { BentoPanel } from '@/components/bento';
 import { useServerConfig, useUpdateServerConfig, useResetWorld, useRestartServer } from '@/hooks/useMcctl';
 import { HostnameSection } from './HostnameSection';
 import { SettingsSection, StickyActionBar, RestartConfirmDialog, sectionConfigs } from './settings';
@@ -207,8 +206,8 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
       ))}
 
       {/* Danger Zone */}
-      <Card sx={{ borderRadius: 3, borderColor: 'error.main', borderWidth: 1, borderStyle: 'solid' }}>
-        <CardContent>
+      <BentoPanel accent="error">
+        <Box sx={{ p: 2.5 }}>
           <Typography variant="h6" gutterBottom fontWeight={600} color="error">
             Danger Zone
           </Typography>
@@ -236,8 +235,8 @@ export function ServerOptionsTab({ serverName, isRunning }: ServerOptionsTabProp
               </Typography>
             )}
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Sticky Save Bar */}
       <StickyActionBar

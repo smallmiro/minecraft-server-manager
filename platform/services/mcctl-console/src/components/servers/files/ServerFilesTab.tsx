@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Alert from '@mui/material/Alert';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
+import Box from '@mui/material/Box';
+import { BentoPanel } from '@/components/bento';
 import { useServerFiles, useDeleteFile, useCreateDirectory, useRenameFile, useUploadFiles, downloadFile } from '@/hooks/use-server-files';
 import { FileBreadcrumb } from './FileBreadcrumb';
 import { FileToolbar } from './FileToolbar';
@@ -159,15 +159,15 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
 
   if (isLoading) {
     return (
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent>
+      <BentoPanel>
+        <Box sx={{ p: 2.5 }}>
           <Skeleton variant="text" width={300} height={32} sx={{ mb: 2 }} />
           <Skeleton variant="rectangular" height={40} sx={{ mb: 2 }} />
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} variant="rectangular" height={48} sx={{ mb: 0.5 }} />
           ))}
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
@@ -222,8 +222,8 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
 
   return (
     <>
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent>
+      <BentoPanel>
+        <Box sx={{ p: 2.5 }}>
           <FileBreadcrumb path={currentPath} onNavigate={handleNavigate} />
           <FileToolbar
             searchQuery={searchQuery}
@@ -241,8 +241,8 @@ export function ServerFilesTab({ serverName }: ServerFilesTabProps) {
             onFileAction={handleFileAction}
             searchQuery={searchQuery}
           />
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Delete Confirmation Dialog (with type-to-confirm for dangerous files) */}
       <DeleteConfirmDialog

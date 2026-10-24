@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -31,6 +29,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { BentoPanel } from '@/components/bento';
 import { useServerPlayers } from '@/hooks/useServerPlayers';
 import { useAddToWhitelist, useRemoveFromWhitelist } from '@/hooks/useMcctl';
 import { PlayerDetailModal } from './PlayerDetailModal';
@@ -199,8 +198,8 @@ export function ServerPlayersTab({ serverName }: ServerPlayersTabProps) {
   };
 
   return (
-    <Card sx={{ borderRadius: 3 }}>
-      <CardContent>
+    <BentoPanel>
+      <Box sx={{ p: 2.5 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6" fontWeight={600}>
             Players
@@ -410,7 +409,7 @@ export function ServerPlayersTab({ serverName }: ServerPlayersTabProps) {
           open={detailOpen}
           onClose={() => setDetailOpen(false)}
         />
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }

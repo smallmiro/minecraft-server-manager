@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import Avatar from '@mui/material/Avatar';
@@ -22,6 +20,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { BentoPanel } from '@/components/bento';
 import { PermissionBadge } from '@/components/users/PermissionBadge';
 import { ServerAccessDialog } from '@/components/users/ServerAccessDialog';
 import {
@@ -76,8 +75,8 @@ export function ServerAccessTab({ serverId }: ServerAccessTabProps) {
 
   if (isLoading) {
     return (
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent>
+      <BentoPanel>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Skeleton variant="text" width="30%" height={32} />
             <Skeleton variant="rounded" width={120} height={36} sx={{ borderRadius: 2 }} />
@@ -94,8 +93,8 @@ export function ServerAccessTab({ serverId }: ServerAccessTabProps) {
               <Skeleton variant="circular" width={32} height={32} />
             </Box>
           ))}
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
@@ -111,8 +110,8 @@ export function ServerAccessTab({ serverId }: ServerAccessTabProps) {
 
   return (
     <>
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent>
+      <BentoPanel>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight={600}>
               Server Access
@@ -182,8 +181,8 @@ export function ServerAccessTab({ serverId }: ServerAccessTabProps) {
               Only platform admins and server owners can manage access.
             </Typography>
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Permission Change Menu */}
       <Menu

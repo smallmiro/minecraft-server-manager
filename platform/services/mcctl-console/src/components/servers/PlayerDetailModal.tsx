@@ -7,7 +7,6 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Avatar from '@mui/material/Avatar';
@@ -15,6 +14,7 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import PersonIcon from '@mui/icons-material/Person';
+import { BentoPanel } from '@/components/bento';
 import { usePlayerDetail } from '@/hooks/useMcctl';
 import type { PlayerSummary, PlayerStats, PlayerData, LivePosition, SessionHistory } from '@/ports/api/IMcctlApiClient';
 
@@ -40,14 +40,14 @@ export function formatDistance(meters: number): string {
 
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
-    <Card sx={{ p: 1.5, height: '100%', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+    <BentoPanel component="div" sx={{ p: 1.5, height: '100%' }}>
       <Typography variant="caption" color="text.secondary" fontWeight={500}>
         {label}
       </Typography>
       <Typography variant="body1" fontWeight={600} mt={0.5}>
         {value}
       </Typography>
-    </Card>
+    </BentoPanel>
   );
 }
 
