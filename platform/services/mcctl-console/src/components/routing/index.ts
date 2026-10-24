@@ -1,3 +1,3 @@
 export { RoutingTable } from './RoutingTable';
 export { RouterGatewayCard } from './RouterGatewayCard';
-export { classifyHostname, routeStatusDisplay, extractServerName } from './hostnameType';
+export { classifyRouteHostname, routeStatusDisplay, extractServerName } from './hostnameType';

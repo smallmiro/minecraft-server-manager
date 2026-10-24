@@ -20,7 +20,7 @@ export const HOSTNAME_TYPE_LABEL: Record<HostnameType, string> = {
  * Classify a route hostname. A playit domain wins over the suffix rules because
  * it is the only signal that a hostname is reachable from the WAN.
  */
-export function classifyHostname(
+export function classifyRouteHostname(
   hostname: string,
   playitDomains: ReadonlyArray<string | null | undefined>
 ): HostnameType {

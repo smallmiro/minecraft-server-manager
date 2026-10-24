@@ -23,7 +23,7 @@ import { CopyButton } from '@/components/common';
 import type { RouteInfo } from '@/ports/api/IMcctlApiClient';
 import {
   HOSTNAME_TYPE_LABEL,
-  classifyHostname,
+  classifyRouteHostname,
   extractServerName,
   routeStatusDisplay,
   type HostnameType,
@@ -148,7 +148,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
         hostname: route.hostname,
         serverName: extractServerName(route.target),
         detail: [route.serverType, route.serverVersion].filter(Boolean).join(' '),
-        type: classifyHostname(route.hostname, playitDomains),
+        type: classifyRouteHostname(route.hostname, playitDomains),
         route,
       })),
     [routes, playitDomains]
