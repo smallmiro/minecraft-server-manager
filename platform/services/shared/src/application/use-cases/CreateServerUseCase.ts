@@ -108,12 +108,13 @@ export class CreateServerUseCase implements ICreateServerUseCase {
    * Write the new server's files and bring it up: TypeScript provisioning
    * (ADR-0003 §5) when provision deps are given, else create-server.sh.
    * Rejects when the server was not created; a start failure is returned.
+   * @param version VERSION as written; undefined writes none (the modpack decides).
    */
   private async createFiles(
     name: ServerName,
     options: CreateServerOptions,
     run: CreateServerRunOptions,
-    versionText?: string
+    version: string | undefined
   ): Promise<{ startError?: string }> {
     if (!this.provision) {
       // create-server.sh was removed in #675; the shell port is kept for v2 callers (#736).
@@ -128,9 +129,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       buildCreateSpec({
         name: name.value,
         type: type.value,
-        // The modpack decides the Minecraft version unless one is given (no VERSION).
-        version:
-          versionText ?? (type.isModpack && options.version.value === 'LATEST' ? undefined : options.version.value),
+        version,
         memory: (options.memory ?? (type.isModpack ? Memory.create('6G') : Memory.default())).formatted,
         seed: worldOptions.setupType === WorldSetupType.NEW ? worldOptions.seed : undefined,
         worldUrl: worldOptions.setupType === WorldSetupType.DOWNLOAD ? worldOptions.downloadUrl : undefined,
@@ -311,6 +310,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       spinner.stop('Writing server files...');
 
       let startError: string | undefined;
+      // A modpack is asked no Minecraft version: it decides (no VERSION).
+      const versionToWrite = type.isModpack ? undefined : version.value;
       const result = await this.createFiles(name, {
         type,
         version,
@@ -327,7 +328,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       }, {
         onProgress: (_stage, message) => this.prompt.info(message),
         onLog: (line) => this.prompt.warn(line),
-      }).then(
+      }, versionToWrite).then(
         (r) => {
           startError = r.startError;
           return { success: true, stderr: '' };
@@ -468,7 +469,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
     await this.assertWorldAssignable(worldOptions, name);
 
-    // Execute creation
+    // Execute creation. The modpack decides the Minecraft version unless one is
+    // given (no VERSION); a given LATEST is written.
+    const versionToWrite = !config.version && type.isModpack ? undefined : versionText ?? version.value;
     let startError: string | undefined;
     const result = await this.createFiles(name, {
       type,
@@ -484,7 +487,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       whitelistPlayers: config.whitelistPlayers,
       playitDomain: config.playitDomain,
       noPlayitDomain: config.noPlayitDomain,
-    }, options, versionText).then(
+    }, options, versionToWrite).then(
       (r) => {
         startError = r.startError;
         return { success: true, stderr: '' };

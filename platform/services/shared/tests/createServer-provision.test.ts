@@ -123,6 +123,11 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
     expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.has('VERSION')).toBe(false);
   });
 
+  it.each(['LATEST', 'latest'])('writes VERSION=LATEST for a modpack given version %s', async (version) => {
+    await useCase().executeWithConfig({ name: 'beta', type: 'MODRINTH', modpackSlug: 'cobblemon', version, autoStart: false });
+    expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.get('VERSION')).toBe('LATEST');
+  });
+
   it('writes nothing when the create fails, and a retry succeeds at once (#657)', async () => {
     writeFileSync(file('compose.yml'), 'include: [broken\n');
     await expect(useCase().executeWithConfig({ name: 'beta', version: '1.21.1' }, run)).rejects.toMatchObject({
@@ -192,5 +197,18 @@ describe('CreateServerUseCase.execute (interactive) with provisioning', () => {
     const prompt = interactivePrompt();
     await expect(useCase({ prompt: prompt as unknown as IPromptPort }).execute()).rejects.toThrow(/servers\/compose\.yml/);
     expect(prompt.error).not.toHaveBeenCalled();
+  });
+
+  it('leaves VERSION to the modpack: the flow asks no Minecraft version for it', async () => {
+    const prompt = {
+      ...interactivePrompt(),
+      promptServerType: async () => ServerType.create('MODRINTH'),
+      promptModpackSlug: async () => 'cobblemon',
+      promptModpackLoader: async () => undefined,
+      promptModpackVersion: async () => undefined,
+      promptModpackExcludeFiles: async () => undefined,
+    };
+    await useCase({ prompt: prompt as unknown as IPromptPort }).execute();
+    expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.has('VERSION')).toBe(false);
   });
 });
