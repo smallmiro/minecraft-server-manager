@@ -110,7 +110,7 @@ beforeEach(() => {
     0o755,
   );
   put(join(bin, 'docker'), FAKE_LOGGER(''), 0o755);
-  put(join(bin, 'curl'), FAKE_LOGGER('echo "{\\"status\\":\\"ok\\"}"'), 0o755);
+  put(join(bin, 'curl'), FAKE_LOGGER("echo '{\"status\":\"ok\"}'"), 0o755);
   put(join(bin, 'git'), FAKE_LOGGER('echo "git version 2.43.0"'), 0o755);
   put(join(bin, 'systemctl'), FAKE_LOGGER(''), 0o755);
   put(
