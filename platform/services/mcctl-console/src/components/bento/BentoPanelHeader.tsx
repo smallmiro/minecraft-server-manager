@@ -25,7 +25,7 @@ export function BentoPanelHeader({
   return (
     <Stack
       direction="row"
-      alignItems="flex-start"
+      alignItems="center"
       justifyContent="space-between"
       spacing={2}
       sx={{ px: 2.5, pt: 2.5, pb: 1.5, minWidth: 0 }}
