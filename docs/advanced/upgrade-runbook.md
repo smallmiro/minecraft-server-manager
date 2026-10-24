@@ -98,6 +98,8 @@ v3.0.0 removes every Bash script (#715). `mcctl` no longer reads `<root>/scripts
 | `logs.sh` | `mcctl logs` |
 | `init.sh` | `mcctl init` |
 | `render-map.sh` | No CLI command. Use **Render map** in the web console, or the API (BlueMap) |
+| `migrate-nip-io.sh` | No dedicated command. After the host IP changes, run `mcctl init --reconfigure` and answer yes to "Update existing servers with new IP hostnames?"; it renders every server again and the nip.io router hosts follow the new `HOST_IPS` (custom hosts stay) |
+| `lib/common.sh` | None. It was the scripts' own helper library; the name rules are in TypeScript |
 
 - Servers keep working. The first command that changes a server writes `servers/<name>/server.yaml` and rewrites `config.env` and the server's `compose.yml`; see [server.yaml](../configuration/server-yaml.md).
 

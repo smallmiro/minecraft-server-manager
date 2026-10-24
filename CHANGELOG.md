@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > **Upgrade notes (v3.0.0, BREAKING).** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts). All Bash scripts are gone (#715, #736).
 > - **`<root>/scripts` is no longer used.** `mcctl upgrade` shows the folder and, in a terminal, deletes it only after you answer `y` (default `N`); with `--non-interactive` or without a terminal it only prints `rm -r <path>`. Copy any script you edited first. If cron jobs or your own scripts called `<root>/scripts/*.sh`, switch them to `mcctl`: see the [script to mcctl table](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts).
 > - **`MCCTL_SCRIPTS` is ignored.**
-> - **`@minecraft-docker/shared` API (breaking for code that imports it).** The script-based exports are removed (`IShellPort`, `ShellAdapter`, `execScript`, `execScriptInteractive`, `Paths.scripts` and more) and the use case constructors lose their shell argument and gain required `provision`/`runtime`/`deprovisionDeps`. The replacement for each symbol is in [Removed](#removed).
+> - **`@minecraft-docker/shared` API (breaking for code that imports it).** The script-based exports are removed (`IShellPort`, `ShellAdapter`, `execScript`, `execScriptInteractive`, `Paths.scripts` and more) and the use case constructors lose their shell argument (`CreateServerUseCase` now requires `provision`, `DeleteServerUseCase` requires `runtime` and `deprovisionDeps`). The replacement for each symbol is in [Removed](#removed).
 > - **npm packages.** The CLI and mcctl-api packages no longer contain `scripts/` (`sync-scripts` became `sync-docker`; only `docker/bluemap/Dockerfile` is bundled).
 > - **First write adds `server.yaml`.** The first command that changes an existing server (`mcctl config`, whitelist, ops, mods, playit, the console) writes `servers/<name>/server.yaml` and rewrites that server's `config.env` and `compose.yml` with a header; see [server.yaml](https://minecraft-server-manager.readthedocs.io/en/latest/configuration/server-yaml/). Comments in `servers/compose.yml` are lost on its first rewrite.
 > - **Auto-backup on stop now also runs for API and console stops.** Hosts with `BACKUP_AUTO_ON_STOP=true` should add `kill_timeout: 130000` to the mcctl-api app in `ecosystem.config.cjs` (runbook step 4-2).
@@ -60,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   | `new BlueMapCliRenderer(scriptPath, run?, options?)`, `RenderSpawn`, `RenderSpawnOptions`, `parseResultJson` | `new BlueMapCliRenderer({ worldsDir, mapsDir, dockerDir })` |
   | `executeWithName(name)`, `executeWithName(name, boolean)` | `executeWithName(name, { force, yes, deleteWorld })` |
 
-  Constructors lose the shell argument, and `provision`, `runtime` and `deprovisionDeps` are required:
+  Constructors lose the shell argument. `CreateServerUseCase` requires `provision`, `DeleteServerUseCase` requires `runtime` and `deprovisionDeps`, `WorldManagementUseCase` takes `runtime` as an optional argument, and `BackupUseCase` only drops the shell argument:
   - `new CreateServerUseCase(prompt, serverRepo, settings: IPlatformSettingsPort, provision, worldRepo?, auditLog?, modSource?, assignments?)`
   - `new DeleteServerUseCase(prompt, serverRepo, runtime, deprovisionDeps, auditLog?, serverConsole?)`
   - `new WorldManagementUseCase(prompt, worldRepo, serverRepo, assignments?, runtime?)`
