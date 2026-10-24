@@ -31,7 +31,7 @@ mcctl console init
 
 # Run tests (point at a disposable test instance, never your live one)
 cd e2e
-E2E_BASE_URL=http://localhost:5000 E2E_API_URL=http://localhost:5001 pnpm test
+E2E_BASE_URL=http://<test-console-host>:<port> E2E_API_URL=http://<test-api-host>:<port> pnpm test
 ```
 
 ## Test Scripts
@@ -43,7 +43,7 @@ E2E_BASE_URL=http://localhost:5000 E2E_API_URL=http://localhost:5001 pnpm test
 | `pnpm test:headed` | Run tests in headed browser mode |
 | `pnpm test:debug` | Run tests in debug mode |
 | `pnpm test:ci` | Run tests and stop services after (for CI) |
-| `pnpm test:unit` | Unit test of the target URL guard (`env.test.ts`, no network) |
+| `pnpm test:unit` | Unit test of the target URL guard (`env.test.ts`, no network, Node 22.7+; runs in CI) |
 | `pnpm test:skip-start` | Skip service auto-start (use existing services) |
 | `pnpm report` | View the HTML test report |
 
@@ -57,6 +57,7 @@ E2E_BASE_URL=http://localhost:5000 E2E_API_URL=http://localhost:5001 pnpm test
 | `E2E_API_URL` | none (required) | API URL |
 | `E2E_SKIP_SERVICE_START` | `false` | Skip PM2 service startup |
 | `E2E_STOP_SERVICES` | `false` | Stop services after tests |
+| `E2E_PLATFORM_ENV` | none (`platform-settings.spec.ts` skips without it) | Platform `.env` of the API under test; the spec writes it and restores it afterwards |
 
 ## Service Management
 
@@ -134,7 +135,7 @@ test('authenticated test', async ({ authenticatedPage }) => {
 ```typescript
 import { test, expect } from '@playwright/test';
 
-const API_URL = process.env.E2E_API_URL || 'http://localhost:5001';
+import { E2E_API_URL as API_URL } from '../env'; // required, no localhost default
 
 test('health check', async ({ request }) => {
   const response = await request.get(`${API_URL}/health`);
