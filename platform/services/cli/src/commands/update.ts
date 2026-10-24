@@ -223,14 +223,13 @@ export async function updateDockerImages(serversDir: string, rootDir: string): P
  * mc-router auto-scale only `docker start`s existing containers, so a stopped
  * container would otherwise keep waking up on the old image (#796). Compose
  * recreates only when image/config changed; a changed container ID tells us.
- * Running servers are left alone. Failures are reported per server, never fatal.
+ * Only `exited`/`created` containers are touched: compose would stop a running
+ * one, so an unknown state (inspect failed) is skipped, not guessed.
+ * Failures are reported per server, never fatal.
  */
 export async function recreateStoppedServers(
   serversDir: string,
-  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerId'>,
-  isRunning: (container: string) => Promise<boolean> = async (c) =>
-    // lazy: rcon.js pulls in the whole DI container
-    (await import('../lib/rcon.js')).isContainerRunning(c)
+  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>
 ): Promise<void> {
   const servers = existsSync(serversDir)
     ? readdirSync(serversDir).filter(
@@ -245,19 +244,27 @@ export async function recreateStoppedServers(
   for (const server of servers) {
     const container = `mc-${server}`;
     try {
-      if (await isRunning(container)) {
-        running.push(server);
+      const before = await shell.containerState(container);
+      if (!before) {
+        console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim('(no container, or docker inspect failed)')}`);
         continue;
       }
-      const before = await shell.containerId(container);
+      if (before.status !== 'exited' && before.status !== 'created') {
+        running.push(`${server}: ${before.status}`);
+        continue;
+      }
       const code = await shell.dockerCompose(['up', '--no-start', '--no-deps', container]);
       if (code !== 0) {
         console.log(`  ${colors.red('✗')} ${server} ${colors.dim(`(docker compose up --no-start exited ${code})`)}`);
         continue;
       }
-      const after = await shell.containerId(container);
+      const after = await shell.containerState(container);
+      if (!after) {
+        console.log(`  ${colors.red('✗')} ${server} ${colors.dim('(no container after docker compose up --no-start)')}`);
+        continue;
+      }
       console.log(
-        before !== after
+        before.id !== after.id
           ? `  ${colors.green('✓')} ${server}: recreated`
           : `  ${colors.green('✓')} ${server}: up to date`
       );
@@ -266,8 +273,8 @@ export async function recreateStoppedServers(
     }
   }
 
-  for (const server of running) {
-    console.log(`  ${colors.yellow('-')} ${server}: running, keeps its current image`);
+  for (const entry of running) {
+    console.log(`  ${colors.yellow('-')} ${entry}, keeps its current image`);
   }
   if (running.length > 0) {
     console.log(colors.dim('  Apply it in a quiet moment: mcctl stop <server> && mcctl start <server>'));
