@@ -144,6 +144,32 @@ describe('delete: server directory and include entry', () => {
     ]);
   });
 
+  it('drops every path inside servers/alpha/, written any way, and keeps other servers (#735 decision)', async () => {
+    writeFileSync(
+      at('servers', 'compose.yml'),
+      yaml.dump({
+        include: [
+          {
+            path: ['alpha/docker-compose.yml', 'alpha/docker-compose.override.yml', 'beta/docker-compose.yml'],
+            env_file: 'shared.env',
+          },
+          'alpha/extra.yml',
+          { path: './alpha/docker-compose.yml', project_directory: '.' },
+          { path: ['./alpha//more.yml', 'gamma/docker-compose.yml'] },
+          'alphabet/docker-compose.yml',
+          'alpha-two/docker-compose.yml',
+        ],
+      })
+    );
+    await repo.delete('alpha');
+    expect((yaml.load(compose()) as { include: unknown[] }).include).toEqual([
+      { path: ['beta/docker-compose.yml'], env_file: 'shared.env' },
+      { path: ['gamma/docker-compose.yml'] },
+      'alphabet/docker-compose.yml',
+      'alpha-two/docker-compose.yml',
+    ]);
+  });
+
   it('servers/compose.yml keeps its file mode (#660)', async () => {
     writeFileSync(at('servers', 'compose.yml'), 'include:\n  - alpha/docker-compose.yml\n  - beta/docker-compose.yml\n');
     chmodSync(at('servers', 'compose.yml'), 0o640);

@@ -187,6 +187,11 @@ describe('delete: a failed move puts the include entry back (#735 review)', () =
       'a multi-path entry, which only lost alpha',
       [{ path: ['alpha/docker-compose.yml', 'beta/docker-compose.yml'], env_file: 'shared.env' }],
     ],
+    [
+      'a multi-path entry with another file of alpha, which lost both',
+      [{ path: ['alpha/docker-compose.yml', 'alpha/docker-compose.override.yml', 'beta/docker-compose.yml'], env_file: 'shared.env' }],
+    ],
+    ['an entry with only other files of alpha', ['alpha/docker-compose.yml', { path: ['./alpha/override.yml'] }, 'beta/docker-compose.yml']],
   ])('restores %s in its form when another process changed servers/compose.yml meanwhile (#735 re-review)', async (_, original) => {
     writeFileSync(at('servers', 'compose.yml'), yaml.dump({ include: original }));
     serverSpecTestHooks.beforeWorldMove = async () => {
