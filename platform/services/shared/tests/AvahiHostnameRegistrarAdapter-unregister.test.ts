@@ -1,8 +1,7 @@
 /**
  * AvahiHostnameRegistrarAdapter.unregister (#735): the avahi step of
  * delete-server.sh, with exactly the command the README sudoers line allows
- * (#751) and the sudo password rules of lib/common.sh (#682, was
- * sudo-password.bats). Temp hosts file; fake sudo and systemctl on PATH.
+ * (#751) and the sudo password rules of the removed lib/common.sh (#682). Temp hosts file; fake sudo and systemctl on PATH.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { spawnSync } from 'node:child_process';

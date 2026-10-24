@@ -1,8 +1,7 @@
 import { containerNameOf } from '../../infrastructure/adapters/workloadNames.js';
 
 /**
- * Server name rules: the single source for the CLI, API, console and scripts
- * (platform/scripts/lib/common.sh mirrors them in bash).
+ * Server name rules: the single source for the CLI, API and console.
  *
  * New names are DNS-1123 labels that start with a letter, so the runtime's
  * workload name (infrastructure/adapters/workloadNames.ts) stays a valid
