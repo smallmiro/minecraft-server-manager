@@ -22,6 +22,7 @@ import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Collapse from '@mui/material/Collapse';
@@ -46,6 +47,8 @@ interface CreateServerDialogProps {
   status?: CreateServerStatus;
   progress?: number;
   message?: string;
+  /** Created, but the start failed or goes on in the background (#675): shown as a warning */
+  warning?: string | null;
 }
 
 const STANDARD_SERVER_TYPES = ['VANILLA', 'PAPER', 'FABRIC', 'FORGE', 'NEOFORGE'];
@@ -82,6 +85,7 @@ export function CreateServerDialog({
   status = 'idle',
   progress = 0,
   message = '',
+  warning = null,
 }: CreateServerDialogProps) {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -413,7 +417,12 @@ export function CreateServerDialog({
     <Dialog open={open} onClose={isCreating ? undefined : onClose} maxWidth="sm" fullWidth fullScreen={isSmallScreen}>
       <form onSubmit={handleSubmit}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {status === 'completed' ? (
+          {status === 'completed' && warning ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <WarningAmberIcon color="warning" />
+              Server Created with a Warning
+            </Box>
+          ) : status === 'completed' ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CheckCircleIcon color="success" />
               Server Created Successfully
@@ -464,7 +473,8 @@ export function CreateServerDialog({
               )}
 
               {/* Completion/Error Message */}
-              {status === 'completed' && (
+              {status === 'completed' && warning && <Alert severity="warning">{warning}</Alert>}
+              {status === 'completed' && !warning && (
                 <Typography color="success.main" sx={{ textAlign: 'center' }}>
                   {message}
                 </Typography>

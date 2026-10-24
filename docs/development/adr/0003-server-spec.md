@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Accepted with changes after system-architect review (2026-10-23) |
+| **Status** | Accepted with changes after system-architect review (2026-10-23); implemented in PR 1 (#754), PR 2 (#754) and PR 3 (`feature/675-provision`) |
 | **Issue** | [#675](https://github.com/smallmiro/minecraft-server-manager/issues/675) (Hardening D5, milestone M4 #645), includes #715 S8 (replace `create-server.sh`) |
 | **Changes** | [ADR-0001](0001-container-runtime-ports.md): `IServerSpecRepository` gains `load`/`write` (v2 methods kept), `IHostnameRegistrarPort.register`/`unregister` |
 | **Builds on** | [ADR-0002](0002-world-server-assignment.md) (#670, `LEVEL` is the assignment; merged in PR #750), PR #749 (#656: env codec, `atomicWriteFile`, API create/delete queue), #651 (single template), #649 (names), #654 (runtime ports), #751 (avahi sudoers shape) |
@@ -21,7 +21,7 @@
 2. **Small typed core + `env` pass-through.** Typed fields only for what mcctl reasons about or a renderer must translate (type, version, memory, image, world, routing). Every other `config.env` key lives in `env` unchanged, so import is lossless.
 3. **Readers do not change in v2.x.** Generated files are rewritten on every save, so existing readers (`ServerRepository`, status, API config) keep reading `config.env`/compose. Only writers move.
 4. **Hand edits are absorbed, not lost.** A header hash detects them. `config.env` edits and edits of spec-owned compose fields (`image`, `mc-router.*` labels) are absorbed into the spec before the next write. Any other compose difference is protected: never overwritten silently.
-5. **No new port, no broken export** (#715, v2.x rule). `IServerSpecRepository` and `ServerSpec` keep their v2 shape; the full type is the new `ServerSpecDocument`, and the new behaviour comes from added methods (`load`, `write`), as #670 did for `IWorldAssignmentPort`. Rendering is an infrastructure detail of the repository adapter. `IHostnameRegistrarPort` gains `register` (+ `unregister` for #735).
+5. **No new port, no broken export** (#715, v2.x rule). `IServerSpecRepository` and `ServerSpec` keep their v2 shape; the full type is the new `ServerSpecDocument`, and the new behaviour comes from added methods (`load`, `write`), as #670 did for `IWorldAssignmentPort`. Rendering is an infrastructure detail of the repository adapter. `IHostnameRegistrarPort` gains `register`; `unregister` is added with delete in #735.
 6. **No lock file.** Create claims the directory with `mkdir`; updates use an optimistic revision (sha256 of `server.yaml`). The in-process API queue from #749 stays.
 7. **Import is lazy or explicit, never bulk.** A server without `server.yaml` is imported in memory on its first write; `mcctl migrate spec` imports on request. `mcctl upgrade` only reports which servers are not imported yet. A server that is never imported keeps working as today.
 8. **Provision replaces `create-server.sh`** inside `CreateServerUseCase`, with progress events named as the API SSE already expects and all-or-nothing cleanup so a retry works.
@@ -94,9 +94,9 @@ env:
 |-------|--------|-----------------------------------|
 | `name` | `ServerName` (DNS-1123, reserved words, #649); equals the directory | `EXISTING_SERVER_NAME_PATTERN` |
 | `world.level` | `WORLD_NAME_PATTERN`, not `*_nether`/`*_the_end` (ADR-0002) | `EXISTING_WORLD_NAME_PATTERN` |
-| `type`, `version`, `memory` | `ServerType`, `McVersion`, `Memory` | env value rule |
+| `type`, `version`, `memory` | `ServerType`, `MC_VERSION_INPUT_PATTERN` (releases, `LATEST`, snapshots and pre-releases, the API create rule), `Memory` | env value rule |
 | `routing.*Hostnames`, `playitDomain` | hostname rule (moved from `HostnameService` to domain) | same |
-| `env` keys / values | `ENV_KEY_RE` / `assertEnvFileValue` (#726) | same |
+| `env` keys / values | `ENV_KEY_RE` / `assertEnvFileValue` (#726), and a value the `config.env` writer can write (PR 3 review) | `ENV_KEY_RE` / `assertEnvFileValue` |
 
 - **Managed keys** cannot appear in `env`: `TYPE`, `VERSION`, `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`. `env.EXTRA_ARGS` is allowed but must not contain `--universe` (that is `world.storage`).
 - **Strict file**: unknown top-level keys and non-string scalars are rejected with the path (`version: 1.21` is a float in YAML; the error says to quote it). mcctl itself writes with `js-yaml` `dump`, which quotes as needed.
@@ -152,14 +152,14 @@ export interface ServerSpecRenderer {
 | `servers/compose.yml` | `js-yaml` load, add `<n>/docker-compose.yml` if no entry equals it, keep all other entries (long form `- path:` too), dump with a static header. The whole read-merge-write runs under `servers/.compose.yml.lock` (`acquireFileLock`, shared with the backup lock: link-based, a holder that provably died on this host is taken over, about 10 s wait, then `locked`), because CLI and API processes add servers to the same file. Inside the lock the file is read fresh, written, read back and checked for every entry it had plus the new one; retry once on mismatch. A file that fails to load is never overwritten: the write stops with an error before anything is written. | no (merge) |
 | `data/`, `logs/`, `servers/global.env` | `mkdir -p`; copy `global.env` from the template if missing (as the script does). | — |
 
-- **Env projection**: `TYPE`, `VERSION` (omitted when absent), `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`, `EXTRA_ARGS`, then `env`. `EXTRA_ARGS` = `--universe /worlds/` plus `env.EXTRA_ARGS` for `universe`; `env.EXTRA_ARGS ?? ''` for `data` (an empty value still overrides `global.env`, ADR-0002).
+- **Env projection**: `TYPE`, `VERSION` (omitted when absent, `VERSION=` when `''`), `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`, `EXTRA_ARGS`, then `env`. `EXTRA_ARGS` = `--universe /worlds/` plus `env.EXTRA_ARGS` for `universe`; `env.EXTRA_ARGS ?? ''` for `data` (an empty value still overrides `global.env`, ADR-0002).
 - **Router hosts**: `<n>.local`, `<n>.<ip>.nip.io` for each `hostIps`, `playitDomain`, `customHostnames` (deduplicated, in this order). This one generator replaces `build_hostnames`, `init.ts` `buildHostnames`/`mergeHostnames`, and the system part of `HostnameService` (B4).
 - **Host IPs** (`resolveHostIps`, shared infrastructure, the script's order): `.env` `HOST_IPS`, else `HOST_IP` (comma list), read with the env codec; else the `src` address of `ip route get 1`; else the first address of `hostname -I`; else (macOS) the first non-internal IPv4 from `os.networkInterfaces()`. Addresses on `docker0`, `br-*`, `veth*` are skipped in every probe. Avahi gets the first address.
 - **Header** (first line of guarded files):
   `# Generated by mcctl from server.yaml; edits are detected (ADR-0003). mcctl:sha256=<64 hex> spec=<12 hex>`
   `sha256` hashes the rest of the file; `spec` is the prefix of the `server.yaml` revision it was rendered from. No other state file.
 - **Idempotent**: rendering twice gives the same bytes; an unchanged spec means no writes (no mtime churn, no needless container recreation).
-- **Who does what** (PR 2): the renderer returns file bodies and reads bodies through `ctx.read`; the repository adds and checks the header, so the renderer never sees it. Every check (revision, storage, edit detection, an unreadable `servers/compose.yml`) runs before the first write. `FileServerSpecRepository.loadFile(name)` (adapter only, not the port) reads `server.yaml` without absorbing; `mcctl migrate spec --force` uses it to re-render from `server.yaml`. With `server.yaml` present, compose `environment` entries are not spec-owned: they count as edits outside the spec (import still moves them, §4).
+- **Who does what** (PR 2): the renderer returns file bodies and reads bodies through `ctx.read`; the repository adds and checks the header, so the renderer never sees it. Every check (revision, storage, edit detection, an unreadable `servers/compose.yml`) runs before the first write. A write that fails part way puts back every file it already changed (a new file is removed) before the error is thrown, but only while the file still holds what it wrote: a file another writer changed meanwhile (e.g. during the include lock wait) is left and named. `server.yaml`, the definition, is put back only when every generated file was; otherwise it keeps the new spec, so what is left is all earlier content or the new spec with some new generated files, and `mcctl migrate spec` renders the new spec again. The files it could not put back are on the error (`unrestoredFiles(error)`); `mcctl migrate worlds` then places the world where the spec `mcctl migrate spec` would render (`load()`) puts it (new: it stays in `worlds/`; earlier: moved back; otherwise left, with what to check) and says to run `mcctl migrate spec` before the next start, or, when that spec and `server.yaml` disagree on the storage (which `mcctl migrate spec` refuses), to remove `server.yaml` and run `mcctl migrate worlds` again (PR 3 review). `FileServerSpecRepository.loadFile(name)` (adapter only, not the port) reads `server.yaml` without absorbing; `mcctl migrate spec --force` uses it to re-render from `server.yaml`. With `server.yaml` present, compose `environment` entries are not spec-owned: they count as edits outside the spec (import still moves them, §4).
 
 **Edit detection** (on `load`):
 
@@ -179,10 +179,10 @@ export interface ServerSpecRenderer {
 
 `importDockerServer(name, ctx)` (infrastructure, next to the renderer):
 
-1. **`config.env`** via `parseEnvDocument`: `TYPE`, `VERSION`, `MEMORY`, `PLAYIT_DOMAIN` → typed fields. `world.level` = `resolveWorldName(env)` (`LEVEL`, else legacy `WORLD_NAME`, else `world`; `WORLD_NAME` stays in `env`). Every other key → `env` in file order (unknown keys preserved).
+1. **`config.env`** via `parseEnvDocument`: `TYPE`, `VERSION`, `MEMORY`, `PLAYIT_DOMAIN` → typed fields; an empty `VERSION`, `MEMORY` or `PLAYIT_DOMAIN` stays `''`, so the rendered `KEY=` keeps overriding `global.env` (PR 3 review). `world.level` = `resolveWorldName(env)` (`LEVEL`, else legacy `WORLD_NAME`, else `world`; `WORLD_NAME` stays in `env`). Every other key → `env` in file order (unknown keys preserved).
 2. **Storage** from the *effective* `EXTRA_ARGS`, with ADR-0002's resolution reused (config.env wins even when empty, else `global.env`, whose bare key takes the `.env` value): `--universe /worlds[/]` → `universe`; no `--universe`, `/data` or `.` → `data`. The `--universe` token is stripped and the rest goes to `env.EXTRA_ARGS` (pinned, reported when it came from `global.env`). The directories are only cross-checked (warning when `worlds/<level>` is missing but `servers/<n>/data/<level>` exists).
 3. **Fail-closed** (R7 style): an interpolated managed value (`${...}` unquoted or double-quoted) or another `--universe` location is `undetermined`: the import is refused for that server, it keeps running, and writes to it fail with the reason until the file is fixed.
-4. **Compose**: one service `mc-<n>` expected. `image` and router labels → `routing`; hostnames are classified as system (`<n>.local`, `<n>.<IPv4>.nip.io`, the playit domain) or custom. `environment` entries other than `EULA` move to `env`; Compose gives `environment` precedence over `env_file`, so on a key clash the compose value wins and the clash is reported. `${...}` in a spec-owned field or a moved `environment` entry → `undetermined`; elsewhere → protected. The semantic comparison of §3 runs on the compose with the moved and absorbed items removed.
+4. **Compose**: one service `mc-<n>` expected. `image` and router labels → `routing`; hostnames are classified as system (`<n>.local`, `<n>.<IPv4>.nip.io`, the playit domain) or custom. `environment` entries other than `EULA` move to `env`; Compose gives `environment` precedence over `env_file`, so on a key clash the compose value wins and the clash is reported. `${...}` in a spec-owned field or a moved `environment` entry → `undetermined`; elsewhere → protected. `$$` is Compose's literal `$` and is read as `$`; the renderer writes every `$` it puts in the compose as `$$`, and the `config.env` writer single-quotes a value with `$`, refusing one that ends with `\` (Compose reads `\'` as an escaped quote; PR 3 review). The semantic comparison of §3 runs on the compose with the moved and absorbed items removed.
 5. **Report** per server (`imported` | `refused`; a protected compose is a warning) with warnings: pinned `EXTRA_ARGS`, `environment` clashes, stale nip.io hosts re-derived from the current `HOST_IPS`, values the strict create rules would reject.
 
 **When it runs**
@@ -194,17 +194,17 @@ export interface ServerSpecRenderer {
 
 ## 5. Provision (replaces `create-server.sh`)
 
-`CreateServerUseCase` gains optional trailing constructor parameters `specRepo?`, `hostnames?`, `runtime?` (after #670's `assignments?`) and `executeWithConfig(config, options?: { onProgress?, onLog? })`. Without `specRepo` it keeps the deprecated shell path. Once PR 3 deletes the script, that path and `ShellAdapter.createServer` fail with a clear error instead of ENOENT: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`. Both `execute` (interactive) and `executeWithConfig` use the same flow; the API route calls the use case instead of spawning the script.
+`CreateServerUseCase` gains one optional trailing constructor parameter `provision?: ServerProvisionDeps` (`{ specRepo, hostnames?, runtime?, hostIps? }`, after #670's `assignments?`; one object keeps the constructor change small next to #665) and `executeWithConfig(config, options?: CreateServerRunOptions)` (`{ onProgress?, onLog? }`). Without it, since the script is deleted, that path and `ShellAdapter.createServer` fail with a clear error instead of ENOENT: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`. Both `execute` (interactive) and `executeWithConfig` use the same flow; the API route calls the use case instead of spawning the script.
 
 | # | `create-server.sh` | TS provision | Progress |
 |---|--------------------|--------------|----------|
-| 0 | parse flags, validate names, world exclusivity, env values, modpack slug | `buildCreateSpec(config, templateEnv)` (pure) + validation; #670 `checkAssign(..., { newServer: true })` (reads the assignment snapshot). No writes before this passes. | `initializing` (API) |
+| 0 | parse flags, validate names, world exclusivity, env values, modpack slug | `buildCreateSpec(input)` (pure; the repository adds the bundled template's other `config.env` keys under the document's values on `create`, so the use case needs no template) + validation (`parseCreateServerConfig`, pure: an input the value objects refuse, or a spec the create rules refuse, such as a seed `config.env` cannot hold, is `invalid_spec`; the API runs it before it opens the SSE stream, so JSON and SSE both answer 400); #670 `checkAssign(..., { newServer: true })` (reads the assignment snapshot). No writes before this passes. | `initializing` (API) |
 | 1–4 | `cp -RL _template`, `sed` compose and `config.env`, add include, `docker compose config --quiet`, restore `.bak` on failure | one call, `specRepo.write(doc, { create: true })`: `mkdir` claim, `server.yaml`, render, include entry (read back, §3). `docker compose config` is dropped: the files are generated by `js-yaml`, and `start` reports a broken project. | `creating` |
 | 5 | avahi `<n>.local` → first IP, best effort | `hostnames.register('<n>.local', hostIps[0])`; a skip is a warning | `configuring` |
 | 6 | `docker compose up -d mc-<n>` unless `--no-start`, `sleep 2`, `ps` | `runtime.start('mc-<n>')` unless `autoStart === false`; no sleep | `starting` |
 
 - **Events**: `onProgress(stage, message)` uses the statuses the API `server-create` SSE event and the console `CreateServerStatus` already define (`creating`, `configuring`, `starting`); `onLog(line)` becomes `server-create-log`. The API sends `initializing` first and `completed`/`error` from the result, never from stderr text (#658: a server named `error-test` succeeds). A client disconnect stops events, not provisioning (today it kills the script mid-way).
-- **Start failure** (decision 1): CLI exit 1 with the cause and `mcctl start <n>`; API `201`/SSE `completed` with `server.status: 'created'` and `warning`. PR 3 checks how the console's `CreateServerStatus` handling shows that warning.
+- **Start failure** (decision 1): CLI exit 1 with the cause and `mcctl start <n>`; API `201`/SSE `completed` with `server.status: 'created'` and `warning`. PR 3 checks how the console's `CreateServerStatus` handling shows that warning (a warning dialog). JSON `POST /api/servers` (no `follow`) waits for the container start at most `createTimeoutMs` (120 s) once the files are written; past that it gives the same answer with a warning that the start goes on in the background, and the create/delete queue moves on with the reply. SSE and the CLI keep the 30-minute start limit.
 - **Cleanup (#657)**: `write({ create: true })` is all-or-nothing. On any failure after the claim it removes the include entry it added and the directory it created, then rethrows, so the same create can be retried at once. It never touches `worlds/` (itzg creates the world on first start). Hostname registration is best effort as today. A process killed mid-create can leave `servers/<n>`; `mcctl delete <n>` removes it (`ponytail:` no marker file).
 - **Avahi adapter** runs the commands the `README.md` sudoers lines allow, as argv without a shell: `sudo -n tee -a /etc/avahi/hosts` (stdin `<ip> <host>`), then `sudo -n systemctl restart avahi-daemon`. The sudo password is an adapter option, not an environment variable: the CLI passes `--sudo-password`, `MCCTL_SUDO_PASSWORD`, or what `promptSudoPasswordIfNeeded` asked for (mcctl prompts, not sudo); the API passes the request's `sudoPassword`. With a password, `sudo -S -p '' -v` reads it on stdin first and the command never sees it (#682). Without one, `sudo -n` relies on NOPASSWD or cached credentials and a failure becomes a warning. Exact-match check (#660), IPv4 check, avahi presence via `getStatus`.
 
@@ -214,7 +214,7 @@ export interface ServerSpecRenderer {
 |--------|-----------|------------|
 | `<name>` | name | `name` |
 | `-t` (default `PAPER`); bare `PAPER` positional | `--type` / `type` | `type`; the positional form is dropped (no caller) |
-| `-v` | `--version` / `version` | `version`; modpack type without version → no `VERSION`, otherwise the template default |
+| `-v` | `--version` / `version` | `version`; modpack type without version → no `VERSION` (a given `LATEST` is written), otherwise the template default |
 | `-m` | `--memory` / `memory` | `memory` (closes #737 if still open) |
 | `-s`, `-u` (exclusive with `-w`) | `--seed`, `--world-url` / `seed`, `worldUrl` | `env.SEED`, `env.WORLD` |
 | `-w` | `--world` / `worldName` | `world.level`; missing world: warning (CLI), 400 (API), as today |
@@ -246,7 +246,7 @@ All in PR 3. Every writer goes through `updateServerSpec(repo, name, mutate)`. `
 | CLI `update` | image tag, loading-MOTD label | `doc.image`; the label comes from the template |
 | CLI upgrade `server-env-migration` | `env_file` repoint | **kept until #736**: servers that were never imported still need it (decision 4) |
 | `ConfigEnvWorldAssignmentAdapter.assign/release` (#670) | `LEVEL` | `world.level` through the repository |
-| `WorldManagementUseCase` → `shell.setServerConfig` (`SEED`, `LEVEL`) | `config.env` | `setEnvKey` |
+| `WorldManagementUseCase` → `shell.setServerConfig` (`SEED`, `LEVEL`); since #734 `assign(world, server, { seed })` | `config.env` | `env.SEED` in the same write as `world.level` (row above) |
 | `mcctl migrate worlds` (#655) | `EXTRA_ARGS`, `LEVEL` | `world.storage = 'universe'` with `allowStorageChange` |
 | config snapshot restore | `config.env`, compose | restore `server.yaml` and render when the snapshot has it (add it to `KNOWN_CONFIG_FILES`); older snapshots: write the files, then absorb |
 | `create-server.sh` / `delete-server.sh` | everything | provision (§5) / #735 via `repo.delete` |
@@ -266,6 +266,15 @@ Out of scope: platform files (main compose and its playit service, `.env`, `ecos
 All eight acceptance criteria of #675 are met by PR 3, so **#675 closes after PR 3**. The former stage 4 ("end of old-format support") is folded into PR 3 as the write guard test and the docs: from PR 3 on, no code path writes the old way except `server-env-migration`. Servers without `server.yaml` stay supported through lazy import (also how a hand-copied server is adopted). **Deferred to #736 (v3.0.0)**: removing the `@deprecated` exports above, `IShellPort`/`ShellAdapter`, and `server-env-migration`. No ServerSpec behaviour changes in v3.0.0.
 
 Order: PR 1–2 after #749 (#656) merges; PR 3 after #670 (merged in PR #750); #735 follows PR 3. A server whose `server.yaml` was written by PR 1's `migrate spec` and whose `config.env` was later changed by a v2 writer has no header, so PR 2 absorbs the `config.env` change on the next load (§3).
+
+**PR 3 notes** (as built):
+
+- The rendered server compose quotes every string, because the v2 label readers (`parseRouterHosts`, `HostnameService`) match `mc-router.host: "..."`.
+- Every writer of §6 goes through `updateServerSpec`/`setEnvKeys` except: `setServerPlayitDomain` (deprecated v2 export, no longer called by mcctl), `server-env-migration` (until #736) and config snapshot restore, which writes a consistent set: snapshots and `mcctl server-backup` now include `server.yaml`, and a pre-#675 set without it is absorbed on the next load. The write-guard test lists each exception with its reason.
+- `ConfigEnvWorldAssignmentAdapter` takes the repository in its constructor; without one that has a runtime, a `LEVEL` change is refused (R7). A new world's `SEED` goes in the same write: `WorldManagementUseCase` passes it to `assign` (#734).
+- The CLI and API build their repositories through small factories (`serverSpecRepositories`, `serverProvision`) that tests replace; no test runs docker, sudo or the real platform root.
+- Provisioning starts the server with a 30-minute `docker compose up` timeout (`DockerComposeRuntimeAdapter` `startTimeoutMs`): the first start can pull the image, and the script had no timeout.
+- A modpack type without a version writes no `VERSION` (the CLI used to pass `LATEST`); an explicit `LATEST` is written. Snapshot and pre-release versions the API accepts are written as given.
 
 ## 8. Tests (TDD, failing test first in each PR)
 

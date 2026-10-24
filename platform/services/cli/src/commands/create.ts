@@ -1,4 +1,4 @@
-import { Paths, log, colors, containerNameOf, serverHostnameOf } from '@minecraft-docker/shared';
+import { Paths, log, colors, containerNameOf, serverHostnameOf, ServerStartError } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 import { promptSudoPasswordIfNeeded } from '../lib/sudo-utils.js';
 
@@ -111,6 +111,9 @@ async function createWithArguments(
       whitelistPlayers,
       playitDomain: options.playitDomain,
       noPlayitDomain: options.noPlayitDomain,
+    }, {
+      onProgress: (_stage, message) => console.log(colors.dim(`  ${message}`)),
+      onLog: (line) => log.warn(line),
     });
 
     console.log('');
@@ -145,8 +148,10 @@ async function createWithArguments(
 
     return 0;
   } catch (error) {
+    // The server exists but did not start (ADR-0003 decision 1): exit 1 with the cause.
     const message = error instanceof Error ? error.message : String(error);
     log.error(message);
+    if (error instanceof ServerStartError) log.info(`Check the logs with: mcctl logs ${error.server.name.value}`);
     return 1;
   }
 }

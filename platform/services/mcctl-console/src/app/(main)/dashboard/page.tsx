@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Box, Typography, Skeleton, Card, CardContent, Paper, alpha } from '@mui/material';
+import { Alert, Box, Skeleton, Typography } from '@mui/material';
 import {
   Storage as ServerIcon,
   CheckCircle as OnlineIcon,
@@ -9,7 +9,7 @@ import {
 } from '@mui/icons-material';
 import { useServers, useWorlds } from '@/hooks/useMcctl';
 import { useServersSSE } from '@/hooks/useServersSSE';
-import { BentoGrid } from '@/components/bento';
+import { BentoGrid, BentoPanel, BentoPanelHeader, PageHero } from '@/components/bento';
 import {
   DashboardHero,
   StatCard,
@@ -26,17 +26,12 @@ const metricItemSx = {
 
 const cardItemSx = {
   minWidth: 0,
-  '& > .MuiCard-root': {
-    height: '100%',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
 } as const;
 
 function SkeletonMetricCard() {
   return (
-    <Card sx={{ height: '100%', minHeight: 152, borderRadius: 4 }}>
-      <CardContent sx={{ p: 2.25 }}>
+    <BentoPanel sx={{ height: '100%', minHeight: 152 }}>
+      <Box sx={{ p: 2.25 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
           <Skeleton variant="text" width="50%" />
           <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: 2 }} />
@@ -44,8 +39,8 @@ function SkeletonMetricCard() {
         <Skeleton variant="text" width="30%" height={38} />
         <Skeleton variant="rounded" width="100%" height={4} sx={{ mt: 1 }} />
         <Skeleton variant="text" width="68%" sx={{ mt: 0.75 }} />
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
 
@@ -91,32 +86,24 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <BentoGrid aria-label="Dashboard overview" aria-busy="true">
-        <Paper
-          elevation={0}
+        <PageHero
+          eyebrow={<Skeleton variant="text" width={120} />}
+          icon={<Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 2.5 }} />}
+          title="Dashboard"
+          description={<Skeleton variant="text" width="72%" />}
+          status={<Skeleton variant="rounded" width={72} height={24} sx={{ borderRadius: 4 }} />}
           sx={{
             gridColumn: { xs: '1 / -1', md: 'span 6' },
             gridRow: { md: 'span 2' },
             minHeight: { xs: 280, md: 328 },
-            p: { xs: 3, sm: 4 },
-            background: (theme) =>
-              `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.16)} 0%, ${alpha(theme.palette.secondary.main, 0.08)} 52%, ${theme.palette.background.paper} 100%)`,
-            borderRadius: 4,
-            border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.24)}`,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 2.5 }} />
-            <Skeleton variant="text" width={120} />
-          </Box>
-          <Typography variant="h4" component="h1" fontWeight="bold" sx={{ mt: 3 }}>
-            Dashboard
-          </Typography>
-          <Skeleton variant="text" width="72%" />
-          <Box sx={{ mt: 7 }}>
-            <Skeleton variant="text" width="45%" height={48} />
-            <Skeleton variant="rounded" width="100%" height={7} sx={{ mt: 1 }} />
-          </Box>
-        </Paper>
+          <Skeleton variant="text" width="45%" height={48} />
+          <Skeleton variant="rounded" width="100%" height={7} sx={{ mt: 1 }} />
+        </PageHero>
 
         {[0, 1, 2, 3].map((i) => (
           <Box key={i} sx={metricItemSx}>
@@ -125,9 +112,9 @@ export default function DashboardPage() {
         ))}
 
         <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 390 }}>
-            <Card>
-              <CardContent>
-                <Skeleton variant="text" width="30%" height={32} sx={{ mb: 2 }} />
+            <BentoPanel sx={{ height: '100%' }}>
+              <BentoPanelHeader title={<Skeleton variant="text" width="30%" />} />
+              <Box sx={{ px: 2.5, pb: 2.5 }}>
                 {[0, 1, 2, 3, 4].map((i) => (
                   <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                     <Skeleton variant="circular" width={10} height={10} />
@@ -135,8 +122,8 @@ export default function DashboardPage() {
                     <Skeleton variant="rounded" width={60} height={24} sx={{ ml: 'auto' }} />
                   </Box>
                 ))}
-              </CardContent>
-            </Card>
+              </Box>
+            </BentoPanel>
         </Box>
 
         {[0, 1, 2].map((i) => (
@@ -151,9 +138,9 @@ export default function DashboardPage() {
               minHeight: i === 0 ? 210 : 300,
             }}
           >
-            <Card>
-              <CardContent>
-                <Skeleton variant="text" width="42%" height={32} sx={{ mb: 2 }} />
+            <BentoPanel sx={{ height: '100%' }}>
+              <BentoPanelHeader title={<Skeleton variant="text" width="42%" />} />
+              <Box sx={{ px: 2.5, pb: 2.5 }}>
                 {[0, 1, 2].map((row) => (
                   <Box key={row} sx={{ display: 'flex', gap: 1.5, py: 1 }}>
                     <Skeleton variant="circular" width={24} height={24} />
@@ -163,8 +150,8 @@ export default function DashboardPage() {
                     </Box>
                   </Box>
                 ))}
-              </CardContent>
-            </Card>
+              </Box>
+            </BentoPanel>
           </Box>
         ))}
       </BentoGrid>
@@ -236,12 +223,12 @@ export default function DashboardPage() {
 
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' } }}>
           {serversUnavailable ? (
-            <Card>
-              <CardContent>
-                <Typography variant="h6">Servers</Typography>
-                <Typography color="text.secondary" sx={{ mt: 2 }}>Servers unavailable</Typography>
-              </CardContent>
-            </Card>
+            <BentoPanel sx={{ height: '100%' }}>
+              <BentoPanelHeader title="Servers" />
+              <Box sx={{ px: 2.5, pb: 2.5 }}>
+                <Typography color="text.secondary">Servers unavailable</Typography>
+              </Box>
+            </BentoPanel>
           ) : (
             <ServerOverview
               servers={serversData?.servers || []}

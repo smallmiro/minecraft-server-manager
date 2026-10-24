@@ -14,7 +14,8 @@
  *   ignored. The key is a POSIX name (ENV_KEY_RE).
  * - Unquoted value: runs to end of line, trimmed; ` #` (whitespace + hash)
  *   starts an inline comment. `a#b` is kept.
- * - Single-quoted value: literal up to the next `'`.
+ * - Single-quoted value: literal up to the next unescaped `'`; `\'` is a
+ *   quote, any other backslash is kept (so `'a\'` is unterminated).
  * - Double-quoted value: up to the next unescaped `"`; `\n`, `\r`, `\t`, `\"`,
  *   `\\` and `\$` are unescaped, any other backslash is kept.
  * - Text after a closing quote is ignored. An unterminated quote is read
@@ -29,8 +30,8 @@
  *   bare-safe, otherwise single-quoted (serializeEnvValue).
  * - raw (`config.env`): `KEY=value` unquoted when that reads back as the same
  *   value. A value raw cannot carry (` #`, leading/trailing blanks, a leading
- *   quote) is single-quoted; one that cannot be quoted either (contains `'`)
- *   or has a control character throws EnvValueError. Every written value
+ *   quote, a `$` that Compose would interpolate) is single-quoted; one that cannot be quoted either (contains `'`
+ *   or ends with `\`) or has a control character throws EnvValueError. Every written value
  *   reads back unchanged. Rejecting user input that starts with a quote
  *   (#726) is the caller's job (assertEnvFileValue), not the serializer's.
  */
@@ -51,8 +52,8 @@ export const ENV_FILE_VALUE_RE = /^(?!\s*["'`])[^\x00-\x1f\x7f-\x9f\u2028\u2029]
 
 /** A value that cannot be written as one `KEY=value` setting. */
 export class EnvValueError extends Error {
-  constructor(key: string) {
-    super(`${key} must be one line without control characters and must not start with a quote`);
+  constructor(key: string, message = `${key} must be one line without control characters and must not start with a quote`) {
+    super(message);
     this.name = 'EnvValueError';
   }
 }
@@ -99,8 +100,8 @@ const DOUBLE_QUOTE_ESCAPES: Record<string, string> = { n: '\n', r: '\r', t: '\t'
 function decodeValue(rest: string): string {
   const v = rest.trim();
   if (v[0] === "'") {
-    const end = v.indexOf("'", 1);
-    if (end > 0) return v.slice(1, end);
+    const match = /^'((?:[^'\\]|\\.)*)'/.exec(v);
+    if (match) return match[1]!.replace(/\\(.)/g, (seq, ch: string) => (ch === "'" ? ch : seq));
   } else if (v[0] === '"') {
     const match = /^"((?:[^"\\]|\\.)*)"/.exec(v);
     if (match) return match[1]!.replace(/\\(.)/g, (seq, ch: string) => DOUBLE_QUOTE_ESCAPES[ch] ?? seq);
@@ -122,22 +123,30 @@ export function parseEnvDocument(content: string): EnvDocument {
 
 const CONTROL_CHAR_RE = /[\x00-\x1f\x7f-\x9f\u2028\u2029]/;
 
+/** Whether `'value'` reads back as `value`: no `'` inside, and no trailing `\` that escapes the closing quote. */
+const singleQuotable = (value: string): boolean => !value.includes("'") && !value.endsWith('\\');
+
 /** Raw-style value for `KEY=<here>` in config.env (see the module header). */
 function serializeRawEnvValue(key: string, value: string): string {
   if (CONTROL_CHAR_RE.test(value)) throw new EnvValueError(key);
-  if (!/^["'`]/.test(value) && decodeValue(value) === value) return value;
-  if (!value.includes("'")) return `'${value}'`;
-  throw new EnvValueError(key);
+  // `$` is interpolated by Compose in an unquoted env_file value; single quotes keep it literal.
+  if (!/^["'`]/.test(value) && !value.includes('$') && decodeValue(value) === value) return value;
+  if (singleQuotable(value)) return `'${value}'`;
+  throw new EnvValueError(
+    key,
+    `${key} cannot be written: a value with $, # or surrounding blanks must not contain ' or end with \\`
+  );
 }
 
 /**
  * Serialize a value for `KEY=<here>`: bare when bare-safe, otherwise
  * single-quoted (literal in bash, compose v2 and dotenv). A single quote,
- * CR, LF or NUL cannot be represented safely and is rejected.
+ * CR, LF or NUL, or a quoted value ending with `\` (Compose reads `\'` as a
+ * quote), cannot be represented safely and is rejected.
  */
 export function serializeEnvValue(value: string): string {
-  if (/['\r\n\0]/.test(value)) {
-    throw new Error('Value must not contain a single quote, CR, LF or NUL');
+  if (/['\r\n\0]/.test(value) || value.endsWith('\\')) {
+    throw new Error('Value must not contain a single quote, CR, LF or NUL, or end with a backslash');
   }
   return BARE_SAFE_RE.test(value) ? value : `'${value}'`;
 }

@@ -11,12 +11,29 @@ import { Pm2ServiceManagerAdapter } from '../infrastructure/adapters/Pm2ServiceM
 import { ShellExecutor } from '../lib/shell.js';
 import { runNpm } from '../infrastructure/npm.js';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import * as prompts from '@clack/prompts';
+import * as yaml from 'js-yaml';
 import { printTelemetryNotice } from '../lib/telemetry-notice.js';
-import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { updateServer } from '../lib/server-config.js';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
+
+/**
+ * The service images of a compose file ([] when it does not parse). Read as
+ * YAML: mcctl renders them quoted (image: "itzg/minecraft-server:java25", #675).
+ */
+function composeImages(content: string): string[] {
+  try {
+    const services = (yaml.load(content) as { services?: Record<string, { image?: unknown } | null> } | null)?.services;
+    return Object.values(services ?? {})
+      .map((service) => service?.image)
+      .filter((image): image is string => typeof image === 'string' && image.trim() !== '');
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Scan platform/servers docker-compose.yml files and return unique Docker image names.
@@ -40,16 +57,7 @@ export function scanDockerImages(serversDir: string): string[] {
       continue;
     }
 
-    const content = readFileSync(composePath, 'utf-8');
-    const imageRegex = /^\s+image:\s+(.+)$/gm;
-    let match: RegExpExecArray | null;
-
-    while ((match = imageRegex.exec(content)) !== null) {
-      const imageName = match[1]!.trim();
-      if (imageName) {
-        images.add(imageName);
-      }
-    }
+    for (const image of composeImages(readFileSync(composePath, 'utf-8'))) images.add(image);
   }
 
   return Array.from(images);
@@ -68,13 +76,15 @@ function parseVersionFromConfig(configContent: string): string | null {
   return parseEnvDocument(configContent).values.get('VERSION') ?? null;
 }
 
+const SERVER_IMAGE = 'itzg/minecraft-server:';
+
 /**
  * Extract the image tag from a docker-compose.yml content.
- * Returns null if no itzg/minecraft-server: image line found.
+ * Returns null if no service uses an itzg/minecraft-server: image.
  */
 function extractImageTag(composeContent: string): string | null {
-  const match = composeContent.match(/image:\s+itzg\/minecraft-server:(\S+)/);
-  return match ? match[1]! : null;
+  const image = composeImages(composeContent).find((i) => i.startsWith(SERVER_IMAGE));
+  return image ? image.slice(SERVER_IMAGE.length) : null;
 }
 
 /**
@@ -137,34 +147,27 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
       continue;
     }
 
-    let fileContent = composeContent;
-    let changed = false;
-
-    // Check image tag compatibility
-    if (currentTag !== recommendedTag) {
-      fileContent = fileContent.replace(
-        `image: itzg/minecraft-server:${currentTag}`,
-        `image: itzg/minecraft-server:${recommendedTag}`
-      );
-      changed = true;
+    const tagChange = currentTag !== recommendedTag;
+    if (tagChange) {
       console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version})`);
     } else {
       console.log(`  ${colors.green('✓')} ${entry}: ${currentTag} (VERSION=${version} - compatible)`);
     }
+    // mc-router v1.40.2+ loading MOTD: the render adds the template label when the spec has none
+    const motdMissing = !composeContent.includes('auto-scale-loading-motd');
+    if (!tagChange && !motdMissing) continue;
 
-    // Add loading MOTD label if missing (mc-router v1.40.2+)
-    if (!fileContent.includes('auto-scale-loading-motd') && fileContent.includes('auto-scale-asleep-motd')) {
-      fileContent = fileContent.replace(
-        /^(\s*mc-router\.auto-scale-asleep-motd:.*)$/m,
-        '$1\n      mc-router.auto-scale-loading-motd: "§a§lServer is starting...§r\\n§7Please wait!"'
+    try {
+      // Through the ServerSpec (#675): server.yaml image, compose rendered from it
+      await updateServer(new Paths(dirname(serversDir)), entry, (doc) =>
+        tagChange && doc.image.startsWith('itzg/minecraft-server')
+          ? { ...doc, image: `itzg/minecraft-server:${recommendedTag}` }
+          : doc
       );
-      changed = true;
-      console.log(`  ${colors.green('+')} ${entry}: added loading MOTD label`);
-    }
-
-    if (changed) {
-      atomicWriteFileSync(composePath, fileContent);
+      if (motdMissing) console.log(`  ${colors.green('+')} ${entry}: added loading MOTD label`);
       updatedCount++;
+    } catch (error) {
+      console.log(`  ${colors.red('✗')} ${entry}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

@@ -9,6 +9,11 @@ import {
   ModpackOptions,
   WorldAssignmentError,
   checkAssign,
+  buildCreateSpec,
+  MC_VERSION_INPUT_PATTERN,
+  ServerSpecError,
+  assertServerSpecDocument,
+  type ServerSpecDocument,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import { Config, type Paths } from '../../utils/index.js';
@@ -23,7 +28,174 @@ import type {
   IModSourcePort,
   IWorldAssignmentPort,
   IPlatformSettingsPort,
+  CreateServerRunOptions,
+  IServerSpecRepository,
+  IHostnameRegistrarPort,
+  IContainerRuntimePort,
 } from '../ports/index.js';
+import type { CreateServerOptions } from '../ports/outbound/IShellPort.js';
+
+/**
+ * What TypeScript provisioning needs (#675, ADR-0003 §5). Without it create
+ * fails: create-server.sh was removed.
+ */
+export interface ServerProvisionDeps {
+  specRepo: IServerSpecRepository;
+  /** avahi `<name>.local`; skipped when absent. */
+  hostnames?: IHostnameRegistrarPort;
+  /** Starts the new server unless autoStart is false. */
+  runtime?: IContainerRuntimePort;
+  /** Host addresses; the first one is announced for `<name>.local`. */
+  hostIps?: () => string[];
+}
+
+/**
+ * The server was created but did not start (ADR-0003 decision 1). It stays
+ * created: the CLI exits 1 with the cause, the API answers success with
+ * `server.status: 'created'` and a warning.
+ */
+export class ServerStartError extends Error {
+  constructor(
+    readonly server: Server,
+    readonly reason: string
+  ) {
+    super(`Server '${server.name.value}' was created but did not start: ${reason}. Start it with: mcctl start ${server.name.value}`);
+    this.name = 'ServerStartError';
+  }
+}
+
+/**
+ * The create input as value objects, before anything is checked against the
+ * platform. Pure: the API runs it before it opens an event stream. An input
+ * they refuse is ServerSpecError invalid_spec (the API answers 400), never a
+ * plain Error.
+ * @param options.versionText accept a snapshot or pre-release McVersion cannot
+ *   model, written as given (TypeScript provisioning only, #675).
+ */
+export function parseCreateServerConfig(config: CreateServerConfig, options: { versionText?: boolean } = {}) {
+  try {
+    const parsed = parseConfigValues(config, options.versionText ?? false);
+    // The spec it writes, under the create rules: also every value config.env must hold (#675)
+    assertServerSpecDocument(createSpecDocument(parsed.name, parsed.createOptions, parsed.versionToWrite), 'create', {
+      server: parsed.name.value,
+      file: `servers/${parsed.name.value}/server.yaml`,
+    });
+    return parsed;
+  } catch (error) {
+    if (error instanceof ServerSpecError) throw error;
+    throw new ServerSpecError('invalid_spec', error instanceof Error ? error.message : String(error), config.name);
+  }
+}
+
+function parseConfigValues(config: CreateServerConfig, allowVersionText: boolean) {
+  const name = ServerName.create(config.name);
+  const type = config.type
+    ? ServerType.create(config.type)
+    : ServerType.getRecommended();
+
+  // Validate modpack requirements
+  if (type.isModpack && !config.modpackSlug) {
+    throw new Error(`Modpack slug is required for ${type.label} server type`);
+  }
+
+  // Snapshots and pre-releases (24w14a, 1.20.5-rc1) are valid requests that
+  // McVersion cannot model: provisioning writes the text as given (#675).
+  let versionText: string | undefined;
+  let version: McVersion;
+  try {
+    version = config.version ? McVersion.create(config.version) : McVersion.latest();
+  } catch (error) {
+    if (!allowVersionText || !MC_VERSION_INPUT_PATTERN.test(config.version!)) throw error;
+    version = McVersion.latest();
+    versionText = config.version;
+  }
+  const memory = config.memory
+    ? Memory.create(config.memory)
+    : type.isModpack
+      ? Memory.create('6G') // Default 6G for modpacks
+      : Memory.default();
+
+  // Determine world options
+  let worldOptions: WorldOptions;
+  if (config.worldUrl) {
+    worldOptions = WorldOptions.downloadWorld(config.worldUrl);
+  } else if (config.worldName) {
+    worldOptions = WorldOptions.existingWorld(config.worldName);
+  } else if (config.seed) {
+    worldOptions = WorldOptions.newWorld(config.seed);
+  } else {
+    worldOptions = WorldOptions.default();
+  }
+
+  // Whitelist is off unless explicitly enabled or players are given;
+  // an explicit false always wins
+  const enableWhitelist =
+    config.enableWhitelist ?? (config.whitelistPlayers?.length ?? 0) > 0;
+
+  // Build modpack options if this is a modpack server
+  const modpackOptions =
+    type.isModpack && config.modpackSlug
+      ? ModpackOptions.modrinth(config.modpackSlug, {
+          version: config.modpackVersion,
+          loader: config.modLoader,
+          excludeFiles: config.modpackExcludeFiles,
+        })
+      : undefined;
+
+  // Create server
+  const server = Server.create({
+    name,
+    type,
+    version,
+    memory,
+    worldOptions,
+    modpackOptions,
+  });
+
+  // What provisioning writes. The modpack decides the Minecraft version unless
+  // one is given (no VERSION); a given LATEST is written.
+  const versionToWrite = !config.version && type.isModpack ? undefined : versionText ?? version.value;
+  const createOptions: CreateServerOptions = {
+    type,
+    version,
+    worldOptions,
+    memory,
+    autoStart: config.autoStart ?? true,
+    modpackSlug: config.modpackSlug,
+    modpackVersion: config.modpackVersion,
+    modLoader: config.modLoader,
+    modpackExcludeFiles: modpackOptions?.excludeFiles,
+    enableWhitelist,
+    whitelistPlayers: config.whitelistPlayers,
+    playitDomain: config.playitDomain,
+    noPlayitDomain: config.noPlayitDomain,
+  };
+  return { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite };
+}
+
+/**
+ * The ServerSpec document a create writes (pure).
+ * @param version VERSION as written; undefined writes none (the modpack decides).
+ */
+function createSpecDocument(name: ServerName, options: CreateServerOptions, version: string | undefined): ServerSpecDocument {
+  const { type, worldOptions } = options;
+  return buildCreateSpec({
+    name: name.value,
+    type: type.value,
+    version,
+    memory: (options.memory ?? (type.isModpack ? Memory.create('6G') : Memory.default())).formatted,
+    seed: worldOptions.setupType === WorldSetupType.NEW ? worldOptions.seed : undefined,
+    worldUrl: worldOptions.setupType === WorldSetupType.DOWNLOAD ? worldOptions.downloadUrl : undefined,
+    worldName: worldOptions.setupType === WorldSetupType.EXISTING ? worldOptions.worldName : undefined,
+    modpackSlug: options.modpackSlug,
+    modpackVersion: options.modpackVersion,
+    modLoader: options.modLoader,
+    modpackExcludeFiles: options.modpackExcludeFiles,
+    enableWhitelist: options.enableWhitelist,
+    whitelistPlayers: options.whitelistPlayers,
+    playitDomain: options.playitDomain,
+  });
+}
 
 /**
  * Create Server Use Case
@@ -44,7 +216,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     private readonly worldRepo?: IWorldRepository,
     private readonly auditLog?: IAuditLogPort,
     private readonly modSource?: IModSourcePort,
-    private readonly assignments?: IWorldAssignmentPort
+    private readonly assignments?: IWorldAssignmentPort,
+    private readonly provision?: ServerProvisionDeps
   ) {
     this.config = settings && 'load' in settings ? settings : new Config(settings);
   }
@@ -65,6 +238,43 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     }
     const refused = checkAssign(await this.assignments.snapshot(), world, name.value, { newServer: true });
     if (refused) throw refused;
+  }
+
+  /**
+   * Write the new server's files and bring it up: TypeScript provisioning
+   * (ADR-0003 §5) when provision deps are given, else create-server.sh.
+   * Rejects when the server was not created; a start failure is returned.
+   * @param version VERSION as written; undefined writes none (the modpack decides).
+   */
+  private async createFiles(
+    name: ServerName,
+    options: CreateServerOptions,
+    run: CreateServerRunOptions,
+    version: string | undefined
+  ): Promise<{ startError?: string }> {
+    if (!this.provision) {
+      // create-server.sh was removed in #675; the shell port is kept for v2 callers (#736).
+      throw new Error('create-server.sh was removed in #675; pass specRepo / use ServerSpec provision');
+    }
+    const { specRepo, hostnames, runtime, hostIps } = this.provision;
+
+    run.onProgress?.('creating', 'Creating server directory...');
+    await specRepo.write(createSpecDocument(name, options, version), { create: true });
+
+    run.onProgress?.('configuring', 'Registering mDNS hostname...');
+    if (hostnames) {
+      const ip = hostIps?.()[0];
+      const result = ip
+        ? await hostnames.register(`${name.value}.local`, ip)
+        : { status: 'skipped' as const, reason: 'could not determine the host address (set HOST_IP in .env)' };
+      if (result.status === 'skipped') run.onLog?.(`Warning: mDNS registration of ${name.value}.local skipped: ${result.reason}`);
+    }
+
+    if (options.autoStart === false) return {};
+    run.onProgress?.('starting', 'Starting container...');
+    if (!runtime) return { startError: 'no container runtime configured' };
+    const started = await runtime.start(name);
+    return started.success ? {} : { startError: started.error || started.stderr?.trim() || 'the container did not start' };
   }
 
   /**
@@ -207,19 +417,18 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         modpackOptions,
       });
 
-      try {
-        await this.assertWorldAssignable(worldOptions, name);
-      } catch (error) {
-        this.prompt.error(error instanceof Error ? error.message : String(error));
-        throw error;
-      }
+      // Failures below reject without printing: the caller reports them once (mcctl create).
+      await this.assertWorldAssignable(worldOptions, name);
 
       // Execute creation - stop spinner before running script to avoid output conflicts
       const spinner = this.prompt.spinner();
       spinner.start('Creating server...');
-      spinner.stop('Running create script...');
+      spinner.stop('Writing server files...');
 
-      const result = await this.shell.createServer(name, {
+      let startError: string | undefined;
+      // A modpack is asked no Minecraft version: it decides (no VERSION).
+      const versionToWrite = type.isModpack ? undefined : version.value;
+      const result = await this.createFiles(name, {
         type,
         version,
         worldOptions,
@@ -232,10 +441,18 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         enableWhitelist,
         whitelistPlayers,
         playitDomain,
-      });
+      }, {
+        onProgress: (_stage, message) => this.prompt.info(message),
+        onLog: (line) => this.prompt.warn(line),
+      }, versionToWrite).then(
+        (r) => {
+          startError = r.startError;
+          return { success: true, stderr: '' };
+        },
+        (error: unknown) => ({ success: false, stderr: error instanceof Error ? error.message : String(error) })
+      );
 
       if (!result.success) {
-        this.prompt.error(result.stderr || 'Unknown error occurred');
         // Log audit failure
         await this.auditLog?.log({
           action: AuditActionEnum.SERVER_CREATE,
@@ -266,6 +483,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         errorMessage: null,
       });
 
+      if (startError) throw new ServerStartError(server, startError);
+
       this.prompt.success(`Server '${name.value}' created!`);
 
       const whitelistInfo = !enableWhitelist
@@ -293,87 +512,26 @@ export class CreateServerUseCase implements ICreateServerUseCase {
   /**
    * Execute server creation with provided configuration
    */
-  async executeWithConfig(config: CreateServerConfig): Promise<Server> {
-    // Parse configuration
-    const name = ServerName.create(config.name);
-    const type = config.type
-      ? ServerType.create(config.type)
-      : ServerType.getRecommended();
-
-    // Validate modpack requirements
-    if (type.isModpack && !config.modpackSlug) {
-      throw new Error(`Modpack slug is required for ${type.label} server type`);
-    }
-
-    const version = config.version
-      ? McVersion.create(config.version)
-      : McVersion.latest();
-    const memory = config.memory
-      ? Memory.create(config.memory)
-      : type.isModpack
-        ? Memory.create('6G') // Default 6G for modpacks
-        : Memory.default();
-
-    // Determine world options
-    let worldOptions: WorldOptions;
-    if (config.worldUrl) {
-      worldOptions = WorldOptions.downloadWorld(config.worldUrl);
-    } else if (config.worldName) {
-      worldOptions = WorldOptions.existingWorld(config.worldName);
-    } else if (config.seed) {
-      worldOptions = WorldOptions.newWorld(config.seed);
-    } else {
-      worldOptions = WorldOptions.default();
-    }
-
-    // Whitelist is off unless explicitly enabled or players are given;
-    // an explicit false always wins
-    const enableWhitelist =
-      config.enableWhitelist ?? (config.whitelistPlayers?.length ?? 0) > 0;
+  async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
+    const { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite } =
+      parseCreateServerConfig(config, { versionText: !!this.provision });
 
     // Check if server already exists
     if (await this.serverRepo.exists(name.value)) {
       throw new Error(`Server '${name.value}' already exists`);
     }
 
-    // Build modpack options if this is a modpack server
-    const modpackOptions =
-      type.isModpack && config.modpackSlug
-        ? ModpackOptions.modrinth(config.modpackSlug, {
-            version: config.modpackVersion,
-            loader: config.modLoader,
-            excludeFiles: config.modpackExcludeFiles,
-          })
-        : undefined;
-
-    // Create server
-    const server = Server.create({
-      name,
-      type,
-      version,
-      memory,
-      worldOptions,
-      modpackOptions,
-    });
-
     await this.assertWorldAssignable(worldOptions, name);
 
     // Execute creation
-    const result = await this.shell.createServer(name, {
-      type,
-      version,
-      worldOptions,
-      memory,
-      autoStart: config.autoStart ?? true,
-      modpackSlug: config.modpackSlug,
-      modpackVersion: config.modpackVersion,
-      modLoader: config.modLoader,
-      modpackExcludeFiles: modpackOptions?.excludeFiles,
-      enableWhitelist,
-      whitelistPlayers: config.whitelistPlayers,
-      playitDomain: config.playitDomain,
-      noPlayitDomain: config.noPlayitDomain,
-    });
+    let startError: string | undefined;
+    const result = await this.createFiles(name, createOptions, options, versionToWrite).then(
+      (r) => {
+        startError = r.startError;
+        return { success: true, stderr: '' };
+      },
+      (error: unknown) => ({ success: false, stderr: error instanceof Error ? error.message : String(error), error })
+    );
 
     if (!result.success) {
       // Log audit failure
@@ -386,6 +544,8 @@ export class CreateServerUseCase implements ICreateServerUseCase {
         errorMessage: result.stderr || 'Server creation failed',
         details: null,
       });
+      // Keep a typed provisioning error (ServerSpecError, WorldAssignmentError) for the caller.
+      if ('error' in result && result.error instanceof Error) throw result.error;
       throw new Error(result.stderr || 'Server creation failed');
     }
 
@@ -406,6 +566,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       errorMessage: null,
     });
 
+    if (startError) throw new ServerStartError(server, startError);
     return server;
   }
 }

@@ -8,6 +8,7 @@ import {
   AuditActionEnum,
   WORLD_NAME_PATTERN,
   WorldAssignmentError,
+  ServerSpecError,
 } from '@minecraft-docker/shared';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
 import { writeAuditLog } from '../../services/audit-log-service.js';
@@ -23,6 +24,7 @@ import { config } from '../../config/index.js';
 import { resolveInside } from '../../lib/safe-path.js';
 import { createConfigService } from '../../services/ConfigService.js';
 import { createWorldUseCase, worldFailure } from '../../lib/world-use-case.js';
+import { serverSpecFailure } from '../../lib/server-spec.js';
 
 // ============================================================
 // Types
@@ -165,7 +167,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const { level: _level, ...otherUpdates } = updates;
-      const result = configService.updateConfig(name, otherUpdates);
+      const result = await configService.updateConfig(name, otherUpdates);
       if (levelChanged) {
         result.changedFields.unshift('level');
         result.restartRequired = true;
@@ -213,6 +215,10 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
       if (error instanceof EnvValueError) {
         return reply.code(400).send({ error: 'BadRequest', message: error.message });
+      }
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
       }
       fastify.log.error(error, 'Failed to update server configuration');
       return reply.code(500).send({

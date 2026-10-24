@@ -63,7 +63,7 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
   // Handle shortcut flags
   for (const [flagName, mapping] of Object.entries(SHORTCUTS)) {
     if (options[flagName as keyof ConfigCommandOptions]) {
-      const success = shell.writeConfigValue(options.serverName, mapping.key, mapping.value);
+      const success = await shell.writeConfigValue(options.serverName, mapping.key, mapping.value);
       if (success) {
         console.log(colors.green(`✓ ${mapping.key}=${mapping.value}`));
         log.info('Restart server to apply changes: mcctl stop <server> && mcctl start <server>');
@@ -115,7 +115,7 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
   } else if (world === 'assigned' && options.key === 'LEVEL') {
     success = true; // the assignment port wrote LEVEL
   } else {
-    success = shell.writeConfigValue(options.serverName, options.key, options.value);
+    success = await shell.writeConfigValue(options.serverName, options.key, options.value);
   }
 
   if (success) {

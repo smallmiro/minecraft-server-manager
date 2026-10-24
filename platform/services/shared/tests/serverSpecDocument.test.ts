@@ -68,7 +68,7 @@ describe('validateServerSpecDocument', () => {
     const legacy = doc({
       name: 'Old_Server',
       type: 'CUSTOM_TYPE',
-      version: '24w14a',
+      version: 'bad/version',
       memory: '300M',
       world: { level: 'My World', storage: 'universe' },
     });
@@ -122,6 +122,14 @@ describe('validateServerSpecDocument', () => {
       'env.MOTD',
       'env.ICON',
     ]);
+  });
+
+  // config.env cannot hold these (#675): $ needs single quotes, which cannot carry ' or end with \
+  it("refuses env values config.env cannot hold on create, as the existing rules did not", () => {
+    const unwritable = doc({ env: { SEED: "$x'", MOTD: 'pa$$\\', ICON: 'trail\\' } });
+    expect(paths(unwritable, 'create')).toEqual(['env.SEED', 'env.MOTD']);
+    expect(validateServerSpecDocument(unwritable, 'create')[0]!.message).toContain("must not contain '");
+    expect(paths(unwritable, 'existing')).toEqual([]);
   });
 
   it('reports an unknown specVersion', () => {

@@ -22,8 +22,24 @@ import {
   ModSourceFactory,
   buildModpackCompatibilityMatrix,
   isModpackCompatible,
+  CreateServerUseCase,
+  ServerStartError,
+  ServerSpecError,
+  parseCreateServerConfig,
+  WorldAssignmentError,
+  ApiPromptAdapter,
+  ShellAdapter,
+  ServerRepository,
+  FileServerSpecRepository,
+  AvahiHostnameRegistrarAdapter,
+  DockerComposeRuntimeAdapter,
+  resolveHostIps,
+  type CreateServerConfig,
+  type CreateServerRunOptions,
+  type ICreateServerUseCase,
 } from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
+import { EnvValueError } from '@minecraft-docker/shared/utils';
 import {
   ServerListResponseSchema,
   ServerDetailResponseSchema,
@@ -55,6 +71,7 @@ import { config, childProcessEnv } from '../config/index.js';
 import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
 import { worldFailure } from '../lib/world-use-case.js';
+import { serverSpecFailure } from '../lib/server-spec.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { delay, runScript, startScriptGroup } from '../lib/script-process.js';
@@ -66,10 +83,45 @@ import { delay, runScript, startScriptGroup } from '../lib/script-process.js';
  * queue moves on once it exits or killGraceMs after SIGKILL.
  * Mutable so tests can shorten them.
  */
+/**
+ * How POST /api/servers builds its CreateServerUseCase (#675, ADR-0003 §5):
+ * TypeScript provisioning with the ServerSpec repository, avahi (the
+ * request's sudo password as an adapter option, never an env var) and the
+ * runtime. Tests replace createUseCase.
+ */
+export const serverProvision = {
+  createUseCase(options: { sudoPassword?: string }): ICreateServerUseCase {
+    const paths = new Paths(config.mcctlRoot);
+    // Image pulls and modpack downloads can take a while on the first start.
+    const runtime = new DockerComposeRuntimeAdapter({
+      root: paths.root,
+      env: () => childProcessEnv(),
+      startTimeoutMs: lifecycleLimits.sseCreateTimeoutMs,
+    });
+    const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
+    return new CreateServerUseCase(
+      new ApiPromptAdapter({}),
+      new ShellAdapter({ paths }),
+      new ServerRepository(paths),
+      paths,
+      undefined,
+      undefined,
+      undefined,
+      assignments,
+      {
+        specRepo: new FileServerSpecRepository(paths, undefined, runtime),
+        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: options.sudoPassword }),
+        runtime,
+        hostIps: () => resolveHostIps(paths),
+      }
+    );
+  },
+};
+
 export const lifecycleLimits = {
-  /** JSON create. */
+  /** JSON create (no follow): how long the reply waits for the container start before answering with a warning. */
   createTimeoutMs: 120_000,
-  /** Streaming create: image pulls and modpack downloads can take a while. */
+  /** Create (TypeScript provisioning): how long the queue waits for it, and the container start timeout. */
   sseCreateTimeoutMs: 30 * 60_000,
   /** Delete. */
   deleteTimeoutMs: 60_000,
@@ -77,9 +129,6 @@ export const lifecycleLimits = {
   killGraceMs: 10_000,
 };
 
-function createTimeoutMessage(): string {
-  return `Server creation timed out after ${Math.round(lifecycleLimits.sseCreateTimeoutMs / 1000)}s`;
-}
 
 /**
  * Map Docker container status to SSE-compatible status
@@ -822,295 +871,156 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     }
 
-    // Build create-server.sh command arguments
-    const args: string[] = [name];
+    // TypeScript provisioning replaces create-server.sh (#675, ADR-0003 §5).
+    const createConfig: CreateServerConfig = {
+      name,
+      type,
+      version,
+      memory,
+      seed,
+      worldUrl,
+      worldName,
+      autoStart,
+      modpackSlug: modpack,
+      modpackVersion,
+      modLoader,
+      modpackExcludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles : undefined,
+    };
+    // An input the value objects refuse (memory: '256M') is a 400 for JSON and SSE alike: parsed
+    // before the event stream opens. Failures once files are written stay SSE error events.
+    try {
+      parseCreateServerConfig(createConfig, { versionText: true });
+    } catch (error) {
+      const failure = serverSpecFailure(error as ServerSpecError);
+      return reply.code(failure.status).send(failure.body);
+    }
+    const useCase = serverProvision.createUseCase({ sudoPassword });
+    const auditDetails = {
+      type: type ?? null,
+      version: version ?? null,
+      memory: memory ?? null,
+      modpack: modpack ?? null,
+      modpackVersion: modpackVersion ?? null,
+      modLoader: modLoader ?? null,
+      excludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles.join(',') : null,
+    };
+    const created = (warning?: string) => ({
+      name,
+      container: `mc-${name}`,
+      status: autoStart !== false && !warning ? 'starting' : 'created',
+    });
+    const audit = (status: 'success' | 'failure', errorMessage: string | null) =>
+      writeAuditLog({
+        action: AuditActionEnum.SERVER_CREATE,
+        actor: 'api:console',
+        targetType: 'server',
+        targetName: name,
+        status,
+        details: status === 'success' ? auditDetails : null,
+        errorMessage,
+      });
 
-    if (type) {
-      args.push('-t', type);
-    }
-    if (version) {
-      args.push('-v', version);
-    }
-    if (memory) {
-      args.push('--memory', memory);
-    }
-    if (seed) {
-      args.push('-s', seed);
-    }
-    if (worldUrl) {
-      args.push('-u', worldUrl);
-    }
-    if (worldName) {
-      args.push('-w', worldName);
-    }
-    if (modpack) {
-      args.push('--modpack', modpack);
-    }
-    if (modpackVersion) {
-      args.push('--modpack-version', modpackVersion);
-    }
-    if (modLoader) {
-      args.push('--mod-loader', modLoader);
-    }
-    if (excludeFiles && excludeFiles.length > 0) {
-      args.push('--exclude-files', excludeFiles.join(','));
-    }
-    if (autoStart === false) {
-      args.push('--no-start');
-    }
-
-    // Resolve create-server.sh: prefer the version-matched script bundled with
-    // mcctl-api, fall back to the deployed platform copy, then the global mcctl CLI.
-    // The deployed copy under <mcctlRoot>/scripts is not refreshed by
-    // 'mcctl update' and can be stale (missing newer options like --memory/--modpack).
-    const mcctlRoot = config.mcctlRoot;
-    const resolvedScript = resolveScriptPath('create-server.sh', mcctlRoot);
-
-    let command: string;
-    let commandArgs: string[];
-    if (resolvedScript) {
-      command = 'bash';
-      commandArgs = [resolvedScript.scriptPath, ...args];
-    } else {
-      // Use mcctl CLI if script not found
-      command = 'mcctl';
-      commandArgs = ['create', ...args];
-    }
-    const scriptsDir = resolvedScript?.scriptsDir;
+    /** Created, or created but not started (decision 1: success with a warning). */
+    const provision = async (run: CreateServerRunOptions): Promise<{ warning?: string }> => {
+      try {
+        await useCase.executeWithConfig(createConfig, run);
+        return {};
+      } catch (error) {
+        if (error instanceof ServerStartError) return { warning: error.message };
+        throw error;
+      }
+    };
 
     // SSE streaming mode
     if (follow) {
-
       reply.raw.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
         'Access-Control-Allow-Origin': '*',
       });
-
-      // Send initial status
-      reply.raw.write(`data: ${JSON.stringify({
-        type: 'server-create',
-        data: { status: 'initializing', message: 'Initializing server creation...' },
-      })}\n\n`);
-
-      // Run create-server.sh in its own process group, streaming its output
-      const run = startScriptGroup(command, commandArgs, {
-        cwd: mcctlRoot,
-        env: childProcessEnv({
-          MCCTL_ROOT: mcctlRoot,
-          ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
-          ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
-        }),
-      }, { timeoutMs: lifecycleLimits.sseCreateTimeoutMs, graceMs: lifecycleLimits.killGraceMs });
-      const createProcess = run.child;
-
-      let hasError = false;
-      let stderrOutput = '';
-
-      // Track creation stages based on output patterns
-      const sendStageEvent = (status: string, message: string) => {
-        reply.raw.write(`data: ${JSON.stringify({
-          type: 'server-create',
-          data: { status, message },
-        })}\n\n`);
+      // A client disconnect stops the events, not the provisioning.
+      const send = (event: unknown) => {
+        if (!reply.raw.writableEnded && !reply.raw.destroyed) reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
       };
-
-      const sendLogEvent = (log: string) => {
-        reply.raw.write(`data: ${JSON.stringify({
-          type: 'server-create-log',
-          data: { log },
-        })}\n\n`);
-      };
-
-      // Process stdout for progress tracking
-      createProcess.stdout?.on('data', (data) => {
-        const output = data.toString();
-        sendLogEvent(output);
-
-        // Detect stages based on script output patterns
-        if (output.includes('Creating server directory')) {
-          sendStageEvent('creating', 'Creating server directory...');
-        } else if (output.includes('Writing docker-compose') || output.includes('Writing config')) {
-          sendStageEvent('configuring', 'Configuring server...');
-        } else if (output.includes('Starting container') || output.includes('docker compose up')) {
-          sendStageEvent('starting', 'Starting container...');
-        }
-      });
-
-      // Process stderr
-      createProcess.stderr?.on('data', (data) => {
-        const output = data.toString();
-        stderrOutput += output;
-        sendLogEvent(output);
-
-        // Check for errors
-        if (output.toLowerCase().includes('error') || output.toLowerCase().includes('failed')) {
-          hasError = true;
-        }
-      });
-
-      // Heartbeat to keep connection alive
+      send({ type: 'server-create', data: { status: 'initializing', message: 'Initializing server creation...' } });
       const heartbeat = setInterval(() => {
-        reply.raw.write(': heartbeat\n\n');
+        if (!reply.raw.writableEnded && !reply.raw.destroyed) reply.raw.write(': heartbeat\n\n');
       }, 30000);
-
-      // Handle process completion
-      createProcess.on('close', async (code) => {
-        clearInterval(heartbeat);
-
-        if (code === 0 && !hasError) {
-          await writeAuditLog({
-            action: AuditActionEnum.SERVER_CREATE,
-            actor: 'api:console',
-            targetType: 'server',
-            targetName: name,
-            status: 'success',
-            details: {
-              type: type ?? null,
-              version: version ?? null,
-              memory: memory ?? null,
-              modpack: modpack ?? null,
-              modpackVersion: modpackVersion ?? null,
-              modLoader: modLoader ?? null,
-              excludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles.join(',') : null,
-            },
-            errorMessage: null,
-          });
-
-          reply.raw.write(`data: ${JSON.stringify({
-            type: 'server-create',
-            data: {
-              status: 'completed',
-              message: 'Server created successfully',
-              server: {
-                name,
-                container: `mc-${name}`,
-                status: autoStart !== false ? 'starting' : 'created',
-              },
-            },
-          })}\n\n`);
-        } else {
-          const errorDetail = stderrOutput.trim();
-          const errorMessage = run.timedOut
-            ? createTimeoutMessage()
-            : errorDetail
-              ? `Server creation failed: ${errorDetail}`
-              : `Server creation failed with exit code ${code}`;
-
-          await writeAuditLog({
-            action: AuditActionEnum.SERVER_CREATE,
-            actor: 'api:console',
-            targetType: 'server',
-            targetName: name,
-            status: 'failure',
-            details: null,
-            errorMessage,
-          });
-
-          reply.raw.write(`data: ${JSON.stringify({
-            type: 'server-create',
-            data: {
-              status: 'error',
-              message: errorMessage,
-              exitCode: code,
-              stderr: errorDetail || undefined,
-            },
-          })}\n\n`);
-        }
-
-        reply.raw.end();
-      });
-
-      // Client disconnect (an ended response also emits close; ignore that)
-      const onDisconnect = () => {
-        if (reply.raw.writableFinished) return;
-        clearInterval(heartbeat);
-        run.stop();
-        reply.raw.end();
-      };
-      request.raw.on('close', onDisconnect);
-      reply.raw.on('close', onDisconnect);
-
-      // Hold the create/delete queue until the script exits, or until a stop gives up
-      const exited = await run.settled;
-      clearInterval(heartbeat);
-      if (!exited && !reply.raw.writableEnded) {
-        reply.raw.write(`data: ${JSON.stringify({
+      try {
+        const { warning } = await provision({
+          onProgress: (status, message) => send({ type: 'server-create', data: { status, message } }),
+          onLog: (log) => send({ type: 'server-create-log', data: { log } }),
+        });
+        await audit('success', null);
+        send({
           type: 'server-create',
-          data: { status: 'error', message: run.timedOut ? createTimeoutMessage() : 'Server creation was stopped' },
-        })}\n\n`);
-        reply.raw.end();
+          data: {
+            status: 'completed',
+            message: warning ? 'Server created, but it did not start' : 'Server created successfully',
+            server: created(warning),
+            ...(warning && { warning }),
+          },
+        });
+      } catch (error) {
+        const errorMessage = `Server creation failed: ${error instanceof Error ? error.message : String(error)}`;
+        await audit('failure', errorMessage);
+        send({ type: 'server-create', data: { status: 'error', message: errorMessage } });
+      } finally {
+        clearInterval(heartbeat);
+        if (!reply.raw.writableEnded) reply.raw.end();
       }
       return;
     }
 
-    // Standard JSON response (non-streaming)
+    // Standard JSON response (non-streaming). Its clients (the console BFF) give up
+    // after a few minutes, so once the files are written the reply waits for the
+    // container start at most createTimeoutMs. Past that it answers like a start
+    // failure while compose up goes on; the queue then moves on, since the start
+    // touches no servers/ file. ponytail: a delete of this server can then race its
+    // start; hold the queue for the background start if that is ever seen.
     try {
-      const { stdout, stderr } = await runScript(command, commandArgs, {
-        cwd: mcctlRoot,
-        env: childProcessEnv({
-          MCCTL_ROOT: mcctlRoot,
-          ...(scriptsDir ? { MCCTL_SCRIPTS: scriptsDir } : {}),
-          ...(sudoPassword ? { MCCTL_SUDO_PASSWORD: sudoPassword } : {}),
-        }),
-      }, { timeoutMs: lifecycleLimits.createTimeoutMs, graceMs: lifecycleLimits.killGraceMs });
-
-      fastify.log.info({ stdout, stderr }, 'Server created');
-
-      await writeAuditLog({
-        action: AuditActionEnum.SERVER_CREATE,
-        actor: 'api:console',
-        targetType: 'server',
-        targetName: name,
-        status: 'success',
-        details: {
-          type: type ?? null,
-          version: version ?? null,
-          memory: memory ?? null,
-          modpack: modpack ?? null,
-          modpackVersion: modpackVersion ?? null,
-          modLoader: modLoader ?? null,
-          excludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles.join(',') : null,
-        },
-        errorMessage: null,
-      });
-
-      return reply.code(201).send({
-        success: true,
-        server: {
-          name,
-          container: `mc-${name}`,
-          status: autoStart !== false ? 'starting' : 'created',
-        },
-      });
+      let starting = (): void => undefined;
+      const startStage = new Promise<void>((resolve) => (starting = resolve));
+      const result = provision({ onProgress: (stage) => stage === 'starting' && starting() });
+      const outcome = await Promise.race([
+        result,
+        startStage.then(() => delay(lifecycleLimits.createTimeoutMs)).then(() => 'still-starting' as const),
+      ]);
+      let warning: string | undefined;
+      if (outcome === 'still-starting') {
+        warning =
+          `Server '${name}' was created and its container is still starting in the background ` +
+          '(the first start can take several minutes to pull the image or download mods). ' +
+          `Check it with: mcctl status ${name}. If it does not come up, start it with: mcctl start ${name}`;
+        result.then(
+          (late) => fastify.log.info({ server: name, warning: late.warning }, 'Background server start finished'),
+          (error: unknown) => fastify.log.error(error, 'Background server start failed')
+        );
+      } else {
+        warning = outcome.warning;
+      }
+      await audit('success', null);
+      return reply.code(201).send({ success: true, server: created(warning), ...(warning && { warning }) });
     } catch (error) {
-      const execError = error as { stderr?: string; stdout?: string; message?: string; code?: number };
       fastify.log.error(error, 'Failed to create server');
-      // Include stderr and stdout for better error diagnosis
-      // Script errors (e.g., "Template directory not found") appear in stdout
-      const errorDetail = execError.stderr?.trim() || execError.stdout?.trim() || '';
-      const errorMessage = errorDetail
-        ? `Failed to create server: ${errorDetail}`
-        : (execError.message || 'Failed to create server');
-
-      await writeAuditLog({
-        action: AuditActionEnum.SERVER_CREATE,
-        actor: 'api:console',
-        targetType: 'server',
-        targetName: name,
-        status: 'failure',
-        details: null,
-        errorMessage,
-      });
-
-      return reply.code(500).send({
-        error: 'InternalServerError',
-        message: errorMessage,
-      });
+      const message = error instanceof Error ? error.message : String(error);
+      const errorMessage = `Failed to create server: ${message}`;
+      await audit('failure', errorMessage);
+      if (error instanceof WorldAssignmentError) {
+        const failure = worldFailure({ error: error.message, errorCode: error.code }, 'World is not available');
+        return reply.code(failure.status).send(failure.body);
+      }
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error, errorMessage);
+        return reply.code(failure.status).send(failure.body);
+      }
+      if (error instanceof EnvValueError) {
+        return reply.code(400).send({ error: 'BadRequest', message: errorMessage });
+      }
+      return reply.code(500).send({ error: 'InternalServerError', message: errorMessage });
     }
-  }, () => (request.query.follow ? lifecycleLimits.sseCreateTimeoutMs : lifecycleLimits.createTimeoutMs)
-    + 3 * lifecycleLimits.killGraceMs));
+  }, () => lifecycleLimits.sseCreateTimeoutMs));
 
   /**
    * DELETE /api/servers/:name

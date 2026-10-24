@@ -35,9 +35,12 @@ function setupServer(serverName: string, opts: { configEnv?: string; files?: Rec
   const dataDir = join(serverDir, 'data');
   mkdirSync(dataDir, { recursive: true });
 
+  // A real server compose (bundled template): config writes go through the ServerSpec since #675
   writeFileSync(
     join(serverDir, 'docker-compose.yml'),
-    'services:\n  minecraft:\n    image: itzg/minecraft-server',
+    readFileSync(join(import.meta.dirname, '../../cli/templates/servers/_template/docker-compose.yml'), 'utf-8')
+      .replace(/mc-template/g, `mc-${serverName}`)
+      .replace('mc-router.host: "template.local"', `mc-router.host: "${serverName}.local"`),
     'utf-8'
   );
 
@@ -171,6 +174,37 @@ describe('Whitelist Status API', () => {
       const configPath = join(TEST_PLATFORM_PATH, 'servers', 'test-server', 'config.env');
       const content = readFileSync(configPath, 'utf-8');
       expect(content).toContain('ENABLE_WHITELIST=FALSE');
+    });
+
+    it('answers 409 and leaves config.env alone when the server cannot be imported (#675)', async () => {
+      setupServer('test-server', { configEnv: 'ENABLE_WHITELIST=FALSE\nTYPE=PAPER\n' });
+      const compose = join(TEST_PLATFORM_PATH, 'servers', 'test-server', 'docker-compose.yml');
+      writeFileSync(compose, readFileSync(compose, 'utf-8').replace(/image: .*/, 'image: ${MC_IMAGE}'));
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/servers/test-server/whitelist/status',
+        payload: { enabled: true },
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({ error: 'Conflict', message: expect.stringMatching(/image/) });
+      const configPath = join(TEST_PLATFORM_PATH, 'servers', 'test-server', 'config.env');
+      expect(readFileSync(configPath, 'utf-8')).toBe('ENABLE_WHITELIST=FALSE\nTYPE=PAPER\n');
+    });
+
+    it('answers 400 for an invalid server.yaml (#675)', async () => {
+      setupServer('test-server', { configEnv: 'TYPE=PAPER\n' });
+      writeFileSync(join(TEST_PLATFORM_PATH, 'servers', 'test-server', 'server.yaml'), 'specVersion: 1\nname: test-server\n');
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: '/api/servers/test-server/whitelist/status',
+        payload: { enabled: true },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: 'BadRequest', message: expect.stringMatching(/server\.yaml/) });
     });
 
     it('should preserve other config values', async () => {

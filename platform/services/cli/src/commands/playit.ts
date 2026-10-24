@@ -7,13 +7,13 @@ import {
   startPlayitAgent,
   stopPlayitAgent,
   getServerPlayitDomain,
-  setServerPlayitDomain,
   getConfiguredServers,
 } from '@minecraft-docker/shared';
 import * as p from '@clack/prompts';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-config.js';
 
 export interface PlayitCommandOptions {
   root?: string;
@@ -313,8 +313,15 @@ async function handleDomain(paths: Paths, args: string[], remove: boolean): Prom
     return 1;
   }
 
+  try {
+    if (remove) await writeServerConfig(paths, serverName, { remove: ['PLAYIT_DOMAIN'] });
+    else if (domain) await writeServerConfig(paths, serverName, { set: { PLAYIT_DOMAIN: domain } });
+  } catch (error) {
+    log.error(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
+
   if (remove) {
-    setServerPlayitDomain(serverName, null, serversDir);
     log.info(`Removed playit domain from '${serverName}'`);
     log.info(`Apply with: mcctl stop ${serverName} && mcctl start ${serverName} (restart does not apply; container must be recreated)`);
   } else {
@@ -322,7 +329,6 @@ async function handleDomain(paths: Paths, args: string[], remove: boolean): Prom
       log.error('Usage: mcctl playit domain <server> <domain>');
       return 1;
     }
-    setServerPlayitDomain(serverName, domain, serversDir);
     log.info(`Set playit domain for '${serverName}': ${colors.cyan(domain)}`);
     log.info(`Apply with: mcctl stop ${serverName} && mcctl start ${serverName} (restart does not apply; container must be recreated)`);
   }

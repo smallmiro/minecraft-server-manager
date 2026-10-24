@@ -238,6 +238,17 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
     expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'up', '-d', 'mc-a'], COMPOSE, expect.any(Function));
   });
 
+  it('start takes a longer timeout when given (first start pulls the image, #675)', async () => {
+    execFileCalls({}, {});
+    await new DockerComposeRuntimeAdapter({ root: '/srv/mc', env, startTimeoutMs: 1_800_000 }).start('mc-a');
+    expect(execFile).toHaveBeenLastCalledWith(
+      'docker',
+      ['compose', 'up', '-d', 'mc-a'],
+      { ...COMPOSE, timeout: 1_800_000 },
+      expect.any(Function)
+    );
+  });
+
   it('restart runs compose restart in the root with COMPOSE_FILE', async () => {
     execFileCalls({});
     expect(await runtime.restart('mc-a')).toEqual({ success: true, stdout: '', stderr: '' });
