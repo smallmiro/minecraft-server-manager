@@ -44,6 +44,9 @@ export enum AuditActionEnum {
   PLAYIT_START = 'playit.start',
   PLAYIT_STOP = 'playit.stop',
 
+  // mc-router
+  ROUTER_RESTART = 'router.restart',
+
   // File management
   FILE_READ = 'file.read',
   FILE_WRITE = 'file.write',

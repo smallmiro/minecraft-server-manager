@@ -347,3 +347,9 @@ describe('SqliteAuditLogRepository', () => {
     expect(log.details).toBe(null);
   });
 });
+
+describe('AuditActionEnum router actions', () => {
+  test('has ROUTER_RESTART for mc-router restarts (#768)', () => {
+    expect(AuditActionEnum.ROUTER_RESTART).toBe('router.restart');
+  });
+});
