@@ -427,6 +427,21 @@ describe('McctlApiAdapter', () => {
     });
   });
 
+  describe('Router restart (#768)', () => {
+    it('restartRouter should POST /api/router/restart without a body', async () => {
+      const mockResponse = { success: true, message: 'mc-router restarted' };
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mockResponse) });
+
+      const result = await adapter.restartRouter();
+
+      expect(result).toEqual(mockResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/router/restart',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+  });
+
   describe('Whitelist status operations', () => {
     it('getWhitelistStatus should GET whitelist status', async () => {
       const mockResponse = { enabled: true, source: 'config' };

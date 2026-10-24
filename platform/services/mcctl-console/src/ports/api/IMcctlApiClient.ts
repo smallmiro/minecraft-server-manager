@@ -440,6 +440,25 @@ export interface RouteInfo {
   serverStatus: ContainerStatus;
   serverType?: string;
   serverVersion?: string;
+  /** mc-router label autoscale.up; absent when container labels could not be read. */
+  autoScaleUp?: boolean;
+  autoScaleDown?: boolean;
+  /** Whether mc-router's management API lists this hostname; absent when it could not be read. */
+  discoveredByRouter?: boolean;
+}
+
+export interface RouterAutoScale {
+  up: boolean;
+  down: boolean;
+  /** Idle duration before scale-down, e.g. "10m". */
+  downAfter?: string;
+  /** Raw MOTD: may contain literal `\n` sequences and `§x` formatting codes. */
+  asleepMotd?: string;
+}
+
+export interface RouterResolver {
+  hostIp?: string;
+  hostIps: string[];
 }
 
 export interface RouterDetail {
@@ -450,6 +469,9 @@ export interface RouterDetail {
   uptime?: string;
   uptimeSeconds?: number;
   mode?: string;
+  image?: string;
+  autoScale?: RouterAutoScale;
+  resolver?: RouterResolver;
   routes: RouteInfo[];
 }
 
@@ -462,6 +484,11 @@ export interface AvahiInfo {
 export interface RouterStatusResponse {
   router: RouterDetail;
   avahi?: AvahiInfo;
+}
+
+export interface RouterActionResponse {
+  success: boolean;
+  message: string;
 }
 
 export interface ApiError {
@@ -1031,6 +1058,7 @@ export interface IMcctlApiClient {
 
   // Router operations
   getRouterStatus(): Promise<RouterStatusResponse>;
+  restartRouter(): Promise<RouterActionResponse>;
 
   // Backup operations
   getBackupStatus(): Promise<BackupStatusResponse>;

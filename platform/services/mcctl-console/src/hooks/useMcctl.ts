@@ -31,6 +31,7 @@ import type {
   UpdateServerConfigResponse,
   WorldResetResponse,
   RouterStatusResponse,
+  RouterActionResponse,
   BackupStatusResponse,
   BackupPushResponse,
   BackupHistoryResponse,
@@ -669,6 +670,20 @@ export function useRouterStatus() {
     queryKey: ['router-status'],
     queryFn: () => apiFetch<RouterStatusResponse>('/api/router/status'),
     refetchInterval: 30000,
+  });
+}
+
+/**
+ * Hook to restart the mc-router container
+ */
+export function useRestartRouter() {
+  const queryClient = useQueryClient();
+
+  return useMutation<RouterActionResponse, Error, void>({
+    mutationFn: () => apiFetch<RouterActionResponse>('/api/router/restart', { method: 'POST' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['router-status'] });
+    },
   });
 }
 
