@@ -12,6 +12,7 @@ import {
   buildCreateSpec,
   MC_VERSION_INPUT_PATTERN,
   ServerSpecError,
+  type ServerSpecDocument,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import { Config, type Paths } from '../../utils/index.js';
@@ -143,7 +144,50 @@ function parseConfigValues(config: CreateServerConfig, allowVersionText: boolean
     worldOptions,
     modpackOptions,
   });
-  return { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server };
+
+  // What provisioning writes. The modpack decides the Minecraft version unless
+  // one is given (no VERSION); a given LATEST is written.
+  const versionToWrite = !config.version && type.isModpack ? undefined : versionText ?? version.value;
+  const createOptions: CreateServerOptions = {
+    type,
+    version,
+    worldOptions,
+    memory,
+    autoStart: config.autoStart ?? true,
+    modpackSlug: config.modpackSlug,
+    modpackVersion: config.modpackVersion,
+    modLoader: config.modLoader,
+    modpackExcludeFiles: modpackOptions?.excludeFiles,
+    enableWhitelist,
+    whitelistPlayers: config.whitelistPlayers,
+    playitDomain: config.playitDomain,
+    noPlayitDomain: config.noPlayitDomain,
+  };
+  return { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite };
+}
+
+/**
+ * The ServerSpec document a create writes (pure).
+ * @param version VERSION as written; undefined writes none (the modpack decides).
+ */
+function createSpecDocument(name: ServerName, options: CreateServerOptions, version: string | undefined): ServerSpecDocument {
+  const { type, worldOptions } = options;
+  return buildCreateSpec({
+    name: name.value,
+    type: type.value,
+    version,
+    memory: (options.memory ?? (type.isModpack ? Memory.create('6G') : Memory.default())).formatted,
+    seed: worldOptions.setupType === WorldSetupType.NEW ? worldOptions.seed : undefined,
+    worldUrl: worldOptions.setupType === WorldSetupType.DOWNLOAD ? worldOptions.downloadUrl : undefined,
+    worldName: worldOptions.setupType === WorldSetupType.EXISTING ? worldOptions.worldName : undefined,
+    modpackSlug: options.modpackSlug,
+    modpackVersion: options.modpackVersion,
+    modLoader: options.modLoader,
+    modpackExcludeFiles: options.modpackExcludeFiles,
+    enableWhitelist: options.enableWhitelist,
+    whitelistPlayers: options.whitelistPlayers,
+    playitDomain: options.playitDomain,
+  });
 }
 
 /**
@@ -206,29 +250,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       throw new Error('create-server.sh was removed in #675; pass specRepo / use ServerSpec provision');
     }
     const { specRepo, hostnames, runtime, hostIps } = this.provision;
-    const type = options.type;
-    const worldOptions = options.worldOptions;
 
     run.onProgress?.('creating', 'Creating server directory...');
-    await specRepo.write(
-      buildCreateSpec({
-        name: name.value,
-        type: type.value,
-        version,
-        memory: (options.memory ?? (type.isModpack ? Memory.create('6G') : Memory.default())).formatted,
-        seed: worldOptions.setupType === WorldSetupType.NEW ? worldOptions.seed : undefined,
-        worldUrl: worldOptions.setupType === WorldSetupType.DOWNLOAD ? worldOptions.downloadUrl : undefined,
-        worldName: worldOptions.setupType === WorldSetupType.EXISTING ? worldOptions.worldName : undefined,
-        modpackSlug: options.modpackSlug,
-        modpackVersion: options.modpackVersion,
-        modLoader: options.modLoader,
-        modpackExcludeFiles: options.modpackExcludeFiles,
-        enableWhitelist: options.enableWhitelist,
-        whitelistPlayers: options.whitelistPlayers,
-        playitDomain: options.playitDomain,
-      }),
-      { create: true }
-    );
+    await specRepo.write(createSpecDocument(name, options, version), { create: true });
 
     run.onProgress?.('configuring', 'Registering mDNS hostname...');
     if (hostnames) {
@@ -482,7 +506,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
    * Execute server creation with provided configuration
    */
   async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
-    const { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server } =
+    const { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite } =
       parseCreateServerConfig(config, { versionText: !!this.provision });
 
     // Check if server already exists
@@ -492,25 +516,9 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
     await this.assertWorldAssignable(worldOptions, name);
 
-    // Execute creation. The modpack decides the Minecraft version unless one is
-    // given (no VERSION); a given LATEST is written.
-    const versionToWrite = !config.version && type.isModpack ? undefined : versionText ?? version.value;
+    // Execute creation
     let startError: string | undefined;
-    const result = await this.createFiles(name, {
-      type,
-      version,
-      worldOptions,
-      memory,
-      autoStart: config.autoStart ?? true,
-      modpackSlug: config.modpackSlug,
-      modpackVersion: config.modpackVersion,
-      modLoader: config.modLoader,
-      modpackExcludeFiles: modpackOptions?.excludeFiles,
-      enableWhitelist,
-      whitelistPlayers: config.whitelistPlayers,
-      playitDomain: config.playitDomain,
-      noPlayitDomain: config.noPlayitDomain,
-    }, options, versionToWrite).then(
+    const result = await this.createFiles(name, createOptions, options, versionToWrite).then(
       (r) => {
         startError = r.startError;
         return { success: true, stderr: '' };
