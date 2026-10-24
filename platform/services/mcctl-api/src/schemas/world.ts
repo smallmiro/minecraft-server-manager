@@ -1,5 +1,5 @@
 import { Type, Static } from '@sinclair/typebox';
-import { WORLD_NAME_PATTERN } from '@minecraft-docker/shared';
+import { WORLD_NAME_PATTERN, EXISTING_WORLD_DIR_PATTERN } from '@minecraft-docker/shared';
 import { ENV_FILE_VALUE_RE } from '@minecraft-docker/shared/utils';
 import { ExistingServerNameSchema } from './server.js';
 
@@ -46,19 +46,10 @@ export const WorldDetailSchema = Type.Object({
 // ========================================
 
 /**
- * Name of a world that already exists (#720). Hand-made folders (e.g. a
- * legacy LEVEL like "My World") stay reachable; only names that are not one
- * safe path segment are rejected: path separators, control characters, and a
- * leading '.' ('.', '..', hidden dirs). A leading '-' is allowed like in
- * WORLD_NAME_PATTERN: scripts only take the name as a positional argument.
- */
-const EXISTING_WORLD_NAME_PATTERN = /^[^./\\\x00-\x1f\x7f][^/\\\x00-\x1f\x7f]*$/;
-
-/**
- * World name path parameter
+ * World name path parameter: a world that already exists (#720)
  */
 export const WorldNameParamsSchema = Type.Object({
-  name: Type.String({ pattern: EXISTING_WORLD_NAME_PATTERN.source, description: 'World name' }),
+  name: Type.String({ pattern: EXISTING_WORLD_DIR_PATTERN.source, description: 'World name' }),
 });
 
 /**

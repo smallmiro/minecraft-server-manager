@@ -161,6 +161,31 @@ describe('Console Routes', () => {
       });
     });
 
+    // rcon-cli parses flags anywhere in its argv: '--host=x' would redirect the RCON connection (#728)
+    it('passes a command starting with - after --, so rcon-cli never reads it as a flag', async () => {
+      const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
+      mockSpawn.mockClear();
+      mockSpawn.mockImplementation(() => ({
+        stdout: { on: vi.fn() },
+        stderr: { on: vi.fn() },
+        on: vi.fn((event, callback) => {
+          if (event === 'close') setTimeout(() => callback(0), 10);
+        }),
+      }));
+
+      await app.inject({
+        method: 'POST',
+        url: '/servers/testserver/console/exec',
+        payload: { command: '--host=evil.example' },
+      });
+
+      expect(mockSpawn).toHaveBeenCalledWith(
+        'docker',
+        ['exec', 'mc-testserver', 'rcon-cli', '--', '--host=evil.example'],
+        expect.anything()
+      );
+    });
+
     it('should not double-prefix server name that already has mc-', async () => {
       const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
       mockSpawn.mockImplementation((cmd: string, args: string[]) => {

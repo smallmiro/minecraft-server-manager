@@ -25,12 +25,12 @@ export async function execRcon(
   containerName: string,
   command: string
 ): Promise<RconResult> {
-  // Split command into parts for rcon-cli
-  // Note: rcon-cli accepts the full command as a single argument
+  // Note: rcon-cli accepts the full command as a single argument; '--' keeps
+  // a command starting with '-' (e.g. --host=x) from being read as a flag (#728)
   const normalizedContainer = getContainerName(containerName);
 
   return new Promise((resolve) => {
-    const child = spawn('docker', ['exec', normalizedContainer, 'rcon-cli', command], {
+    const child = spawn('docker', ['exec', normalizedContainer, 'rcon-cli', '--', command], {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 

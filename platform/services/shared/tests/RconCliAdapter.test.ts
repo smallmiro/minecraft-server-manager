@@ -26,8 +26,20 @@ describe('RconCliAdapter', () => {
     expect(pos!.dimension).toBe(Dimension.Nether);
     // argv form: no shell string, player passed as a discrete argument
     expect(calls[0]).toEqual([
-      'docker', 'exec', 'mc-survival', 'rcon-cli', 'data', 'get', 'entity', 'Steve', 'Pos',
+      'docker', 'exec', '--', 'mc-survival', 'rcon-cli', '--', 'data', 'get', 'entity', 'Steve', 'Pos',
     ]);
+  });
+
+  // rcon-cli parses flags anywhere in its argv: without '--', '-foo' fails
+  // as "unknown shorthand flag" and '--host x' redirects the connection (#728).
+  it.each(['-foo', '--host'])('passes the player %s after --, so rcon-cli never reads it as a flag', async (player) => {
+    const calls: string[][] = [];
+    const runner: CommandRunner = async (_file, args) => {
+      calls.push(args);
+      return '';
+    };
+    await new RconCliAdapter(runner).getEntityPosition('mc-x', player);
+    expect(calls[0]).toEqual(['exec', '--', 'mc-x', 'rcon-cli', '--', 'data', 'get', 'entity', player, 'Pos']);
   });
 
   it('passes player names with spaces safely as a single argument', async () => {
@@ -87,6 +99,6 @@ describe('RconCliAdapter with a ServerName (#665)', () => {
       return 'x has the following entity data: [1.0d, 2.0d, 3.0d]';
     });
     await adapter.getEntityPosition(ServerName.fromExisting('survival'), 'Steve');
-    expect(calls[0]).toEqual(['docker', 'exec', 'mc-survival', 'rcon-cli', 'data', 'get', 'entity', 'Steve', 'Pos']);
+    expect(calls[0]).toEqual(['docker', 'exec', '--', 'mc-survival', 'rcon-cli', '--', 'data', 'get', 'entity', 'Steve', 'Pos']);
   });
 });

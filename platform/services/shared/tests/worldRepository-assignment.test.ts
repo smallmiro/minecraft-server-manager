@@ -152,3 +152,59 @@ describe('WorldRepository assignment hydration', () => {
     expect(existsSync(file)).toBe(true);
   });
 });
+
+// Defense in depth behind the API's path-parameter schema (#728): the
+// repository only sees an existing, non-hidden directory right under worlds/.
+// Legacy names such as "My World" work; files, hidden dirs and other paths do not.
+describe('WorldRepository world names (#728)', () => {
+  it('does not find, or delete, anything but one directory right under worlds/', async () => {
+    mkdirSync(join(root, 'servers'), { recursive: true });
+    writeFileSync(join(root, '.meta'), JSON.stringify({ seed: 'outside' }));
+    mkdirSync(join(root, 'worlds', 'a', 'b'), { recursive: true });
+    world('.locks');
+    world('.old');
+
+    for (const name of ['', '.', '..', '../servers', 'a/b', 'a/', 'b/../a', join(root, 'servers'), '.locks', '.old']) {
+      expect(await repo.findByName(name), name).toBeNull();
+      expect(await repo.exists(name), name).toBe(false);
+      expect(await repo.getSeed(name), name).toBeNull();
+      expect(await repo.delete(name), name).toBe(false);
+    }
+    expect(existsSync(join(root, 'servers'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'a', 'b'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', '.locks'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', '.old'))).toBe(true);
+  });
+
+  it.each(['notes.txt', 'mapbackup.zip'])('treats the plain file worlds/%s as no world', async (name) => {
+    mkdirSync(join(root, 'worlds'), { recursive: true });
+    writeFileSync(join(root, 'worlds', name), 'not a world');
+    world(`${name}_nether`);
+
+    expect(await repo.findByName(name)).toBeNull();
+    expect(await repo.exists(name)).toBe(false);
+    expect(await repo.delete(name)).toBe(false);
+    expect(existsSync(join(root, 'worlds', name))).toBe(true);
+    expect(existsSync(join(root, 'worlds', `${name}_nether`))).toBe(true);
+  });
+
+  it.each(['My World'])('finds and deletes the legacy name %j, with its dimension folders', async (name) => {
+    for (const dir of [name, `${name}_nether`, `${name}_the_end`, `${name}s`]) world(dir);
+
+    expect((await repo.findByName(name))?.name).toBe(name);
+    expect(await repo.exists(name)).toBe(true);
+    expect(await repo.delete(name)).toBe(true);
+    for (const dir of [name, `${name}_nether`, `${name}_the_end`]) {
+      expect(existsSync(join(root, 'worlds', dir)), dir).toBe(false);
+    }
+    expect(existsSync(join(root, 'worlds', `${name}s`))).toBe(true);
+  });
+
+  it('deletes only satellites that are directories', async () => {
+    world('w');
+    writeFileSync(join(root, 'worlds', 'w_nether'), 'a file, not a dimension');
+
+    expect(await repo.delete('w')).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'w_nether'))).toBe(true);
+  });
+});

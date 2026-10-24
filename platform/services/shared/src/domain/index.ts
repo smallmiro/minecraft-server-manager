@@ -9,6 +9,7 @@ export {
   WorldName,
   WORLD_NAME_PATTERN,
   EXISTING_WORLD_NAME_PATTERN,
+  EXISTING_WORLD_DIR_PATTERN,
   configuredWorldName,
   resolveWorldName,
   ServerType,

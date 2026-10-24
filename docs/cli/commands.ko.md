@@ -487,7 +487,7 @@ mcctl create [name] [options]
 |--------|-------|-------------|
 | `--type` | `-t` | 서버 타입: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, MODRINTH |
 | `--version` | `-v` | 마인크래프트 버전 (예: 1.21.1) |
-| `--seed` | `-s` | 월드 생성 시드 |
+| `--seed` | `-s` | 월드 생성 시드. 음수 시드도 됩니다(`-s -123`). `--seed=<값>`은 어떤 값이든 받습니다 |
 | `--world-url` | `-u` | ZIP URL에서 월드 다운로드 |
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
 | `--modpack` | | Modrinth 모드팩 서버 생성 활성화 (대화형 검색) |
@@ -832,6 +832,8 @@ Teleported Steve to 0.0, 100.0, 0.0
 ```bash
 mcctl exec <server> <command...>
 ```
+
+음수는 그대로 전달됩니다(`mcctl exec myserver tp Steve -1 64 -5`). 그 밖에 `-`로 시작하는 인자가 든 명령은 `--` 뒤에 적으세요: `mcctl exec myserver -- say -h`.
 
 **예제:**
 
@@ -1272,7 +1274,7 @@ mcctl world new [name] [options]
 
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
-| `--seed` | `-s` | 월드 생성 시드 |
+| `--seed` | `-s` | 월드 생성 시드. 음수 시드도 됩니다(`-s -123`). `--seed=<값>`은 어떤 값이든 받습니다 |
 | `--server` | | 월드를 할당할 서버 (`LEVEL`을 설정하고, 시드가 있으면 `SEED`도 설정). 서버가 중지되어 있어야 함 |
 | `--no-start` | | 할당 후 서버 자동 시작 안 함 |
 

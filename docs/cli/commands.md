@@ -487,7 +487,7 @@ mcctl create [name] [options]
 |--------|-------|-------------|
 | `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, MODRINTH |
 | `--version` | `-v` | Minecraft version (e.g., 1.21.1) |
-| `--seed` | `-s` | World seed for generation |
+| `--seed` | `-s` | World seed for generation. A negative seed works (`-s -123`); `--seed=<value>` takes any value |
 | `--world-url` | `-u` | Download world from ZIP URL |
 | `--world` | `-w` | Use existing world from worlds/ directory |
 | `--modpack` | | Enable Modrinth modpack server creation (interactive search) |
@@ -832,6 +832,8 @@ Execute a single RCON command on a server. This is the non-interactive alternati
 ```bash
 mcctl exec <server> <command...>
 ```
+
+Negative numbers are passed as they are (`mcctl exec myserver tp Steve -1 64 -5`). Put a command with other arguments that start with `-` after `--`: `mcctl exec myserver -- say -h`.
 
 **Examples:**
 
@@ -1272,7 +1274,7 @@ mcctl world new [name] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--seed` | `-s` | World seed for generation |
+| `--seed` | `-s` | World seed for generation. A negative seed works (`-s -123`); `--seed=<value>` takes any value |
 | `--server` | | Server to assign world to (sets `LEVEL`, and `SEED` if given). The server must be stopped |
 | `--no-start` | | Don't auto-start server after assignment |
 

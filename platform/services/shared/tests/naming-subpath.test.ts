@@ -39,6 +39,8 @@ describe('@minecraft-docker/shared/naming (#721)', () => {
     expect(naming.SERVER_NAME_PATTERN).toBe(domain.SERVER_NAME_PATTERN);
     expect(naming.EXISTING_SERVER_NAME_PATTERN).toBe(domain.EXISTING_SERVER_NAME_PATTERN);
     expect(naming.WORLD_NAME_PATTERN).toBe(domain.WORLD_NAME_PATTERN);
+    expect(naming.EXISTING_WORLD_NAME_PATTERN).toBe(domain.EXISTING_WORLD_NAME_PATTERN);
+    expect(naming.EXISTING_WORLD_DIR_PATTERN).toBe(domain.EXISTING_WORLD_DIR_PATTERN);
     expect(naming.SERVER_NAME_MIN_LENGTH).toBe(domain.SERVER_NAME_MIN_LENGTH);
     expect(naming.SERVER_NAME_MAX_LENGTH).toBe(domain.SERVER_NAME_MAX_LENGTH);
     expect(naming.RESERVED_SERVER_NAMES).toBe(domain.RESERVED_SERVER_NAMES);

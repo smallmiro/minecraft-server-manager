@@ -185,6 +185,21 @@ export class WorldRepository implements IWorldRepository {
   }
 
   /**
+   * worlds/<name> when it is an existing directory right under worlds/, else
+   * null (#728): '', '..', 'a/b', 'a/', absolute paths, plain files and hidden
+   * dirs ('.locks', like listNames) are no world. Legacy names ('My World') are.
+   */
+  private async worldDir(name: string): Promise<string | null> {
+    const dir = resolve(this.worldsDir, name);
+    if (name.startsWith('.') || dirname(dir) !== resolve(this.worldsDir) || basename(dir) !== name) return null;
+    try {
+      return (await stat(dir)).isDirectory() ? dir : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Listings are read-only, so an unreadable servers/ shows every world as
    * unassigned; assignment changes go through the port and fail there (R7).
    */
@@ -197,9 +212,9 @@ export class WorldRepository implements IWorldRepository {
   }
 
   private async load(name: string, snapshot: WorldAssignmentSnapshot): Promise<World | null> {
-    const worldPath = join(this.worldsDir, name);
+    const worldPath = await this.worldDir(name);
 
-    if (!existsSync(worldPath)) {
+    if (!worldPath) {
       return null;
     }
 
@@ -227,8 +242,7 @@ export class WorldRepository implements IWorldRepository {
    * Check if world exists
    */
   async exists(name: string): Promise<boolean> {
-    const worldPath = join(this.worldsDir, name);
-    return existsSync(worldPath);
+    return (await this.worldDir(name)) !== null;
   }
 
   /**
@@ -341,10 +355,9 @@ export class WorldRepository implements IWorldRepository {
    * Returns true if the main world was deleted.
    */
   async delete(name: string): Promise<boolean> {
-    assertValidWorldName(name);
-    const worldPath = join(this.worldsDir, name);
+    const worldPath = await this.worldDir(name);
 
-    if (!existsSync(worldPath)) {
+    if (!worldPath) {
       return false;
     }
 
@@ -354,8 +367,8 @@ export class WorldRepository implements IWorldRepository {
 
       // Cascade-delete split-dimension satellites
       for (const suffix of ['_nether', '_the_end']) {
-        const satellitePath = join(this.worldsDir, `${name}${suffix}`);
-        if (existsSync(satellitePath)) {
+        const satellitePath = await this.worldDir(`${name}${suffix}`);
+        if (satellitePath) {
           await rm(satellitePath, { recursive: true, force: true });
         }
       }
@@ -408,7 +421,9 @@ export class WorldRepository implements IWorldRepository {
    * Get seed for a world from .meta file
    */
   async getSeed(name: string): Promise<string | null> {
-    const metaPath = join(this.worldsDir, name, '.meta');
+    const worldPath = await this.worldDir(name);
+    if (!worldPath) return null;
+    const metaPath = join(worldPath, '.meta');
 
     if (!existsSync(metaPath)) {
       return null;

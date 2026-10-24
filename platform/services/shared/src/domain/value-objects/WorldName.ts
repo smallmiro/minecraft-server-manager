@@ -16,6 +16,18 @@ export const WORLD_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
 export const EXISTING_WORLD_NAME_PATTERN = /^(?!\.\.?$)[^/\\'"\x00-\x1f\x7f]+$/;
 
 /**
+ * A name that points at one directory already under worlds/: API path
+ * parameters and repository lookups (#720). Hand-made folders (a legacy LEVEL
+ * such as `My World`) stay reachable; only names that are not one safe path
+ * segment are rejected: path separators, control characters, and a leading
+ * `.` (`.`, `..`, hidden directories such as `.locks`). Unlike
+ * EXISTING_WORLD_NAME_PATTERN it allows quotes: the name is never written to
+ * a config.env. A leading `-` is allowed like in WORLD_NAME_PATTERN.
+ */
+// eslint-disable-next-line no-control-regex
+export const EXISTING_WORLD_DIR_PATTERN = /^[^./\\\x00-\x1f\x7f][^/\\\x00-\x1f\x7f]*$/;
+
+/**
  * WorldName Value Object
  * A validated world directory name, used as a server's LEVEL
  */

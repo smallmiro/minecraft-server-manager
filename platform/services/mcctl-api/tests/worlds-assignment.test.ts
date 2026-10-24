@@ -226,6 +226,40 @@ describe('World routes - assignment rules (#670)', () => {
       expect((await app.inject({ method: 'DELETE', url: '/api/worlds/free' })).statusCode).toBe(200);
       expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'free'))).toBe(false);
     });
+
+    // A legacy LEVEL name (#649) is listed and opened, so it is deleted too (#728)
+    it('deletes an unassigned legacy name with a space, with its dimension folders', async () => {
+      for (const dir of ['My World', 'My World_nether', 'My World_the_end']) world(dir);
+      server('alpha', `LEVEL=alpha\n${UNIVERSE}`);
+
+      const response = await app.inject({ method: 'DELETE', url: '/api/worlds/My%20World' });
+
+      expect(response.statusCode).toBe(200);
+      expect(JSON.parse(response.body)).toMatchObject({ success: true, worldName: 'My World' });
+      for (const dir of ['My World', 'My World_nether', 'My World_the_end']) {
+        expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', dir)), dir).toBe(false);
+      }
+    });
+
+    it('returns 404 for a plain file under worlds/ and leaves it alone (#728)', async () => {
+      writeFileSync(join(TEST_PLATFORM_PATH, 'worlds', 'notes.txt'), 'not a world');
+
+      expect((await app.inject({ method: 'GET', url: '/api/worlds/notes.txt' })).statusCode).toBe(404);
+      const response = await app.inject({ method: 'DELETE', url: '/api/worlds/notes.txt?force=true' });
+
+      expect(response.statusCode).toBe(404);
+      expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'notes.txt'))).toBe(true);
+    });
+
+    it('returns 409 for a legacy name with a space that a server uses, even with force', async () => {
+      world('My World');
+      server('alpha', `LEVEL=My World\n${UNIVERSE}`);
+
+      const response = await app.inject({ method: 'DELETE', url: '/api/worlds/My%20World?force=true' });
+
+      expect(response.statusCode).toBe(409);
+      expect(existsSync(join(TEST_PLATFORM_PATH, 'worlds', 'My World'))).toBe(true);
+    });
   });
 
   describe('POST /api/worlds with serverName', () => {

@@ -11,4 +11,9 @@ export {
   RESERVED_SERVER_NAMES,
   EXISTING_SERVER_NAME_PATTERN,
 } from '../domain/value-objects/ServerName.js';
-export { WorldName, WORLD_NAME_PATTERN, EXISTING_WORLD_NAME_PATTERN } from '../domain/value-objects/WorldName.js';
+export {
+  WorldName,
+  WORLD_NAME_PATTERN,
+  EXISTING_WORLD_NAME_PATTERN,
+  EXISTING_WORLD_DIR_PATTERN,
+} from '../domain/value-objects/WorldName.js';

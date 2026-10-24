@@ -183,4 +183,16 @@ describe('$ in values (Compose interpolation)', () => {
     expect(imported.document.routing.loadingMotd).toBe('${MCCTL_X}');
     expect(imported.document).toEqual(before);
   });
+
+  // `docker compose config` interpolates ${VAR} in an unquoted or double-quoted
+  // env_file value (SEED=${CF_API_KEY} -> the platform's key) and keeps a
+  // single-quoted one literal (#728).
+  it('single-quotes a seed and world URL with ${VAR}, so Compose substitutes no other variable', async () => {
+    await repo.write(spec({ seed: '${CF_API_KEY}', worldUrl: 'https://example.com/w.zip?k=$CF_API_KEY' }), {
+      create: true,
+    });
+    const config = read('alpha', 'config.env');
+    expect(config).toContain("\nSEED='${CF_API_KEY}'\n");
+    expect(config).toContain("\nWORLD='https://example.com/w.zip?k=$CF_API_KEY'\n");
+  });
 });

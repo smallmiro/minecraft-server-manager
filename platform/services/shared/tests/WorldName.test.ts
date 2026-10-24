@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   WorldName,
   WORLD_NAME_PATTERN,
+  EXISTING_WORLD_DIR_PATTERN,
   configuredWorldName,
   resolveWorldName,
 } from '../src/domain/value-objects/WorldName.js';
@@ -64,5 +65,15 @@ describe('resolveWorldName (#649, #721)', () => {
 
   it('does not validate existing values (legacy LEVEL keeps working)', () => {
     expect(resolveWorldName({ LEVEL: 'My World' })).toBe('My World');
+  });
+});
+
+describe('EXISTING_WORLD_DIR_PATTERN (a directory already under worlds/, #728)', () => {
+  it.each(['world', 'My World', 'world.old', '-lobby', "it's", 'say "hi"', '월드'])('accepts %j', (name) => {
+    expect(EXISTING_WORLD_DIR_PATTERN.test(name)).toBe(true);
+  });
+
+  it.each(['', '.', '..', '.locks', '../x', 'a/b', 'a\\b', '/etc', 'a\nb', 'a\0b', 'a\x7fb'])('rejects %j', (name) => {
+    expect(EXISTING_WORLD_DIR_PATTERN.test(name)).toBe(false);
   });
 });
