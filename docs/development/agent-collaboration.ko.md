@@ -21,7 +21,7 @@
 |----------|------|------|--------|
 | `orchestrator-agent` | 요청의 진입점. 분석, 계획, 위임, 조율을 수행하며 코드를 작성하지 않습니다. | opus | `agent:orchestrator` |
 | `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (도메인 엔티티, 값 객체, 유스케이스, 포트/어댑터) | opus | `agent:core` |
-| `cli-agent` | `platform/services/cli/`, `platform/scripts/` | sonnet | `agent:cli` |
+| `cli-agent` | `platform/services/cli/` | sonnet | `agent:cli` |
 | `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | `agent:backend` |
 | `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | `agent:frontend` |
 | `devops-agent` | Docker 관련 파일과 나머지 `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | `agent:devops` |
@@ -106,7 +106,7 @@ flowchart LR
 | `Files to Modify`의 경로 | 담당 |
 |--------------------------|------|
 | `platform/services/shared/**`, `platform/services/mod-source-*/**` | core-agent |
-| `platform/services/cli/**`, `platform/scripts/**` | cli-agent |
+| `platform/services/cli/**` | cli-agent |
 | `platform/services/mcctl-api/**` | backend-agent |
 | `platform/services/mcctl-console/**` | frontend-agent |
 | 나머지 `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` | devops-agent |

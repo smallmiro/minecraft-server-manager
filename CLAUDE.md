@@ -9,7 +9,6 @@ This project is a DevOps project for building and operating multiple Minecraft J
 | Directory | Description |
 |-----------|-------------|
 | `platform/` | Docker platform runtime (docker-compose, .env, servers/, worlds/, shared/) |
-| `platform/scripts/` | `lib/common.sh` (bash name validators, tested by `pnpm test:scripts`). Server create and delete are TypeScript (`servers/<name>/server.yaml`, #675, #735) |
 | `platform/services/shared/` | `@minecraft-docker/shared` - Domain entities, value objects, use cases, ports/adapters |
 | `platform/services/cli/` | `@minecraft-docker/mcctl` - npm CLI (Hexagonal Architecture) |
 | `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api` - Fastify REST API (:5001) |
@@ -48,7 +47,7 @@ See `.claude/commands/` for detailed command specifications.
 | **Docker Compose** | >= 2.20.0 | `include` feature required |
 | **PM2** | >= 6.0.14 | mcctl-api, mcctl-console process management |
 
-**OS**: Linux, macOS only (mcctl CLI depends on bash scripts)
+**OS**: Linux, macOS only
 
 **Ports**:
 
@@ -221,7 +220,7 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 |-------|--------|------|
 | 🎯 **Orchestrator** | All modules | **Entry point for ALL tasks**. 작업 분배, 의존성 추적, 에이전트 간 동기화 조율 |
 | 🔧 **Core** | `platform/services/shared/` | Domain entities, value objects, use cases, ports/adapters |
-| 💻 **CLI** | `platform/services/cli/`, `scripts/` | CLI commands, interactive prompts, bash scripts |
+| 💻 **CLI** | `platform/services/cli/` | CLI commands, interactive prompts |
 | 🖥️ **Backend** | `platform/services/mcctl-api/` | Fastify REST API, authentication, OpenAPI/Swagger |
 | 🎨 **Frontend** | `platform/services/mcctl-console/` | Next.js Web UI, React components, hooks |
 | 🐳 **DevOps** | `platform/`, `e2e/` | Docker, docker-compose, Playwright E2E tests |

@@ -29,7 +29,7 @@
 | Docker / Docker Compose | Engine 24+, Compose 2.20+ | 서버 컨테이너, E2E |
 | Git, GitHub CLI (`gh`) | 최신 | 포크, 이슈, PR |
 
-`mcctl` CLI가 bash 스크립트에 의존하므로 지원 OS는 Linux와 macOS입니다. mcctl-console이 사용하는 `better-sqlite3`는 네이티브 모듈이라 환경에 따라 빌드 도구(gcc, make, python)가 필요합니다.
+지원 OS는 Linux와 macOS입니다. mcctl-console이 사용하는 `better-sqlite3`는 네이티브 모듈이라 환경에 따라 빌드 도구(gcc, make, python)가 필요합니다.
 
 ## 포크와 로컬 설정 {#fork-and-set-up}
 
@@ -79,7 +79,6 @@ node platform/services/cli/dist/index.js --version
 | `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api`: Fastify REST API (포트 5001) |
 | `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console`: Next.js 웹 UI (포트 5000) |
 | `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth`: Modrinth 어댑터 |
-| `platform/scripts/` | Bash 관리 스크립트 (테스트는 `platform/scripts/tests/`) |
 | `platform/services/cli/templates/` | `mcctl init`이 복사하는 플랫폼 템플릿의 단일 원천 (`platform/docker-compose.yml`, `platform/servers/_template`은 이를 가리키는 심볼릭 링크) |
 | `e2e/` | Management Console용 Playwright E2E 테스트 |
 | `docs/` | MkDocs 문서 (영어/한국어) |
@@ -128,8 +127,6 @@ pnpm --filter @minecraft-docker/mcctl test
 
 pnpm test:e2e                                # Management Console E2E (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
-
-pnpm test:scripts                            # bash 스크립트 테스트 (bats, *.bats)
 ```
 
 새 REST 엔드포인트의 E2E 테스트는 `e2e/tests/api-*.spec.ts`에, 콘솔 UI 흐름은 `e2e/tests/*.spec.ts`에, 새 CLI 명령이나 옵션은 `platform/services/cli/tests/e2e/cli-*.test.ts`에 추가합니다.
@@ -157,7 +154,6 @@ gh pr create --repo smallmiro/minecraft-server-manager --base develop \
 | 잡 | 내용 |
 |----|------|
 | `lint, typecheck, test` | 모든 패키지를 빌드하고 `pnpm lint`, `pnpm typecheck`, `e2e`를 제외한 전 패키지 테스트, cli `verify:package` 드리프트 검사를 실행 |
-| `script tests` (ubuntu, macos) | `pnpm test:scripts`(bats)와 `pnpm lint:scripts`(shellcheck) |
 | `docker compose config` (platform, templates) | 두 compose 파일 검증 |
 
 `e2e.yml`은 매일 03:00 KST와 수동 실행 시에만 돌고 **PR에서는 실행되지 않습니다**. mcctl-api와 mcctl-console을 띄우고 Playwright 테스트를 실행합니다. API나 콘솔 동작을 바꿨다면 로컬에서 `pnpm test:e2e`를 실행하세요.

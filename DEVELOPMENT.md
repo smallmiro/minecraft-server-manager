@@ -28,7 +28,7 @@ Create issue in the original repo → Fork → Create branch → Tests first (TD
 | Docker / Docker Compose | Engine 24+, Compose 2.20+ | Server containers, E2E |
 | Git, GitHub CLI (`gh`) | Latest | Fork, issues, PRs |
 
-Supported operating systems are Linux and macOS, because the `mcctl` CLI depends on bash scripts.
+Supported operating systems are Linux and macOS.
 
 ## 2. Fork and Set Up Locally
 
@@ -68,7 +68,6 @@ git push origin develop
 | `platform/services/mcctl-api/` | Fastify REST API (port 5001) |
 | `platform/services/mcctl-console/` | Next.js web UI (port 5000) |
 | `platform/services/mod-source-modrinth/` | Modrinth adapter |
-| `platform/scripts/` | Bash management scripts (tests in `platform/scripts/tests/`) |
 | `platform/services/cli/templates/` | Single source of the templates shipped by `mcctl init`; `platform/docker-compose.yml`, `platform/.env.example` and `platform/servers/{_template,global.env}` are symlinks to it (`pnpm --filter @minecraft-docker/mcctl check:templates` guards this) |
 | `e2e/` | Playwright E2E tests |
 | `docs/` | MkDocs documentation (English/Korean) |
@@ -159,7 +158,6 @@ CI checks on PRs against `develop` must pass before merge. `ci.yml` runs on ever
 | Job | What it does |
 |-----|--------------|
 | `lint, typecheck, test` | Builds every package, then runs `pnpm lint`, `pnpm typecheck`, the tests of every package except `e2e`, and the cli `verify:package` drift check |
-| `script tests` (ubuntu, macos) | `pnpm test:scripts` (bats) and `pnpm lint:scripts` (shellcheck) |
 | `docker compose config` (platform, cli templates) | Validates both compose files |
 | `template drift check` | `pnpm --filter @minecraft-docker/mcctl check:templates` (plus its `node --test` self-test): one template source, agreed default values read structurally |
 
@@ -177,30 +175,9 @@ pnpm --filter @minecraft-docker/mcctl test
 
 pnpm test:e2e                                # Management Console E2E: mcctl-api + mcctl-console (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
-
-pnpm test:scripts                            # bash script tests (bats)
-pnpm lint:scripts                            # shellcheck on platform/scripts (needs shellcheck installed)
 ```
 
 Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console UI flows in `e2e/tests/*.spec.ts`, and for new CLI commands or options in `platform/services/cli/tests/e2e/cli-*.test.ts`.
-
-### 5.1 Bash script tests
-
-Tests for `platform/scripts/lib/common.sh` (the bash mirror of the `ServerName`/`WorldName` rules) live in `platform/scripts/tests/*.bats` and run on [bats-core](https://github.com/bats-core/bats-core) (npm `bats`, installed by `pnpm install`). No real Docker, sudo or system file is touched.
-
-```bash
-pnpm test:scripts                                         # all bats tests
-pnpm exec bats platform/scripts/tests/naming-rules.bats   # one file
-pnpm exec bats -f "validate" platform/scripts/tests       # tests matching a name
-```
-
-- `helpers.bash`: `TESTS_DIR` and `SCRIPTS_DIR`. The stubs and temp-platform helpers went with the script tests that used them (#734, #735).
-- Example to copy: `naming-rules.bats`.
-- Server delete (and its avahi `sudo sed -i` step) moved to TypeScript in #735; its tests are vitest tests in `platform/services/shared/tests` with fake `docker`, `sudo` and `systemctl` on `PATH` and a temp hosts file.
-
-Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures.
-
-`pnpm lint:scripts` runs shellcheck at `--severity=error` (config: `.shellcheckrc`, `platform/scripts/tests/lint.sh`). `platform/scripts/` has no top-level `*.sh` left (#735); over `lib/*.sh` the baseline is 0 findings at every severity (shellcheck 0.10.0). Do not add new findings; check with `shellcheck -x -S style platform/scripts/lib/*.sh`.
 
 ## 6. Documentation
 
@@ -240,7 +217,7 @@ Specialized subagents are defined in `.claude/agents/`. Models are assigned by t
 |-------|----------------|-------|
 | `orchestrator-agent` | Entry point for all work. Analyzes the request, delegates to specialists, and coordinates them. | opus |
 | `core-agent` | Domain design in `platform/services/shared/` | opus |
-| `cli-agent` | `platform/services/cli/` and bash scripts | sonnet |
+| `cli-agent` | `platform/services/cli/` | sonnet |
 | `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet |
 | `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React) | sonnet |
 | `devops-agent` | Docker, CI, `e2e/` | sonnet |

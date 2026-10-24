@@ -54,8 +54,6 @@ flowchart TB
     DI --> UC
     DI --> ADP
     DI --> CLIAD
-    SH --> BASH["platform/scripts/*.sh"]
-    ADP --> BASH
 ```
 
 ## 두 종류의 커맨드
@@ -258,7 +256,7 @@ const spin = this.prompt.spinner();
 - `mcctl console ...`은 `Pm2ServiceManagerAdapter`와 `shared/src/infrastructure/config/Pm2EcosystemConfig.ts`를 통해 `mcctl-api`, `mcctl-console`을 PM2 프로세스로 관리합니다.
 - `mcctl console user`는 콘솔 SQLite 데이터베이스에 직접 기록합니다(`cli/src/lib/console-db.ts`).
 - SQLite 저장소(better-sqlite3), 플랫폼 루트 기준: `data/audit.db`, `backups/meta/backup-schedules.db`, `backups/meta/config-snapshots.db`.
-- bash 스크립트는 `platform/scripts/`에 있으며, 배포 시 `sync-scripts` npm 스크립트(`prepublishOnly`에서 실행)가 CLI 패키지로 복사합니다.
+- bash 스크립트는 없습니다. 모든 명령이 TypeScript이며(#715), `mcctl`은 docker, git, avahi를 포트와 어댑터로 실행합니다.
 - 일부 하위 시스템은 `mcctl-api`에서만 사용합니다: BlueMap 렌더링, 월드 분석, 플레이어 세션, RCON 어댑터(`RconCliAdapter`).
 
 ## 테스트

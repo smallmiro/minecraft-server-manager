@@ -54,8 +54,6 @@ flowchart TB
     DI --> UC
     DI --> ADP
     DI --> CLIAD
-    SH --> BASH["platform/scripts/*.sh"]
-    ADP --> BASH
 ```
 
 ## Two Kinds of Commands
@@ -258,7 +256,7 @@ To add a source: create a package that implements `IModSourcePort`, call `ModSou
 - `mcctl console ...` manages `mcctl-api` and `mcctl-console` as PM2 processes through `Pm2ServiceManagerAdapter` and `shared/src/infrastructure/config/Pm2EcosystemConfig.ts`.
 - `mcctl console user` writes the console SQLite database directly (`cli/src/lib/console-db.ts`).
 - SQLite stores (better-sqlite3), relative to the platform root: `data/audit.db`, `backups/meta/backup-schedules.db`, `backups/meta/config-snapshots.db`.
-- Bash scripts live in `platform/scripts/` and are copied into the CLI package at publish time by the `sync-scripts` npm script (run from `prepublishOnly`).
+- There are no bash scripts. Every command is TypeScript (#715); `mcctl` runs docker, git and avahi through ports and adapters.
 - Some subsystems are only used by `mcctl-api`: BlueMap rendering, world analysis, player sessions and the RCON adapter (`RconCliAdapter`).
 
 ## Testing
