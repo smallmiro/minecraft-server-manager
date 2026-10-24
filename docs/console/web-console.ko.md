@@ -787,10 +787,13 @@ Routing 페이지에서 네트워크 라우팅 구성을 완전히 확인하고 
 왼쪽의 넓은 패널에 라이브 라우팅 테이블과 함께 **MC-Router Status**가 표시됩니다:
 
 - 라우터 상태와 헬스 칩 (예: `running`, `healthy`)
-- **Routing Table**에서 서버마다 펼칠 수 있는 항목이 다음을 보여줍니다:
-    - 상태 점, 서버 이름, 서버 유형과 Minecraft 버전
-    - 구성된 라우트 수
-    - 모든 호스트명 매핑 (예: `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
+- **Routing Table**은 서버마다 한 줄입니다. 접힌 줄에는 다음이 보입니다:
+    - 서버 이름, 서버 유형과 Minecraft 버전, 상태 (예: **Sleeping · wakes on connect**)
+    - 대표 주소(nip.io, mDNS, WAN, Custom 순서로 첫 번째)와 복사 버튼, 나머지 호스트명 수
+    - 호스트명 유형 (예: `nip.io ×2`, `mDNS`, `WAN`). mc-router가 모르는 호스트명이 있으면 **N not routed** 경고
+    - **Wake/Start**, **Edit hostnames**, **Open server**
+- 줄(또는 화살표)을 클릭하면 그 서버의 모든 호스트명이 복사 버튼, 유형, 필요하면 **Not routed** 경고와 함께 펼쳐집니다. 여러 서버를 동시에 펼칠 수 있고, **Expand all** / **Collapse all**로 한 번에 펼치거나 접습니다.
+- 검색창은 서버 이름과 호스트명을 찾습니다. 호스트명이 일치하면 그 서버가 펼쳐지고 일치한 호스트명이 강조됩니다.
 
 ### 플랫폼 정보
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { ThemeProvider } from '@/theme';
 import { RoutingTable } from './RoutingTable';
@@ -53,65 +53,150 @@ afterEach(() => {
   delete window.matchMedia;
 });
 
+const toggleOf = (server: string) => screen.getByRole('button', { name: `Show domains of ${server}` });
+const rowOf = (server: string) => toggleOf(server).closest('tr') as HTMLElement;
+const domainsOf = (server: string) =>
+  document.getElementById(toggleOf(server).getAttribute('aria-controls') as string) as HTMLElement;
+const expand = (server: string) => fireEvent.click(toggleOf(server));
+
 describe('RoutingTable', () => {
-  it('renders every hostname on its own row without expanding anything', () => {
+  it('renders one collapsed row per server', () => {
     renderTable();
-    const rows = screen.getAllByRole('row');
-    // header + 5 routes
-    expect(rows).toHaveLength(6);
-    for (const r of routes) expect(screen.getByText(r.hostname)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Show domains of / })).toHaveLength(3);
+    for (const server of ['survival', 'creative', 'modded']) {
+      expect(toggleOf(server)).toHaveAttribute('aria-expanded', 'false');
+    }
+    expect(screen.queryByText('survival.local')).not.toBeInTheDocument();
   });
 
-  it('offers a copy button for each hostname', () => {
+  it('counts servers and hostnames in the header', () => {
     renderTable();
-    expect(screen.getAllByLabelText('Copy to clipboard')).toHaveLength(routes.length);
+    expect(screen.getByText('3 servers · 5 hostnames')).toBeInTheDocument();
   });
 
-  it('shows the correct type badge per hostname', () => {
-    renderTable();
-    const rowOf = (host: string) => screen.getByText(host).closest('tr') as HTMLElement;
-    expect(within(rowOf('survival.local')).getByText('mDNS')).toBeInTheDocument();
-    expect(within(rowOf('survival.192.168.1.5.nip.io')).getByText('nip.io')).toBeInTheDocument();
-    expect(within(rowOf('aa-bb.craft.playit.gg')).getByText('WAN')).toBeInTheDocument();
-    expect(within(rowOf('mc.example.com')).getByText('Custom')).toBeInTheDocument();
+  it('uses singular words for one server with one hostname', () => {
+    renderTable([routes[3]]);
+    expect(screen.getByText('1 server · 1 hostname')).toBeInTheDocument();
   });
 
-  it('shows target server name with type and version', () => {
+  it('shows the primary address, how many more there are, and the types in the collapsed row', () => {
     renderTable();
-    const row = screen.getByText('creative.local').closest('tr') as HTMLElement;
-    expect(within(row).getByText('creative')).toBeInTheDocument();
-    expect(within(row).getByText('FABRIC 1.20.4')).toBeInTheDocument();
+    const row = rowOf('survival');
+    expect(within(row).getByText('survival.192.168.1.5.nip.io')).toBeInTheDocument();
+    expect(within(row).getByText('+2')).toBeInTheDocument();
+    expect(within(row).getByText('nip.io')).toBeInTheDocument();
+    expect(within(row).getByText('mDNS')).toBeInTheDocument();
+    expect(within(row).getByText('WAN')).toBeInTheDocument();
+    expect(within(rowOf('modded')).getByText('Custom')).toBeInTheDocument();
+    expect(within(rowOf('creative')).queryByText(/^\+/)).not.toBeInTheDocument();
+  });
+
+  it('shows how many hostnames share a type', () => {
+    renderTable([
+      { hostname: 'a.1.1.1.1.nip.io', target: 'mc-a:25565', serverStatus: 'running' },
+      { hostname: 'a.2.2.2.2.nip.io', target: 'mc-a:25565', serverStatus: 'running' },
+    ]);
+    expect(within(rowOf('a')).getByText('nip.io ×2')).toBeInTheDocument();
+  });
+
+  it('offers a copy button for the primary address of each collapsed server', () => {
+    renderTable();
+    expect(screen.getAllByLabelText('Copy to clipboard')).toHaveLength(3);
+  });
+
+  it('lists every hostname of a server with copy and type when expanded', () => {
+    renderTable();
+    expand('survival');
+    expect(toggleOf('survival')).toHaveAttribute('aria-expanded', 'true');
+    const domains = domainsOf('survival');
+    const items = within(domains).getAllByRole('listitem');
+    expect(items.map((item) => item.textContent)).toEqual([
+      expect.stringContaining('survival.192.168.1.5.nip.io'),
+      expect.stringContaining('survival.local'),
+      expect.stringContaining('aa-bb.craft.playit.gg'),
+    ]);
+    expect(within(domains).getAllByLabelText('Copy to clipboard')).toHaveLength(3);
+    expect(within(items[1]).getByText('mDNS')).toBeInTheDocument();
+    expect(within(items[2]).getByText('WAN')).toBeInTheDocument();
+  });
+
+  it('expands when the row itself is clicked and collapses on the next click', async () => {
+    renderTable();
+    fireEvent.click(within(rowOf('survival')).getByText('PAPER 1.21.1'));
+    expect(screen.getByText('survival.local')).toBeInTheDocument();
+    fireEvent.click(within(rowOf('survival')).getByText('PAPER 1.21.1'));
+    expect(toggleOf('survival')).toHaveAttribute('aria-expanded', 'false');
+    await waitFor(() => expect(screen.queryByText('survival.local')).not.toBeInTheDocument());
+  });
+
+  it('keeps several servers open at once', () => {
+    renderTable();
+    expand('survival');
+    expand('creative');
+    expect(toggleOf('survival')).toHaveAttribute('aria-expanded', 'true');
+    expect(toggleOf('creative')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('expands and collapses every server at once', () => {
+    renderTable();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand all' }));
+    for (const server of ['survival', 'creative', 'modded']) {
+      expect(toggleOf(server)).toHaveAttribute('aria-expanded', 'true');
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse all' }));
+    for (const server of ['survival', 'creative', 'modded']) {
+      expect(toggleOf(server)).toHaveAttribute('aria-expanded', 'false');
+    }
+  });
+
+  it('shows the server type and version', () => {
+    renderTable();
+    expect(within(rowOf('creative')).getByText('FABRIC 1.20.4')).toBeInTheDocument();
   });
 
   it('shows exited servers as warning with wakes-on-connect, not error', () => {
     renderTable();
-    const row = screen.getByText('creative.local').closest('tr') as HTMLElement;
-    const chip = within(row).getByText('Stopped · wakes on connect').closest('.MuiChip-root') as HTMLElement;
+    const chip = within(rowOf('creative')).getByText('Stopped · wakes on connect').closest('.MuiChip-root');
     expect(chip).toHaveClass('MuiChip-colorWarning');
-    const dead = within(screen.getByText('mc.example.com').closest('tr') as HTMLElement)
-      .getByText('Dead')
-      .closest('.MuiChip-root');
+    const dead = within(rowOf('modded')).getByText('Dead').closest('.MuiChip-root');
     expect(dead).toHaveClass('MuiChip-colorError');
   });
 
-  it('links each row to the server detail page', () => {
+  it('links each server to its detail page', () => {
     renderTable();
-    const row = screen.getByText('creative.local').closest('tr') as HTMLElement;
-    expect(within(row).getByRole('link', { name: 'Open creative' })).toHaveAttribute('href', '/servers/creative');
+    expect(within(rowOf('creative')).getByRole('link', { name: 'Open creative' })).toHaveAttribute(
+      'href',
+      '/servers/creative'
+    );
   });
 
-  it('filters by hostname', () => {
+  it('filters by hostname and opens the matching server with the match marked', () => {
     renderTable();
-    fireEvent.change(screen.getByLabelText('Search routes'), { target: { value: 'nip.io' } });
-    expect(screen.getByText('survival.192.168.1.5.nip.io')).toBeInTheDocument();
-    expect(screen.queryByText('survival.local')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Search routes'), { target: { value: 'local' } });
+    expect(screen.queryByRole('button', { name: 'Show domains of modded' })).not.toBeInTheDocument();
+    expect(toggleOf('survival')).toHaveAttribute('aria-expanded', 'true');
+    const items = within(domainsOf('survival')).getAllByRole('listitem');
+    expect(items.filter((item) => item.dataset.match === 'true').map((item) => item.textContent)).toEqual([
+      expect.stringContaining('survival.local'),
+    ]);
   });
 
-  it('filters by server name, case-insensitively', () => {
+  it('filters by server name, case-insensitively, without opening the server', () => {
     renderTable();
-    fireEvent.change(screen.getByLabelText('Search routes'), { target: { value: 'CREATIVE' } });
-    expect(screen.getByText('creative.local')).toBeInTheDocument();
-    expect(screen.queryByText('survival.local')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Search routes'), { target: { value: 'MODDED' } });
+    expect(toggleOf('modded')).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('button', { name: 'Show domains of survival' })).not.toBeInTheDocument();
+  });
+
+  it('returns to the servers the user opened once the search is cleared', () => {
+    renderTable();
+    expand('creative');
+    const search = screen.getByLabelText('Search routes');
+    fireEvent.change(search, { target: { value: 'survival.local' } });
+    expect(toggleOf('survival')).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.change(search, { target: { value: '' } });
+    expect(toggleOf('survival')).toHaveAttribute('aria-expanded', 'false');
+    expect(toggleOf('creative')).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('shows an empty state when nothing matches', () => {
@@ -124,15 +209,18 @@ describe('RoutingTable', () => {
   it('shows an empty state when there are no routes', () => {
     renderTable([]);
     expect(screen.getByText('No routes configured')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Expand all' })).not.toBeInTheDocument();
   });
 
-  it('renders a card list instead of a table on xs', () => {
+  it('renders one card per server instead of a table on xs, expandable the same way', () => {
     setMobile(true);
     renderTable();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     const list = screen.getByRole('list', { name: 'Routes' });
-    expect(within(list).getAllByRole('listitem')).toHaveLength(routes.length);
-    expect(within(list).getAllByLabelText('Copy to clipboard')).toHaveLength(routes.length);
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.queryByText('survival.local')).not.toBeInTheDocument();
+    expand('survival');
+    expect(within(domainsOf('survival')).getByText('survival.local')).toBeInTheDocument();
   });
 
   it('keeps the hidden Actions header label 1px wide so it cannot widen the page', () => {
@@ -143,13 +231,15 @@ describe('RoutingTable', () => {
     expect(getComputedStyle(label).height).toBe('1px');
   });
 
-  it('renders rows that share a hostname without duplicate keys', () => {
+  it('renders a hostname shared by two servers without duplicate keys', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     renderTable([
       { hostname: 'play.example.com', target: 'mc-a:25565', serverStatus: 'running' },
       { hostname: 'play.example.com', target: 'mc-b:25565', serverStatus: 'exited' },
+      { hostname: 'play.example.com', target: 'mc-b:25565', serverStatus: 'exited' },
     ]);
-    expect(screen.getAllByText('play.example.com')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Expand all' }));
+    expect(screen.getAllByText('play.example.com').length).toBeGreaterThanOrEqual(3);
     expect(errorSpy.mock.calls.flat().join(' ')).not.toMatch(/same key/);
     errorSpy.mockRestore();
   });
@@ -166,44 +256,63 @@ describe('RoutingTable', () => {
   });
 
   describe('row actions (#768)', () => {
-    const rowOf = (host: string) => screen.getByText(host).closest('tr') as HTMLElement;
-
-    it('offers Start for stopped routes when auto-scale-up is off or unknown, and nothing for running ones', () => {
+    it('offers Start for stopped servers when auto-scale-up is off or unknown, and nothing for running ones', () => {
       renderTable();
-      expect(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' })).toBeInTheDocument();
-      expect(within(rowOf('survival.local')).queryByRole('button', { name: /^(Start|Wake)/ })).not.toBeInTheDocument();
-      expect(within(rowOf('mc.example.com')).queryByRole('button', { name: /^(Start|Wake)/ })).not.toBeInTheDocument();
+      expect(within(rowOf('creative')).getByRole('button', { name: 'Start creative' })).toBeInTheDocument();
+      expect(within(rowOf('survival')).queryByRole('button', { name: /^(Start|Wake)/ })).not.toBeInTheDocument();
+      expect(within(rowOf('modded')).queryByRole('button', { name: /^(Start|Wake)/ })).not.toBeInTheDocument();
+    });
+
+    it('offers a single Wake per server however many hostnames it has', () => {
+      renderTable([
+        { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: true },
+        { hostname: 'a.1.1.1.1.nip.io', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: true },
+      ]);
+      expand('a');
+      expect(screen.getAllByRole('button', { name: 'Wake a' })).toHaveLength(1);
     });
 
     it('labels the action Wake and the status Sleeping when auto-scale-up is on', () => {
       renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: true }]);
-      const row = rowOf('a.local');
+      const row = rowOf('a');
       expect(within(row).getByRole('button', { name: 'Wake a' })).toHaveTextContent('Wake');
       expect(within(row).getByText('Sleeping · wakes on connect')).toBeInTheDocument();
     });
 
     it('labels the action Start and the status Stopped when auto-scale-up is off', () => {
       renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'exited', autoScaleUp: false }]);
-      const row = rowOf('a.local');
+      const row = rowOf('a');
       expect(within(row).getByRole('button', { name: 'Start a' })).toHaveTextContent('Start');
       expect(within(row).getByText('Stopped')).toBeInTheDocument();
     });
 
-    it('starts the server by name when clicked', () => {
+    it('starts the server by name when clicked, without toggling the row', () => {
       renderTable();
-      fireEvent.click(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' }));
+      fireEvent.click(within(rowOf('creative')).getByRole('button', { name: 'Start creative' }));
       expect(mockStart).toHaveBeenCalledWith('creative', expect.anything());
+      expect(toggleOf('creative')).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('does not toggle the row from the links or the copy button', () => {
+      // jsdom cannot navigate; keep the link click in the page.
+      const preventNavigation = (event: Event) => event.preventDefault();
+      window.addEventListener('click', preventNavigation, true);
+      renderTable();
+      fireEvent.click(within(rowOf('creative')).getByRole('link', { name: 'Open creative' }));
+      fireEvent.click(within(rowOf('creative')).getByLabelText('Copy to clipboard'));
+      window.removeEventListener('click', preventNavigation, true);
+      expect(toggleOf('creative')).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('shows why a start failed instead of failing silently', async () => {
       mockStart.mockImplementation((_name, opts) => opts?.onError?.(new Error('Forbidden: manage permission required')));
       renderTable();
-      fireEvent.click(within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' }));
-      expect(await within(rowOf('creative.local')).findByText('Start failed')).toBeInTheDocument();
-      expect(within(rowOf('creative.local')).getByLabelText(/Forbidden: manage permission required/)).toBeInTheDocument();
+      fireEvent.click(within(rowOf('creative')).getByRole('button', { name: 'Start creative' }));
+      expect(await within(rowOf('creative')).findByText('Start failed')).toBeInTheDocument();
+      expect(within(rowOf('creative')).getByLabelText(/Forbidden: manage permission required/)).toBeInTheDocument();
     });
 
-    it('does not bubble the click to the row', () => {
+    it('does not bubble the click out of the table', () => {
       const onClick = vi.fn();
       render(
         <ThemeProvider>
@@ -219,34 +328,40 @@ describe('RoutingTable', () => {
     it('disables the action and shows a spinner while starting', () => {
       mockStartHook(true);
       renderTable();
-      const button = within(rowOf('creative.local')).getByRole('button', { name: 'Start creative' });
+      const button = within(rowOf('creative')).getByRole('button', { name: 'Start creative' });
       expect(button).toBeDisabled();
       expect(within(button).getByRole('progressbar')).toBeInTheDocument();
     });
 
     it('links straight to the hostnames section of the server', () => {
       renderTable();
-      expect(within(rowOf('creative.local')).getByRole('link', { name: 'Edit hostnames of creative' })).toHaveAttribute(
+      expect(within(rowOf('creative')).getByRole('link', { name: 'Edit hostnames of creative' })).toHaveAttribute(
         'href',
         '/servers/creative?tab=Options#hostnames'
       );
     });
 
-    it('shows a Not routed warning only when discoveredByRouter is false', () => {
+    it('warns on the collapsed row when some hostnames are not routed', () => {
       renderTable([
         { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false },
-        { hostname: 'b.local', target: 'mc-b:25565', serverStatus: 'running', discoveredByRouter: true },
-        { hostname: 'c.local', target: 'mc-c:25565', serverStatus: 'running' },
+        { hostname: 'a.1.1.1.1.nip.io', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: true },
+        { hostname: 'b.local', target: 'mc-b:25565', serverStatus: 'running' },
       ]);
-      const chip = within(rowOf('a.local')).getByText('Not routed').closest('.MuiChip-root');
+      const chip = within(rowOf('a')).getByText('1 not routed').closest('.MuiChip-root');
       expect(chip).toHaveClass('MuiChip-colorWarning');
-      expect(within(rowOf('b.local')).queryByText('Not routed')).not.toBeInTheDocument();
-      expect(within(rowOf('c.local')).queryByText('Not routed')).not.toBeInTheDocument();
+      expect(within(rowOf('b')).queryByText(/not routed/i)).not.toBeInTheDocument();
     });
 
-    it('explains Not routed in a tooltip', async () => {
-      renderTable([{ hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false }]);
-      expect(screen.getByLabelText(/mc-router has not registered this hostname/i)).toBeInTheDocument();
+    it('marks each unrouted hostname in the expanded list and explains it in a tooltip', () => {
+      renderTable([
+        { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false },
+        { hostname: 'a.1.1.1.1.nip.io', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: true },
+      ]);
+      expand('a');
+      const [nip, local] = within(domainsOf('a')).getAllByRole('listitem');
+      expect(within(local).getByText('Not routed')).toBeInTheDocument();
+      expect(within(nip).queryByText('Not routed')).not.toBeInTheDocument();
+      expect(within(local).getByLabelText(/mc-router has not registered this hostname/i)).toBeInTheDocument();
     });
 
     it('renders the same actions in the xs card list', () => {
@@ -258,9 +373,10 @@ describe('RoutingTable', () => {
       expect(within(item).getByRole('button', { name: 'Wake a' })).toBeInTheDocument();
       expect(within(item).getByRole('link', { name: 'Edit hostnames of a' })).toBeInTheDocument();
       expect(within(item).getByRole('link', { name: 'Open a' })).toBeInTheDocument();
-      expect(within(item).getByText('Not routed')).toBeInTheDocument();
+      expect(within(item).getByText('1 not routed')).toBeInTheDocument();
       fireEvent.click(within(item).getByRole('button', { name: 'Wake a' }));
       expect(mockStart).toHaveBeenCalledWith('a', expect.anything());
+      expect(toggleOf('a')).toHaveAttribute('aria-expanded', 'false');
     });
   });
 });
