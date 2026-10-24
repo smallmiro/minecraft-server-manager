@@ -252,7 +252,7 @@ export default function DashboardPage() {
         <RecentActivityFeed maxItems={5} />
       </Box>
       <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 5' } }}>
-        <ChangelogFeed maxVersions={2} />
+        <ChangelogFeed />
       </Box>
     </BentoGrid>
   );
