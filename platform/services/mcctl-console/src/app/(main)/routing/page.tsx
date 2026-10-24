@@ -10,13 +10,16 @@ import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import RouterIcon from '@mui/icons-material/Router';
-import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
+import { BentoGrid, BentoPanel, BentoPanelHeader, PageHero } from '@/components/bento';
 import {
   RestartRouterDialog,
   RoutingTable,
   RouterGatewayCard,
+  RouterLogPanel,
   RouterResolverCard,
+  RoutingFlowDiagram,
   extractServerName,
 } from '@/components/routing';
 import { PlayitSection } from '@/components/settings';
@@ -148,6 +151,25 @@ export default function RoutingPage() {
             sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 12' } }}
           >
             <RoutingTable routes={router.routes} playitDomains={playitDomains} />
+          </BentoPanel>
+          <BentoPanel
+            role="region"
+            aria-label="Routing flow"
+            sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 7' } }}
+          >
+            <BentoPanelHeader
+              title="Routing Flow"
+              subtitle="Access type to mc-router to server"
+              icon={<AccountTreeIcon fontSize="small" />}
+            />
+            <RoutingFlowDiagram router={router} playitDomains={playitDomains} />
+          </BentoPanel>
+          <BentoPanel
+            role="region"
+            aria-label="Live router log"
+            sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 5' } }}
+          >
+            <RouterLogPanel />
           </BentoPanel>
           <BentoPanel
             role="region"

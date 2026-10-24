@@ -49,6 +49,16 @@ export const RouterRestartResponseSchema = Type.Object({
   message: Type.String(),
 });
 
+// SSE query schemas
+export const RouterLogsStreamQuerySchema = Type.Object({
+  // String on purpose: out-of-range / non-numeric values are clamped by the route, not rejected
+  tail: Type.Optional(Type.String({ description: 'Initial log lines to replay (integer, clamped to 1-500, default 100)' })),
+});
+
+export const RouterStatusStreamQuerySchema = Type.Object({
+  interval: Type.Optional(Type.Integer({ minimum: 1000, maximum: 60000, default: 5000, description: 'Poll interval in ms' })),
+});
+
 // Avahi info schema
 export const AvahiInfoSchema = Type.Object({
   name: Type.String(),

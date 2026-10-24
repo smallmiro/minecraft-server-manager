@@ -107,6 +107,9 @@ export {
   type RouteAutoScale,
 } from './services/routerDetail.js';
 
+// mc-router log lines (#769)
+export { parseRouterLogLine, type RouterLogEvent, type RouterLogKind } from './services/routerLog.js';
+
 // ServerSpec (#675, ADR-0003)
 export {
   ServerSpecError,

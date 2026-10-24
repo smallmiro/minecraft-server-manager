@@ -131,3 +131,15 @@ export interface SSEError {
   retryCount?: number;
   timestamp: Date;
 }
+
+/**
+ * One mc-router log line, parsed by mcctl-api (`router-log` SSE event)
+ */
+export interface RouterLogEvent {
+  ts?: string;
+  kind: 'connect' | 'wake' | 'error' | 'info';
+  hostname?: string;
+  target?: string;
+  player?: string;
+  raw: string;
+}

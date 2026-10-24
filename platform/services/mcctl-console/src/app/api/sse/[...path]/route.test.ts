@@ -2,6 +2,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET, POST, OPTIONS } from './route';
 import { NextRequest } from 'next/server';
 
+const { requireAuthMock, MockAuthError } = vi.hoisted(() => {
+  class MockAuthError extends Error {
+    constructor(
+      message: string,
+      public statusCode: number = 401
+    ) {
+      super(message);
+      this.name = 'AuthError';
+    }
+  }
+  return { requireAuthMock: vi.fn(), MockAuthError };
+});
+
+vi.mock('@/lib/auth-utils', () => ({
+  requireAuth: requireAuthMock,
+  AuthError: MockAuthError,
+}));
+
+vi.mock('next/headers', () => ({
+  headers: vi.fn(async () => new Headers({ cookie: 'session=abc' })),
+}));
+
 describe('SSE Proxy Route', () => {
   const originalEnv = process.env;
 
@@ -14,11 +36,120 @@ describe('SSE Proxy Route', () => {
 
     // Mock global fetch
     global.fetch = vi.fn();
+    requireAuthMock.mockReset();
+    requireAuthMock.mockResolvedValue({ user: { id: 'u1', role: 'user' } });
   });
 
   afterEach(() => {
     process.env = originalEnv;
     vi.restoreAllMocks();
+  });
+
+  describe('authentication', () => {
+    it('GET returns 401 without a session and never contacts mcctl-api', async () => {
+      requireAuthMock.mockRejectedValue(new MockAuthError('Unauthorized', 401));
+
+      const request = new NextRequest('http://localhost:5000/api/sse/router/logs/stream');
+      const response = await GET(request, { params: { path: ['router', 'logs', 'stream'] } });
+
+      expect(response.status).toBe(401);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('POST returns 401 without a session and never contacts mcctl-api', async () => {
+      requireAuthMock.mockRejectedValue(new MockAuthError('Unauthorized', 401));
+
+      const request = new NextRequest('http://localhost:5000/api/sse/servers', { method: 'POST', body: '{}' });
+      const response = await POST(request, { params: { path: ['servers'] } });
+
+      expect(response.status).toBe(401);
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('checks the session with the request headers', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({ ok: false, status: 404, statusText: 'x' });
+      const request = new NextRequest('http://localhost:5000/api/sse/router/logs/stream');
+      await GET(request, { params: { path: ['router', 'logs', 'stream'] } });
+
+      expect(requireAuthMock).toHaveBeenCalledTimes(1);
+      expect(requireAuthMock.mock.calls[0][0]).toBeInstanceOf(Headers);
+    });
+  });
+
+  describe('query string and disconnect handling', () => {
+    const sseResponse = (reader: Record<string, unknown>) => ({
+      ok: true,
+      headers: new Headers({ 'content-type': 'text/event-stream' }),
+      body: { getReader: vi.fn().mockReturnValue(reader) },
+    });
+
+    it('GET preserves the client query string and adds follow=true', async () => {
+      const reader = { read: vi.fn().mockResolvedValue({ done: true }), cancel: vi.fn() };
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(sseResponse(reader));
+
+      const request = new NextRequest('http://localhost:5000/api/sse/router/logs/stream?tail=100&interval=5000');
+      await GET(request, { params: { path: ['router', 'logs', 'stream'] } });
+
+      const url = new URL((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      expect(url.pathname).toBe('/api/router/logs/stream');
+      expect(url.searchParams.get('tail')).toBe('100');
+      expect(url.searchParams.get('interval')).toBe('5000');
+      expect(url.searchParams.get('follow')).toBe('true');
+    });
+
+    it('GET does not let the client turn follow off', async () => {
+      const reader = { read: vi.fn().mockResolvedValue({ done: true }), cancel: vi.fn() };
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(sseResponse(reader));
+
+      const request = new NextRequest('http://localhost:5000/api/sse/servers/a/logs?follow=false');
+      await GET(request, { params: { path: ['servers', 'a', 'logs'] } });
+
+      const url = new URL((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][0]);
+      expect(url.searchParams.getAll('follow')).toEqual(['true']);
+    });
+
+    it('GET aborts the upstream fetch when the client request is aborted', async () => {
+      const reader = { read: vi.fn(() => new Promise(() => {})), cancel: vi.fn() };
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(sseResponse(reader));
+
+      const abort = new AbortController();
+      const request = new NextRequest('http://localhost:5000/api/sse/router/logs/stream', { signal: abort.signal });
+      await GET(request, { params: { path: ['router', 'logs', 'stream'] } });
+
+      const upstreamSignal = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].signal as AbortSignal;
+      expect(upstreamSignal).toBeDefined();
+      expect(upstreamSignal.aborted).toBe(false);
+      abort.abort();
+      expect(upstreamSignal.aborted).toBe(true);
+    });
+
+    it('GET cancels the upstream reader and aborts the fetch when the client cancels the stream', async () => {
+      const reader = { read: vi.fn(() => new Promise(() => {})), cancel: vi.fn().mockResolvedValue(undefined) };
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(sseResponse(reader));
+
+      const request = new NextRequest('http://localhost:5000/api/sse/router/logs/stream');
+      const response = await GET(request, { params: { path: ['router', 'logs', 'stream'] } });
+      const upstreamSignal = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].signal as AbortSignal;
+
+      await response.body!.cancel();
+
+      expect(reader.cancel).toHaveBeenCalledTimes(1);
+      expect(upstreamSignal.aborted).toBe(true);
+    });
+
+    it('POST cancels the upstream reader and aborts the fetch when the client cancels the stream', async () => {
+      const reader = { read: vi.fn(() => new Promise(() => {})), cancel: vi.fn().mockResolvedValue(undefined) };
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(sseResponse(reader));
+
+      const request = new NextRequest('http://localhost:5000/api/sse/servers', { method: 'POST', body: '{}' });
+      const response = await POST(request, { params: { path: ['servers'] } });
+      const upstreamSignal = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].signal as AbortSignal;
+
+      await response.body!.cancel();
+
+      expect(reader.cancel).toHaveBeenCalledTimes(1);
+      expect(upstreamSignal.aborted).toBe(true);
+    });
   });
 
   describe('GET', () => {

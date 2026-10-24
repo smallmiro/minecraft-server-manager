@@ -1,7 +1,13 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from './useApi';
 import { consumeSseStream } from './sse';
+import {
+  ROUTER_STATUS_QUERY_KEY,
+  acquireRouterStatusStream,
+  isRouterStatusStreamConnected,
+  subscribeRouterStatusConnection,
+} from './routerStatusStream';
 import type {
   ServerListResponse,
   ServerDetailResponse,
@@ -668,13 +674,26 @@ export function useUpdateHostnames() {
 // ============================================================
 
 /**
- * Hook to fetch router status
+ * Hook to fetch router status.
+ *
+ * The first paint uses the REST query. A shared SSE stream (one per tab) then
+ * pushes changes into the same query cache and polling is switched off; without
+ * a live stream (unsupported, errored, reconnecting) it polls every 30s.
  */
 export function useRouterStatus() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => acquireRouterStatusStream(queryClient), [queryClient]);
+  const streaming = useSyncExternalStore(
+    subscribeRouterStatusConnection,
+    isRouterStatusStreamConnected,
+    () => false
+  );
+
   return useQuery<RouterStatusResponse, Error>({
-    queryKey: ['router-status'],
+    queryKey: [...ROUTER_STATUS_QUERY_KEY],
     queryFn: () => apiFetch<RouterStatusResponse>('/api/router/status'),
-    refetchInterval: 30000,
+    refetchInterval: streaming ? false : 30000,
   });
 }
 
