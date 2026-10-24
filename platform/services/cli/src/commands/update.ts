@@ -241,16 +241,16 @@ export async function recreateStoppedServers(
     : [];
   if (servers.length === 0) return;
 
-  const stopped: Array<{ server: string; container: string; before: ContainerState }> = [];
+  const stopped: Array<{ server: string; container: string }> = [];
   const running: string[] = [];
   const skipped: string[] = [];
   for (const server of servers) {
     const container = `mc-${server}`;
     try {
-      const before = await shell.containerState(container);
-      if (!before) skipped.push(server);
-      else if (before.status === 'exited' || before.status === 'created') stopped.push({ server, container, before });
-      else running.push(`${server}: ${before.status}`);
+      const state = await shell.containerState(container);
+      if (!state) skipped.push(server);
+      else if (isStopped(state.status)) stopped.push({ server, container });
+      else running.push(`${server}: ${state.status}`);
     } catch {
       skipped.push(server);
     }
@@ -285,15 +285,21 @@ export async function recreateStoppedServers(
   console.log('');
 }
 
-type ContainerState = NonNullable<Awaited<ReturnType<ShellExecutor['containerState']>>>;
+const isStopped = (status: string) => status === 'exited' || status === 'created';
 
 async function recreate(
-  stopped: Array<{ server: string; container: string; before: ContainerState }>,
+  stopped: Array<{ server: string; container: string }>,
   shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>
 ): Promise<void> {
   const rollbacks: string[] = [];
-  for (const { server, container, before } of stopped) {
+  for (const { server, container } of stopped) {
     try {
+      // Read again: auto-scale may have started it while the prompt waited, and compose would stop it
+      const before = await shell.containerState(container);
+      if (!before || !isStopped(before.status)) {
+        console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim(`(${before ? `${before.status} now` : 'docker inspect failed'})`)}`);
+        continue;
+      }
       const code = await shell.dockerCompose(['up', '--no-start', '--no-deps', container]);
       if (code !== 0) {
         console.log(`  ${colors.red('✗')} ${server} ${colors.dim(`(docker compose up --no-start exited ${code})`)}`);
