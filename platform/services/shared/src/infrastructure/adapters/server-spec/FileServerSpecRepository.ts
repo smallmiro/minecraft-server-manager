@@ -24,8 +24,8 @@ import type {
 import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImport } from './importDockerServer.js';
 import {
   DockerComposeRenderer,
-  hasIncludeEntry,
   includeEntries,
+  includesServer,
   removeIncludeEntry,
   restoreIncludeEntry,
   type RenderContext,
@@ -298,7 +298,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
           return ` servers/${name}/docker-compose.yml no longer exists, so its servers/compose.yml entry was not put back`;
         }
         const current = readOptionalSync(includePath);
-        if (hasIncludeEntry(current, name)) return '';
+        if (includesServer(current, name)) return '';
         const text = current === removed.after ? removed.before : restoreIncludeEntry(current, removed.before, name);
         await atomicWriteFile(includePath, text);
         return '';
@@ -777,7 +777,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     );
   }
 
-  /** Remove the server's servers/compose.yml entry (exact name) under the lock. */
+  /** Remove the server's servers/compose.yml entries (every file inside servers/<n>/) under the lock. */
   private async removeInclude(name: string): Promise<void> {
     await this.withIncludeLock(name, async () => {
       const path = join(this.paths.servers, 'compose.yml');

@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import yaml from 'js-yaml';
 import { applyEnvChanges, parseEnvDocument } from '../../../utils/env-file.js';
@@ -116,6 +116,20 @@ export function hasIncludeEntry(text: string | undefined, name: string): boolean
   return includeEntries(text).includes(`${name}/docker-compose.yml`);
 }
 
+/** Whether an include path is inside servers/<name>/: `alpha/x.yml`, `./alpha//x.yml`, `alpha/`; not `alphabet/x.yml`. */
+function insideServer(path: unknown, name: string): boolean {
+  if (typeof path !== 'string') return false;
+  const p = posix.normalize(path);
+  return p === name || p.startsWith(`${name}/`);
+}
+
+const namesServer = (e: unknown, name: string): boolean => includePaths(e).some((p) => insideServer(p, name));
+
+/** Whether servers/compose.yml text includes any file inside servers/<name>/. */
+export function includesServer(text: string | undefined, name: string): boolean {
+  return includeEntries(text).some((p) => insideServer(p, name));
+}
+
 /** servers/compose.yml text parsed for adding entries; 'conflict' when it cannot be rewritten safely. */
 function readInclude(current: string | undefined, name: string): { parsed: Record<string, unknown>; list: unknown[] } {
   if (current === undefined) return { parsed: {}, list: [] };
@@ -142,43 +156,45 @@ function renderInclude(name: string, current: string | undefined): string {
 }
 
 /**
- * `current` with the entries naming `<name>/docker-compose.yml` back as
- * `before` had them (the delete restore, #735): an entry that only lost that
- * path is replaced by its original, a removed entry is put back whole near its
+ * `current` with the entries naming files inside servers/<name>/ back as
+ * `before` had them (the delete restore, #735): an entry that only lost those
+ * paths is replaced by its original, a removed entry is put back whole near its
  * old position. Other entries of `current` stay; refuses a file it cannot read.
  */
 export function restoreIncludeEntry(current: string | undefined, before: string, name: string): string {
-  const entry = `${name}/docker-compose.yml`;
   const { parsed, list } = readInclude(current, name);
   const restored = [...list];
   readInclude(before, name).list.forEach((e, index) => {
-    if (!includePaths(e).includes(entry)) return;
-    const reduced = withoutPath(e, entry);
+    if (!namesServer(e, name)) return;
+    const reduced = withoutServer(e, name);
     const at = reduced === undefined ? -1 : restored.findIndex((x) => isDeepStrictEqual(x, reduced));
     if (at >= 0) restored[at] = e;
-    else restored.splice(Math.min(index, restored.length), 0, reduced === undefined ? e : { ...(e as object), path: [entry] });
+    else {
+      const ours = reduced === undefined ? e : { ...(e as object), path: includePaths(e).filter((p) => insideServer(p, name)) };
+      restored.splice(Math.min(index, restored.length), 0, ours);
+    }
   });
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: restored }, DUMP_OPTIONS);
 }
 
-/** An include entry naming `path` without it: undefined when no path is left. */
-function withoutPath(e: unknown, path: string): unknown {
-  const others = isMapping(e) && Array.isArray(e['path']) ? e['path'].filter((p) => p !== path) : [];
+/** An include entry without its paths inside servers/<name>/: undefined when no path is left. */
+function withoutServer(e: unknown, name: string): unknown {
+  const others = isMapping(e) && Array.isArray(e['path']) ? e['path'].filter((p) => !insideServer(p, name)) : [];
   return others.length > 0 ? { ...(e as Record<string, unknown>), path: others } : undefined;
 }
 
 /**
- * servers/compose.yml text without `<name>/docker-compose.yml`; unchanged when no entry names it.
- * An entry whose `path` lists other files too keeps them; one left with no path goes.
+ * servers/compose.yml text without the files inside servers/<name>/, which a
+ * delete removes; unchanged when no entry names one. An entry whose `path`
+ * lists other servers' files keeps them; one left with no path goes.
  */
 export function removeIncludeEntry(current: string, name: string): string {
-  const entry = `${name}/docker-compose.yml`;
   const parsed = yaml.load(current) as Record<string, unknown> | null;
   const list = parsed?.['include'];
-  if (!Array.isArray(list) || !list.some((e) => includePaths(e).includes(entry))) return current;
+  if (!Array.isArray(list) || !list.some((e) => namesServer(e, name))) return current;
   const kept = list.flatMap((e) => {
-    if (!includePaths(e).includes(entry)) return [e];
-    const reduced = withoutPath(e, entry);
+    if (!namesServer(e, name)) return [e];
+    const reduced = withoutServer(e, name);
     return reduced === undefined ? [] : [reduced];
   });
   const doc: Record<string, unknown> = { ...parsed, include: kept };
