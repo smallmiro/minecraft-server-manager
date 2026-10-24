@@ -502,6 +502,29 @@ describe('ServerOverview', () => {
       expect(slot).toHaveTextContent('4G');
     });
 
+    it('drops live players and memory once SSE reports the server stopped', () => {
+      const server = {
+        ...mockServers[0],
+        memory: '4G',
+        type: 'PAPER',
+        players: { online: 3, max: 20, players: [] },
+        stats: { memoryUsage: 2 * 1024 ** 3, memoryLimit: 4 * 1024 ** 3 },
+      } as ServerSummary;
+      renderWithTheme(
+        <ServerOverview
+          servers={[server]}
+          statusMap={{ server1: { status: 'exited', health: 'none', timestamp: '2026-10-24T00:00:00.000Z' } }}
+          isLoading={false}
+        />
+      );
+
+      const slot = screen.getByTestId('server-row-metrics');
+      expect(slot).not.toHaveTextContent(/players/i);
+      expect(slot).not.toHaveTextContent('2.0 GB');
+      expect(slot).toHaveTextContent('4G');
+      expect(slot).toHaveTextContent('PAPER');
+    });
+
     it('shows no players cell when player data is null', () => {
       const server = { ...mockServers[0], type: 'PAPER', players: null } as ServerSummary;
       renderWithTheme(<ServerOverview servers={[server]} isLoading={false} />);

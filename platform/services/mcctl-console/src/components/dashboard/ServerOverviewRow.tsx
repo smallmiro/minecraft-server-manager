@@ -85,13 +85,14 @@ function formatBytes(bytes: number): string {
 
 const stopPropagation = (event: MouseEvent | KeyboardEvent) => event.stopPropagation();
 
-function MetricsSlot({ server }: { server: ServerSummary }) {
+function MetricsSlot({ server, isRunning }: { server: ServerSummary; isRunning: boolean }) {
   const cells: { label: string; value: string }[] = [];
 
-  if (server.players) {
+  // Players and stats are a snapshot from the last poll; hide them once the live status says it stopped
+  if (isRunning && server.players) {
     cells.push({ label: 'Players', value: `${server.players.online} / ${server.players.max}` });
   }
-  if (server.stats) {
+  if (isRunning && server.stats) {
     cells.push({
       label: 'Memory',
       value: `${formatBytes(server.stats.memoryUsage)} / ${formatBytes(server.stats.memoryLimit)}`,
@@ -286,7 +287,7 @@ export function ServerOverviewRow({
         )}
       </Box>
 
-      <MetricsSlot server={server} />
+      <MetricsSlot server={server} isRunning={isRunning} />
 
       <Dialog
         open={confirming !== null}
