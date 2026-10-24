@@ -89,7 +89,7 @@ The default response above is unchanged when `include` is omitted.
 !!! note "Summary behavior"
     - `type`, `version`, and `memory` come from the server's `config.env`.
     - `players` and `stats` are returned only for running servers. `players` is `null` when the RCON query fails or times out. `stats` (`memoryUsage`, `memoryLimit`, in bytes) is omitted when `docker stats` does not answer in time.
-    - RCON and stats run in parallel for running servers with a timeout of about 2 seconds each, so one slow server only gets `players: null`.
+    - RCON and stats run in parallel for running servers with timeouts of about 2 seconds (RCON) and 3 seconds (stats), so one slow server only gets `players: null` (or no `stats`).
     - Results are cached for about 10 seconds per server.
     - `totals.playersOnline` and `totals.playersMax` sum only the servers whose players are known. `totals.running` is the number of running servers.
 

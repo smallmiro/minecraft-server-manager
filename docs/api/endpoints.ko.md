@@ -89,7 +89,7 @@ API 서버 상태를 확인합니다.
 !!! note "summary 동작"
     - `type`, `version`, `memory`는 서버의 `config.env`에서 가져옵니다.
     - `players`와 `stats`는 실행 중인 서버에만 포함됩니다. RCON 조회가 실패하거나 시간 초과되면 `players`는 `null`입니다. `stats`(`memoryUsage`, `memoryLimit`, 바이트 단위)는 `docker stats`가 제때 응답하지 않으면 빠집니다.
-    - 실행 중인 서버마다 RCON과 stats를 병렬로 조회하며 각각 약 2초 타임아웃을 적용하므로, 느린 서버 하나는 `players: null`만 받습니다.
+    - 실행 중인 서버마다 RCON과 stats를 병렬로 조회하며 RCON 약 2초, stats 약 3초 타임아웃을 적용하므로, 느린 서버 하나는 `players: null`(또는 `stats` 없음)만 받습니다.
     - 결과는 서버별로 약 10초 동안 캐시됩니다.
     - `totals.playersOnline`과 `totals.playersMax`는 플레이어 수를 알 수 있는 서버만 합산합니다. `totals.running`은 실행 중인 서버 수입니다.
 
