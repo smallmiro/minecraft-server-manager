@@ -113,26 +113,6 @@ export class Server {
   }
 
   /**
-   * Convert to CLI arguments for create-server.sh
-   * @deprecated create-server.sh was removed in #675. Removed in v3.0.0 (#736).
-   */
-  toCreateArgs(): string[] {
-    const args: string[] = [];
-
-    args.push('-t', this._config.type.value);
-    args.push('-v', this._config.version.value);
-
-    // Add world options
-    args.push(...this._config.worldOptions.toCliArgs());
-
-    if (!this.autoStart) {
-      args.push('--no-start');
-    }
-
-    return args;
-  }
-
-  /**
    * Convert to environment variables for config.env
    */
   toEnvVars(): Record<string, string> {

@@ -206,11 +206,6 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     return names;
   }
 
-  /** @deprecated Use load(). Removed in v3.0.0 (#736). */
-  async get(name: string): Promise<ServerSpec | null> {
-    return (await this.load(name))?.document ?? null;
-  }
-
   async save(spec: ServerSpec): Promise<void> {
     await this.write(spec as ServerSpecDocument);
   }

@@ -50,15 +50,12 @@ export interface ServerSpecDeleteResult {
 /**
  * Server Spec Repository - Outbound Port (ADR-0001, settled by ADR-0003, #675)
  *
- * `servers/<n>/server.yaml` is the server definition. The four v2 (D1)
- * methods keep their signatures until v3.0.0 (#715, #736); #675 adds
- * load/write. Errors are ServerSpecError (domain).
+ * `servers/<n>/server.yaml` is the server definition. Errors are
+ * ServerSpecError (domain).
  */
 export interface IServerSpecRepository {
   /** One `{ name }` per server directory with server.yaml or config.env. */
   list(): Promise<ServerSpec[]>;
-  /** The document, typed as the v2 ServerSpec. @deprecated Use load(). Removed in v3.0.0 (#736). */
-  get(name: string): Promise<ServerSpec | null>;
   /** write(spec) after checking that `spec` is a full document; a bare `{ name }` → 'invalid_spec' listing the missing fields. */
   save(spec: ServerSpec): Promise<void>;
   /**

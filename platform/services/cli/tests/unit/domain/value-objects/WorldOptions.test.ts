@@ -82,28 +82,6 @@ describe('WorldOptions Value Object', () => {
     });
   });
 
-  describe('CLI arguments', () => {
-    it('should generate seed argument', () => {
-      const options = WorldOptions.newWorld('12345');
-      assert.deepStrictEqual(options.toCliArgs(), ['-s', '12345']);
-    });
-
-    it('should generate no args for new world without seed', () => {
-      const options = WorldOptions.newWorld();
-      assert.deepStrictEqual(options.toCliArgs(), []);
-    });
-
-    it('should generate world argument', () => {
-      const options = WorldOptions.existingWorld('survival');
-      assert.deepStrictEqual(options.toCliArgs(), ['-w', 'survival']);
-    });
-
-    it('should generate URL argument', () => {
-      const options = WorldOptions.downloadWorld('https://example.com/world.zip');
-      assert.deepStrictEqual(options.toCliArgs(), ['-u', 'https://example.com/world.zip']);
-    });
-  });
-
   describe('default', () => {
     it('should return new world by default', () => {
       const options = WorldOptions.default();

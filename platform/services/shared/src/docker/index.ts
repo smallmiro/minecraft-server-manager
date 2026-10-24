@@ -14,8 +14,7 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot } from '../utils/index.js';
-import { assertEnvFileValue, parseEnvDocument } from '../utils/env-file.js';
-import { atomicWriteFileSync } from '../utils/atomic-write.js';
+import { parseEnvDocument } from '../utils/env-file.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
   DockerComposeRuntimeAdapter,
@@ -661,25 +660,6 @@ export function parseRouterHosts(composeContent: string): string[] {
 }
 
 /**
- * Replace the mc-router.host label value with the given hosts (content unchanged if label absent)
- * @deprecated A regex edit of a generated file (#675): change routing in the ServerSpec. Removed in v3.0.0 (#736).
- */
-export function replaceRouterHosts(composeContent: string, hosts: string[]): string {
-  return composeContent.replace(ROUTER_HOST_LABEL_REGEX, (_m, open: string, _v: string, close: string) => `${open}${hosts.join(',')}${close}`);
-}
-
-/**
- * Swap oldHost for newHost in a host list: keeps position, never duplicates,
- * appends when oldHost is absent, removes oldHost when newHost is null.
- */
-function swapRouterHost(hosts: string[], oldHost: string | null, newHost: string | null): string[] {
-  const kept = hosts.filter((h) => !sameHost(h, oldHost) || sameHost(h, newHost));
-  if (newHost === null || kept.some((h) => sameHost(h, newHost))) return kept;
-  const i = hosts.findIndex((h) => sameHost(h, oldHost));
-  return i === -1 ? [...kept, newHost] : [...kept.slice(0, i), newHost, ...kept.slice(i)];
-}
-
-/**
  * Decide the PLAYIT_DOMAIN after the custom hostname list was edited (pure, no I/O).
  * Current domain still listed → unchanged; otherwise exactly one newly added host
  * becomes the domain; zero or 2+ added → null (remove). No current domain → null.
@@ -696,54 +676,4 @@ export function resolvePlayitDomain(
   if (nextCustom.some((h) => sameHost(h, currentDomain))) return currentDomain;
   const added = nextCustom.filter((h) => !previousCustom.some((p) => sameHost(h, p)));
   return added.length === 1 ? added[0]! : null;
-}
-
-/**
- * @deprecated Writes config.env and the compose directly (#675): use
- * updateServerSpec with setEnvKeys({ set: { PLAYIT_DOMAIN } }). Removed in v3.0.0 (#736).
- *
- * Set or remove a server's playit.gg domain in config.env, and keep the
- * mc-router.host label in docker-compose.yml in sync (skipped if file/label absent)
- * @param domain - Domain string to set, or null to remove
- * @throws Error if config.env does not exist
- * @throws EnvValueError if domain has a line break or control character
- */
-export function setServerPlayitDomain(serverName: string, domain: string | null, serversDir?: string): void {
-  const dir = serversDir ?? getServersDir();
-  const configPath = join(dir, serverName, 'config.env');
-
-  if (!existsSync(configPath)) {
-    throw new Error(`config.env not found for server '${serverName}': ${configPath}`);
-  }
-
-  if (domain !== null) assertEnvFileValue('PLAYIT_DOMAIN', domain);
-
-  const previousDomain = getServerPlayitDomain(serverName, dir);
-  let content = readFileSync(configPath, 'utf-8');
-
-  if (domain === null) {
-    // Remove PLAYIT_DOMAIN line and its comment header
-    content = content.replace(/\n?# playit\.gg External Domain\n/g, '\n');
-    content = content.replace(/^PLAYIT_DOMAIN=.*\n?/m, '');
-  } else if (content.match(/^PLAYIT_DOMAIN=/m)) {
-    // Update existing
-    // Callback, so '$`', "$'" and '$&' in the domain stay literal (#726)
-    content = content.replace(/^PLAYIT_DOMAIN=.*$/m, () => `PLAYIT_DOMAIN=${domain}`);
-  } else {
-    // Append new
-    const suffix = content.endsWith('\n') ? '' : '\n';
-    content += `${suffix}\n# playit.gg External Domain\nPLAYIT_DOMAIN=${domain}\n`;
-  }
-
-  atomicWriteFileSync(configPath, content);
-
-  const composePath = join(dir, serverName, 'docker-compose.yml');
-  if (!existsSync(composePath)) return;
-  const compose = readFileSync(composePath, 'utf-8');
-  const hosts = parseRouterHosts(compose);
-  if (hosts.length === 0) return;
-  const nextHosts = swapRouterHost(hosts, previousDomain, domain);
-  if (nextHosts.join(',') !== hosts.join(',')) {
-    atomicWriteFileSync(composePath, replaceRouterHosts(compose, nextHosts));
-  }
 }

@@ -17,7 +17,6 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
     startPlayitAgent: vi.fn(),
     stopPlayitAgent: vi.fn(),
     getServerPlayitDomain: vi.fn(),
-    setServerPlayitDomain: vi.fn(),
     getConfiguredServers: vi.fn(() => []),
   };
 });
