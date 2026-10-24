@@ -94,13 +94,15 @@ v3.0.0은 Bash 스크립트를 모두 없앱니다(#715). `mcctl`은 더 이상 
 | `create-server.sh` | `mcctl create` |
 | `delete-server.sh` | `mcctl delete` |
 | `backup.sh push` / `status` / `history` / `restore` | `mcctl backup push` / `status` / `history` / `restore` |
-| `lock.sh` | `mcctl world` (`list`, `assign`, `release`, [월드 배정 규칙](../cli/commands.md#world-assignment-rules) 참고) |
+| `lock.sh` | `mcctl world` (`list`, `assign`, `release`, [월드 배정 규칙](../cli/commands.ko.md#world-assignment-rules) 참고) |
 | `player.sh lookup` / `uuid` | `mcctl player info <name> [--offline]` |
 | `logs.sh` | `mcctl logs` |
 | `init.sh` | `mcctl init` |
 | `render-map.sh` | CLI 명령 없음. 웹 콘솔의 **Render map**이나 API를 사용합니다 (BlueMap) |
+| `migrate-nip-io.sh` | 전용 명령 없음. 호스트 IP가 바뀐 뒤 `mcctl init --reconfigure`를 실행하고 "Update existing servers with new IP hostnames?"에 yes로 답하세요. 모든 서버를 다시 렌더링하며 nip.io 라우터 호스트가 새 `HOST_IPS`를 따릅니다(직접 추가한 호스트는 유지) |
+| `lib/common.sh` | 없음. 스크립트 내부 헬퍼 라이브러리였습니다. 이름 규칙은 TypeScript에 있습니다 |
 
-- 서버는 그대로 동작합니다. 서버를 바꾸는 첫 명령이 `servers/<name>/server.yaml`을 만들고 `config.env`와 서버의 `compose.yml`을 다시 씁니다. 자세한 내용은 [server.yaml](../configuration/server-yaml.md)을 보세요.
+- 서버는 그대로 동작합니다. 서버를 바꾸는 첫 명령이 `servers/<name>/server.yaml`을 만들고 `config.env`와 서버의 `compose.yml`을 다시 씁니다. 자세한 내용은 [server.yaml](../configuration/server-yaml.ko.md)을 보세요.
 
 **확인 기준:** `ls $ROOT/scripts`가 폴더 없음을 보고하고(또는 남기기로 선택했고), `crontab -l`과 `systemctl list-timers`에 그 폴더의 `.sh` 파일이 남아 있지 않습니다.
 
