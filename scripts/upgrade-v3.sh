@@ -44,6 +44,7 @@ RC=0
 STOPPED=0
 CUR_OLD=""
 CUR_NOW=""
+MCCTL_INSTALLS=""
 UPDATE_ACTION=""
 ECO_BAK=""
 NEED_RESTART=0
@@ -230,6 +231,7 @@ pm2_apps() {
 }
 
 finish() {
+  local others
   say ""
   printf '%s== Step 9: Summary ==%s\n' "$BOLD" "$RST"
   log "== Step 9: Summary =="
@@ -247,6 +249,11 @@ finish() {
     if [ "$NEED_RESTART" = 1 ]; then
       say "  - Restart mcctl-api and the console so PM2 reads ecosystem.config.cjs again:"
       say "      $RESTART_CMD"
+    fi
+    others=$(other_installs)
+    if [ -n "$others" ]; then
+      say "  - Other mcctl installs on PATH are not $CUR_NOW (another shell, cron or PATH order runs them); update each:"
+      say "$others"
     fi
     say "  - Restart running servers so they pick up new images and settings:"
     say "      mcctl stop <server> && mcctl start <server>"
@@ -283,6 +290,43 @@ rollback_hint() {
   fi
 }
 
+# other_installs: an update command for each mcctl after the first on PATH
+# whose version is not CUR_NOW
+other_installs() {
+  local f v
+  printf '%s\n' "$MCCTL_INSTALLS" | sed 1d | while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    v=$(capture "$f" --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)
+    if [ "$v" != "$CUR_NOW" ]; then
+      printf '      npm install -g --prefix %s %s@%s   # %s is %s\n' "$(prefix_of "$f")" "$PKG" "$CUR_NOW" "$f" "${v:-unknown}"
+    fi
+  done
+}
+
+# prefix_of <bin path>: the npm prefix of <prefix>/bin/<command>
+prefix_of() { (cd "$(dirname "$1")/.." 2>/dev/null && pwd -P); }
+
+# 'mcctl update' runs 'npm install -g', which installs into npm's global
+# prefix. If the first mcctl on PATH lives elsewhere, the update lands in
+# another install and this one stays old.
+# check_npm_prefix [PM2 Node major]
+check_npm_prefix() {
+  local first np interp hint
+  first=$(printf '%s\n' "$MCCTL_INSTALLS" | head -n 1)
+  np=$(capture npm prefix -g | tail -n 1)
+  if [ -z "$np" ] || [ ! -d "$np" ]; then return 0; fi
+  np=$(cd "$np" && pwd -P)
+  if [ "$(prefix_of "$first")" = "$np" ]; then return 0; fi
+  if [ -f "$ROOT/ecosystem.config.cjs" ] && command -v node >/dev/null 2>&1; then
+    interp=$(state_get "$(eco_state "$ROOT/ecosystem.config.cjs")" interp)
+  fi
+  case "${interp:-}" in
+    /*) hint="export PATH=\"$(dirname "$interp"):\$PATH\"" ;;
+    *) hint="nvm use ${1:-<the Node major PM2 runs>}" ;;
+  esac
+  stop_with "the first mcctl on PATH ($first) is not under npm's global prefix ($np): 'mcctl update' would update another install and leave this one at $CUR_OLD. Nothing was changed. Put the bin directory of PM2's Node first on PATH ($hint), check that 'command -v mcctl' is under 'npm prefix -g', then run this script again. If you update the CLI yourself, use --skip-update."
+}
+
 stop_with() {
   err "$1"
   RC=1
@@ -294,7 +338,7 @@ stop_with() {
 
 step0_precheck() {
   step 0 "Pre-flight checks (read only)"
-  local f hits u t gitv major_shell n units
+  local f hits u t gitv major_shell pm2_major="" n units
   if [ ! -f "$ROOT/docker-compose.yml" ] && [ ! -f "$ROOT/.env" ]; then
     stop_with "$ROOT is not a platform root (no docker-compose.yml and no .env). Check --root."
   fi
@@ -310,9 +354,9 @@ step0_precheck() {
   if [ "$n" -eq 0 ]; then
     stop_with "mcctl is not installed or not on PATH"
   elif [ "$n" -gt 1 ]; then
-    add_warning "several mcctl installs found (the first one runs):"
-    say "$(printf '%s\n' "$u" | sed 's/^/      /')"
+    add_warning "several mcctl installs found (the first one runs): $(printf '%s\n' "$u" | awk 'NR > 1 { printf ", " } { printf "%s", $0 }')"
   fi
+  MCCTL_INSTALLS=$u
   CUR_OLD=$(cur_version)
   CUR_NOW=$CUR_OLD
   if [ -z "$CUR_OLD" ]; then
@@ -326,6 +370,7 @@ step0_precheck() {
     if [ -n "$t" ]; then
       say "PM2 apps (name status node kill_timeout):"
       say "$(printf '%s\n' "$t" | sed 's/^/      /')"
+      pm2_major=$(printf '%s\n' "$t" | awk '$3 != "?" { split($3, a, "."); print a[1]; exit }')
       n=$(printf '%s\n' "$t" | awk -v m="$major_shell" '$3 != "?" { split($3, a, "."); if (a[1] != m) { print $3; exit } }')
       if [ -n "$n" ]; then
         add_warning "PM2 runs Node $n but this shell has Node $(capture node --version): switch with 'nvm use <major>' before continuing (native better-sqlite3 ABI)"
@@ -376,6 +421,7 @@ EOF
   fi
 
   decide_update
+  if [ "$UPDATE_ACTION" = run ]; then check_npm_prefix "$pm2_major"; fi
   if [ -n "$WARNINGS" ]; then
     record 0 "Pre-flight" ok "with warnings"
   else
@@ -583,6 +629,7 @@ eco_state() {
     console.log("kill=" + (a && a.kill_timeout !== undefined ? a.kill_timeout : ""));
     console.log("auth=" + (env.AUTH_MODE !== undefined ? env.AUTH_MODE : ""));
     console.log("wl=" + (env.AUTH_IP_WHITELIST !== undefined ? env.AUTH_IP_WHITELIST : ""));
+    console.log("interp=" + (a && a.interpreter !== undefined ? a.interpreter : ""));
     console.log("others=" + apps.filter((x) => x !== a).map((x) => JSON.stringify(x)).join(";"));
   ' "$1"
 }

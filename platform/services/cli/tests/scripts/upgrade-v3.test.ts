@@ -124,7 +124,11 @@ beforeEach(() => {
   const bin = join(ctx.fake, 'bin');
   symlinkSync(process.execPath, join(bin, 'node'));
   put(join(bin, 'mcctl'), FAKE_MCCTL, 0o755);
-  put(join(bin, 'npm'), FAKE_LOGGER('[ "$1" = view ] && echo "$FAKE_NPM_LATEST"'), 0o755);
+  put(
+    join(bin, 'npm'),
+    FAKE_LOGGER('[ "$1" = view ] && echo "$FAKE_NPM_LATEST"; [ "$1" = prefix ] && echo "$FAKE_NPM_PREFIX"'),
+    0o755,
+  );
   put(
     join(bin, 'pm2'),
     FAKE_LOGGER(`if [ "$1" = jlist ]; then
@@ -204,6 +208,7 @@ function run(opts: RunOpts = {}) {
       TMPDIR: ctx.tmp,
       FAKE_DIR: ctx.fake,
       FAKE_NPM_LATEST: '3.0.0',
+      FAKE_NPM_PREFIX: ctx.fake, // the fake mcctl is <prefix>/bin/mcctl
       MCCTL_UPGRADE_TTY: join(ctx.base, 'no-such-tty'),
       MCCTL_UPGRADE_HEALTH_WAIT: '0',
       ...opts.env,
@@ -465,6 +470,58 @@ describe('upgrade-v3.sh', () => {
     const r = run({ args: ['--dry-run'], env: { PATH: `${bin}:${bin}:/usr/bin:/bin` } });
     expect(r.out).toContain('mcctl version: 2.33.0');
     expect(r.out).not.toContain('several mcctl installs');
+  });
+
+  describe('several mcctl installs', () => {
+    const otherInstall = (): string => {
+      put(join(ctx.base, 'other/bin/mcctl'), '#!/bin/sh\necho 2.33.0\n', 0o755);
+      return `${join(ctx.fake, 'bin')}:${join(ctx.base, 'other/bin')}:${HOST_PATH}`;
+    };
+
+    it('stops in pre-flight, before any change, when npm installs into another prefix', () => {
+      const nvm = join(ctx.base, 'nvm');
+      mkdirSync(nvm);
+      put(
+        join(ctx.root, 'ecosystem.config.cjs'),
+        ECOSYSTEM.replace("script: 'index.js',", "script: 'index.js',\n      interpreter: '/opt/node22/bin/node',"),
+      );
+      const before = snapshot(ctx.root);
+      for (const args of [['--yes'], ['--dry-run']]) {
+        const r = run({ args, env: { FAKE_NPM_PREFIX: nvm } });
+        expect(r.code, args[0]).not.toBe(0);
+        expect(r.out).toContain(`is not under npm's global prefix (${nvm})`);
+        expect(r.out).toContain('export PATH="/opt/node22/bin:$PATH"');
+        expect(r.out).toContain('did not finish');
+      }
+      expect(snapshot(ctx.root)).toEqual(before);
+      expect(calls()).not.toMatch(/mcctl (update|upgrade)/);
+    });
+
+    it('suggests nvm use with PM2\'s Node major when the ecosystem names no interpreter', () => {
+      const nvm = join(ctx.base, 'nvm');
+      mkdirSync(nvm);
+      const r = run({ args: ['--yes'], env: { FAKE_NPM_PREFIX: nvm } });
+      expect(r.out).toContain(`nvm use ${process.versions.node.split('.')[0]}`);
+    });
+
+    it('does not check the prefix when the update is skipped', () => {
+      const nvm = join(ctx.base, 'nvm');
+      mkdirSync(nvm);
+      const r = run({ args: ['--yes', '--skip-update'], env: { FAKE_NPM_PREFIX: nvm } });
+      expect(r.code).toBe(0);
+      expect(r.out).not.toContain("npm's global prefix");
+    });
+
+    it('shows the paths in the warning and how to update the installs left behind', () => {
+      const r = run({ args: ['--yes'], env: { PATH: otherInstall() } });
+      expect(r.code).toBe(0);
+      const warnings = r.out.slice(r.out.indexOf('Warnings:'));
+      expect(warnings).toContain(
+        `several mcctl installs found (the first one runs): ${join(ctx.fake, 'bin/mcctl')}, ${join(ctx.base, 'other/bin/mcctl')}`,
+      );
+      const todo = r.out.slice(r.out.indexOf('Still to do by hand'), r.out.indexOf('Rollback'));
+      expect(todo).toContain(`npm install -g --prefix ${join(ctx.base, 'other')} @minecraft-docker/mcctl@3.0.0`);
+    });
   });
 
   it('highlights duplicate world warnings', () => {
