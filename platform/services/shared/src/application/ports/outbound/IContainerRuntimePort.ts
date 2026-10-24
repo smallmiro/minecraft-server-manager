@@ -40,6 +40,11 @@ export interface IContainerRuntimePort {
   /** Last `lines` lines (default 50). '' on failure. */
   getLogs(name: ServerName | string, lines?: number): string;
   getStats(name: ServerName | string): ContainerStats | null;
+  /**
+   * getStats without blocking the event loop (#764): same parsing and null
+   * sentinel, the query runs as an awaited child process. For callers on request paths.
+   */
+  getStatsAsync(name: ServerName | string): Promise<ContainerStats | null>;
   getUptime(name: ServerName | string): { uptime: string; seconds: number } | null;
 
   /** Create the workload if missing, then run it. */

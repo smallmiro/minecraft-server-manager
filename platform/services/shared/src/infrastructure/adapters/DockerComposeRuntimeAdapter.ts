@@ -231,6 +231,20 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     return parseDockerStats(result);
   }
 
+  /** getStats through an awaited `docker stats` (#764). Non-zero exit or unparseable → null. */
+  async getStatsAsync(name: ServerName | string): Promise<ContainerStats | null> {
+    const result = await execCommandAsync('docker', [
+      'stats',
+      '--no-stream',
+      '--format',
+      '{{.MemUsage}},{{.CPUPerc}}',
+      '--',
+      workloadNameOf(name),
+    ]);
+    if (result.code !== 0) return null;
+    return parseDockerStats(result.stdout);
+  }
+
   /**
    * Get container uptime (time since start)
    */
@@ -408,17 +422,17 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
  */
 export class DockerServerConsoleAdapter implements IServerConsolePort {
   /**
-   * Get online players via RCON
+   * Get online players via RCON. Runs `docker exec` as an awaited child process
+   * (#764) so callers can probe several servers in parallel; 5 s timeout as before.
    */
   async listPlayers(name: ServerName | string): Promise<PlayerListResult | null> {
     const container = workloadNameOf(name);
     try {
-      const rawResult = execFileSync('docker', ['exec', '--', container, 'rcon-cli', 'list'], {
+      const { stdout } = await execFilePromise('docker', ['exec', '--', container, 'rcon-cli', 'list'], {
         encoding: 'utf-8',
         timeout: 5000,
-        stdio: ['pipe', 'pipe', 'pipe'],
       });
-      return parseRconPlayerList(rawResult);
+      return parseRconPlayerList(stdout);
     } catch {
       return null;
     }
