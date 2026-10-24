@@ -82,7 +82,8 @@ mcctl upgrade --non-interactive   # 프롬프트 없이 기본값 적용(자동�
 
 v3.0.0은 Bash 스크립트를 모두 없앱니다(#715). `mcctl`은 더 이상 `<root>/scripts`를 읽지 않고, 환경 변수 `MCCTL_SCRIPTS`는 무시됩니다.
 
-- `mcctl upgrade`는 `<root>/scripts`를 보여 주고, **`y`로 답했을 때만**(기본값 `N`) 삭제합니다. 터미널이 없으면(`--non-interactive`, cron) 안내만 출력하고 아무것도 지우지 않습니다. 폴더를 직접 지워도 됩니다. 플랫폼 루트의 다른 파일은 이 폴더에 의존하지 않습니다.
+- `mcctl upgrade`는 `<root>/scripts`의 경로, v3.0.0부터 쓰지 않으며 직접 고친 파일이 있을 수 있다는 경고, 이 대응표 링크를 출력합니다. 터미널에서는 `Remove <path>?`를 묻고 **`y`로 답했을 때만**(기본값 `N`) 삭제합니다. `--non-interactive`이거나 터미널이 없으면(cron) 힌트로 `rm -r <path>`만 출력하고 아무것도 지우지 않습니다. `--dry-run`은 `Would ask before removing <path>.`만 출력합니다. 심볼릭 링크는 링크만 지우고 따라가지 않습니다. 확인을 건너뛰는 옵션은 없습니다. 폴더를 직접 지워도 됩니다. 플랫폼 루트의 다른 파일은 이 폴더에 의존하지 않습니다.
+- **지우기 전에 직접 고친 스크립트를 복사해 두세요**(예: `cp -r $ROOT/scripts ~/scripts-backup`). 삭제는 되돌릴 수 없습니다.
 - cron, systemd 유닛, 직접 만든 스크립트에서 `<root>/scripts/*.sh`를 바로 부르고 있었다면 폴더를 지우기 전에 바꾸세요. 대응표는 다음과 같습니다.
 
 | 예전 스크립트 (`<root>/scripts/`) | v3.0.0 |

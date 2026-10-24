@@ -81,7 +81,8 @@ mcctl upgrade --non-interactive   # apply defaults without prompting (automation
 
 v3.0.0 removes every Bash script (#715). `mcctl` no longer reads `<root>/scripts`, and the `MCCTL_SCRIPTS` environment variable is ignored.
 
-- `mcctl upgrade` lists `<root>/scripts` and deletes it **only after you answer `y`** (default `N`). Without a terminal (`--non-interactive`, cron) it prints a notice and deletes nothing. You can also delete the folder yourself; nothing else in the platform root depends on it.
+- `mcctl upgrade` prints the path of `<root>/scripts`, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and a link to this table. In a terminal it asks `Remove <path>?` and deletes **only after you answer `y`** (default `N`). With `--non-interactive` or without a terminal (cron) it prints `rm -r <path>` as a hint and deletes nothing; `--dry-run` only says `Would ask before removing <path>.`. A symbolic link is unlinked, not followed. There is no option to skip the question. You can also delete the folder yourself; nothing else in the platform root depends on it.
+- **Before you delete it, copy any script you edited** (for example `cp -r $ROOT/scripts ~/scripts-backup`). Deleting cannot be undone.
 - If cron jobs, systemd units or your own scripts called `<root>/scripts/*.sh` directly, change them before you delete the folder. Use this table:
 
 | Old script (`<root>/scripts/`) | v3.0.0 |
