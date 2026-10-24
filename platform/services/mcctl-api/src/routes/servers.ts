@@ -25,6 +25,7 @@ import {
   CreateServerUseCase,
   ServerStartError,
   ServerSpecError,
+  parseCreateServerConfig,
   WorldAssignmentError,
   ApiPromptAdapter,
   ShellAdapter,
@@ -885,6 +886,14 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       modLoader,
       modpackExcludeFiles: excludeFiles && excludeFiles.length > 0 ? excludeFiles : undefined,
     };
+    // An input the value objects refuse (memory: '256M') is a 400 for JSON and SSE alike: parsed
+    // before the event stream opens. Failures once files are written stay SSE error events.
+    try {
+      parseCreateServerConfig(createConfig, { versionText: true });
+    } catch (error) {
+      const failure = serverSpecFailure(error as ServerSpecError);
+      return reply.code(failure.status).send(failure.body);
+    }
     const useCase = serverProvision.createUseCase({ sudoPassword });
     const auditDetails = {
       type: type ?? null,
