@@ -138,8 +138,10 @@ export function OverviewConsole({
           borderBottom: '1px solid',
           borderColor: 'divider',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          gap: 1.25,
+          columnGap: 1.25,
+          rowGap: 0.5,
         }}
       >
         <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
