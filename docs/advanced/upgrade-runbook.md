@@ -48,7 +48,7 @@ Before the first step the script reads `mcctl --version` and `npm view @minecraf
 | 5 `ecosystem.config.cjs` | Before v2.32.0, rewrites old `AUTH_MODE` values ([4-1](#4-1-upgrading-to-v2320-or-later-check-the-console-access-mode-633)); adds `kill_timeout` to mcctl-api ([4-2](#pm2-kill-timeout)); then `mcctl console service restart --console --force` | optional (AUTH_MODE: no; kill_timeout: yes if `BACKUP_AUTO_ON_STOP=true`; restart: yes) |
 | 6 ServerSpec | Shows `mcctl migrate spec --all --dry-run`, optionally runs it | optional (no) |
 | 7 Worlds | Shows `mcctl world list`, highlights duplicate or warning lines | automatic |
-| 7b Stopped servers | Lists running servers (restart them yourself). On yes, recreates each stopped one with `docker compose up --no-start --no-deps mc-<server>`, so its next start uses the pulled image; otherwise the summary lists those commands | optional (no) |
+| 7b Stopped servers | Lists running servers (restart them yourself) and stopped ones already on the local image their compose service names (`up to date`). On yes, recreates each other stopped one with `docker compose up --no-start --no-deps mc-<server>`, so its next start uses the pulled image; otherwise the summary lists those commands. Without such servers it does not ask | optional (no) |
 | 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, PM2's mcctl-api `kill_timeout` equals the one in `ecosystem.config.cjs`, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
 | 9 Summary | Result of each step, what is left (including mcctl installs still on the old version), rollback, log path | automatic |
 
