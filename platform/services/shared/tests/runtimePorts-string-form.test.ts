@@ -1,8 +1,9 @@
 /**
- * #665 widened the runtime, console, router and RCON ports to `ServerName | string`
- * and deprecated members instead of removing them (#715: v2.x never breaks a
- * shared export or signature). This compiles v2 consumer code against src.
- * The runtime contract of the released IRconPort is in rconPort-v2-contract.test.ts.
+ * #665 widened the runtime, console, router and RCON ports to `ServerName | string`.
+ * The container-name string form stays until its callers move (the router and
+ * playit agent until #641; see ADR-0001 "Callers still on the string form").
+ * This compiles string-form callers against src. The runtime contract of the
+ * released IRconPort is in rconPort-v2-contract.test.ts.
  */
 import { describe, it, expect } from 'vitest';
 import { writeFileSync, rmSync } from 'node:fs';
@@ -10,7 +11,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
-const V2_CONSUMER = `
+const STRING_FORM_CALLER = `
 import type {
   IContainerRuntimePort, IServerConsolePort, IRouterStatusPort, IRconPort,
   ContainerStatus,
@@ -29,7 +30,7 @@ export class V2Rcon implements IRconPort {
   async getEntityPosition(container: string, player: string) { return container && player ? null : null; }
 }
 
-// v2 callers: container-name strings, deprecated getters and members, old constructors
+// Callers that pass container-name strings
 export async function use(
   runtime: IContainerRuntimePort, console: IServerConsolePort, router: IRouterStatusPort,
   rcon: IRconPort
@@ -49,11 +50,11 @@ export async function use(
 }
 `;
 
-describe('runtime ports v2 contract (#665)', () => {
-  it('v2 consumer code still type-checks', () => {
+describe('runtime ports accept a container-name string (#665)', () => {
+  it('string-form callers type-check', () => {
     const testsDir = dirname(fileURLToPath(import.meta.url));
     const file = join(testsDir, `.runtime-ports-compat-${process.pid}.ts`);
-    writeFileSync(file, V2_CONSUMER);
+    writeFileSync(file, STRING_FORM_CALLER);
     try {
       const { options } = ts.parseJsonConfigFileContent(
         { extends: '../tsconfig.json', compilerOptions: { noEmit: true, rootDir: '..', noUnusedParameters: false } },
