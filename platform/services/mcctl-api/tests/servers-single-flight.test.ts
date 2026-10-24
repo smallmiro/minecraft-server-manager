@@ -265,13 +265,35 @@ describe('server create/delete single-flight (#656)', () => {
     });
   });
 
-  it('a delete that never ends holds the queue no longer than its limit', async () => {
-    lifecycleLimits.deleteTimeoutMs = 20;
-    lifecycleLimits.killGraceMs = 10;
+  it('a delete holds the queue until it ends, up to 30 minutes like a streaming create (#735 review)', () => {
+    // A delete is not killed, and each runtime step or a cross-device world copy can take minutes.
+    expect(defaults.deleteHoldMs).toBe(30 * 60_000);
+    expect(defaults.deleteHoldMs).toBe(defaults.sseCreateTimeoutMs);
+    expect(Object.keys(defaults).sort()).toEqual(['createTimeoutMs', 'deleteHoldMs', 'sseCreateTimeoutMs']);
+  });
+
+  it('a slow delete keeps the queue until it ends', async () => {
+    lifecycleLimits.deleteHoldMs = 5_000;
     const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
     await started(1);
     const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'next', type: 'PAPER' } });
-    await started(2); // after deleteTimeoutMs + 3 * killGraceMs
+    await queued(2);
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(scripts()).toEqual(['delete old']);
+
+    deletes[0]!.done();
+    expect((await remove).statusCode).toBe(200);
+    await started(2);
+    creates[0]!.done();
+    expect((await create).statusCode).toBe(201);
+  });
+
+  it('a delete that never ends holds the queue no longer than deleteHoldMs', async () => {
+    lifecycleLimits.deleteHoldMs = 40;
+    const remove = app.inject({ method: 'DELETE', url: '/api/servers/old' });
+    await started(1);
+    const create = app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'next', type: 'PAPER' } });
+    await started(2); // after deleteHoldMs
     expect(scripts()).toEqual(['delete old', 'create next']);
     creates[0]!.done();
     expect((await create).statusCode).toBe(201);

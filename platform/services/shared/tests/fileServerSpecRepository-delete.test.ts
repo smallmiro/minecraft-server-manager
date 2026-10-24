@@ -7,6 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import yaml from 'js-yaml';
 import { Paths } from '../src/utils/index.js';
 import {
   FileServerSpecRepository,
@@ -125,6 +126,22 @@ describe('delete: server directory and include entry', () => {
     writeFileSync(at('servers', 'compose.yml'), 'include: [wood/docker-compose.yml, ironwood/docker-compose.yml]\n');
     await repo.delete('wood');
     expect(includeEntries(compose())).toEqual(['ironwood/docker-compose.yml']);
+  });
+
+  it('an object entry listing several paths keeps the other paths (#735 review)', async () => {
+    writeFileSync(
+      at('servers', 'compose.yml'),
+      'include:\n' +
+        '  - path:\n      - alpha/docker-compose.yml\n      - beta/docker-compose.yml\n    project_directory: .\n' +
+        '  - path: [alpha/docker-compose.yml]\n' +
+        '  - path: alpha/docker-compose.yml\n' +
+        '  - path: [gamma/docker-compose.yml, delta/docker-compose.yml]\n'
+    );
+    await repo.delete('alpha');
+    expect((yaml.load(compose()) as { include: unknown[] }).include).toEqual([
+      { path: ['beta/docker-compose.yml'], project_directory: '.' },
+      { path: ['gamma/docker-compose.yml', 'delta/docker-compose.yml'] },
+    ]);
   });
 
   it('servers/compose.yml keeps its file mode (#660)', async () => {

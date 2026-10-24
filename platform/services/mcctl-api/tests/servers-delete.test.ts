@@ -22,6 +22,8 @@ const fakes = vi.hoisted(() => ({
   removed: [] as string[],
   removeResult: { success: true } as { success: boolean; error?: string },
   unregisterResult: { status: 'changed' } as { status: string; reason?: string },
+  /** Runs while the container is removed, between the dry run and the delete. */
+  onRemove: undefined as (() => void) | undefined,
 }));
 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => {
@@ -48,6 +50,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   class FakeRuntime {
     async remove(name: { value: string }) {
       fakes.removed.push(name.value);
+      fakes.onRemove?.();
       return fakes.removeResult;
     }
   }
@@ -65,7 +68,11 @@ vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { ServerSpecError } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../src/services/audit-log-service.js';
+import { serverProvision } from '../src/routes/servers.js';
+
+const realDeleteUseCase = serverProvision.deleteUseCase;
 
 const at = (...p: string[]) => join(ROOT, ...p);
 const SECRET = 'top-secret-sudo';
@@ -92,6 +99,8 @@ describe('DELETE /api/servers/:name (#735)', () => {
     fakes.removed.length = 0;
     fakes.removeResult = { success: true };
     fakes.unregisterResult = { status: 'changed' };
+    fakes.onRemove = undefined;
+    serverProvision.deleteUseCase = realDeleteUseCase;
     rmSync(at('servers'), { recursive: true, force: true });
     rmSync(at('worlds'), { recursive: true, force: true });
     mkdirSync(at('servers', 'alpha', 'data', 'alpha'), { recursive: true });
@@ -155,17 +164,40 @@ describe('DELETE /api/servers/:name (#735)', () => {
     expect(writeAuditLog).toHaveBeenCalledWith(expect.objectContaining({ details: { force: false, deleteWorld: true } }));
   });
 
-  it('refuses an unsafe world plan with 500 before the container is touched (#652)', async () => {
+  it('refuses an unsafe world plan with 409 before the container is touched (#652, #735 review)', async () => {
     mkdirSync(at('worlds', 'alpha'));
 
     const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha', payload: { sudoPassword: SECRET } });
 
-    expect(response.statusCode).toBe(500);
+    expect(response.statusCode).toBe(409);
+    expect(response.json().error).toBe('Conflict');
     expect(response.json().message).toMatch(/worlds\/alpha already exists/);
     expect(fakes.removed).toEqual([]);
     expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
     expect(writeAuditLog).toHaveBeenCalledWith(expect.objectContaining({ status: 'failure' }));
     expect(JSON.stringify(vi.mocked(writeAuditLog).mock.calls)).not.toContain(SECRET);
+  });
+
+  it('a refusal after the container was removed is 409 and says the container is gone (#735 review)', async () => {
+    fakes.onRemove = () => mkdirSync(at('worlds', 'alpha')); // another process takes the name meanwhile
+
+    const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: 'Conflict',
+      message: expect.stringMatching(/^Container mc-alpha was stopped and removed\. worlds\/alpha appeared/),
+    });
+    expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
+  });
+
+  it('an invalid_spec refusal is 400, like create', async () => {
+    serverProvision.deleteUseCase = () => ({
+      deprovision: () => Promise.reject(new ServerSpecError('invalid_spec', 'servers/alpha/server.yaml: bad', 'alpha')),
+    });
+    const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: 'BadRequest', message: 'servers/alpha/server.yaml: bad' });
   });
 
   it('a container that cannot be stopped fails with 500 and deletes nothing (#652)', async () => {
