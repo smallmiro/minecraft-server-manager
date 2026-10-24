@@ -17,6 +17,7 @@ import {
   readdirSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -25,6 +26,12 @@ import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../..');
 const SCRIPT = join(REPO_ROOT, 'scripts', 'upgrade-v3.sh');
+// The host's PATH without directories holding a real mcctl, so the script never
+// sees (or runs) an install outside the test; node is linked into the fake bin.
+const HOST_PATH = (process.env.PATH ?? '')
+  .split(':')
+  .filter((d) => d && !existsSync(join(d, 'mcctl')))
+  .join(':');
 
 const FAKE_MCCTL = `#!/bin/sh
 D="$FAKE_DIR"
@@ -107,6 +114,7 @@ beforeEach(() => {
   for (const d of [ctx.root, join(ctx.fake, 'bin'), ctx.home, ctx.tmp]) mkdirSync(d, { recursive: true });
 
   const bin = join(ctx.fake, 'bin');
+  symlinkSync(process.execPath, join(bin, 'node'));
   put(join(bin, 'mcctl'), FAKE_MCCTL, 0o755);
   put(join(bin, 'npm'), FAKE_LOGGER('[ "$1" = view ] && echo "$FAKE_NPM_LATEST"'), 0o755);
   put(
@@ -163,7 +171,7 @@ function run(opts: RunOpts = {}) {
     input: readFileSync(SCRIPT, 'utf8'),
     encoding: 'utf8',
     env: {
-      PATH: `${join(ctx.fake, 'bin')}:${process.env.PATH}`,
+      PATH: `${join(ctx.fake, 'bin')}:${HOST_PATH}`,
       HOME: ctx.home,
       TMPDIR: ctx.tmp,
       FAKE_DIR: ctx.fake,
@@ -242,6 +250,7 @@ describe('upgrade-v3.sh', () => {
     const r = run({ args: ['--yes'] });
     expect(r.code).toBe(0);
     expect(r.out).toContain('Summary');
+    expect(r.out).not.toContain('several mcctl installs'); // the host's own mcctl is not on PATH
     const c = calls();
     expect(c).toMatch(/mcctl update --yes/);
     expect(c).toMatch(/mcctl upgrade --non-interactive/);
@@ -550,7 +559,7 @@ describe('upgrade-v3.sh', () => {
       const r = spawnSync('bash', ['-s', '--', '--yes', '--root', ctx.root], {
         input: head + cut,
         encoding: 'utf8',
-        env: { PATH: `${join(ctx.fake, 'bin')}:${process.env.PATH}`, HOME: ctx.home, TMPDIR: ctx.tmp, FAKE_DIR: ctx.fake },
+        env: { PATH: `${join(ctx.fake, 'bin')}:${HOST_PATH}`, HOME: ctx.home, TMPDIR: ctx.tmp, FAKE_DIR: ctx.fake },
       });
       expect(r.status, cut).not.toBe(0);
     }
