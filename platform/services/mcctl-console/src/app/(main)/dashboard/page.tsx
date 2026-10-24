@@ -68,12 +68,18 @@ export default function DashboardPage() {
 
   const totalWorlds = worldsData?.total || 0;
 
-  // Player totals come from the summary include; null (totals absent) renders "—" rather than a fake 0
-  const totalPlayers: number | null = serversData?.totals?.playersOnline ?? null;
-  const playersMax = serversData?.totals?.playersMax ?? 0;
-  const runningCount = serversData?.totals?.running ?? onlineServers;
-  const silentServers =
-    serversData?.servers.filter((server) => server.status === 'running' && server.players === null).length ?? 0;
+  // Player figures come from the summary include (totals present). They are summed over servers that
+  // are running per the live SSE overlay, so a server stopped since the last poll drops out at once.
+  // null (no summary) renders "—" rather than a fake 0.
+  const liveRunning =
+    serversData?.servers.filter((server) => (liveStatusMap[server.name]?.status || server.status) === 'running') ?? [];
+  const hasSummary = serversData?.totals !== undefined;
+  const totalPlayers: number | null = hasSummary
+    ? liveRunning.reduce((sum, server) => sum + (server.players?.online ?? 0), 0)
+    : null;
+  const playersMax = liveRunning.reduce((sum, server) => sum + (server.players?.max ?? 0), 0);
+  const runningCount = onlineServers;
+  const silentServers = liveRunning.filter((server) => server.players === null).length;
   const playersDescription =
     totalPlayers === null
       ? 'Player data unavailable'
