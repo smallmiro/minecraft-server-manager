@@ -64,3 +64,33 @@ describe('parseChangelog', () => {
     expect(parseChangelog('# Changelog\n\nnothing here', 2)).toEqual([]);
   });
 });
+
+import { compareVersions, isNewerVersion } from './changelog';
+
+describe('compareVersions / isNewerVersion', () => {
+  it('compares numerically, not lexically', () => {
+    expect(compareVersions('2.10.0', '2.9.0')).toBeGreaterThan(0);
+    expect(compareVersions('2.33.0', '2.33.0')).toBe(0);
+    expect(compareVersions('1.0.0', '1.0.1')).toBeLessThan(0);
+  });
+
+  it('tolerates a v prefix and missing segments', () => {
+    expect(compareVersions('v2.34.0', '2.33.9')).toBeGreaterThan(0);
+    expect(compareVersions('2.1', '2.1.0')).toBe(0);
+  });
+
+  it('ranks a prerelease below its release', () => {
+    expect(compareVersions('2.34.0-rc.1', '2.34.0')).toBeLessThan(0);
+  });
+
+  it('isNewerVersion is true only when latest is strictly newer', () => {
+    expect(isNewerVersion('2.34.0', '2.33.0')).toBe(true);
+    expect(isNewerVersion('2.33.0', '2.33.0')).toBe(false);
+    expect(isNewerVersion('2.32.0', '2.33.0')).toBe(false);
+  });
+
+  it('returns false for unparseable versions', () => {
+    expect(isNewerVersion('Unreleased', '2.33.0')).toBe(false);
+    expect(isNewerVersion('2.34.0', 'unknown')).toBe(false);
+  });
+});

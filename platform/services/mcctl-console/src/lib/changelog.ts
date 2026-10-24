@@ -56,3 +56,32 @@ export function parseChangelog(content: string, maxVersions: number): ChangelogV
 
   return versions;
 }
+
+function parseSemver(v: string): { nums: number[]; pre: string } | null {
+  const m = v.trim().match(/^v?(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z.-]+))?(?:\+.*)?$/);
+  if (!m) return null;
+  return { nums: [Number(m[1]), Number(m[2] ?? 0), Number(m[3] ?? 0)], pre: m[4] ?? '' };
+}
+
+/** Small semver compare (major.minor.patch, prerelease ranks below release). Throws on unparseable input. */
+export function compareVersions(a: string, b: string): number {
+  const pa = parseSemver(a);
+  const pb = parseSemver(b);
+  if (!pa || !pb) throw new Error('Invalid version');
+  for (let i = 0; i < 3; i++) {
+    if (pa.nums[i] !== pb.nums[i]) return pa.nums[i] > pb.nums[i] ? 1 : -1;
+  }
+  if (pa.pre === pb.pre) return 0;
+  if (!pa.pre) return 1;
+  if (!pb.pre) return -1;
+  return pa.pre > pb.pre ? 1 : -1;
+}
+
+/** True only when `latest` is strictly newer than `installed`; false if either is unparseable. */
+export function isNewerVersion(latest: string, installed: string): boolean {
+  try {
+    return compareVersions(latest, installed) > 0;
+  } catch {
+    return false;
+  }
+}
