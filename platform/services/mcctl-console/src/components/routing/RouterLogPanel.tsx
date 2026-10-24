@@ -33,11 +33,12 @@ function kindColor(theme: Theme, kind: RouterLogEntry['kind']): string {
   }
 }
 
-/** HH:MM:SS from an ISO-like timestamp; falls back to the raw value. */
+/** Viewer-local HH:MM:SS (logrus writes the container clock, usually UTC); falls back to the raw value. */
 function formatTime(ts?: string): string {
   if (!ts) return '';
-  const match = /T(\d{2}:\d{2}:\d{2})/.exec(ts);
-  return match ? match[1] : ts;
+  const date = new Date(ts);
+  if (Number.isNaN(date.getTime())) return ts;
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 }
 
 const KIND_LABEL: Record<RouterLogEntry['kind'], string> = {

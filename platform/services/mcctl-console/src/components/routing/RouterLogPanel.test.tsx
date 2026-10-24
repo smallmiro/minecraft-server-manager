@@ -63,7 +63,10 @@ describe('RouterLogPanel', () => {
     renderPanel();
     const rows = screen.getAllByTestId('router-log-row');
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toHaveTextContent('09:08:07');
+    // logrus writes the container clock (UTC); the panel shows the viewer's local time like the rest of the console
+    expect(rows[0]).toHaveTextContent(
+      new Date('2026-10-24T09:08:07Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+    );
     expect(rows[0]).toHaveTextContent('survival.local → mc-survival:25565');
     expect(rows[0]).toHaveTextContent('Steve');
     expect(rows[0]).toHaveAttribute('data-kind', 'connect');
