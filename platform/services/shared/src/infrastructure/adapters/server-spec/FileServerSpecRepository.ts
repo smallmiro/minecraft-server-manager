@@ -211,6 +211,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
    * lock, move the world inside the server to worlds/ unless deleteWorld
    * (a failed move puts the entry back), then remove servers/<n> (what rm
    * leaves is a warning). Every refusal comes before the first change.
+   * A second delete of the server, from any process, is 'locked' meanwhile.
    */
   async delete(name: string, options: DeleteServerSpecOptions = {}): Promise<ServerSpecDeleteResult> {
     if (!EXISTING_SERVER_NAME_PATTERN.test(name)) {
@@ -220,7 +221,22 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     if (!(await isDirectory(dir))) {
       throw new ServerSpecError('not_found', `Server '${name}' not found (no servers/${name} directory)`, name);
     }
-    return this.deleteServer(name, dir, options);
+    // One delete of a server at a time across processes (CLI and API): a second one could remove
+    // what the first one may still put back. The lock lives beside servers/<n>, which goes.
+    const lock = await acquireFileLock(join(this.paths.servers, `.${name}.delete.lock`), 'server-delete');
+    if (!lock.ok) {
+      const who = lock.holder ? ` by pid ${lock.holder.pid} since ${lock.holder.startedAt}` : '';
+      throw new ServerSpecError(
+        'locked',
+        `servers/${name} is already being deleted${who} (another mcctl delete); retry when it is done`,
+        name
+      );
+    }
+    try {
+      return await this.deleteServer(name, dir, options);
+    } finally {
+      await lock.release();
+    }
   }
 
   /** delete() once the server directory is known to exist. */
