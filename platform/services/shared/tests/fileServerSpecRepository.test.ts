@@ -2,7 +2,7 @@
  * FileServerSpecRepository (#675, ADR-0003 §2): servers/<n>/server.yaml
  * read/write, optimistic revision, lazy in-memory import, v2 methods.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
@@ -12,6 +12,20 @@ import { Paths } from '../src/utils/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ServerSpecError, type ServerSpecDocument } from '../src/domain/server-spec/ServerSpecDocument.js';
 import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+
+// Lets a test fail chosen atomic writes (a restore that fails too); passes through otherwise.
+const writeFault = vi.hoisted(() => ({ fail: undefined as ((path: string) => Error | undefined) | undefined }));
+vi.mock('../src/utils/atomic-write.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/utils/atomic-write.js')>();
+  return {
+    ...actual,
+    atomicWriteFile: async (...args: Parameters<typeof actual.atomicWriteFile>) => {
+      const error = writeFault.fail?.(String(args[0]));
+      if (error) throw error;
+      return actual.atomicWriteFile(...args);
+    },
+  };
+});
 
 let root: string;
 let repo: FileServerSpecRepository;
@@ -76,6 +90,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  writeFault.fail = undefined;
   rmSync(root, { recursive: true, force: true });
 });
 
@@ -162,6 +177,51 @@ describe('write', () => {
 
   it('refuses a server whose directory does not exist', async () => {
     expect((await rejection(repo.write(spec()))).code).toBe('not_found');
+  });
+});
+
+describe('write is all or nothing', () => {
+  const file = (...p: string[]) => join(root, 'servers', 'survival', ...p);
+
+  it('removes the new server.yaml and puts config.env back when the compose cannot be written', async () => {
+    serverDir('survival', VALID, COMPOSE('survival'));
+    chmodSync(file('docker-compose.yml'), 0o444);
+
+    const error = await repo.write(spec()).catch((e: unknown) => e);
+
+    expect((error as NodeJS.ErrnoException).code).toBe('EACCES');
+    expect(existsSync(yamlPath('survival'))).toBe(false);
+    expect(readFileSync(file('config.env'), 'utf-8')).toBe(VALID);
+    expect(readFileSync(file('docker-compose.yml'), 'utf-8')).toBe(COMPOSE('survival'));
+  });
+
+  it('puts server.yaml and config.env back to the previous write', async () => {
+    serverDir('survival', VALID, COMPOSE('survival'));
+    await repo.write(spec());
+    const yamlBefore = readFileSync(yamlPath('survival'), 'utf-8');
+    const configBefore = readFileSync(file('config.env'), 'utf-8');
+    chmodSync(file('docker-compose.yml'), 0o444);
+
+    await expect(repo.write(spec({ memory: '6G', image: 'itzg/minecraft-server:java21' }))).rejects.toMatchObject({ code: 'EACCES' });
+
+    expect(readFileSync(yamlPath('survival'), 'utf-8')).toBe(yamlBefore);
+    expect(readFileSync(file('config.env'), 'utf-8')).toBe(configBefore);
+    expect((await repo.load('survival'))!.document).toEqual(spec());
+  });
+
+  it('keeps the write error and adds a restore that failed', async () => {
+    serverDir('survival', VALID, COMPOSE('survival'));
+    let configWrites = 0;
+    writeFault.fail = (path) => {
+      if (path.endsWith('docker-compose.yml')) return new Error('compose write failed');
+      if (path.endsWith('config.env') && ++configWrites > 1) return new Error('disk full');
+      return undefined;
+    };
+
+    const error = (await repo.write(spec()).catch((e: unknown) => e)) as Error;
+
+    expect(error.message).toMatch(/^compose write failed .*servers\/survival\/config\.env: disk full/);
+    expect(existsSync(yamlPath('survival'))).toBe(false);
   });
 });
 

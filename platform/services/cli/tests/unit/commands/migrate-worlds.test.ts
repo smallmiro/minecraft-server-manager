@@ -3,7 +3,7 @@
  * runtime port (#668, ADR-0001 row 14) instead of `docker inspect` / `docker stop`.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -88,6 +88,23 @@ describe('migrate worlds (runtime port)', () => {
 
     expect(code).toBe(0);
     expect(runtime.stop).not.toHaveBeenCalled();
+  });
+
+  it('moves the world back and leaves the config as it was when the compose cannot be written', async () => {
+    runtime.getStatusAsync.mockResolvedValue('exited');
+    const alpha = join(root, 'servers', 'alpha');
+    const compose = readFileSync(join(alpha, 'docker-compose.yml'), 'utf-8');
+    chmodSync(join(alpha, 'docker-compose.yml'), 0o444);
+
+    const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
+
+    expect(code).toBe(1);
+    expect(existsSync(join(alpha, 'data', 'world', 'level.dat'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'alpha'))).toBe(false);
+    // The next start still finds the world where config.env says it is
+    expect(readFileSync(join(alpha, 'config.env'), 'utf-8')).toBe('TYPE=PAPER\n');
+    expect(existsSync(join(alpha, 'server.yaml'))).toBe(false);
+    expect(readFileSync(join(alpha, 'docker-compose.yml'), 'utf-8')).toBe(compose);
   });
 
   it('fails without migrating when the stop fails', async () => {

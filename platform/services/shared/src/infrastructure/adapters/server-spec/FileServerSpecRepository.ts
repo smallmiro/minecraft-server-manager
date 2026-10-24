@@ -5,7 +5,7 @@ import yaml from 'js-yaml';
 import { Paths } from '../../../utils/index.js';
 import { envRevision, parseEnvDocument } from '../../../utils/env-file.js';
 import { resolveHostIps } from '../../hostIps.js';
-import { atomicWriteFile } from '../../../utils/atomic-write.js';
+import { atomicWriteFile, type AtomicWriteOptions } from '../../../utils/atomic-write.js';
 import { EXISTING_SERVER_NAME_PATTERN } from '../../../domain/value-objects/ServerName.js';
 import {
   ServerSpecError,
@@ -246,6 +246,9 @@ export class FileServerSpecRepository implements IServerSpecRepository {
   /**
    * Write server.yaml, then render the generated files (ADR-0003 §2-§3).
    * Every check runs before the first write. Unchanged files are not written.
+   * All or nothing per file: when a write fails, the files this write already
+   * changed get their earlier content back (or are removed when new), so a
+   * caller undoing its own steps (migrate worlds) matches the files.
    */
   async write(doc: ServerSpecDocument, options: WriteServerSpecOptions = {}): Promise<void> {
     if (options.create) return this.create(doc);
@@ -344,18 +347,38 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       }
     }
 
-    if (currentYaml !== nextYaml) {
-      const mode = currentYaml === undefined ? await this.fileMode(join(dir, 'config.env')) : undefined;
-      await atomicWriteFile(specPath, nextYaml, mode === undefined ? {} : { mode });
-    }
-    for (const step of plan) {
-      if (step.backup !== undefined) {
-        const mode = await this.fileMode(step.path);
-        await atomicWriteFile(`${step.path}.bak`, step.backup, mode === undefined ? {} : { mode });
+    const written: Array<{ path: string; before: string | undefined }> = [];
+    const put = async (path: string, content: string, before: string | undefined, opts: AtomicWriteOptions = {}) => {
+      await atomicWriteFile(path, content, opts);
+      written.push({ path, before });
+    };
+    try {
+      if (currentYaml !== nextYaml) {
+        const mode = currentYaml === undefined ? await this.fileMode(join(dir, 'config.env')) : undefined;
+        await put(specPath, nextYaml, currentYaml, mode === undefined ? {} : { mode });
       }
-      await atomicWriteFile(step.path, step.content);
+      for (const step of plan) {
+        if (step.backup !== undefined) {
+          const bak = `${step.path}.bak`;
+          const mode = await this.fileMode(step.path);
+          await put(bak, step.backup, await readOptional(bak), mode === undefined ? {} : { mode });
+        }
+        await put(step.path, step.content, step.before);
+      }
+      if (include) await this.writeInclude(name, doc, ctx);
+    } catch (err) {
+      // A restore failure never hides the write error: it is added to the message (as create's cleanup).
+      const failed: string[] = [];
+      for (const { path, before } of written.reverse()) {
+        await (before === undefined ? rm(path, { force: true }) : atomicWriteFile(path, before)).catch(
+          (e: unknown) => void failed.push(`servers/${name}/${basename(path)}: ${(e as Error).message}`)
+        );
+      }
+      if (failed.length > 0 && err instanceof Error) {
+        err.message += ` (restoring the earlier files failed: ${failed.join('; ')}; check them by hand)`;
+      }
+      throw err;
     }
-    if (include) await this.writeInclude(name, doc, ctx);
   }
 
   /**
