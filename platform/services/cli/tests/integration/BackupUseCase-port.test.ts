@@ -227,6 +227,14 @@ describe('BackupUseCase prompt flows', () => {
       expect(result.error).toContain('No backup history');
     });
 
+    it('history is empty and restore stops without restoring when the history read fails', async () => {
+      port.historyResult = { ok: false, error: { code: 'io_failed', message: 'EACCES' } };
+      expect(await useCase.history()).toEqual([]);
+      const result = await useCase.restore();
+      expect(result.success).toBe(false);
+      expect(called('restore')).toBe(false);
+    });
+
     it('does not restore when the user declines', async () => {
       prompt = new MockPromptAdapter({ confirm: false });
       useCase = new BackupUseCase(prompt, port);
