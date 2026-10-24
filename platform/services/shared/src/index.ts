@@ -125,6 +125,17 @@ export {
   type WorldAssignment,
   type WorldAssignmentSnapshot,
   type WorldAssignmentErrorCode,
+  // mc-router detail rules (#768)
+  parseGoBool,
+  parseRouterAutoScaleEnv,
+  resolveRouteAutoScale,
+  parseResolverEnv,
+  markDiscoveredRoutes,
+  AUTO_SCALE_UP_LABEL,
+  AUTO_SCALE_DOWN_LABEL,
+  type RouterAutoScale,
+  type RouterResolver,
+  type RouteAutoScale,
   // ServerSpec (#675, ADR-0003)
   ServerSpecError,
   unrestoredFiles,

@@ -95,6 +95,18 @@ export {
   type WorldAssignmentSnapshot,
   type WorldAssignmentErrorCode,
 } from './services/worldAssignment.js';
+export {
+  parseGoBool,
+  parseRouterAutoScaleEnv,
+  resolveRouteAutoScale,
+  parseResolverEnv,
+  markDiscoveredRoutes,
+  AUTO_SCALE_UP_LABEL,
+  AUTO_SCALE_DOWN_LABEL,
+  type RouterAutoScale,
+  type RouterResolver,
+  type RouteAutoScale,
+} from './services/routerDetail.js';
 
 // ServerSpec (#675, ADR-0003)
 export {
