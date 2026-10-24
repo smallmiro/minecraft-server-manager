@@ -1,4 +1,11 @@
 /**
+ * A value for the flag before it: not another flag, but a negative number
+ * (`-s -123`) is a value. `--key=value` takes any value, even `--seed=--x` (#728).
+ */
+const isValue = (arg: string | undefined): arg is string =>
+  !!arg && (!arg.startsWith('-') || /^-\d/.test(arg));
+
+/**
  * Parse command line arguments
  */
 export function parseArgs(args: string[]): {
@@ -22,7 +29,11 @@ export function parseArgs(args: string[]): {
   while (i < args.length) {
     const arg = args[i]!;
 
-    if (arg.startsWith('--')) {
+    if (arg.startsWith('--') && arg.includes('=')) {
+      const eq = arg.indexOf('=');
+      result.flags[arg.slice(2, eq)] = arg.slice(eq + 1);
+      i++;
+    } else if (arg.startsWith('--')) {
       const key = arg.slice(2);
       const nextArg = args[i + 1];
 
@@ -32,7 +43,7 @@ export function parseArgs(args: string[]): {
       if (booleanOnlyFlags.includes(key)) {
         result.flags[key] = true;
         i++;
-      } else if (nextArg && !nextArg.startsWith('-')) {
+      } else if (isValue(nextArg)) {
         result.flags[key] = nextArg;
         i += 2;
       } else {
@@ -68,7 +79,7 @@ export function parseArgs(args: string[]): {
       if (booleanOnlyShortFlags.includes(key)) {
         result.flags[longKey] = true;
         i++;
-      } else if (nextArg && !nextArg.startsWith('-')) {
+      } else if (isValue(nextArg)) {
         result.flags[longKey] = nextArg;
         i += 2;
       } else {
