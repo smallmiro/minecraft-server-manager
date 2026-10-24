@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -38,7 +39,9 @@ function MetricSkeleton() {
 
 export default function ServersPage() {
   const router = useAppRouter();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  // The dashboard hero links here with ?create=1 to open the create dialog straight away
+  const searchParams = useSearchParams();
+  const [createDialogOpen, setCreateDialogOpen] = useState(searchParams.get('create') === '1');
   const [loadingServers, setLoadingServers] = useState<string[]>([]);
 
   const { data, isLoading, error } = useServers();
