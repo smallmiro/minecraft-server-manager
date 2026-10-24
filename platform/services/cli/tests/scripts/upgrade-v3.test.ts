@@ -42,6 +42,8 @@ case "$1" in
   --version) cat "$D/version" ;;
   update)
     [ -n "$FAKE_UPDATE_FAIL" ] && { echo "update failed" >&2; exit 1; }
+    # a spinner and colours, as clack prints them
+    printf '\\033[?25l\\033[2K\\033[1G\\033[35m◒\\033[39m  Updating\\033[?25h\\n'
     cp "$D/version_after" "$D/version" ;;
   upgrade)
     case "$*" in
@@ -51,7 +53,7 @@ case "$1" in
   migrate) echo "migrate spec: alpha would be imported" ;;
   world)
     [ -n "$FAKE_WORLD_FAIL" ] && { echo "world list failed" >&2; exit 1; }
-    echo "survival  alpha, beta"
+    printf '\\033[1msurvival\\033[22m  alpha, beta\\n'
     echo "[WARN] World 'survival' is assigned to alpha, beta; only one server may use a world" >&2 ;;
   console)
     # Like the real CLI: with api and console installed and no --api/--console,
@@ -316,6 +318,20 @@ describe('upgrade-v3.sh', () => {
       expect(existsSync(join(b, f)), f).toBe(true);
     }
     expect(readFileSync(join(b, 'upgrade.log'), 'utf8')).toContain('Summary');
+  });
+
+  it('keeps escape sequences on screen but not in upgrade.log', () => {
+    const r = run({ args: ['--yes'] });
+    expect(r.out).toContain('\x1b[35m◒');
+    const log = readFileSync(join(backupDir(), 'upgrade.log'), 'utf8');
+    expect(log).toContain('◒  Updating');
+    expect(log).toContain('survival  alpha, beta');
+    expect(log).not.toContain('\x1b');
+  });
+
+  it('says that the update also pulls server images', () => {
+    const r = run({ args: ['--yes'] });
+    expect(r.out).toMatch(/\? Run 'mcctl update --yes' \(.*pulls server images.*\)\?/);
   });
 
   it('without a terminal and without --yes skips every mutating step', () => {

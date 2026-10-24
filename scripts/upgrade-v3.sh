@@ -25,6 +25,7 @@ PKG="@minecraft-docker/mcctl"
 KILL_TIMEOUT_MS=130000
 # --console restarts mcctl-api and the console without asking which (#794)
 RESTART_CMD="mcctl console service restart --console --force"
+ESC=$(printf '\033')
 
 ROOT=""
 YES=0
@@ -86,7 +87,14 @@ init_output() {
   fi
 }
 
-log() { printf '%s\n' "$*" >>"$LOG"; }
+# strip_esc: drop escape sequences (colours, spinners) on the way to the log
+strip_esc() { LC_ALL=C sed "s/$ESC\[[0-9;?]*[A-Za-z]//g" | LC_ALL=C tr -d '\033'; }
+log() {
+  case "$*" in
+    *"$ESC"*) printf '%s\n' "$*" | strip_esc >>"$LOG" ;;
+    *) printf '%s\n' "$*" >>"$LOG" ;;
+  esac
+}
 say() {
   printf '%s\n' "$*"
   log "$*"
@@ -116,13 +124,16 @@ record() {
 
 # ---------------------------------------------------------------- helpers
 
-# Run a command with stdin closed; show and log its output; return its status.
+# Run a command with stdin closed; show its output as is and log it without
+# escape sequences; return its status.
 run() {
   local rc
   set +e
-  "$@" </dev/null 3<&- 2>&1 | tee -a "$LOG"
+  "$@" </dev/null 3<&- 2>&1 | tee "$LOG.part"
   rc=${PIPESTATUS[0]}
   set -e
+  strip_esc <"$LOG.part" >>"$LOG"
+  rm -f "$LOG.part"
   return "$rc"
 }
 
@@ -529,11 +540,11 @@ step2_update() {
     return 0
   fi
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would run: mcctl update --yes, then check that mcctl --version is 3.x"
+    say "[dry-run] would run: mcctl update --yes (also pulls server images), then check that mcctl --version is 3.x"
     record 2 "Update" skipped "dry-run"
     return 0
   fi
-  if ! confirm "Run 'mcctl update --yes' (CLI, API and console packages; restarts PM2 apps)?" y; then
+  if ! confirm "Run 'mcctl update --yes' (CLI, API and console packages, pulls server images; restarts PM2 apps)?" y; then
     record 2 "Update" skipped "not run"
     stop_with "the update was not run, so the next steps (which need the v3 CLI) were not started. Re-run in a terminal or with --yes."
   fi
