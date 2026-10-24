@@ -91,10 +91,14 @@ export default function DashboardPage() {
           icon={<Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: 2.5 }} />}
           title="Dashboard"
           description={<Skeleton variant="text" width="72%" />}
+          status={<Skeleton variant="rounded" width={72} height={24} sx={{ borderRadius: 4 }} />}
           sx={{
             gridColumn: { xs: '1 / -1', md: 'span 6' },
             gridRow: { md: 'span 2' },
             minHeight: { xs: 280, md: 328 },
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
           }}
         >
           <Skeleton variant="text" width="45%" height={48} />
@@ -109,8 +113,8 @@ export default function DashboardPage() {
 
         <Box sx={{ ...cardItemSx, gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 390 }}>
             <BentoPanel sx={{ height: '100%' }}>
-              <Box sx={{ p: 2.5 }}>
-                <Skeleton variant="text" width="30%" height={32} sx={{ mb: 2 }} />
+              <BentoPanelHeader title={<Skeleton variant="text" width="30%" />} />
+              <Box sx={{ px: 2.5, pb: 2.5 }}>
                 {[0, 1, 2, 3, 4].map((i) => (
                   <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                     <Skeleton variant="circular" width={10} height={10} />
@@ -135,8 +139,8 @@ export default function DashboardPage() {
             }}
           >
             <BentoPanel sx={{ height: '100%' }}>
-              <Box sx={{ p: 2.5 }}>
-                <Skeleton variant="text" width="42%" height={32} sx={{ mb: 2 }} />
+              <BentoPanelHeader title={<Skeleton variant="text" width="42%" />} />
+              <Box sx={{ px: 2.5, pb: 2.5 }}>
                 {[0, 1, 2].map((row) => (
                   <Box key={row} sx={{ display: 'flex', gap: 1.5, py: 1 }}>
                     <Skeleton variant="circular" width={24} height={24} />
