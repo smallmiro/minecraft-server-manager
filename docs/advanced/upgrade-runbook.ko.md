@@ -113,7 +113,7 @@ hash -r && mcctl --version    # = $NEW
 ```
 
 - `Updated (restart manually)`가 보이면 4단계를 수행합니다.
-- `mcctl update`가 서버 compose의 이미지 태그를 바꾸면 `⚠ <server>: A → B` 출력을 기록합니다. 중지된 서버는 다음 기동 때 반영됩니다.
+- `mcctl update`가 서버 compose의 이미지 태그를 바꾸면 `⚠ <server>: A → B` 출력을 기록합니다. mc-router auto-scale은 기존 컨테이너를 `docker start`만 하고 다시 만들지 않으므로, 중지된 서버는 컨테이너를 다시 만들기 전까지 옛 이미지로 뜹니다. v3.0.1부터 `mcctl update`가 중지된 서버마다 컨테이너를 다시 만들고 서버별로 `recreated` 또는 `up to date`를 출력합니다(5단계 참고).
 
 **롤백 지점:** `npm install -g @minecraft-docker/mcctl@<이전버전>` 후 `mcctl console service restart --force`.
 
@@ -227,7 +227,13 @@ mcctl console service restart --force               # 파일에서 앱을 다시
 
 ## 5. 서버 이미지 반영
 
-중지된 서버는 다음 기동 때 새 이미지가 적용됩니다. 실행 중인 서버는 사용자 영향이 없는 시간에 `mcctl stop <server> && mcctl start <server>`로 재기동합니다(월드는 보존).
+중지된 서버는 기동만으로는 새 이미지가 적용되지 않습니다. auto-scale은 기존 컨테이너를 `docker start`만 하므로 옛 이미지로 뜹니다. v3.0.1부터 `mcctl update`가 중지된 서버의 컨테이너를 (기동하지 않고) 다시 만들고 서버별로 `recreated`, `up to date`, 실패 사유를 보고합니다. 그 이전 버전에서 올리는 경우 중지된 서버마다 직접 실행합니다.
+
+```bash
+docker compose up --no-start --no-deps mc-<server>
+```
+
+실행 중인 서버는 건드리지 않습니다. 실행 중인 서버는 사용자 영향이 없는 시간에 `mcctl stop <server> && mcctl start <server>`로 재기동합니다(월드는 보존).
 
 ## 6. 지도(BlueMap) 재렌더 (릴리즈 노트에 지도 변경이 있을 때만)
 
