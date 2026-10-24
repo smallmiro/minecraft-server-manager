@@ -1,4 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
+import { E2E_API_URL } from '../env';
 import { chmodSync, existsSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
@@ -7,13 +8,13 @@ import { join } from 'path';
  * Platform settings API (#683): GET/PUT /api/platform-settings
  *
  * These tests WRITE the platform .env that the API under test points at.
- * - E2E_API_URL        API under test (default http://localhost:5001)
+ * - E2E_API_URL        API under test
  * - E2E_PLATFORM_ENV   path of that API's platform .env
  *                      (default: $MCCTL_ROOT/.env, else ~/minecraft-servers/.env)
  * - E2E_API_KEY        optional X-API-Key when the API runs with AUTH_MODE=api-key
  * The original .env is backed up in beforeAll and restored (bytes + mode) in afterAll.
  */
-const API = process.env.E2E_API_URL || 'http://localhost:5001';
+const API = E2E_API_URL;
 const ENV_PATH =
   process.env.E2E_PLATFORM_ENV || join(process.env.MCCTL_ROOT || join(homedir(), 'minecraft-servers'), '.env');
 const URL = `${API}/api/platform-settings`;
