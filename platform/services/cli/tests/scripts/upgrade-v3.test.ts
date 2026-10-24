@@ -461,7 +461,7 @@ describe('upgrade-v3.sh', () => {
   it('warns about cron jobs that call scripts or player lookup', () => {
     const r = run({ args: ['--dry-run'], env: { FAKE_CRON: '0 3 * * * /home/u/minecraft-servers/scripts/backup.sh push' } });
     expect(r.out).toMatch(/cron/i);
-    expect(r.out).toContain('backup.sh');
+    expect(r.out.slice(r.out.indexOf('Warnings:'))).toContain('      0 3 * * * /home/u/minecraft-servers/scripts/backup.sh push');
   });
 
   it('shows the macOS console note on Darwin', () => {
@@ -533,7 +533,7 @@ describe('upgrade-v3.sh', () => {
       expect(r.code).toBe(0);
       const warnings = r.out.slice(r.out.indexOf('Warnings:'));
       expect(warnings).toContain(
-        `several mcctl installs found (the first one runs): ${join(ctx.fake, 'bin/mcctl')}, ${join(ctx.base, 'other/bin/mcctl')}`,
+        `several mcctl installs found (the first one runs):\n      ${join(ctx.fake, 'bin/mcctl')}\n      ${join(ctx.base, 'other/bin/mcctl')}\n`,
       );
       const todo = r.out.slice(r.out.indexOf('Still to do by hand'), r.out.indexOf('Rollback'));
       expect(todo).toContain(`npm install -g --prefix ${join(ctx.base, 'other')} @minecraft-docker/mcctl@3.0.0`);
@@ -544,6 +544,7 @@ describe('upgrade-v3.sh', () => {
     const r = run({ args: ['--yes'] });
     expect(r.out).toContain("World 'survival' is assigned to alpha, beta");
     expect(r.out).toMatch(/world list shows warnings/);
+    expect(r.out.slice(r.out.indexOf('Warnings:'))).toContain("      [WARN] World 'survival' is assigned to alpha, beta");
   });
   it('every fake command, not only mcctl, got empty stdin', () => {
     run({ args: ['--yes'] });

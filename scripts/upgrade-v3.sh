@@ -107,9 +107,13 @@ err() {
   printf '%sx %s%s\n' "$RED" "$*" "$RST"
   log "x $*"
 }
+# add_warning <message> [detail lines]: details are shown indented, here and in the summary
 add_warning() {
-  WARNINGS="${WARNINGS}  - $*"$'\n'
-  warn "$*"
+  local d=""
+  if [ -n "${2:-}" ]; then d=$(printf '%s\n' "$2" | sed 's/^/      /'); fi
+  WARNINGS="${WARNINGS}  - $1"$'\n'"${d:+$d$'\n'}"
+  warn "$1"
+  if [ -n "$d" ]; then say "$d"; fi
 }
 step() {
   printf '\n%s== Step %s: %s ==%s\n' "$BOLD" "$1" "$2" "$RST"
@@ -365,7 +369,7 @@ step0_precheck() {
   if [ "$n" -eq 0 ]; then
     stop_with "mcctl is not installed or not on PATH"
   elif [ "$n" -gt 1 ]; then
-    add_warning "several mcctl installs found (the first one runs): $(printf '%s\n' "$u" | awk 'NR > 1 { printf ", " } { printf "%s", $0 }')"
+    add_warning "several mcctl installs found (the first one runs):" "$u"
   fi
   MCCTL_INSTALLS=$u
   CUR_OLD=$(cur_version)
@@ -423,8 +427,7 @@ EOF
   fi
   hits=$(printf '%s\n' "$hits" | grep -v '^$' || true)
   if [ -n "$hits" ]; then
-    add_warning "cron/timers call scripts/*.sh or 'player lookup|uuid' (removed in v3; see $DOCS_URL):"
-    say "$(printf '%s\n' "$hits" | sed 's/^/      /')"
+    add_warning "cron/timers call scripts/*.sh or 'player lookup|uuid' (removed in v3; see $DOCS_URL):" "$hits"
   fi
 
   if [ "$(uname -s)" = Darwin ]; then
@@ -844,8 +847,7 @@ step7_worlds() {
   fi
   out=$(printf '%s\n' "$out" | grep -iE 'duplicate|warn|conflict|more than one|used by [2-9]|is assigned to|Cannot read the world assignment' || true)
   if [ -n "$out" ]; then
-    add_warning "world list shows warnings (one world used by several servers?):"
-    say "$(printf '%s\n' "$out" | sed 's/^/      /')"
+    add_warning "world list shows warnings (one world used by several servers?):" "$out"
     record 7 "Worlds" warn "warnings shown"
   else
     record 7 "Worlds" ok "no warnings"
