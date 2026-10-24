@@ -15,7 +15,6 @@ import { rm } from 'node:fs/promises';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { hostname, tmpdir, uptime } from 'node:os';
 import { join } from 'node:path';
-import yaml from 'js-yaml';
 import { Paths } from '../src/utils/index.js';
 import { ServerSpecError } from '../src/domain/server-spec/ServerSpecDocument.js';
 import {
@@ -68,8 +67,6 @@ function holdIncludeLock(): void {
   serverSpecTestHooks.includeLockWaitMs = 50;
 }
 
-/** servers/compose.yml's include list. */
-const includeList = () => (yaml.load(compose()) as { include?: unknown[] } | null)?.include;
 
 /** A second world folder, so a move can fail after the first one moved. */
 function addNether(): void {
@@ -132,7 +129,7 @@ describe('delete: a failed move puts the include entry back (#735 review)', () =
   it('restores servers/compose.yml exactly when nobody changed it meanwhile', async () => {
     addNether();
     const original =
-      '# hand-written\ninclude:\n  - path: [alpha/docker-compose.yml, beta/docker-compose.yml]\n    project_directory: .\n';
+      '# kept as written\ninclude:\n  - alpha/docker-compose.yml # mcctl\n  - path: [beta/docker-compose.yml]\n    project_directory: .\n';
     writeFileSync(at('servers', 'compose.yml'), original);
     serverSpecTestHooks.beforeWorldMove = async (world) => {
       if (world === 'alpha_nether') mkdirSync(at('worlds', 'alpha_nether')); // another process takes the name
@@ -176,31 +173,6 @@ describe('delete: a failed move puts the include entry back (#735 review)', () =
       'servers/alpha/docker-compose.yml no longer exists, so its servers/compose.yml entry was not put back'
     );
     expect(includeEntries(compose())).toEqual(['beta/docker-compose.yml']);
-  });
-
-  it.each([
-    [
-      'a long-form entry with options',
-      [{ path: 'alpha/docker-compose.yml', project_directory: '.', env_file: 'alpha.env' }, 'beta/docker-compose.yml'],
-    ],
-    [
-      'a multi-path entry, which only lost alpha',
-      [{ path: ['alpha/docker-compose.yml', 'beta/docker-compose.yml'], env_file: 'shared.env' }],
-    ],
-    [
-      'a multi-path entry with another file of alpha, which lost both',
-      [{ path: ['alpha/docker-compose.yml', 'alpha/docker-compose.override.yml', 'beta/docker-compose.yml'], env_file: 'shared.env' }],
-    ],
-    ['an entry with only other files of alpha', ['alpha/docker-compose.yml', { path: ['./alpha/override.yml'] }, 'beta/docker-compose.yml']],
-  ])('restores %s in its form when another process changed servers/compose.yml meanwhile (#735 re-review)', async (_, original) => {
-    writeFileSync(at('servers', 'compose.yml'), yaml.dump({ include: original }));
-    serverSpecTestHooks.beforeWorldMove = async () => {
-      writeFileSync(at('servers', 'compose.yml'), yaml.dump({ include: [...(includeList() ?? []), 'gamma/docker-compose.yml'] }));
-      mkdirSync(at('worlds', 'alpha'));
-    };
-
-    await expect(repo.delete('alpha')).rejects.toThrow(/worlds\/alpha appeared/);
-    expect(includeList()).toEqual([...original, 'gamma/docker-compose.yml']);
   });
 
   it.each([

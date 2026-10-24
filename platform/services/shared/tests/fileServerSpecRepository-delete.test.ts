@@ -98,13 +98,9 @@ describe('delete: server directory and include entry', () => {
     expect(compose()).not.toMatch(/include/);
   });
 
-  it('quoted and commented entries are removed, others kept (#660)', async () => {
+  it('a quoted and commented generated entry is removed, others kept (#660)', async () => {
     addServer('wood');
-    writeFileSync(
-      at('servers', 'compose.yml'),
-      'include:\n  - "wood/docker-compose.yml" # managed server\n  - ironwood/docker-compose.yml\n' +
-        "  - 'wood/docker-compose.yml'\n  - wood/docker-compose.yml # note\n"
-    );
+    writeFileSync(at('servers', 'compose.yml'), 'include:\n  - "wood/docker-compose.yml" # managed server\n  - ironwood/docker-compose.yml\n');
     await repo.delete('wood');
     expect(includeEntries(compose())).toEqual(['ironwood/docker-compose.yml']);
   });
@@ -128,46 +124,42 @@ describe('delete: server directory and include entry', () => {
     expect(includeEntries(compose())).toEqual(['ironwood/docker-compose.yml']);
   });
 
-  it('an object entry listing several paths keeps the other paths (#735 review)', async () => {
-    writeFileSync(
-      at('servers', 'compose.yml'),
-      'include:\n' +
-        '  - path:\n      - alpha/docker-compose.yml\n      - beta/docker-compose.yml\n    project_directory: .\n' +
-        '  - path: [alpha/docker-compose.yml]\n' +
-        '  - path: alpha/docker-compose.yml\n' +
-        '  - path: [gamma/docker-compose.yml, delta/docker-compose.yml]\n'
-    );
+  it('entries of other servers stay as written, long forms included', async () => {
+    const others = [
+      { path: ['beta/docker-compose.yml', 'gamma/docker-compose.yml'], env_file: 'shared.env' },
+      { path: 'alphabet/docker-compose.yml', project_directory: '.' },
+      'alpha-two/docker-compose.yml',
+    ];
+    writeFileSync(at('servers', 'compose.yml'), yaml.dump({ include: ['alpha/docker-compose.yml', ...others] }));
     await repo.delete('alpha');
-    expect((yaml.load(compose()) as { include: unknown[] }).include).toEqual([
-      { path: ['beta/docker-compose.yml'], project_directory: '.' },
-      { path: ['gamma/docker-compose.yml', 'delta/docker-compose.yml'] },
-    ]);
+    expect((yaml.load(compose()) as { include: unknown[] }).include).toEqual(others);
   });
 
-  it('drops every path inside servers/alpha/, written any way, and keeps other servers (#735 decision)', async () => {
-    writeFileSync(
-      at('servers', 'compose.yml'),
-      yaml.dump({
-        include: [
-          {
-            path: ['alpha/docker-compose.yml', 'alpha/docker-compose.override.yml', 'beta/docker-compose.yml'],
-            env_file: 'shared.env',
-          },
-          'alpha/extra.yml',
-          { path: './alpha/docker-compose.yml', project_directory: '.' },
-          { path: ['./alpha//more.yml', 'gamma/docker-compose.yml'] },
-          'alphabet/docker-compose.yml',
-          'alpha-two/docker-compose.yml',
-        ],
-      })
-    );
-    await repo.delete('alpha');
-    expect((yaml.load(compose()) as { include: unknown[] }).include).toEqual([
-      { path: ['beta/docker-compose.yml'], env_file: 'shared.env' },
-      { path: ['gamma/docker-compose.yml'] },
-      'alphabet/docker-compose.yml',
-      'alpha-two/docker-compose.yml',
-    ]);
+  // #735 decision: delete handles the entry mcctl writes, the string <n>/docker-compose.yml, and nothing else.
+  describe.each([
+    ['a long-form entry', [{ path: 'alpha/docker-compose.yml', project_directory: '.' }]],
+    ['a path group', [{ path: ['alpha/docker-compose.yml', 'beta/docker-compose.yml'] }]],
+    ['another file of the server', ['alpha/docker-compose.yml', 'alpha/docker-compose.override.yml']],
+    ['a custom compose file', ['alpha/compose.yml']],
+    ['the generated entry twice', ['alpha/docker-compose.yml', 'alpha/docker-compose.yml']],
+    ['a ./ spelling', ['./alpha/docker-compose.yml']],
+  ])('a hand-written include entry for the server: %s', (_, entries) => {
+    it.each([true, false])('refuses before any change (dryRun %s)', async (dryRun) => {
+      mkWorld('servers', 'alpha', 'data', 'alpha');
+      const text = yaml.dump({ include: [...entries, 'zeta/docker-compose.yml'] });
+      writeFileSync(at('servers', 'compose.yml'), text);
+
+      await expect(repo.delete('alpha', { dryRun })).rejects.toMatchObject({
+        code: 'conflict',
+        message: expect.stringMatching(
+          /^servers\/compose.yml has a hand-written include entry for alpha \(.+\); remove it by hand, then run mcctl delete alpha again/
+        ),
+      });
+      expect(compose()).toBe(text);
+      expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
+      expect(existsSync(at('worlds', 'alpha'))).toBe(false);
+      expect(existsSync(at('servers', '.alpha.delete.lock'))).toBe(false);
+    });
   });
 
   it('servers/compose.yml keeps its file mode (#660)', async () => {

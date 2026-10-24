@@ -214,6 +214,15 @@ describe('DELETE /api/servers/:name (#735)', () => {
     });
   });
 
+  it('a hand-written include entry for the server is 409 before the container is touched (#735 decision)', async () => {
+    writeFileSync(at('servers', 'compose.yml'), 'include:\n  - path: alpha/docker-compose.yml\n    project_directory: .\n');
+    const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });
+    expect(response.statusCode).toBe(409);
+    expect(response.json().message).toMatch(/hand-written include entry for alpha/);
+    expect(fakes.removed).toEqual([]);
+    expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
+  });
+
   it('an invalid_spec refusal is 400, like create', async () => {
     serverProvision.deleteUseCase = () => ({
       deprovision: () => Promise.reject(new ServerSpecError('invalid_spec', 'servers/alpha/server.yaml: bad', 'alpha')),
