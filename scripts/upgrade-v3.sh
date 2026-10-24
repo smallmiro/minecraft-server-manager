@@ -38,6 +38,7 @@ SCRIPTS_BACKED=0
 RESULTS=""
 WARNINGS=""
 RC=0
+STOPPED=0
 CUR_OLD=""
 CUR_NOW=""
 UPDATE_ACTION=""
@@ -104,6 +105,7 @@ step() {
 # record <step> <label> <status> [detail]
 record() {
   RESULTS="${RESULTS}  [$3] Step $1 $2${4:+ - $4}"$'\n'
+  if [ "$3" = failed ]; then RC=1; fi
 }
 
 # ---------------------------------------------------------------- helpers
@@ -231,7 +233,9 @@ finish() {
     say "Warnings:"
     say "$WARNINGS"
   fi
-  if [ "$DRY" = 1 ]; then
+  if [ "$STOPPED" = 1 ]; then
+    say "The upgrade did not finish. Fix the cause above and run this script again."
+  elif [ "$DRY" = 1 ]; then
     say "Dry run: nothing was changed."
   else
     say "Still to do by hand:"
@@ -252,6 +256,7 @@ finish() {
 stop_with() {
   err "$1"
   RC=1
+  STOPPED=1
   finish
 }
 
@@ -260,6 +265,9 @@ stop_with() {
 step0_precheck() {
   step 0 "Pre-flight checks (read only)"
   local f hits u t gitv major_shell n units
+  if [ ! -f "$ROOT/docker-compose.yml" ] && [ ! -f "$ROOT/.env" ]; then
+    stop_with "$ROOT is not a platform root (no docker-compose.yml and no .env). Check --root."
+  fi
   for f in docker-compose.yml .env .mcctl.json; do
     if [ ! -f "$ROOT/$f" ]; then
       add_warning "$ROOT/$f is missing (is --root the platform root?)"
@@ -426,6 +434,12 @@ copy_into() {
     return 0
   fi
   mkdir -p "$BACKUP_DIR/$(dirname "$rel")" || return 1
+  if [ -L "$ROOT/$rel" ] && [ ! -e "$ROOT/$rel" ]; then
+    # dangling link: keep the link itself
+    cp -RP "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
+    log "  copied dangling link $rel"
+    return 0
+  fi
   cp -RpL "$ROOT/$rel" "$BACKUP_DIR/$rel" || return 1
   log "  copied $rel"
 }
@@ -462,6 +476,9 @@ step2_update() {
 
 step3_upgrade() {
   step 3 "Migrate configuration (mcctl upgrade)"
+  if [ "$DRY" = 1 ] && [ "$(major_of "$CUR_NOW")" -lt 3 ]; then
+    say "(This is the plan of the v2 CLI installed now. The v3 plan appears after the update.)"
+  fi
   say "Preview (mcctl upgrade --dry-run):"
   if ! run mcctl upgrade --dry-run; then
     record 3 "Upgrade" failed "mcctl upgrade --dry-run failed"
@@ -522,82 +539,151 @@ step4_scripts() {
   record 4 "scripts" ok "removed (backup kept)"
 }
 
+# eco_state <file>: key=value lines about the mcctl-api app, read by requiring the file
+eco_state() {
+  capture node -e '
+    const path = require("path");
+    let c;
+    try { c = require(path.resolve(process.argv[1])); } catch (e) { process.exit(3); }
+    const apps = (c && Array.isArray(c.apps)) ? c.apps : [];
+    const a = apps.find((x) => x && x.name === "mcctl-api");
+    const env = (a && a.env) || {};
+    console.log("api=" + (a ? 1 : 0));
+    console.log("kill=" + (a && a.kill_timeout !== undefined ? a.kill_timeout : ""));
+    console.log("auth=" + (env.AUTH_MODE !== undefined ? env.AUTH_MODE : ""));
+    console.log("wl=" + (env.AUTH_IP_WHITELIST !== undefined ? env.AUTH_IP_WHITELIST : ""));
+    console.log("others=" + apps.filter((x) => x !== a).map((x) => JSON.stringify(x)).join(";"));
+  ' "$1"
+}
+
+# state_get <state> <key>
+state_get() { printf '%s\n' "$1" | sed -n "s/^$2=//p" | head -n 1; }
+
+# eco_apply <label> <expected "key=value"...> -- <awk args...>
+# Edits the ecosystem file with awk, reloads it with node and checks the result;
+# on any mismatch puts the previous content back.
+eco_apply() {
+  local label=$1 expect=$2 e=$ROOT/ecosystem.config.cjs pre before after kv
+  shift 2
+  before=$(eco_state "$e")
+  pre=$(mktemp "$e.pre.XXXXXX") || return 1
+  cp -p "$e" "$pre"
+  backup_ecosystem_once
+  if awk_replace "$e" "$@"; then
+    after=$(eco_state "$e") || after=""
+    if [ -n "$after" ] && [ "$(state_get "$after" others)" = "$(state_get "$before" others)" ]; then
+      for kv in $expect; do
+        printf '%s\n' "$after" | grep -qxF "$kv" || { after=""; break; }
+      done
+      if [ -n "$after" ]; then
+        rm -f "$pre"
+        return 0
+      fi
+    fi
+  fi
+  cp -p "$pre" "$e"
+  rm -f "$pre"
+  add_warning "$label: the edited ecosystem.config.cjs did not load with the expected values; the original was put back"
+  return 1
+}
+
 step5_ecosystem() {
   step 5 "PM2 ecosystem file (access mode, kill_timeout) and restart"
-  local e=$ROOT/ecosystem.config.cjs changed="" hits state def
+  local e=$ROOT/ecosystem.config.cjs state auth newauth def edit=1 failed=0 changed=""
+  local name_re="^[[:space:]]*name:[[:space:]]*['\"]mcctl-api['\"],[[:space:]]*\$"
   if [ ! -f "$e" ]; then
     say "No ecosystem.config.cjs: the web console is not set up here."
     record 5 "ecosystem" skipped "no ecosystem.config.cjs"
     return 0
   fi
+  if ! command -v node >/dev/null 2>&1; then
+    add_warning "node not found: ecosystem.config.cjs was not checked"
+    record 5 "ecosystem" skipped "no node"
+    return 0
+  fi
+  if ! state=$(eco_state "$e") || [ -z "$state" ]; then
+    add_warning "cannot load ecosystem.config.cjs with node: skipped this step (check the file, then see runbook 4-1 and 4-2)"
+    record 5 "ecosystem" skipped "file cannot be loaded"
+    return 0
+  fi
+  if [ -L "$e" ]; then
+    say "ecosystem.config.cjs is a symbolic link: not edited. Make the changes of runbook 4-1 and 4-2 in the real file yourself."
+    edit=0
+  fi
 
   # 5a: old AUTH_MODE values (runbook 4-1), only when coming from before 2.32.0
-  if ver_lt "$CUR_OLD" "2.32.0"; then
-    hits=$(grep -nE "AUTH_MODE:[[:space:]]*['\"](internal|api-key-ip|open)['\"]" "$e" || true)
-    if [ -n "$hits" ]; then
-      say "AUTH_MODE has a value mcctl-api does not recognise (it falls back to api-key):"
-      say "$(printf '%s\n' "$hits" | sed 's/^/      /')"
+  auth=$(state_get "$state" auth)
+  if [ "$edit" = 1 ] && ver_lt "$CUR_OLD" "2.32.0"; then
+    case "$auth" in
+      internal) newauth=ip-whitelist ;;
+      api-key-ip) newauth=combined ;;
+      open) newauth=disabled ;;
+      *) newauth="" ;;
+    esac
+    if [ -n "$newauth" ]; then
+      say "mcctl-api has AUTH_MODE '$auth', which it does not recognise (it falls back to api-key)."
       say "  internal    -> ip-whitelist + AUTH_IP_WHITELIST '127.0.0.1,::1,::ffff:127.0.0.1' (only the host itself can call the API)"
       say "  api-key-ip  -> combined (the IP whitelist is then enforced)"
       say "  open        -> disabled (authentication really off)"
       if [ "$DRY" = 1 ]; then
-        say "[dry-run] would ask whether to rewrite these."
-      elif confirm "Rewrite AUTH_MODE as above (a .bak is written first)?" n; then
-        backup_ecosystem_once
-        state=0
-        grep -q 'AUTH_IP_WHITELIST' "$e" && state=1
+        say "[dry-run] would ask whether to change '$auth' to '$newauth'."
+      elif confirm "Change AUTH_MODE '$auth' to '$newauth' (a .bak is written first)?" n; then
+        local expect="auth=$newauth"
+        [ "$auth" = internal ] && [ -z "$(state_get "$state" wl)" ] && expect="$expect wl=127.0.0.1,::1,::ffff:127.0.0.1"
         # shellcheck disable=SC2016 # awk program, not shell
-        if awk_replace "$e" -v q="'" -v haswl="$state" '
-            { line = $0; add = ""
-              if (line ~ ("AUTH_MODE:[ \t]*[" q "\"]internal[" q "\"]")) {
-                sub(/internal/, "ip-whitelist", line)
-                if (!haswl) { match(line, /^[ \t]*/); add = substr(line, 1, RLENGTH) "AUTH_IP_WHITELIST: " q "127.0.0.1,::1,::ffff:127.0.0.1" q "," }
-              } else if (line ~ ("AUTH_MODE:[ \t]*[" q "\"]api-key-ip[" q "\"]")) sub(/api-key-ip/, "combined", line)
-              else if (line ~ ("AUTH_MODE:[ \t]*[" q "\"]open[" q "\"]")) sub(/open/, "disabled", line)
-              print line
-              if (add != "") print add }'; then
-          say "AUTH_MODE rewritten."
+        if eco_apply "AUTH_MODE" "$expect" -v q="'" -v new="$newauth" -v addwl="$([ "$auth" = internal ] && [ -z "$(state_get "$state" wl)" ] && echo 1 || echo 0)" '
+            !done && $0 ~ ("^[ \t]*AUTH_MODE:[ \t]*[" q "\"][a-z-]*[" q "\"]") {
+              match($0, ("AUTH_MODE:[ \t]*[" q "\"][a-z-]*[" q "\"]"))
+              head = substr($0, 1, RSTART - 1); rest = substr($0, RSTART + RLENGTH)
+              line = head "AUTH_MODE: " q new q
+              if (addwl && rest !~ /^[ \t]*,/) line = line ","
+              print line rest
+              if (addwl) { match($0, /^[ \t]*/); print substr($0, 1, RLENGTH) "AUTH_IP_WHITELIST: " q "127.0.0.1,::1,::ffff:127.0.0.1" q "," }
+              done = 1; next }
+            { print }'; then
+          say "AUTH_MODE changed."
           changed=1
         else
-          add_warning "could not rewrite AUTH_MODE in $e"
+          failed=1
         fi
       fi
     fi
   fi
 
   # 5b: kill_timeout for mcctl-api (runbook 4-2)
-  state=$(awk -v q="'" '
-    $0 ~ ("name:[ \t]*[" q "\"]") { api = ($0 ~ ("name:[ \t]*[" q "\"]mcctl-api[" q "\"]")); if (api) found = 1 }
-    api && /kill_timeout/ { has = 1 }
-    END { if (!found) print "none"; else if (has) print "has"; else print "missing" }' "$e")
-  case "$state" in
-    has) say "mcctl-api already has kill_timeout." ;;
-    none) say "No mcctl-api app in $e: kill_timeout not needed." ;;
-    missing)
-      def=n
-      [ "$(env_get BACKUP_AUTO_ON_STOP)" = true ] && def=y
-      say "mcctl-api has no kill_timeout: PM2 would kill it after 1.6 s, cutting an auto-backup short."
-      if [ "$DRY" = 1 ]; then
-        say "[dry-run] would add 'kill_timeout: $KILL_TIMEOUT_MS,' after the name line of mcctl-api (default answer: $def)."
-      elif confirm "Add 'kill_timeout: $KILL_TIMEOUT_MS,' to the mcctl-api app (a .bak is written first)?" "$def"; then
-        backup_ecosystem_once
-        # shellcheck disable=SC2016 # awk program, not shell
-        if awk_replace "$e" -v q="'" '
-            { print }
-            !done && $0 ~ ("name:[ \t]*[" q "\"]mcctl-api[" q "\"]") {
-              match($0, /^[ \t]*/)
-              print substr($0, 1, RLENGTH) "kill_timeout: 130000,"
-              done = 1 }'; then
-          say "kill_timeout added."
-          changed=1
-        else
-          add_warning "could not add kill_timeout to $e"
-        fi
+  if [ "$edit" = 1 ] && [ "$failed" = 0 ] && [ "$(state_get "$state" api)" = 1 ] && [ -z "$(state_get "$state" kill)" ]; then
+    def=n
+    if [ "$(env_get BACKUP_AUTO_ON_STOP)" = true ]; then def=y; fi
+    say "mcctl-api has no kill_timeout: PM2 would kill it after 1.6 s, cutting an auto-backup short."
+    if ! grep -Eq "$name_re" "$e"; then
+      add_warning "cannot add kill_timeout automatically (the name line of mcctl-api is not 'name: \"mcctl-api\",' on its own line): add 'kill_timeout: $KILL_TIMEOUT_MS,' to the mcctl-api app by hand"
+    elif [ "$DRY" = 1 ]; then
+      say "[dry-run] would add 'kill_timeout: $KILL_TIMEOUT_MS,' after the name line of mcctl-api (default answer: $def)."
+    elif confirm "Add 'kill_timeout: $KILL_TIMEOUT_MS,' to the mcctl-api app (a .bak is written first)?" "$def"; then
+      # shellcheck disable=SC2016 # awk program, not shell
+      if eco_apply "kill_timeout" "kill=$KILL_TIMEOUT_MS" -v q="'" '
+          { print }
+          !done && $0 ~ ("^[ \t]*name:[ \t]*[" q "\"]mcctl-api[" q "\"],[ \t]*$") {
+            match($0, /^[ \t]*/)
+            print substr($0, 1, RLENGTH) "kill_timeout: 130000,"
+            done = 1 }'; then
+        say "kill_timeout added."
+        changed=1
+      else
+        failed=1
       fi
-      ;;
-  esac
+    fi
+  elif [ "$(state_get "$state" api)" != 1 ]; then
+    say "No mcctl-api app in $e: kill_timeout not needed."
+  elif [ -n "$(state_get "$state" kill)" ]; then
+    say "mcctl-api already has kill_timeout."
+  fi
 
   # 5c: restart so the new ecosystem file, env and console auth key move apply
+  if [ "$failed" = 1 ]; then
+    record 5 "ecosystem" failed "edit did not verify; file restored, no restart"
+    return 0
+  fi
   if [ "$DRY" = 1 ]; then
     say "[dry-run] would run: mcctl console service restart --force"
     record 5 "ecosystem" skipped "dry-run"
@@ -647,19 +733,28 @@ step6_spec() {
 
 step7_worlds() {
   step 7 "World assignment check"
-  local out
+  local out rc
   if [ "$DRY" = 1 ] && [ "$(major_of "$CUR_NOW")" -lt 3 ]; then
     say "[dry-run] after the update: mcctl world list (duplicate assignments are highlighted)"
     record 7 "Worlds" skipped "dry-run (CLI is not v3 yet)"
     return 0
   fi
-  out=$(capture mcctl world list)
+  # mcctl prints these warnings on stderr, so read both
+  set +e
+  out=$(mcctl world list </dev/null 3<&- 2>&1)
+  rc=$?
+  set -e
   say "$out"
-  out=$(printf '%s\n' "$out" | grep -iE 'duplicate|warn|conflict|more than one|used by [2-9]' || true)
+  if [ "$rc" -ne 0 ]; then
+    add_warning "mcctl world list failed (exit $rc): the world assignment was not checked"
+    record 7 "Worlds" warn "world list failed"
+    return 0
+  fi
+  out=$(printf '%s\n' "$out" | grep -iE 'duplicate|warn|conflict|more than one|used by [2-9]|is assigned to|Cannot read the world assignment' || true)
   if [ -n "$out" ]; then
     add_warning "world list shows warnings (one world used by several servers?):"
     say "$(printf '%s\n' "$out" | sed 's/^/      /')"
-    record 7 "Worlds" ok "warnings shown"
+    record 7 "Worlds" warn "warnings shown"
   else
     record 7 "Worlds" ok "no warnings"
   fi
@@ -667,7 +762,7 @@ step7_worlds() {
 
 step8_verify() {
   step 8 "Verification"
-  local bad=0 v out port apps line
+  local bad=0 v out port apps line tries
   if [ "$DRY" = 1 ]; then
     say "[dry-run] would run: mcctl --version, docker compose config -q, PM2 status, API /health"
     record 8 "Verify" skipped "dry-run"
@@ -711,17 +806,24 @@ EOF
   else
     port=${API_PORT:-$(env_get API_PORT)}
     port=${port:-5001}
-    if out=$(capture curl -fsS --max-time 5 "http://127.0.0.1:$port/health") && [ -n "$out" ]; then
+    tries=0
+    out=""
+    while [ "$tries" -lt 5 ]; do
+      tries=$((tries + 1))
+      if out=$(capture curl -fsS --max-time 5 "http://127.0.0.1:$port/health") && [ -n "$out" ]; then break; fi
+      out=""
+      [ "$tries" -lt 5 ] && sleep "${MCCTL_UPGRADE_HEALTH_WAIT:-2}"
+    done
+    if [ -n "$out" ]; then
       say "API /health on :$port: $out"
     else
-      say "API /health on :$port: no answer (is mcctl-api running?)"
+      say "API /health on :$port: no answer after $tries tries (is mcctl-api running?)"
       bad=1
     fi
   fi
   if [ "$bad" = 0 ]; then
     record 8 "Verify" ok
   else
-    RC=1
     record 8 "Verify" failed "see above"
   fi
 }
@@ -812,4 +914,5 @@ main() {
   finish
 }
 
-main "$@"
+# shellcheck disable=SC2317 # exit is the guard against a truncated download
+{ main "$@"; exit $?; }

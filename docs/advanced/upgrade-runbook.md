@@ -51,7 +51,11 @@ Before the first step the script reads `mcctl --version` and `npm view @minecraf
 | 8 Verify | `mcctl --version`, `docker compose config -q`, PM2 status, API `/health` (only when `ecosystem.config.cjs` exists) | automatic |
 | 9 Summary | Result of each step, what is left, rollback, log path | automatic |
 
-If the update, the upgrade or the backup fails, the script stops and does not run the steps that depend on it.
+If step 2 is skipped (you answer no, or there is no terminal and no `--yes`) or fails, the script runs no later step and stops with "The upgrade did not finish": the later steps need the v3 CLI. Fix the cause and run the script again. A failed backup or `mcctl upgrade` stops it the same way. Any failed step makes the exit code 1.
+
+On a dry run with a v2 CLI, the `mcctl upgrade --dry-run` preview is the plan of the v2 CLI installed now; the v3 plan appears after the update.
+
+Step 5 loads `ecosystem.config.cjs` with `node` (so it runs the file, like PM2 does), edits it only if the mcctl-api `name:` line is `name: 'mcctl-api',` alone on its line, loads it again to check the result and puts the original back if the check fails (no restart then). A symbolic link or a one-line app object is not edited; the script tells you what to add by hand.
 
 **What the script does not do** (the summary repeats these):
 
