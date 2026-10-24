@@ -1,9 +1,8 @@
 import { ServerName, EXISTING_SERVER_NAME_PATTERN } from '../value-objects/ServerName.js';
 import { WORLD_NAME_PATTERN, EXISTING_WORLD_NAME_PATTERN } from '../value-objects/WorldName.js';
 import { ServerType } from '../value-objects/ServerType.js';
-import { McVersion } from '../value-objects/McVersion.js';
 import { Memory } from '../value-objects/Memory.js';
-import { ENV_KEY_RE, ENV_FILE_VALUE_RE } from '../../utils/env-file.js';
+import { ENV_KEY_RE, ENV_FILE_VALUE_RE, applyEnvChanges } from '../../utils/env-file.js';
 
 /**
  * The server definition (#675, ADR-0003 §1). Pure: no I/O.
@@ -23,9 +22,9 @@ export interface ServerSpecDocument extends ServerSpec {
   name: string;
   /** TYPE */
   type: string;
-  /** VERSION; absent = itzg/modpack decides. */
+  /** VERSION; absent = itzg/modpack decides; '' = `VERSION=` (empty, still overrides servers/global.env). */
   version?: string;
-  /** MEMORY */
+  /** MEMORY; '' as for version. */
   memory?: string;
   /** Compose image, e.g. itzg/minecraft-server:java25 */
   image: string;
@@ -38,7 +37,7 @@ export interface ServerSpecDocument extends ServerSpec {
   routing: {
     /** User-added mc-router hostnames. */
     customHostnames: string[];
-    /** PLAYIT_DOMAIN and a router hostname. */
+    /** PLAYIT_DOMAIN and a router hostname; '' = `PLAYIT_DOMAIN=` (no router hostname). */
     playitDomain?: string;
     autoScale: { up: boolean; down: boolean };
     /** mc-router.auto-scale-asleep-motd */
@@ -92,10 +91,28 @@ export class ServerSpecError extends Error {
   }
 }
 
+/**
+ * The files (`servers/<n>/...`) a failed ServerSpec write could not put back:
+ * their restore failed (they keep the new content) or another writer changed
+ * them since. [] when the write left nothing behind. Read from the error the
+ * write rejected with (IServerSpecRepository.write).
+ */
+export function unrestoredFiles(error: unknown): string[] {
+  const files = (error as { unrestoredFiles?: unknown } | null | undefined)?.unrestoredFiles;
+  return Array.isArray(files) ? files.filter((f): f is string => typeof f === 'string') : [];
+}
+
 /** `create`: the strict rules for a new server. `existing`: what works today (imported servers). */
 export type ServerSpecRules = 'create' | 'existing';
 
 const DIMENSION_SUFFIX = /_(nether|the_end)$/;
+
+/**
+ * A Minecraft version a new server may ask for: releases, LATEST, snapshots
+ * (24w14a) and pre-releases (1.20.5-rc1). The same rule as the API create
+ * schema; itzg resolves the value.
+ */
+export const MC_VERSION_INPUT_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const HOST_LABEL = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 /**
@@ -206,10 +223,19 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
 
   const type = str(value, 'type', 'type', true);
   if (type !== undefined) check('type', create ? rejects(ServerType.create, type) : envValueError(type));
+  // '' in version, memory and routing.playitDomain is an explicit empty value: config.env keeps
+  // `KEY=`, which still overrides servers/global.env (imported servers, ADR-0003 §4).
   const version = str(value, 'version', 'version', false);
-  if (version !== undefined) check('version', create ? rejects(McVersion.create, version) : envValueError(version));
+  if (version !== undefined && version !== '') {
+    check(
+      'version',
+      create
+        ? MC_VERSION_INPUT_PATTERN.test(version) ? undefined : `invalid Minecraft version '${version}' (e.g. 1.21.1, LATEST, 24w14a)`
+        : envValueError(version)
+    );
+  }
   const memory = str(value, 'memory', 'memory', false);
-  if (memory !== undefined) check('memory', create ? rejects(Memory.create, memory) : envValueError(memory));
+  if (memory !== undefined && memory !== '') check('memory', create ? rejects(Memory.create, memory) : envValueError(memory));
 
   const image = str(value, 'image', 'image', true);
   if (image !== undefined && !/^\S+$/.test(image)) add('image', 'must be a non-empty image reference without spaces');
@@ -246,7 +272,7 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
       });
     }
     const playit = str(routing, 'playitDomain', 'routing.playitDomain', false);
-    if (playit !== undefined) check('routing.playitDomain', validateHostname(playit));
+    if (playit !== undefined && playit !== '') check('routing.playitDomain', validateHostname(playit));
 
     const autoScale = routing['autoScale'];
     if (autoScale === undefined) add('routing.autoScale', 'is required');
@@ -277,7 +303,9 @@ export function validateServerSpecDocument(value: unknown, rules: ServerSpecRule
       }
       const v = str(env, key, path, true);
       if (v === undefined) continue;
-      check(path, envValueError(v));
+      // A new server's values must also be ones the config.env writer can write (#675).
+      const unwritable = () => rejects((x) => applyEnvChanges('', { set: { [key]: x } }, { raw: true }), v);
+      check(path, envValueError(v) ?? (create ? unwritable() : undefined));
       if (key === 'EXTRA_ARGS' && /(^|\s)--universe(\s|=|$)/.test(v)) {
         add(path, 'must not contain --universe; set world.storage instead');
       }

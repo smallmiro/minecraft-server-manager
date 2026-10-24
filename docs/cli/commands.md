@@ -498,6 +498,9 @@ mcctl create [name] [options]
 !!! info "One world, one server"
     `--world` (and the default world `<name>` of a new server) is refused when another server already uses that world. See [World Assignment Rules](#world-assignment-rules).
 
+!!! info "What create writes"
+    `mcctl create` writes `servers/<name>/server.yaml` and renders `config.env`, `docker-compose.yml` and the `servers/compose.yml` entry from it ([Server Definition](../configuration/server-yaml.md)). If anything fails before the server exists, nothing is left behind, so the same command can be run again. If the server is created but does not start, it stays created and the command exits 1 with the cause; start it with `mcctl start <name>`.
+
 !!! note "Whitelist is off by default"
     Servers created without a whitelist option have the whitelist **disabled**, so anyone with a premium (online-mode) account can join. Use `--whitelist` or `--enable-whitelist` to restrict access, or turn it on later with `mcctl whitelist <server> on`. In interactive mode you are asked "Enable whitelist?" (default No) and only asked for players when you answer Yes. Servers created from the Web Console are also created with the whitelist off.
 
@@ -1980,6 +1983,30 @@ If the resulting `LEVEL` is used by another server, or a server's assignment can
 !!! info "World Storage Change"
     New servers created with `mcctl create` already use the `/worlds/` directory structure.
     This migration command is for existing servers created before this change.
+
+---
+
+### mcctl migrate spec
+
+Import servers into their definition file `servers/<name>/server.yaml` and write the files rendered from it (`config.env`, `docker-compose.yml`, the `servers/compose.yml` entry). See [Server Definition](../configuration/server-yaml.md).
+
+```bash
+mcctl migrate spec <server> [options]
+mcctl migrate spec --all [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--all` | Every server |
+| `--dry-run` | Report what would be imported; write nothing |
+| `--force` | Re-render from `server.yaml` over hand edits of the generated files (keeps `.bak` copies) |
+| `--json` | Print the per-server report as JSON |
+
+Running it again is safe: a server that is in sync is reported as `synced` and nothing is rewritten. A server is `refused` (exit 1) when its world or image cannot be determined, for example a `${...}` value in `config.env`. A changed `world.level` is checked against the [World Assignment Rules](#world-assignment-rules) and needs the server to be stopped.
+
+You do not have to run this: a server without `server.yaml` is imported the first time mcctl changes it, and `mcctl upgrade` lists the servers not imported yet.
 
 ---
 

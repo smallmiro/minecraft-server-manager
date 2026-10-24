@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { applyEnvChanges, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-spec.js';
 
 interface WhitelistPlayer {
   name: string;
@@ -96,15 +97,9 @@ export class PlayerFileService {
     return parseEnvDocument(readFileSync(configPath, 'utf-8')).values;
   }
 
-  private writeConfigEnv(serverName: string, key: string, value: string): void {
-    const configPath = this.getConfigEnvPath(serverName);
-    const serverDir = join(this.mcctlRoot, 'servers', serverName);
-    if (!existsSync(serverDir)) {
-      mkdirSync(serverDir, { recursive: true });
-    }
-
-    const content = existsSync(configPath) ? readFileSync(configPath, 'utf-8') : '';
-    atomicWriteFileSync(configPath, applyEnvChanges(content, { set: { [key]: value } }, { raw: true }));
+  /** Through the ServerSpec (#675): server.yaml, config.env rendered from it. */
+  private async writeConfigEnv(serverName: string, key: string, value: string): Promise<void> {
+    await writeServerConfig(this.mcctlRoot, serverName, { set: { [key]: value } });
   }
 
   private parseCommaSeparated(value: string | undefined): string[] {
@@ -121,8 +116,8 @@ export class PlayerFileService {
     return value.toLowerCase() === 'true';
   }
 
-  setWhitelistEnabled(serverName: string, enabled: boolean): void {
-    this.writeConfigEnv(serverName, 'ENABLE_WHITELIST', enabled ? 'TRUE' : 'FALSE');
+  async setWhitelistEnabled(serverName: string, enabled: boolean): Promise<void> {
+    await this.writeConfigEnv(serverName, 'ENABLE_WHITELIST', enabled ? 'TRUE' : 'FALSE');
   }
 
   readWhitelist(serverName: string): WhitelistResult {

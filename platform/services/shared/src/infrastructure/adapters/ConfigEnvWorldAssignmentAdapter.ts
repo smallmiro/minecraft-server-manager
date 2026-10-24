@@ -1,8 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import { Paths } from '../../utils/index.js';
-import { applyEnvChanges, assertEnvFileValue } from '../../utils/env-file.js';
-import { atomicWriteFile } from '../../utils/atomic-write.js';
+import { assertEnvFileValue } from '../../utils/env-file.js';
 import {
   WorldAssignmentError,
   checkAssign,
@@ -14,6 +11,10 @@ import {
 } from '../../domain/index.js';
 import type { IWorldAssignmentPort } from '../../application/ports/outbound/IWorldAssignmentPort.js';
 import { readWorldAssignmentSnapshot } from './effectiveExtraArgs.js';
+import { FileServerSpecRepository } from './server-spec/FileServerSpecRepository.js';
+import { updateServerSpec } from '../../application/use-cases/updateServerSpec.js';
+import { setEnvKeys } from '../../domain/server-spec/setEnvKeys.js';
+import type { IServerSpecRepository } from '../../application/ports/outbound/IServerSpecRepository.js';
 
 /**
  * World assignments derived from each server's `LEVEL` in
@@ -26,7 +27,15 @@ import { readWorldAssignmentSnapshot } from './effectiveExtraArgs.js';
  * .env value), then the server's config.env, which wins.
  */
 export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
-  constructor(private readonly paths: Paths = new Paths()) {}
+  /**
+   * @param specRepo where LEVEL and SEED writes go (#675, ADR-0003 §6): the
+   *   ServerSpec repository, built with a runtime so it can check the server is
+   *   stopped. Default: a repository without one, which refuses LEVEL changes (R7).
+   */
+  constructor(
+    private readonly paths: Paths = new Paths(),
+    private readonly specRepo?: IServerSpecRepository
+  ) {}
 
   /** @deprecated Use snapshot() with holdersOf. Removed in v3.0.0 (#736). */
   async getAssignment(world: string): Promise<string | null> {
@@ -82,14 +91,9 @@ export class ConfigEnvWorldAssignmentAdapter implements IWorldAssignmentPort {
     return readWorldAssignmentSnapshot(this.paths, override, dotenvOverride);
   }
 
-  private configPath(server: string): string {
-    return join(this.paths.servers, server, 'config.env');
-  }
-
+  /** LEVEL/SEED through the ServerSpec (#675): server.yaml is the one record, config.env its rendering. */
   private async writeConfig(server: string, set: Record<string, string>): Promise<void> {
-    const file = this.configPath(server);
-    const content = await readFile(file, 'utf-8');
-    // config.env is a Compose env_file: raw style (#656); atomicWriteFile keeps the mode
-    await atomicWriteFile(file, applyEnvChanges(content, { set }, { raw: true }));
+    const repo = this.specRepo ?? new FileServerSpecRepository(this.paths);
+    await updateServerSpec(repo, server, (doc) => setEnvKeys(doc, { set }));
   }
 }

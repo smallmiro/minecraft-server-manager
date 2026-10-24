@@ -89,6 +89,7 @@ nav:
   - Configuration:
       - Overview: configuration/index.md
       - Environment Variables: configuration/environment.md
+      - Server Definition (server.yaml): configuration/server-yaml.md
       - Server Types: configuration/server-types.md
   - Mods & Plugins:
       - Overview: mods-and-plugins/index.md

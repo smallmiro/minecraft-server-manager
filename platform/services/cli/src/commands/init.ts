@@ -16,6 +16,7 @@ import {
   isUpdateAvailable,
 } from '../lib/update-checker.js';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { rerenderServers } from '../lib/server-config.js';
 
 /**
  * Initialize the platform
@@ -653,7 +654,7 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
     });
 
     if (!isCancel(updateServers) && updateServers) {
-      const updatedCount = await updateServerHostnames(paths, newHostIPs);
+      const updatedCount = await updateServerHostnames(paths);
       if (updatedCount > 0) {
         console.log(`  ${colors.green('✓')} Updated ${updatedCount} server(s)`);
       }
@@ -686,74 +687,11 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
 }
 
 /**
- * Update server docker-compose.yml files with new hostnames
+ * Render every server again (ADR-0003 §6): the nip.io router hosts follow
+ * the new HOST_IPS in .env, custom hosts stay.
  */
-async function updateServerHostnames(paths: Paths, newHostIPs: string): Promise<number> {
-  const serversDir = paths.servers;
-  let updatedCount = 0;
-
-  if (!existsSync(serversDir)) {
-    return 0;
-  }
-
-  const serverDirs = readdirSync(serversDir, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory() && !dirent.name.startsWith('_'))
-    .map((dirent) => dirent.name);
-
-  for (const serverName of serverDirs) {
-    const composeFile = join(serversDir, serverName, 'docker-compose.yml');
-    if (!existsSync(composeFile)) {
-      continue;
-    }
-
-    try {
-      let content = readFileSync(composeFile, 'utf-8');
-
-      // Replace mc-router.host label value
-      // Match patterns like: mc-router.host: "server.local,server.ip.nip.io"
-      const hostLabelRegex = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
-      const match = content.match(hostLabelRegex);
-
-      if (match) {
-        const hostnames = mergeHostnames(serverName, newHostIPs, match[2] ?? '');
-        content = content.replace(hostLabelRegex, `$1${hostnames}$3`);
-        atomicWriteFileSync(composeFile, content);
-        updatedCount++;
-      }
-    } catch {
-      log.warn(`Failed to update ${serverName}/docker-compose.yml`);
-    }
-  }
-
-  return updatedCount;
-}
-
-/**
- * Build hostname string from server name and IPs
- */
-function buildHostnames(serverName: string, hostIPs: string): string {
-  let hostnames = `${serverName}.local`;
-
-  if (hostIPs) {
-    const ips = hostIPs.split(',').map((ip) => ip.trim()).filter((ip) => ip);
-    for (const ip of ips) {
-      hostnames += `,${serverName}.${ip}.nip.io`;
-    }
-  }
-
-  return hostnames;
-}
-
-/**
- * Rebuild the system hostnames (<server>.local, <server>.<ip>.nip.io) and keep
- * every other existing hostname (custom, playit domain) after them.
- */
-export function mergeHostnames(serverName: string, hostIPs: string, existing: string): string {
-  const escaped = serverName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const systemRe = new RegExp(`^${escaped}\\.(local|\\d{1,3}(\\.\\d{1,3}){3}\\.nip\\.io)$`, 'i');
-  const merged = buildHostnames(serverName, hostIPs).split(',');
-  for (const h of existing.split(',').map((x) => x.trim())) {
-    if (h && !systemRe.test(h) && !merged.some((m) => m.toLowerCase() === h.toLowerCase())) merged.push(h);
-  }
-  return merged.join(',');
+async function updateServerHostnames(paths: Paths): Promise<number> {
+  const { updated, failed } = await rerenderServers(paths);
+  for (const { server, reason } of failed) log.warn(`Failed to update ${server}: ${reason}`);
+  return updated.length;
 }

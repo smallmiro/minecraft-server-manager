@@ -1,13 +1,15 @@
 import { readFileSync } from 'node:fs';
-import { readdir, readFile, stat } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import yaml from 'js-yaml';
 import { Paths } from '../../../utils/index.js';
-import { parseEnvDocument, envRevision } from '../../../utils/env-file.js';
-import { atomicWriteFile } from '../../../utils/atomic-write.js';
+import { envRevision, parseEnvDocument } from '../../../utils/env-file.js';
+import { resolveHostIps } from '../../hostIps.js';
+import { atomicWriteFile, type AtomicWriteOptions } from '../../../utils/atomic-write.js';
 import { EXISTING_SERVER_NAME_PATTERN } from '../../../domain/value-objects/ServerName.js';
 import {
   ServerSpecError,
+  SERVER_SPEC_MANAGED_ENV_KEYS,
   assertServerSpecDocument,
   type ServerSpec,
   type ServerSpecDocument,
@@ -21,6 +23,7 @@ import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImpo
 import {
   DockerComposeRenderer,
   includeEntries,
+  removeIncludeEntry,
   type RenderContext,
   type RenderedFile,
   type ServerSpecRenderer,
@@ -128,11 +131,15 @@ const editConflict = (name: string) =>
  * A server without server.yaml is imported in memory from those files.
  */
 export class FileServerSpecRepository implements IServerSpecRepository {
-  /** `runtime`: asked whether a server is stopped before its world changes; without it such writes are refused (R7). */
+  /**
+   * @param runtime asked whether a server is stopped before its world changes; without it such writes are refused (R7).
+   * @param hostIps the host addresses for nip.io router hosts (default: resolveHostIps).
+   */
   constructor(
     private readonly paths: Paths = new Paths(),
     private readonly renderer: ServerSpecRenderer = new DockerComposeRenderer(),
-    private readonly runtime?: IContainerRuntimePort
+    private readonly runtime?: IContainerRuntimePort,
+    private readonly resolveIps: () => string[] = () => resolveHostIps(paths)
   ) {}
 
   async list(): Promise<ServerSpec[]> {
@@ -239,8 +246,12 @@ export class FileServerSpecRepository implements IServerSpecRepository {
   /**
    * Write server.yaml, then render the generated files (ADR-0003 §2-§3).
    * Every check runs before the first write. Unchanged files are not written.
+   * All or nothing per file: when a write fails, the files this write already
+   * changed get their earlier content back (or are removed when new), so a
+   * caller undoing its own steps (migrate worlds) matches the files.
    */
   async write(doc: ServerSpecDocument, options: WriteServerSpecOptions = {}): Promise<void> {
+    if (options.create) return this.create(doc);
     const server = typeof doc?.name === 'string' ? doc.name : '?';
     assertServerSpecDocument(doc, 'existing', { server, file: `servers/${server}/${SPEC_FILE}` });
     const name = doc.name;
@@ -336,18 +347,60 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       }
     }
 
-    if (currentYaml !== nextYaml) {
-      const mode = currentYaml === undefined ? await this.fileMode(join(dir, 'config.env')) : undefined;
-      await atomicWriteFile(specPath, nextYaml, mode === undefined ? {} : { mode });
-    }
-    for (const step of plan) {
-      if (step.backup !== undefined) {
-        const mode = await this.fileMode(step.path);
-        await atomicWriteFile(`${step.path}.bak`, step.backup, mode === undefined ? {} : { mode });
+    const written: Array<{ path: string; content: string; before: string | undefined }> = [];
+    const put = async (path: string, content: string, before: string | undefined, opts: AtomicWriteOptions = {}) => {
+      await atomicWriteFile(path, content, opts);
+      written.push({ path, content, before });
+    };
+    try {
+      if (currentYaml !== nextYaml) {
+        const mode = currentYaml === undefined ? await this.fileMode(join(dir, 'config.env')) : undefined;
+        await put(specPath, nextYaml, currentYaml, mode === undefined ? {} : { mode });
       }
-      await atomicWriteFile(step.path, step.content);
+      for (const step of plan) {
+        if (step.backup !== undefined) {
+          const bak = `${step.path}.bak`;
+          const mode = await this.fileMode(step.path);
+          await put(bak, step.backup, await readOptional(bak), mode === undefined ? {} : { mode });
+        }
+        await put(step.path, step.content, step.before);
+      }
+      if (include) await this.writeInclude(name, doc, ctx);
+    } catch (err) {
+      // A restore failure never hides the write error: it is added to the message (as create's cleanup).
+      // A file another writer changed since (e.g. while the include lock was awaited) is left as it is.
+      // server.yaml (written first, undone last) is put back only when every generated file was: a
+      // generated file left with the new content keeps the new server.yaml with it, so the next
+      // render (mcctl migrate spec) writes the new spec again instead of the earlier one.
+      const failed: Array<{ file: string; reason: string }> = [];
+      const changed: string[] = [];
+      let specKept: string | undefined;
+      for (const { path, content, before } of written.reverse()) {
+        const file = `servers/${name}/${basename(path)}`;
+        const generatedLeft = [...changed, ...failed.map((f) => f.file)].some((f) => !f.endsWith('.bak'));
+        try {
+          // ponytail: read-then-restore leaves a window of milliseconds; a per-server lock closes it if needed.
+          if ((await readOptional(path)) !== content) changed.push(file);
+          else if (path === specPath && generatedLeft) specKept = file;
+          else if (before === undefined) await rm(path, { force: true });
+          else await atomicWriteFile(path, before);
+        } catch (e) {
+          failed.push({ file, reason: (e as Error).message });
+        }
+      }
+      if (err instanceof Error) {
+        if (changed.length > 0) err.message += ` (${changed.join(', ')} changed since this write and were left as they are)`;
+        if (failed.length > 0) {
+          const list = failed.map((f) => `${f.file}: ${f.reason}`).join('; ');
+          err.message += ` (restoring the earlier files failed: ${list}; check them by hand)`;
+        }
+        if (specKept) err.message += ` (${specKept} keeps the new spec to match; run mcctl migrate spec ${name} once the cause is fixed)`;
+        // For the caller (unrestoredFiles): e.g. migrate worlds places the world by the spec left.
+        const left = [...changed, ...failed.map((f) => f.file), ...(specKept ? [specKept] : [])];
+        if (left.length > 0) Object.assign(err, { unrestoredFiles: left });
+      }
+      throw err;
     }
-    if (include) await this.writeInclude(name, doc, ctx);
   }
 
   /**
@@ -400,13 +453,95 @@ export class FileServerSpecRepository implements IServerSpecRepository {
   }
 
   /**
-   * Add the server's servers/compose.yml entry. The file is shared by every
-   * server and by CLI and API processes, so the whole read-merge-write runs
-   * under servers/.compose.yml.lock: inside it the file is read fresh,
-   * merged, written, read back and checked for every entry it had plus ours
-   * (one retry for a writer that ignores the lock).
+   * A new server (ADR-0003 §5): claim servers/<n> with mkdir, write
+   * server.yaml and the generated files, create data/, logs/ and
+   * servers/global.env, then add the include entry. All or nothing: on any
+   * failure after the claim the entry it added and the directory are
+   * removed, so the same create can be retried at once (#657).
    */
-  private async writeInclude(name: string, doc: ServerSpecDocument, ctx: RenderContext): Promise<void> {
+  private async create(input: ServerSpecDocument): Promise<void> {
+    const server = typeof input?.name === 'string' ? input.name : '?';
+    assertServerSpecDocument(input, 'create', { server, file: `servers/${server}/${SPEC_FILE}` });
+    const name = input.name;
+    const dir = this.paths.serverDir(name);
+    await mkdir(this.paths.servers, { recursive: true });
+    try {
+      await mkdir(dir);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+        throw new ServerSpecError('already_exists', `Server '${name}' already exists (servers/${name})`, name);
+      }
+      throw err;
+    }
+
+    let entryAdded = false;
+    try {
+      const doc = this.withTemplateEnv(input);
+      const ctx = this.renderContext(await this.hostIps());
+      const files = this.renderer.render(doc, ctx); // refuses an unreadable servers/compose.yml
+      const config = files.find((f) => basename(f.path) === 'config.env');
+      if (config) {
+        // R1/R7 for the new server's world; it has no container yet, so no stop check.
+        const refused = checkProposed(
+          await readWorldAssignmentSnapshot(this.paths, { server: name, content: config.content }),
+          name
+        );
+        if (refused) throw refused;
+      }
+      const yamlText = dumpServerSpec(doc);
+      const revision = envRevision(yamlText);
+      await atomicWriteFile(join(dir, SPEC_FILE), yamlText, { mode: 0o600 });
+      for (const file of files) {
+        if (file.guarded) await atomicWriteFile(file.path, withHeader(file.content, revision));
+      }
+      await mkdir(join(dir, 'data'), { recursive: true });
+      await mkdir(join(dir, 'logs'), { recursive: true });
+      const globalEnv = join(this.paths.servers, 'global.env');
+      if (readOptionalSync(globalEnv) === undefined) {
+        const bundled = readOptionalSync(join(this.paths.templates, 'servers', 'global.env'));
+        if (bundled !== undefined) await atomicWriteFile(globalEnv, bundled);
+      }
+      entryAdded = !includeEntries(readOptionalSync(join(this.paths.servers, 'compose.yml'))).includes(
+        `${name}/docker-compose.yml`
+      );
+      await this.writeInclude(name, doc, ctx);
+    } catch (err) {
+      // A cleanup failure never hides the create error: it is added to the message (as withCleanup, ADR B5.9).
+      const failed: string[] = [];
+      const note = (what: string) => (e: unknown) => void failed.push(`${what}: ${(e as Error).message}`);
+      if (entryAdded) await this.removeInclude(name).catch(note(`the servers/compose.yml entry for ${name}`));
+      await rm(dir, { recursive: true, force: true }).catch(note(`servers/${name}`));
+      if (failed.length > 0 && err instanceof Error) {
+        err.message += ` (cleanup failed: ${failed.join('; ')}; remove it by hand before retrying)`;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * A new spec's env starts from the bundled template's config.env keys
+   * (minus the managed ones and EXTRA_ARGS, which world.storage renders), in
+   * template order; the document's own values win (create-server.sh copied
+   * the template and changed lines).
+   */
+  private withTemplateEnv(doc: ServerSpecDocument): ServerSpecDocument {
+    const template = readOptionalSync(join(this.paths.templates, 'servers', '_template', 'config.env'));
+    if (template === undefined) {
+      throw new Error(`Bundled server template missing under ${this.paths.templates}; reinstall mcctl`);
+    }
+    const env: Record<string, string> = {};
+    for (const [key, value] of parseEnvDocument(template).values) {
+      if (key in SERVER_SPEC_MANAGED_ENV_KEYS || key === 'EXTRA_ARGS') continue;
+      env[key] = doc.env[key] ?? value;
+    }
+    return { ...doc, env: { ...env, ...doc.env } };
+  }
+
+  /**
+   * Run `fn` on servers/compose.yml under servers/.compose.yml.lock. The file
+   * is shared by every server and by CLI and API processes.
+   */
+  private async withIncludeLock<T>(name: string, fn: () => Promise<T>): Promise<T> {
     const lock = await acquireFileLock(join(this.paths.servers, '.compose.yml.lock'), 'compose-include', {
       waitMs: serverSpecTestHooks.includeLockWaitMs,
       pollMs: 50,
@@ -415,22 +550,36 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       const who = lock.holder ? ` by pid ${lock.holder.pid} since ${lock.holder.startedAt}` : '';
       throw new ServerSpecError(
         'locked',
-        `servers/compose.yml is locked${who} (another mcctl process is adding a server); retry in a moment`,
+        `servers/compose.yml is locked${who} (another mcctl process is changing it); retry in a moment`,
         name
       );
     }
     try {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const file = this.renderer.render(doc, ctx).find((f) => !f.guarded)!; // reads the file fresh
-        const expected = [...includeEntries(readOptionalSync(file.path)), `${name}/docker-compose.yml`];
-        await serverSpecTestHooks.beforeIncludeWrite();
-        if (readOptionalSync(file.path) !== file.content) await atomicWriteFile(file.path, file.content);
-        const written = includeEntries(readOptionalSync(file.path));
-        if (expected.every((entry) => written.includes(entry))) return;
-      }
+      return await fn();
     } finally {
       await lock.release();
     }
+  }
+
+  /**
+   * Add the server's servers/compose.yml entry under the lock: read the file
+   * fresh, merge, write, read back and check every entry it had plus ours
+   * (one retry for a writer that ignores the lock).
+   */
+  private async writeInclude(name: string, doc: ServerSpecDocument, ctx: RenderContext): Promise<void> {
+    const ok = await this.withIncludeLock(name, async () => {
+      const path = join(this.paths.servers, 'compose.yml');
+      const expected = [...includeEntries(readOptionalSync(path)), `${name}/docker-compose.yml`];
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const file = this.renderer.render(doc, ctx).find((f) => !f.guarded)!; // reads the file fresh
+        await serverSpecTestHooks.beforeIncludeWrite();
+        if (readOptionalSync(file.path) !== file.content) await atomicWriteFile(file.path, file.content);
+        const written = includeEntries(readOptionalSync(file.path));
+        if (expected.every((entry) => written.includes(entry))) return true;
+      }
+      return false;
+    });
+    if (ok) return;
     throw new ServerSpecError(
       'conflict',
       `servers/compose.yml lost entries after a retry (a process that does not take servers/.compose.yml.lock is writing it); ` +
@@ -438,6 +587,18 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       name
     );
   }
+
+  /** Remove the server's servers/compose.yml entry (exact name) under the lock. */
+  private async removeInclude(name: string): Promise<void> {
+    await this.withIncludeLock(name, async () => {
+      const path = join(this.paths.servers, 'compose.yml');
+      const current = readOptionalSync(path);
+      if (current === undefined) return;
+      const next = removeIncludeEntry(current, name);
+      if (next !== current) await atomicWriteFile(path, next);
+    });
+  }
+
 
 
   private protectedWarnings(doc: ServerSpecDocument, compose: string, environmentMoved: boolean, hostIps: string[]): string[] {
@@ -504,12 +665,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     }
   }
 
-  /** HOST_IPS, else HOST_IP (comma lists) from the platform .env. */
   private async hostIps(): Promise<string[]> {
-    const text = await readOptional(this.paths.envFile);
-    if (text === undefined) return [];
-    const values = parseEnvDocument(text).values;
-    const list = values.get('HOST_IPS')?.trim() || values.get('HOST_IP') || '';
-    return list.split(',').map((ip) => ip.trim()).filter(Boolean);
+    return this.resolveIps();
   }
 }

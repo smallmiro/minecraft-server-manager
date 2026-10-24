@@ -5,8 +5,8 @@ import {
   serverExists,
   AuditActionEnum,
   getServerPlayitDomain,
-  setServerPlayitDomain,
   resolvePlayitDomain,
+  ServerSpecError,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
@@ -18,6 +18,7 @@ import {
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
 import { createHostnameService } from '../../services/HostnameService.js';
+import { serverSpecFailure } from '../../lib/server-spec.js';
 
 // ============================================================
 // Types
@@ -107,6 +108,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         200: UpdateHostnamesResponseSchema,
         400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
@@ -133,15 +135,12 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
       const previousData = hostnameService.getHostnames(name);
       const previousCustom = previousData.customHostnames;
 
-      const data = hostnameService.updateCustomHostnames(name, customHostnames);
-
-      // Keep PLAYIT_DOMAIN in config.env in step with the label (label already updated above)
+      // PLAYIT_DOMAIN follows the edit of the listed hosts; both change in server.yaml (#675)
       const serversDir = join(config.mcctlRoot, 'servers');
       const currentPlayit = getServerPlayitDomain(name, serversDir);
-      const playitDomain = resolvePlayitDomain(currentPlayit, previousCustom, data.customHostnames);
-      if (playitDomain !== currentPlayit) {
-        setServerPlayitDomain(name, playitDomain, serversDir);
-      }
+      const nextCustom = customHostnames.map((h) => h.trim().toLowerCase());
+      const playitDomain = resolvePlayitDomain(currentPlayit, previousCustom, nextCustom);
+      const data = await hostnameService.updateCustomHostnames(name, customHostnames, playitDomain);
 
       await writeAuditLog({
         action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
@@ -170,27 +169,6 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         playitDomain,
       });
     } catch (error) {
-      if (error instanceof Error && (
-        error.message.includes('Duplicate') ||
-        error.message.includes('Invalid') ||
-        error.message.includes('Cannot use') ||
-        error.message.includes('must be between')
-      )) {
-        await writeAuditLog({
-          action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
-          actor: 'api:console',
-          targetType: 'server',
-          targetName: name,
-          details: { customHostnames },
-          status: 'failure',
-          errorMessage: error.message,
-        });
-        return reply.code(400).send({
-          error: 'BadRequest',
-          message: error.message,
-        });
-      }
-
       await writeAuditLog({
         action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
         actor: 'api:console',
@@ -200,6 +178,22 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         status: 'failure',
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      if (error instanceof ServerSpecError) {
+        const failure = serverSpecFailure(error);
+        return reply.code(failure.status).send(failure.body);
+      }
+      if (error instanceof Error && (
+        error.message.includes('Duplicate') ||
+        error.message.includes('Invalid') ||
+        error.message.includes('Cannot use') ||
+        error.message.includes('must be between')
+      )) {
+        return reply.code(400).send({
+          error: 'BadRequest',
+          message: error.message,
+        });
+      }
+
       fastify.log.error(error, 'Failed to update server hostnames');
       return reply.code(500).send({
         error: 'InternalServerError',

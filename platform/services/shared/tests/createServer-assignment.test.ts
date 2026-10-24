@@ -1,6 +1,6 @@
 /**
  * CreateServerUseCase checks R1 for the world the new server will use
- * (--world, else its default world <name>) before create-server.sh (#670).
+ * (--world, else its default world <name>) before provisioning (#670, #675).
  */
 import { describe, test, expect, vi } from 'vitest';
 import { mkdtempSync } from 'node:fs';
@@ -13,6 +13,7 @@ import type {
   IShellPort,
   IServerRepository,
   IWorldAssignmentPort,
+  IServerSpecRepository,
 } from '../src/application/ports/index.js';
 
 function setup(levels: Record<string, string>, opts: { undetermined?: string[]; noPort?: boolean } = {}) {
@@ -24,7 +25,8 @@ function setup(levels: Record<string, string>, opts: { undetermined?: string[]; 
     assign: vi.fn(),
     release: vi.fn(),
   };
-  const shell = { createServer: vi.fn().mockResolvedValue({ success: true }) };
+  const shell = { createServer: vi.fn() };
+  const specRepo = { write: vi.fn(async () => undefined) };
   const serverRepo = { exists: vi.fn().mockResolvedValue(false) };
   const useCase = new CreateServerUseCase(
     {} as IPromptPort,
@@ -34,57 +36,58 @@ function setup(levels: Record<string, string>, opts: { undetermined?: string[]; 
     undefined,
     undefined,
     undefined,
-    opts.noPort ? undefined : port
+    opts.noPort ? undefined : port,
+    { specRepo: specRepo as unknown as IServerSpecRepository }
   );
-  return { useCase, shell };
+  return { useCase, specRepo };
 }
 
 describe('CreateServerUseCase.executeWithConfig - world assignment (#670)', () => {
   test('creates a server whose default world is free', async () => {
-    const { useCase, shell } = setup({ alpha: 'alpha' });
-    await useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1' });
-    expect(shell.createServer).toHaveBeenCalled();
+    const { useCase, specRepo } = setup({ alpha: 'alpha' });
+    await useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1', autoStart: false });
+    expect(specRepo.write).toHaveBeenCalled();
   });
 
   test('attaches a free existing world', async () => {
-    const { useCase, shell } = setup({ alpha: 'alpha' });
-    await useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1', worldName: 'free' });
-    expect(shell.createServer).toHaveBeenCalled();
+    const { useCase, specRepo } = setup({ alpha: 'alpha' });
+    await useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1', worldName: 'free', autoStart: false });
+    expect(specRepo.write).toHaveBeenCalled();
   });
 
   test('refuses --world held by another server (R1, R6)', async () => {
-    const { useCase, shell } = setup({ alpha: 'shared' });
+    const { useCase, specRepo } = setup({ alpha: 'shared' });
 
     await expect(
       useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1', worldName: 'shared' })
     ).rejects.toMatchObject({ code: 'conflict', servers: ['alpha'] });
-    expect(shell.createServer).not.toHaveBeenCalled();
+    expect(specRepo.write).not.toHaveBeenCalled();
   });
 
   test('refuses a default world <name> held by another server', async () => {
-    const { useCase, shell } = setup({ alpha: 'beta' });
+    const { useCase, specRepo } = setup({ alpha: 'beta' });
 
     await expect(useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1' })).rejects.toMatchObject({
       code: 'conflict',
     });
-    expect(shell.createServer).not.toHaveBeenCalled();
+    expect(specRepo.write).not.toHaveBeenCalled();
   });
 
   test('refuses while any server is undetermined (R7)', async () => {
-    const { useCase, shell } = setup({}, { undetermined: ['broken'] });
+    const { useCase, specRepo } = setup({}, { undetermined: ['broken'] });
 
     await expect(useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1' })).rejects.toMatchObject({
       code: 'undetermined',
     });
-    expect(shell.createServer).not.toHaveBeenCalled();
+    expect(specRepo.write).not.toHaveBeenCalled();
   });
 
   test('fails closed without an assignment port', async () => {
-    const { useCase, shell } = setup({}, { noPort: true });
+    const { useCase, specRepo } = setup({}, { noPort: true });
 
     await expect(useCase.executeWithConfig({ name: 'beta', type: 'PAPER', version: '1.21.1' })).rejects.toMatchObject({
       code: 'undetermined',
     });
-    expect(shell.createServer).not.toHaveBeenCalled();
+    expect(specRepo.write).not.toHaveBeenCalled();
   });
 });

@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const TEST_PLATFORM_PATH = join(import.meta.dirname, '.tmp-audit-logging-test');
@@ -60,9 +60,12 @@ function setupServer(serverName: string, opts: { configEnv?: string; files?: Rec
   const dataDir = join(serverDir, 'data');
   mkdirSync(dataDir, { recursive: true });
 
+  // A real server compose (bundled template): config writes go through the ServerSpec since #675
   writeFileSync(
     join(serverDir, 'docker-compose.yml'),
-    'services:\n  minecraft:\n    image: itzg/minecraft-server',
+    readFileSync(join(import.meta.dirname, '../../cli/templates/servers/_template/docker-compose.yml'), 'utf-8')
+      .replace(/mc-template/g, `mc-${serverName}`)
+      .replace('mc-router.host: "template.local"', `mc-router.host: "${serverName}.local"`),
     'utf-8'
   );
 

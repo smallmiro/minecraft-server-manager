@@ -685,6 +685,16 @@ describe('FileSystemConfigFileCollector', () => {
     expect(paths.includes('docker-compose.yml')).toBeTruthy();
   });
 
+  test('collects server.yaml with the generated files it renders (#675)', async () => {
+    const serverDir = join(serversDir, 'specserver');
+    await mkdir(serverDir, { recursive: true });
+    await writeFile(join(serverDir, 'server.yaml'), 'specVersion: 1\n');
+    await writeFile(join(serverDir, 'config.env'), 'TYPE=PAPER');
+
+    const files = await new FileSystemConfigFileCollector(serversDir).collectFiles('specserver');
+    expect(files.map((f) => f.path)).toEqual(['server.yaml', 'config.env']);
+  });
+
   test('should compute SHA-256 hashes', async () => {
     const serverDir = join(serversDir, 'hashserver');
     await mkdir(serverDir, { recursive: true });

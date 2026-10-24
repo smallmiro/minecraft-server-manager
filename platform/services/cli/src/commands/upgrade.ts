@@ -9,6 +9,7 @@ import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
 import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
+import { serverSpecReport } from '../lib/server-config.js';
 import * as prompts from '@clack/prompts';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
@@ -122,6 +123,9 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   if (authEnv.skipped.length > 0) {
     prompts.log.warn(`Left in ecosystem.config.cjs (value cannot be stored in .env safely): ${authEnv.skipped.join(', ')}`);
   }
+
+  // --- Step 2d: ServerSpec status (#675): report only, import is lazy or `mcctl migrate spec` ---
+  await reportServerSpecs(paths);
 
   // --- Step 3: Update templateVersion in config (and backfill installId) ---
   const addInstallId = !mcctlConfig?.installId;
@@ -398,4 +402,29 @@ function printSummary(
   } else {
     prompts.outro(colors.green('Everything is up to date.'));
   }
+}
+
+/**
+ * Print which servers have no server.yaml yet (ADR-0003 decision 4). Writes
+ * nothing: a server is imported on its first mcctl write, or with
+ * `mcctl migrate spec`.
+ */
+async function reportServerSpecs(paths: Paths): Promise<void> {
+  let report;
+  try {
+    report = await serverSpecReport(paths);
+  } catch (error) {
+    prompts.log.warn(`Could not check server definitions: ${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+  const pending = report.filter((r) => r.status === 'pending');
+  const refused = report.filter((r) => r.status === 'refused');
+  if (pending.length === 0 && refused.length === 0) return;
+  if (pending.length > 0) {
+    prompts.log.info(
+      `Servers without server.yaml (imported on their next change): ${pending.map((r) => r.server).join(', ')}\n` +
+        'Preview the import: mcctl migrate spec --all --dry-run'
+    );
+  }
+  for (const r of refused) prompts.log.warn(`${r.server}: cannot be imported yet: ${r.reason}`);
 }

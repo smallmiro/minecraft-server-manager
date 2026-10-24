@@ -41,26 +41,19 @@ export async function promptSudoPasswordIfNeeded(
   }
 
   // avahi is installed but no password provided - prompt user
-  p.log.info('avahi-daemon detected. Sudo password needed for mDNS hostname registration.');
+  p.log.info('avahi-daemon detected. mDNS hostname registration uses sudo.');
 
   const password = await p.password({
-    message: 'Enter sudo password (or press Enter to skip mDNS):',
+    message: 'Enter sudo password (or press Enter to try sudo without a password):',
     mask: '*',
   });
 
-  if (p.isCancel(password)) {
-    // User cancelled - proceed without sudo
-    p.log.warn('Skipped. mDNS hostname will not be registered.');
+  // No password (Enter or cancel): the registrar runs `sudo -n`, which works with
+  // NOPASSWD or cached credentials; otherwise the registration is skipped.
+  if (p.isCancel(password) || !(password as string).trim()) {
+    p.log.info('No password: mDNS registration tries sudo without a password (NOPASSWD or cached credentials) and is skipped if that fails.');
     return undefined;
   }
 
-  const passwordStr = password as string;
-
-  // Empty password means skip
-  if (!passwordStr.trim()) {
-    p.log.warn('Skipped. mDNS hostname will not be registered.');
-    return undefined;
-  }
-
-  return passwordStr;
+  return password as string;
 }

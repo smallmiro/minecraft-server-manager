@@ -3,15 +3,18 @@ import {
   log,
   colors,
   checkProposed,
+  unrestoredFiles,
   type IContainerRuntimePort,
   type IWorldAssignmentPort,
+  type WorldAssignmentSnapshot,
 } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 import { migrateSpec } from './migrate-spec.js';
 import { isContainerRunning, serverOfContainer } from '../lib/rcon.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { serverSpecRepository, writeServerConfig } from '../lib/server-config.js';
 
 /**
  * Migrate command options
@@ -434,10 +437,12 @@ async function migrateServer(
       ? server.name
       : findExistingWorldName(worldsDir, server.levelValue, server.name);
   const newConfig = proposeConfig(fs.readFileSync(configPath, 'utf-8'), newLevelValue);
-  const refused = checkProposed(await assignments.preview(server.name, newConfig), server.name);
+  const intended = await assignments.preview(server.name, newConfig);
+  const refused = checkProposed(intended, server.name);
   if (refused) {
     throw refused;
   }
+  const before = await assignments.snapshot();
 
   // Ensure worlds directory exists
   if (!fs.existsSync(worldsDir)) {
@@ -451,12 +456,18 @@ async function migrateServer(
     await copyDirectory(sourceWorldDir, backupDir);
   }
 
+  // Every move is undone if the spec write below is refused (import refused, locked,
+  // invalid spec): a moved world with the old LEVEL would make the server start a new one.
+  const undo: Array<() => void> = [];
+
   // Step 2: Move world data if it exists in server directory
   if (fs.existsSync(sourceWorldDir) && fs.statSync(sourceWorldDir).isDirectory()) {
     // Check if it's a symlink
     if (fs.lstatSync(sourceWorldDir).isSymbolicLink()) {
       console.log(`  World is already a symlink, removing...`);
+      const link = fs.readlinkSync(sourceWorldDir);
       fs.unlinkSync(sourceWorldDir);
+      undo.push(() => fs.symlinkSync(link, sourceWorldDir));
     } else {
       // Check if target already exists
       if (fs.existsSync(targetWorldDir)) {
@@ -465,6 +476,7 @@ async function migrateServer(
 
       console.log(`  Moving world data to worlds/${server.name}`);
       fs.renameSync(sourceWorldDir, targetWorldDir);
+      undo.push(() => fs.renameSync(targetWorldDir, sourceWorldDir));
     }
   }
 
@@ -480,14 +492,88 @@ async function migrateServer(
       console.log(`  Moving ${dimWorld} to worlds/`);
       if (!fs.existsSync(targetDimDir)) {
         fs.renameSync(sourceDimDir, targetDimDir);
+        undo.push(() => fs.renameSync(targetDimDir, sourceDimDir));
       }
     }
   }
 
-  // Step 3: Update config.env
+  // Step 3: Update the ServerSpec (#675): world.storage universe, LEVEL; config.env is rendered
   console.log(`  Updating config.env`);
   console.log(`  Setting LEVEL=${newLevelValue}`);
-  atomicWriteFileSync(configPath, newConfig);
+  const proposed = parseEnvDocument(newConfig).values;
+  try {
+    await writeServerConfig(
+      paths,
+      server.name,
+      { set: { LEVEL: newLevelValue, EXTRA_ARGS: proposed.get('EXTRA_ARGS') ?? '--universe /worlds/' } },
+      { allowStorageChange: true }
+    );
+  } catch (error) {
+    if (undo.length === 0) throw error;
+    // The spec write puts its files back. When it could not (unrestoredFiles) it keeps the new
+    // server.yaml with them, and mcctl migrate spec renders whatever spec is left: place the world
+    // where that spec puts it, so the world and the files match once it is run.
+    const left = unrestoredFiles(error).length > 0;
+    const { spec, storageClash } = left
+      ? await specNow(paths, server.name, before, intended)
+      : { spec: 'earlier' as const, storageClash: false };
+    const where = `servers/${server.name}`;
+    // mcctl migrate spec refuses a storage change, so it cannot settle a server.yaml whose storage
+    // the absorbed config.env contradicts: that server.yaml has to go and the migration run again.
+    const rerender = storageClash
+      ? `${where}/server.yaml was written by this run and disagrees with ${where}/config.env; ` +
+        `remove it, then run mcctl migrate worlds again`
+      : `fix the cause and run mcctl migrate spec ${server.name} before you start the server`;
+    let note: string;
+    if (spec === 'migrated') {
+      note = `${where}/server.yaml keeps the new world settings, so the world stays in worlds/${server.name}; ${rerender}`;
+    } else if (spec === 'unknown') {
+      note = `could not tell which world the spec of ${server.name} now uses, so the world was left in worlds/${server.name}; ` +
+        `check world in ${where}/server.yaml and LEVEL and EXTRA_ARGS in ${where}/config.env and move the world to match by hand`;
+    } else {
+      const failed: string[] = [];
+      for (const step of undo.reverse()) {
+        try {
+          step();
+        } catch (e) {
+          failed.push((e as Error).message);
+        }
+      }
+      note = failed.length > 0
+        ? `moving the world back failed: ${failed.join('; ')}; move it back to ${where}/data by hand`
+        : `the world was moved back${left ? `; ${rerender}` : ''}`;
+    }
+    if (error instanceof Error) error.message += ` (${note})`;
+    throw error;
+  }
+}
+
+/**
+ * Which world the spec mcctl migrate spec would render for `server` puts it
+ * in (load(): server.yaml with hand edits absorbed): the migrated one, the
+ * earlier one, or neither / unreadable ('unknown'). `storageClash`: that spec
+ * and server.yaml as written keep the world in different places, which
+ * mcctl migrate spec refuses (storage_change).
+ */
+async function specNow(
+  paths: Paths,
+  server: string,
+  before: WorldAssignmentSnapshot,
+  intended: WorldAssignmentSnapshot
+): Promise<{ spec: 'migrated' | 'earlier' | 'unknown'; storageClash: boolean }> {
+  const assigned = (s: WorldAssignmentSnapshot) => {
+    if (s.undetermined.includes(server)) return undefined;
+    const a = s.assignments.find((x) => x.server === server);
+    return a ? `${a.world}\0${!!a.internal}` : undefined;
+  };
+  const repo = serverSpecRepository(paths);
+  const doc = await repo.load(server).then((l) => l?.document, () => undefined);
+  const file = await repo.loadFile(server).then((l) => l?.document, () => undefined);
+  const storageClash = !!doc && !!file && doc.world.storage !== file.world.storage;
+  if (!doc) return { spec: 'unknown', storageClash };
+  const now = `${doc.world.level}\0${doc.world.storage === 'data'}`;
+  if (now === assigned(intended)) return { spec: 'migrated', storageClash };
+  return { spec: now === assigned(before) ? 'earlier' : 'unknown', storageClash };
 }
 
 /**
