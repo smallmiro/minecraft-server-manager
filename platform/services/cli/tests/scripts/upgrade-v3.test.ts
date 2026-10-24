@@ -641,6 +641,7 @@ describe('upgrade-v3.sh', () => {
   it('checks that PM2 runs mcctl-api with the kill_timeout of the file', () => {
     const ok = run({ args: ['--yes'] });
     expect(ok.out).toContain('PM2 mcctl-api kill_timeout: 130000 (ok)');
+    expect(ok.out).toMatch(/^PM2 mcctl-console online [0-9.]+ \(ok\)$/m);
     expect(ok.code).toBe(0);
   });
 

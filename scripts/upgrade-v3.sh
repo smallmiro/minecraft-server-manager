@@ -938,9 +938,9 @@ step8_verify() {
       case "$line" in
         mcctl-*)
           case "$line" in
-            *" online "*) say "PM2 $line (ok)" ;;
+            *" online "*) say "PM2 ${line% *} (ok)" ;;
             *)
-              say "PM2 $line (not online)"
+              say "PM2 ${line% *} (not online)"
               bad=1
               ;;
           esac
