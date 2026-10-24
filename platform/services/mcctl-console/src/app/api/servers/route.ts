@@ -21,12 +21,14 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
  * GET /api/servers
  * Proxy to mcctl-api: List all servers (filtered by user permissions)
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await requireAuth(await headers());
 
     const client = createMcctlApiClient(getUserContext(session));
-    const allServers = await client.getServers();
+    // Only `include=summary` is forwarded; any other value is ignored
+    const include = request.nextUrl.searchParams.get('include') === 'summary' ? 'summary' : undefined;
+    const allServers = await client.getServers(include ? { include } : undefined);
 
     // Platform admins see all servers
     if (session.user.role === 'admin') {
@@ -42,7 +44,20 @@ export async function GET() {
       allowedServerNames.has(server.name)
     );
 
-    return NextResponse.json({ servers: filteredServers, total: filteredServers.length });
+    // totals describe every server, so rebuild them from what this user may see
+    const totals = allServers.totals
+      ? {
+          running: filteredServers.filter((server) => server.status === 'running').length,
+          playersOnline: filteredServers.reduce((sum, server) => sum + (server.players?.online ?? 0), 0),
+          playersMax: filteredServers.reduce((sum, server) => sum + (server.players?.max ?? 0), 0),
+        }
+      : undefined;
+
+    return NextResponse.json({
+      servers: filteredServers,
+      total: filteredServers.length,
+      ...(totals ? { totals } : {}),
+    });
   } catch (error) {
     if (error instanceof AuthError) {
       return NextResponse.json(

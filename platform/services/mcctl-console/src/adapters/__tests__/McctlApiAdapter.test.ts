@@ -112,6 +112,34 @@ describe('McctlApiAdapter', () => {
   });
 
   describe('Server operations', () => {
+    it('getServers({ include: "summary" }) should request ?include=summary', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ servers: [], total: 0 }),
+      });
+
+      await adapter.getServers({ include: 'summary' });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers?include=summary',
+        expect.any(Object)
+      );
+    });
+
+    it('getServers({}) should not add a query string', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ servers: [], total: 0 }),
+      });
+
+      await adapter.getServers({});
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:5001/api/servers',
+        expect.any(Object)
+      );
+    });
+
     it('getServers should fetch server list', async () => {
       const mockResponse = {
         servers: [

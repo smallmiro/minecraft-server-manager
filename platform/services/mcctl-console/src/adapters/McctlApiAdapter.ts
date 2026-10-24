@@ -177,8 +177,9 @@ export class McctlApiAdapter implements IMcctlApiClient {
   // Server Operations
   // ============================================================
 
-  async getServers(): Promise<ServerListResponse> {
-    return this.fetch<ServerListResponse>('/api/servers');
+  async getServers(options?: { include?: 'summary' }): Promise<ServerListResponse> {
+    const query = options?.include === 'summary' ? '?include=summary' : '';
+    return this.fetch<ServerListResponse>(`/api/servers${query}`);
   }
 
   async getServer(name: string): Promise<ServerDetailResponse> {

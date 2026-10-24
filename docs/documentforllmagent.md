@@ -1338,7 +1338,7 @@ curl -u admin:password http://localhost:5001/api/servers
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/servers` | List all servers |
+| GET | `/api/servers` | List all servers (`?include=summary` adds type, version, memory, players, stats per server and `totals`; RCON ~2 s timeout, cached ~10 s) |
 | POST | `/api/servers` | Create new server |
 | GET | `/api/servers/:name` | Get server details |
 | DELETE | `/api/servers/:name` | Delete server |

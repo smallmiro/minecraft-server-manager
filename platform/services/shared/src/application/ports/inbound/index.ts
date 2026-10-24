@@ -34,5 +34,11 @@ export type {
   GetPlayerDetailOptions,
 } from './IPlayerManagementUseCase.js';
 export type { IPlayerSessionUseCase, SessionHistory } from './IPlayerSessionUseCase.js';
+export type {
+  IGetServerSummariesUseCase,
+  ServerSummaryItem,
+  ServerSummaryTotals,
+  ServerSummariesResult,
+} from './IGetServerSummariesUseCase.js';
 export { AnalysisCancelledError } from './IWorldStatsUseCase.js';
 export type { IWorldStatsUseCase, AnalyzeOptions } from './IWorldStatsUseCase.js';
