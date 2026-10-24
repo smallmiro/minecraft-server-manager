@@ -120,20 +120,28 @@ export const serverSpecTestHooks = {
   beforeWorldMove: async (_world: string): Promise<void> => {},
 };
 
-/** Rename, or copy then remove when worlds/ is on another filesystem (what mv did). */
-async function moveFolder(from: string, to: string): Promise<void> {
+/**
+ * Rename, or copy when worlds/ is on another filesystem (what mv did).
+ * 'copied' leaves `from` for the caller to remove. The copy claims `to` with a
+ * non-recursive mkdir first (EEXIST when another process created it since the
+ * check), so it never merges into, and its rollback never removes, a folder
+ * that is not ours.
+ */
+async function renameOrCopy(from: string, to: string): Promise<'renamed' | 'copied'> {
   try {
     await rename(from, to);
+    return 'renamed';
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code !== 'EXDEV') throw err;
-    try {
-      await cp(from, to, { recursive: true, errorOnExist: true, force: false, preserveTimestamps: true, verbatimSymlinks: true });
-    } catch (copyErr) {
-      await rm(to, { recursive: true, force: true }); // our partial copy; the original is untouched
-      throw copyErr;
-    }
-    await rm(from, { recursive: true, force: true });
   }
+  await mkdir(to);
+  try {
+    await cp(from, to, { recursive: true, errorOnExist: true, force: false, preserveTimestamps: true, verbatimSymlinks: true });
+  } catch (copyErr) {
+    await rm(to, { recursive: true, force: true }); // the folder we claimed; the original is untouched
+    throw copyErr;
+  }
+  return 'copied';
 }
 
 const editConflict = (name: string) =>
@@ -255,19 +263,34 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     await mkdir(this.paths.worlds, { recursive: true });
     for (const world of worlds) {
       await serverSpecTestHooks.beforeWorldMove(world);
+      const appeared = failed(`worlds/${world} appeared before data/${world} could be moved`);
       // ponytail: check-then-rename is not atomic; rename onto a folder created in between
-      // fails (not empty) or replaces an empty one, so no data is lost.
+      // fails (not empty) or replaces an empty one, and the copy claims it first, so no data is lost.
       try {
         await lstat(join(this.paths.worlds, world));
-        throw failed(`worlds/${world} appeared before data/${world} could be moved`);
+        throw appeared;
       } catch (err) {
         if (err instanceof ServerSpecError) throw err;
         if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw failed(`cannot check worlds/${world}`);
       }
+      const from = join(this.paths.serverDir(name), 'data', world);
+      let how: 'renamed' | 'copied';
       try {
-        await moveFolder(join(this.paths.serverDir(name), 'data', world), join(this.paths.worlds, world));
+        how = await renameOrCopy(from, join(this.paths.worlds, world));
       } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === 'EEXIST' || code === 'ENOTEMPTY') throw appeared;
         throw failed(`failed to move data/${world} to worlds/: ${(err as Error).message}`);
+      }
+      if (how === 'copied') {
+        try {
+          await rm(from, { recursive: true, force: true });
+        } catch (err) {
+          throw failed(
+            `worlds/${world} is a complete copy of data/${world}, but servers/${name}/data/${world} could not be fully ` +
+              `removed (${(err as Error).message}); remove what is left of it by hand: sudo rm -rf '${from}'`
+          );
+        }
       }
       moved.push(world);
     }
