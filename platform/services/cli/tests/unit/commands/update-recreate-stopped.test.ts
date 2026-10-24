@@ -112,7 +112,7 @@ describe('recreateStoppedServers (#796)', () => {
       return real(c);
     };
     await recreateStoppedServers(dir, s, yes);
-    expect(text()).toContain('a (boom)');
+    expect(text()).toContain('a: skipped');
     expect(compose).toHaveBeenCalledTimes(2);
   });
 
