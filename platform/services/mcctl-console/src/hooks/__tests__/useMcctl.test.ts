@@ -189,6 +189,27 @@ describe('useMcctl hooks', () => {
     });
   });
 
+  describe('useDeleteServer sudoPassword (#761)', () => {
+    it('sends sudoPassword in the JSON body', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+      const { result } = renderHook(() => useDeleteServer(), { wrapper: createWrapper() });
+      result.current.mutate({ name: 'test', force: true, sudoPassword: 'pw' });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/servers/test?force=true',
+        expect.objectContaining({ method: 'DELETE', body: JSON.stringify({ sudoPassword: 'pw' }) })
+      );
+    });
+
+    it('sends no body when sudoPassword is empty', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) });
+      const { result } = renderHook(() => useDeleteServer(), { wrapper: createWrapper() });
+      result.current.mutate({ name: 'test', force: true, sudoPassword: '' });
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(mockFetch.mock.calls[0][1].body).toBeUndefined();
+    });
+  });
+
   describe('useStartServer', () => {
     it('should start a server', async () => {
       const mockResponse = { success: true, server: 'test', action: 'start', timestamp: '2024-01-01' };

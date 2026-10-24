@@ -114,15 +114,15 @@ export function useCreateServer() {
 export function useDeleteServer() {
   const queryClient = useQueryClient();
 
-  return useMutation<DeleteServerResponse, Error, { name: string; force?: boolean; deleteWorld?: boolean }>({
-    mutationFn: ({ name, force, deleteWorld }) => {
+  return useMutation<DeleteServerResponse, Error, { name: string; force?: boolean; deleteWorld?: boolean; sudoPassword?: string }>({
+    mutationFn: ({ name, force, deleteWorld, sudoPassword }) => {
       const params = new URLSearchParams();
       if (force) params.set('force', 'true');
       if (deleteWorld) params.set('deleteWorld', 'true');
       const qs = params.toString();
       return apiFetch<DeleteServerResponse>(
         `/api/servers/${encodeURIComponent(name)}${qs ? `?${qs}` : ''}`,
-        { method: 'DELETE' }
+        { method: 'DELETE', body: sudoPassword ? JSON.stringify({ sudoPassword }) : undefined }
       );
     },
     onSuccess: () => {

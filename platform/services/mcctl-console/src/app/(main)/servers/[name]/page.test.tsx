@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { ThemeProvider } from '@/theme';
 import ServerDetailPage from './page';
 
@@ -235,6 +235,34 @@ describe('ServerDetailPage', () => {
         { name: 'test-server', force: true, deleteWorld: true },
         expect.anything(),
       );
+    });
+
+    it('sends the typed sudo password with the delete (#761)', () => {
+      openDialog();
+      fireEvent.change(screen.getByLabelText(/sudo password/i), { target: { value: 'pw' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(deleteMutation.mutate).toHaveBeenCalledWith(
+        { name: 'test-server', force: true, deleteWorld: false, sudoPassword: 'pw' },
+        expect.anything(),
+      );
+    });
+
+    it('omits sudoPassword when the field is left empty (#761)', () => {
+      openDialog();
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(deleteMutation.mutate.mock.calls[0][0]).not.toHaveProperty('sudoPassword');
+    });
+
+    it('shows the API warning instead of navigating away (#761)', () => {
+      openDialog();
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      push.mockClear();
+      const { onSuccess } = deleteMutation.mutate.mock.calls[0][1];
+      act(() => onSuccess({ success: true, server: 'test-server', message: 'ok', warning: 'mDNS hostname test-server.local was not removed: sudo failed' }));
+      expect(screen.getByText(/was not removed: sudo failed/)).toBeInTheDocument();
+      expect(push).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+      expect(push).toHaveBeenCalledWith('/servers');
     });
 
     it('shows the API error message when delete fails', () => {

@@ -194,7 +194,12 @@ export class McctlApiAdapter implements IMcctlApiClient {
     });
   }
 
-  async deleteServer(name: string, force?: boolean, deleteWorld?: boolean): Promise<DeleteServerResponse> {
+  async deleteServer(
+    name: string,
+    force?: boolean,
+    deleteWorld?: boolean,
+    sudoPassword?: string
+  ): Promise<DeleteServerResponse> {
     const params = new URLSearchParams();
     if (force) params.set('force', 'true');
     if (deleteWorld) params.set('deleteWorld', 'true');
@@ -202,7 +207,7 @@ export class McctlApiAdapter implements IMcctlApiClient {
     const query = qs ? `?${qs}` : '';
     return this.fetch<DeleteServerResponse>(
       `/api/servers/${encodeURIComponent(name)}${query}`,
-      { method: 'DELETE' }
+      { method: 'DELETE', body: sudoPassword ? JSON.stringify({ sudoPassword }) : undefined }
     );
   }
 
