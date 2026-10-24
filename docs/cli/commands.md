@@ -831,6 +831,8 @@ Execute a single RCON command on a server. This is the non-interactive alternati
 mcctl exec <server> <command...>
 ```
 
+Negative numbers are passed as they are (`mcctl exec myserver tp Steve -1 64 -5`). Put a command with other arguments that start with `-` after `--`: `mcctl exec myserver -- say -h`.
+
 **Examples:**
 
 ```bash

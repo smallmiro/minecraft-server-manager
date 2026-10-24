@@ -831,6 +831,8 @@ Teleported Steve to 0.0, 100.0, 0.0
 mcctl exec <server> <command...>
 ```
 
+음수는 그대로 전달됩니다(`mcctl exec myserver tp Steve -1 64 -5`). 그 밖에 `-`로 시작하는 인자가 든 명령은 `--` 뒤에 적으세요: `mcctl exec myserver -- say -h`.
+
 **예제:**
 
 ```bash
