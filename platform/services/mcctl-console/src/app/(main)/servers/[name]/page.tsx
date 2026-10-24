@@ -161,6 +161,7 @@ export default function ServerDetailPage() {
       {
         onSuccess: (data) => {
           setDeleteSudoPassword('');
+          deleteServer.reset();
           if (data.warning) setDeleteWarning(data.warning);
           else router.push('/servers');
         },
@@ -169,6 +170,8 @@ export default function ServerDetailPage() {
   };
 
   const closeDeleteDialog = () => {
+    if (deleteServer.isPending) return;
+    deleteServer.reset();
     setDeleteDialogOpen(false);
     setDeleteConfirmInput('');
     setDeleteSudoPassword('');
@@ -412,8 +415,9 @@ export default function ServerDetailPage() {
                 onChange={(event) => setDeleteConfirmInput(event.target.value)}
                 fullWidth
                 autoFocus
+                disabled={deleteServer.isPending}
               />
-              <FormControl sx={{ mt: 2 }}>
+              <FormControl sx={{ mt: 2 }} disabled={deleteServer.isPending}>
                 <FormLabel id="delete-world-label">World</FormLabel>
                 <RadioGroup
                   aria-labelledby="delete-world-label"
@@ -438,13 +442,16 @@ export default function ServerDetailPage() {
                 value={deleteSudoPassword}
                 onChange={(event) => setDeleteSudoPassword(event.target.value)}
                 helperText="Optional. Used to remove the mDNS hostname (avahi); leave empty if sudo needs no password"
-                autoComplete="off"
+                autoComplete="new-password"
+                disabled={deleteServer.isPending}
                 fullWidth
                 sx={{ mt: 2 }}
               />
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2 }}>
-              <Button onClick={closeDeleteDialog}>Cancel</Button>
+              <Button onClick={closeDeleteDialog} disabled={deleteServer.isPending}>
+                Cancel
+              </Button>
               <Button
                 variant="contained"
                 color="error"

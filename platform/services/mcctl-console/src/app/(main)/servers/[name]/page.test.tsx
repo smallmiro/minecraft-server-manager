@@ -66,6 +66,7 @@ const asyncMutation = {
 };
 const deleteMutation = {
   mutate: vi.fn(),
+  reset: vi.fn(),
   isPending: false,
   isError: false,
   error: null,
@@ -263,6 +264,35 @@ describe('ServerDetailPage', () => {
       expect(push).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: 'Close' }));
       expect(push).toHaveBeenCalledWith('/servers');
+    });
+
+    it('uses a non-autofilling autocomplete on the sudo field (#761)', () => {
+      openDialog();
+      expect(screen.getByLabelText(/sudo password/i)).toHaveAttribute('autocomplete', 'new-password');
+    });
+
+    it('blocks closing and editing while the delete is in flight (#761)', () => {
+      vi.mocked(useDeleteServer).mockReturnValue({ ...deleteMutation, isPending: true } as never);
+      renderPage();
+      fireEvent.click(screen.getByRole('button', { name: 'Server actions' }));
+      fireEvent.click(screen.getByRole('menuitem', { name: 'Delete Server' }));
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+      expect(screen.getByLabelText(/sudo password/i)).toBeDisabled();
+      expect(screen.getByRole('textbox', { name: 'Server name' })).toBeDisabled();
+      expect(screen.getByRole('radio', { name: /keep the world/i })).toBeDisabled();
+      fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('resets the mutation (clearing the password) on close and after success (#761)', () => {
+      openDialog();
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(deleteMutation.reset).toHaveBeenCalledTimes(1);
+
+      openDialog();
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+      act(() => deleteMutation.mutate.mock.calls[0][1].onSuccess({ success: true }));
+      expect(deleteMutation.reset).toHaveBeenCalledTimes(2);
     });
 
     it('shows the API error message when delete fails', () => {
