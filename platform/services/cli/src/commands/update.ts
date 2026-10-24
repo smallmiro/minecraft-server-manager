@@ -147,8 +147,12 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
       continue;
     }
 
-    const tagChange = currentTag !== recommendedTag;
-    if (tagChange) {
+    // A release tag (2026.10.0-java21) is a deliberate pin, e.g. around an upstream regression (#798)
+    const pinned = /^\d{4}\.\d+\.\d+/.test(currentTag);
+    const tagChange = !pinned && currentTag !== recommendedTag;
+    if (pinned) {
+      console.log(`  ${colors.dim(`- ${entry}: ${currentTag} - pinned release tag, keeping`)}`);
+    } else if (tagChange) {
       console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version})`);
     } else {
       console.log(`  ${colors.green('✓')} ${entry}: ${currentTag} (VERSION=${version} - compatible)`);

@@ -121,6 +121,19 @@ describe('upgradeServerImageTags', () => {
     expect(read('alpha', 'docker-compose.yml')).toContain('image: "itzg/minecraft-server:java25"');
   });
 
+  it('keeps a pinned release tag (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: '2026.10.0-java21' });
+    expect(await upgradeServerImageTags(servers())).toBe(0);
+    expect(read('alpha', 'docker-compose.yml')).toContain('itzg/minecraft-server:2026.10.0-java21');
+  });
+
+  it('adds the loading MOTD label to a pinned server without moving its tag (#798)', async () => {
+    server('alpha', { version: 'LATEST', tag: '2026.10.0-java21', noLoadingMotd: true });
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:2026.10.0-java21');
+    expect(read('alpha', 'docker-compose.yml')).toContain('mc-router.auto-scale-loading-motd');
+  });
+
   it('leaves a compatible server alone', async () => {
     server('alpha', { version: 'LATEST', tag: 'java25' });
     expect(await upgradeServerImageTags(servers())).toBe(0);
