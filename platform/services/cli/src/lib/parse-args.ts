@@ -5,6 +5,9 @@
 const isValue = (arg: string | undefined): arg is string =>
   !!arg && (!arg.startsWith('-') || /^-\d/.test(arg));
 
+/** Boolean-only flags (never take a value) */
+const BOOLEAN_ONLY_FLAGS = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
+
 /**
  * Parse command line arguments
  */
@@ -41,10 +44,7 @@ export function parseArgs(args: string[]): {
       const key = arg.slice(2);
       const nextArg = args[i + 1];
 
-      // Boolean-only flags (never take a value)
-      const booleanOnlyFlags = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
-
-      if (booleanOnlyFlags.includes(key)) {
+      if (BOOLEAN_ONLY_FLAGS.includes(key)) {
         result.flags[key] = true;
         i++;
       } else if (isValue(nextArg)) {
