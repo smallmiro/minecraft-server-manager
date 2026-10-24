@@ -24,8 +24,10 @@ import type {
 import { absorbCompose, absorbConfigEnv, importDockerServer, type ServerSpecImport } from './importDockerServer.js';
 import {
   DockerComposeRenderer,
+  hasIncludeEntry,
   includeEntries,
   removeIncludeEntry,
+  renderInclude,
   type RenderContext,
   type RenderedFile,
   type ServerSpecRenderer,
@@ -205,10 +207,10 @@ export class FileServerSpecRepository implements IServerSpecRepository {
 
   /**
    * Remove a server (#735, delete-server.sh steps 2-4): plan its worlds
-   * (#652), move the world inside the server to worlds/ unless deleteWorld,
-   * then drop its servers/compose.yml entry under the servers/compose.yml
-   * lock, then remove servers/<n> (what rm leaves is a warning). Every
-   * refusal comes before the first change.
+   * (#652), drop its servers/compose.yml entry under the servers/compose.yml
+   * lock, move the world inside the server to worlds/ unless deleteWorld
+   * (a failed move puts the entry back), then remove servers/<n> (what rm
+   * leaves is a warning). Every refusal comes before the first change.
    */
   async delete(name: string, options: DeleteServerSpecOptions = {}): Promise<ServerSpecDeleteResult> {
     if (!EXISTING_SERVER_NAME_PATTERN.test(name)) {
@@ -230,22 +232,24 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     };
     if (options.dryRun) return result;
 
+    // Out of servers/compose.yml before the worlds move, as delete-server.sh did:
+    // `docker compose up -d mc-<n>` (mcctl start, POST .../start) then finds no
+    // service and cannot recreate the server while its world is copied.
+    const removed = await this.withIncludeLock(name, async () => {
+      const current = readOptionalSync(includePath);
+      const next = this.includeWithout(name, current);
+      if (next === current) return undefined;
+      await atomicWriteFile(includePath, next!);
+      return { before: current!, after: next! };
+    });
     const moved: string[] = [];
-    await this.moveWorlds(name, result.movedWorlds, moved);
-    // The move stays outside the lock: a long cross-device copy would make
-    // other writers give up with 'locked'. A failure from here on says what moved.
     try {
-      await this.withIncludeLock(name, async () => {
-        const current = readOptionalSync(includePath);
-        const next = this.includeWithout(name, current);
-        if (next !== current) await atomicWriteFile(includePath, next!);
-      });
+      // Outside the lock: a long cross-device copy would make other writers give up with 'locked'.
+      await this.moveWorlds(name, result.movedWorlds, moved);
     } catch (err) {
-      throw new ServerSpecError(
-        err instanceof ServerSpecError ? err.code : 'conflict',
-        `${(err as Error).message}. servers/${name}/ was kept.${alreadyMoved(name, moved)}`,
-        name
-      );
+      const note = removed ? await this.restoreInclude(name, removed) : '';
+      if (!note) throw err;
+      throw new ServerSpecError(err instanceof ServerSpecError ? err.code : 'conflict', `${(err as Error).message}${note}`, name);
     }
     try {
       await rm(dir, { recursive: true, force: true });
@@ -256,6 +260,29 @@ export class FileServerSpecRepository implements IServerSpecRepository {
         `(${(err as Error).message}); remove what is left with: sudo rm -rf '${dir}'`;
     }
     return result;
+  }
+
+  /**
+   * Put the server's servers/compose.yml entry back after a failed move: the
+   * text delete replaced when nobody changed the file since, else the entry
+   * added. '' when done (or already back), else how to add it by hand.
+   */
+  private async restoreInclude(name: string, removed: { before: string; after: string }): Promise<string> {
+    const includePath = join(this.paths.servers, 'compose.yml');
+    try {
+      await this.withIncludeLock(name, async () => {
+        const current = readOptionalSync(includePath);
+        if (hasIncludeEntry(current, name)) return;
+        await atomicWriteFile(includePath, current === removed.after ? removed.before : renderInclude(name, current));
+      });
+      return '';
+    } catch (err) {
+      return (
+        ` servers/compose.yml no longer includes ${name}/docker-compose.yml and putting it back failed ` +
+        `(${(err as Error).message}); add "- ${name}/docker-compose.yml" under include: in servers/compose.yml ` +
+        'to start the server again'
+      );
+    }
   }
 
   /** servers/compose.yml text without the server's entry; 'conflict' when it does not parse. */

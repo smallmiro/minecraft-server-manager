@@ -116,7 +116,7 @@ export function hasIncludeEntry(text: string | undefined, name: string): boolean
 }
 
 /** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
-function renderInclude(name: string, current: string | undefined): string {
+export function renderInclude(name: string, current: string | undefined): string {
   const entry = `${name}/docker-compose.yml`;
   if (current === undefined) return INCLUDE_HEADER + yaml.dump({ include: [entry] }, DUMP_OPTIONS);
   const unreadable = (why: string) =>

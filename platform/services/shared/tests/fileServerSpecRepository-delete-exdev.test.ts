@@ -21,6 +21,17 @@ let root: string;
 const at = (...p: string[]) => join(root, ...p);
 const repo = () => new FileServerSpecRepository(new Paths(root), undefined, undefined, () => []);
 const errno = (code: string) => Object.assign(new Error(`${code}: test`), { code });
+const realRename = vi.mocked(rename).getMockImplementation()!;
+
+/** rename() of servers/alpha/data/alpha fails with EXDEV once, after `meanwhile` (another process acting). */
+function worldRenameFailsOnce(meanwhile: () => void = () => {}): void {
+  vi.mocked(rename).mockImplementation(async (from, to) => {
+    if (String(from) !== at('servers', 'alpha', 'data', 'alpha')) return realRename(from, to);
+    vi.mocked(rename).mockImplementation(realRename);
+    meanwhile();
+    throw errno('EXDEV');
+  });
+}
 
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-spec-exdev-'));
@@ -34,12 +45,13 @@ beforeEach(() => {
 
 afterEach(() => {
   for (const fn of [rename, cp, rm]) vi.mocked(fn).mockClear();
+  vi.mocked(rename).mockImplementation(realRename);
   rmSync(root, { recursive: true, force: true });
 });
 
 describe('delete: a world moves across filesystems', () => {
   it('copies and removes when rename fails with EXDEV', async () => {
-    vi.mocked(rename).mockRejectedValueOnce(Object.assign(new Error('EXDEV: cross-device link not permitted'), { code: 'EXDEV' }));
+    worldRenameFailsOnce();
     expect((await repo().delete('alpha')).movedWorlds).toEqual(['alpha']);
     expect(readFileSync(at('worlds', 'alpha', 'level.dat'), 'utf-8')).toBe('level');
     expect(readFileSync(at('worlds', 'alpha', 'region', 'r.0.0.mca'), 'utf-8')).toBe('chunks');
@@ -51,10 +63,9 @@ describe('delete: a world moves across filesystems', () => {
     ['a file the copy also has, which fails the copy', 'level.dat'],
   ])('a worlds/ folder another process creates after the check is refused, never merged into or removed (%s)', async (_, file) => {
     // The other process creates worlds/alpha between the existence check and the copy.
-    vi.mocked(rename).mockImplementationOnce(async () => {
+    worldRenameFailsOnce(() => {
       mkdirSync(at('worlds', 'alpha'));
       writeFileSync(at('worlds', 'alpha', file), 'theirs');
-      throw errno('EXDEV');
     });
 
     await expect(repo().delete('alpha')).rejects.toThrow(/worlds\/alpha appeared before data\/alpha could be moved/);
@@ -64,7 +75,7 @@ describe('delete: a world moves across filesystems', () => {
   });
 
   it('a failed copy removes only the folder it claimed and keeps the original', async () => {
-    vi.mocked(rename).mockRejectedValueOnce(errno('EXDEV'));
+    worldRenameFailsOnce();
     vi.mocked(cp).mockImplementationOnce(async (_from, to) => {
       mkdirSync(String(to), { recursive: true });
       writeFileSync(join(String(to), 'level.dat'), 'partial');
@@ -77,7 +88,7 @@ describe('delete: a world moves across filesystems', () => {
   });
 
   it('an original that cannot be removed after the copy: worlds/alpha is complete, clean up the rest by hand', async () => {
-    vi.mocked(rename).mockRejectedValueOnce(errno('EXDEV'));
+    worldRenameFailsOnce();
     vi.mocked(rm).mockRejectedValueOnce(errno('EACCES')); // the first rm is the original's
 
     const error = (await repo().delete('alpha').catch((e: unknown) => e)) as Error;
