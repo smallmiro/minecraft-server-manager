@@ -74,7 +74,7 @@ flowchart TB
 
 | 클래스 | 규칙 |
 |--------|------|
-| `ServerName` | 2~32자, 소문자, 영문자로 시작, 하이픈 허용(연속 불가). `containerName`(`mc-<name>`)과 `hostname`을 제공합니다 |
+| `ServerName` | 2~32자, 소문자, 영문자로 시작, 하이픈 허용(연속 불가). `value`를 제공합니다. 컨테이너·호스트 이름은 `containerNameOf` / `serverHostnameOf`로 얻습니다 |
 | `ServerType` | `ServerTypeEnum`을 감쌉니다: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
 | `McVersion` | Minecraft 버전 |
 | `Memory` | `4G`, `2048M` 같은 JVM 메모리 |

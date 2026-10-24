@@ -74,7 +74,7 @@ Lives in `platform/services/shared/src/domain/`.
 
 | Class | Rule |
 |-------|------|
-| `ServerName` | 2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes `containerName` (`mc-<name>`) and `hostname` |
+| `ServerName` | 2-32 characters, lowercase, must start with a letter, hyphens allowed but not consecutive. Exposes `value`; the container and host names come from `containerNameOf` / `serverHostnameOf` |
 | `ServerType` | Wraps `ServerTypeEnum`: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
 | `McVersion` | Minecraft version |
 | `Memory` | JVM memory such as `4G` or `2048M` |
