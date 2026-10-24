@@ -22,7 +22,7 @@ function getRouterAccent(router: RouterDetail): BentoAccent {
 }
 
 export function RouterMetricCard() {
-  const { data, isLoading, error } = useRouterStatus();
+  const { data, isLoading } = useRouterStatus();
 
   if (isLoading) {
     return (
@@ -41,7 +41,8 @@ export function RouterMetricCard() {
     );
   }
 
-  if (error || !data) {
+  // React Query keeps `data` when a background refetch fails; only show the error without it
+  if (!data) {
     return (
       <BentoMetricCard
         title={TITLE}

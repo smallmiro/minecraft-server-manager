@@ -123,4 +123,15 @@ describe('RouterMetricCard', () => {
     expect(card).toHaveTextContent('Router status unavailable');
     expect(card).not.toHaveTextContent(':');
   });
+
+  it('keeps showing the last known status when a background refetch fails', () => {
+    mockRouter({});
+    routerQuery.current = { ...routerQuery.current, error: new Error('refetch failed') };
+
+    const card = renderCard();
+
+    expect(card).toHaveTextContent(':25565');
+    expect(card).not.toHaveTextContent('Router status unavailable');
+    expect(accentOf(card)).toBe('success');
+  });
 });
