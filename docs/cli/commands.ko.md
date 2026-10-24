@@ -324,7 +324,7 @@ mcctl update [options]
     서버 이미지 태그/Docker 이미지까지 업데이트합니다(기존 `--all` 동작). CLI 바이너리만 업데이트하려면
     `--cli-only`를 사용하세요.
 
-서버 이미지 태그는 `VERSION`을 따릅니다(예: 1.21.1이면 `java21`). `server.yaml`의 `itzg/minecraft-server:2026.10.0-java21` 같은 릴리스 태그는 고정으로 보고 그대로 둡니다. 업스트림 회귀가 해결되지 않은 동안 검증된 이미지에 서버를 묶어 둘 수 있습니다. 수정이 릴리스되면 `java21`로 되돌리세요.
+서버 이미지 태그는 `VERSION`을 따릅니다(예: 1.21.1이면 `java21`). `server.yaml`의 `itzg/minecraft-server:2026.10.0-java21` 같은 릴리스 태그나 digest(`java21@sha256:…`)는 고정으로 보고 그대로 둡니다. 업스트림 회귀가 해결되지 않은 동안 검증된 이미지에 서버를 묶어 둘 수 있습니다. 고정한 Java가 `VERSION`에 맞지 않게 되면 `mcctl update`가 경고하지만 태그는 그대로 둡니다. 수정이 릴리스되면 `VERSION`에 맞는 태그로 되돌리세요.
 
 **예제:**
 

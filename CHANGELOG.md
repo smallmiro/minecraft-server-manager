@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- **`mcctl update` replaced a pinned image tag** (#798) - `mcctl update` moved every `itzg/minecraft-server` tag to the one recommended for the server's `VERSION`, so a server held on a release tag such as `2026.10.0-java21` went back to `java21` on the next update. A tag that starts with a release version is now kept (`pinned release tag, keeping`); the loading MOTD label is still added. Use it to keep a NeoForge server with `MODRINTH_PROJECTS` on `2026.10.0-java21` while the upstream image resolves Modrinth mods with the Forge loader ([itzg/docker-minecraft-server#4357](https://github.com/itzg/docker-minecraft-server/issues/4357)), and set it back to `java21` once the fix ships.
+- **`mcctl update` replaced a pinned image tag** (#798) - `mcctl update` moved every `itzg/minecraft-server` tag to the one recommended for the server's `VERSION`, so a server held on a release tag such as `2026.10.0-java21` went back to `java21` on the next update. A tag that starts with a release version, or a digest (`java21@sha256:…`), is now kept (`pinned tag, keeping`), also when the pin is in `server.yaml` but not rendered yet; if the pinned Java does not fit `VERSION` it warns and still keeps it. The loading MOTD label is still added. Use it to keep a NeoForge server with `MODRINTH_PROJECTS` on `2026.10.0-java21` while the upstream image resolves Modrinth mods with the Forge loader ([itzg/docker-minecraft-server#4357](https://github.com/itzg/docker-minecraft-server/issues/4357)), and set it back to `java21` once the fix ships.
 
 ## [3.0.2] - 2026-10-24
 
