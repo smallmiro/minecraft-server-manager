@@ -195,7 +195,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 `new ServerRepository(paths?, runtime?)`, `new WorldRepository(paths?, assignments?, runtime?)`. 기본값은 퍼사드가 위임하던 것과 같은 `new DockerComposeRuntimeAdapter()`이고, CLI `Container`는 자기 런타임을 넘긴다. 두 저장소 모두 퍼사드를 import하지 않는다.
 
 - `ServerRepository.getStatus`는 `runtime.getStatusAsync(ServerName.fromExisting(name))`을 기다리고, 이전 매핑을 그대로 쓴다(조회 실패 sentinel인 `not_found`는 `STOPPED`). 동기 `getStatus`(`spawnSync`, 타임아웃 없음)를 쓰면 API의 `findAll()`이 서버마다 이벤트 루프를 막아서(#753 리뷰) `IContainerRuntimePort`에 `getStatusAsync`를 추가했다. Docker 어댑터는 #665 이전 조회를 `execCommandAsync`로 그대로 실행한다(`docker inspect -f {{.State.Status}} -- <container>`, 0이 아닌 종료 코드는 `not_found`, 상태는 소문자로). argv에서 바뀐 것은 #720 규칙의 `--`뿐이다. `getStatus` 자체를 비동기로 바꾸는 일은 모든 호출처를 함께 고치는 C2의 몫이라, 메서드를 추가하는 쪽이 더 단순했다. `fromExisting`이 거부하는 이름이면 `STOPPED` 대신 `UNKNOWN`이다. `findByName`은 그런 이름을 먼저 거르므로 이 경로에 오지 않는다.
-- `WorldRepository.findAllWithServerStatus`는 이전과 같은 컨테이너 이름 문자열을 넘긴다. `mc-`로 시작하는 배정 서버를 컨테이너 이름으로 보는 #670 이전 분기도 그대로다. 바꾸면 동작이 바뀐다. 포트를 좁히는 #736에서 지운다.
+- `WorldRepository.findAllWithServerStatus`는 이전과 같은 컨테이너 이름 문자열을 넘긴다. `mc-`로 시작하는 배정 서버를 컨테이너 이름으로 보는 #670 이전 분기도 그대로다. 바꾸면 동작이 바뀐다. 포트를 좁힐 때까지(#667, #641) 남는다. v3.0.0에서는 좁히지 않는다.
 
 ### 플랫폼 설정 포트(`CreateServerUseCase`)
 
@@ -222,7 +222,9 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 
 ### #665에서 deprecated한 것(v3.0.0, #736에서 삭제)
 
-`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, 위 포트들의 서버 인자에 문자열(컨테이너 이름)을 넘기는 형태, `CreateServerUseCase` 네 번째 인자에 `Paths`를 넘기거나 비우는 형태.
+위 포트들의 서버 인자에 문자열(컨테이너 이름)을 넘기는 형태는 v3.0.0에서 **지우지 않는다**. #667과 #641까지 남는다.
+
+`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, `CreateServerUseCase` 네 번째 인자에 `Paths`를 넘기거나 비우는 형태.
 
 ## 백업 포트(#732, S3)
 

@@ -50,7 +50,7 @@ export interface RuntimeActionResult {
 /**
  * Per-workload runtime operations.
  * `name` is the server (#665): the adapter maps a ServerName to its workload (Docker: `mc-<server>`).
- * A string is the workload name itself (D1 form; @deprecated for servers, narrowed in #736).
+ * A string is the workload name itself (D1 form; @deprecated for servers; not narrowed in v3.0.0, see #667 and #641).
  * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
  */
 export interface IContainerRuntimePort {
@@ -468,7 +468,7 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 `new ServerRepository(paths?, runtime?)` and `new WorldRepository(paths?, assignments?, runtime?)`. The default is `new DockerComposeRuntimeAdapter()`, the instance the facade delegated to; the CLI `Container` passes its runtime. Neither repository imports the facade any more.
 
 - `ServerRepository.getStatus` awaits `runtime.getStatusAsync(ServerName.fromExisting(name))` and keeps the old mapping (`not_found`, the failed-query sentinel, is `STOPPED`). `getStatusAsync` was added to `IContainerRuntimePort` because the synchronous `getStatus` (`spawnSync`, no timeout) blocked the API event loop once per server in `findAll()` (#753 review). The Docker adapter runs the pre-#665 query through `execCommandAsync` (`docker inspect -f {{.State.Status}} -- <container>`; a non-zero exit is `not_found`, the state is lower-cased); the only argv change is the `--` of the #720 rule. A new method was simpler than making `getStatus` async, which is C2's change across every caller. A name that `fromExisting` rejects returns `UNKNOWN` instead of `STOPPED`; `findByName` never reaches that, because it rejects such names first.
-- `WorldRepository.findAllWithServerStatus` passes the container-name string it used before, including the pre-#670 branch that takes a holder starting with `mc-` as a container name. Changing that would be a behaviour change; #736 removes it when the port is narrowed.
+- `WorldRepository.findAllWithServerStatus` passes the container-name string it used before, including the pre-#670 branch that takes a holder starting with `mc-` as a container name. Changing that would be a behaviour change; it stays until the port is narrowed (#667, #641); v3.0.0 does not narrow it.
 
 ### Platform settings port (`CreateServerUseCase`)
 
@@ -495,7 +495,9 @@ The module has no runtime imports, so `@minecraft-docker/shared/naming` stays br
 
 ### Deprecated in #665 (removed in v3.0.0, #736)
 
-`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, the string (container-name) form of the server parameter of the ports above, and passing `Paths` (or nothing) to `CreateServerUseCase`'s fourth parameter.
+The string (container-name) form of the server parameter of the ports above is **not** removed in v3.0.0; it stays until #667 and #641.
+
+`ServerName.containerName`, `ServerName.hostname`, `Server.containerName`, `Server.hostname`, `IShellPort.exec`, `IShellPort.execInteractive`, `ShellAdapter.exec`, `ShellAdapter.execInteractive`, and passing `Paths` (or nothing) to `CreateServerUseCase`'s fourth parameter.
 
 ## Backup Port (#732, S3)
 
