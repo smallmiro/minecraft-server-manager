@@ -63,6 +63,90 @@ export class ServerStartError extends Error {
 }
 
 /**
+ * The create input as value objects, before anything is checked against the
+ * platform. Pure: the API runs it before it opens an event stream. An input
+ * they refuse is ServerSpecError invalid_spec (the API answers 400), never a
+ * plain Error.
+ * @param options.versionText accept a snapshot or pre-release McVersion cannot
+ *   model, written as given (TypeScript provisioning only, #675).
+ */
+export function parseCreateServerConfig(config: CreateServerConfig, options: { versionText?: boolean } = {}) {
+  try {
+    return parseConfigValues(config, options.versionText ?? false);
+  } catch (error) {
+    if (error instanceof ServerSpecError) throw error;
+    throw new ServerSpecError('invalid_spec', error instanceof Error ? error.message : String(error), config.name);
+  }
+}
+
+function parseConfigValues(config: CreateServerConfig, allowVersionText: boolean) {
+  const name = ServerName.create(config.name);
+  const type = config.type
+    ? ServerType.create(config.type)
+    : ServerType.getRecommended();
+
+  // Validate modpack requirements
+  if (type.isModpack && !config.modpackSlug) {
+    throw new Error(`Modpack slug is required for ${type.label} server type`);
+  }
+
+  // Snapshots and pre-releases (24w14a, 1.20.5-rc1) are valid requests that
+  // McVersion cannot model: provisioning writes the text as given (#675).
+  let versionText: string | undefined;
+  let version: McVersion;
+  try {
+    version = config.version ? McVersion.create(config.version) : McVersion.latest();
+  } catch (error) {
+    if (!allowVersionText || !MC_VERSION_INPUT_PATTERN.test(config.version!)) throw error;
+    version = McVersion.latest();
+    versionText = config.version;
+  }
+  const memory = config.memory
+    ? Memory.create(config.memory)
+    : type.isModpack
+      ? Memory.create('6G') // Default 6G for modpacks
+      : Memory.default();
+
+  // Determine world options
+  let worldOptions: WorldOptions;
+  if (config.worldUrl) {
+    worldOptions = WorldOptions.downloadWorld(config.worldUrl);
+  } else if (config.worldName) {
+    worldOptions = WorldOptions.existingWorld(config.worldName);
+  } else if (config.seed) {
+    worldOptions = WorldOptions.newWorld(config.seed);
+  } else {
+    worldOptions = WorldOptions.default();
+  }
+
+  // Whitelist is off unless explicitly enabled or players are given;
+  // an explicit false always wins
+  const enableWhitelist =
+    config.enableWhitelist ?? (config.whitelistPlayers?.length ?? 0) > 0;
+
+  // Build modpack options if this is a modpack server
+  const modpackOptions =
+    type.isModpack && config.modpackSlug
+      ? ModpackOptions.modrinth(config.modpackSlug, {
+          version: config.modpackVersion,
+          loader: config.modLoader,
+          excludeFiles: config.modpackExcludeFiles,
+        })
+      : undefined;
+
+  // Create server
+  const server = Server.create({
+    name,
+    type,
+    version,
+    memory,
+    worldOptions,
+    modpackOptions,
+  });
+  return { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server };
+}
+
+/**
  * Create Server Use Case
  * Orchestrates interactive server creation flow
  */
@@ -395,92 +479,11 @@ export class CreateServerUseCase implements ICreateServerUseCase {
   }
 
   /**
-   * The create input as value objects, before anything is checked against the
-   * platform. An input they refuse is ServerSpecError invalid_spec (the API
-   * answers 400), never a plain Error.
-   */
-  private parseConfig(config: CreateServerConfig) {
-    try {
-      return this.parseConfigValues(config);
-    } catch (error) {
-      if (error instanceof ServerSpecError) throw error;
-      throw new ServerSpecError('invalid_spec', error instanceof Error ? error.message : String(error), config.name);
-    }
-  }
-
-  private parseConfigValues(config: CreateServerConfig) {
-    const name = ServerName.create(config.name);
-    const type = config.type
-      ? ServerType.create(config.type)
-      : ServerType.getRecommended();
-
-    // Validate modpack requirements
-    if (type.isModpack && !config.modpackSlug) {
-      throw new Error(`Modpack slug is required for ${type.label} server type`);
-    }
-
-    // Snapshots and pre-releases (24w14a, 1.20.5-rc1) are valid requests that
-    // McVersion cannot model: provisioning writes the text as given (#675).
-    let versionText: string | undefined;
-    let version: McVersion;
-    try {
-      version = config.version ? McVersion.create(config.version) : McVersion.latest();
-    } catch (error) {
-      if (!this.provision || !MC_VERSION_INPUT_PATTERN.test(config.version!)) throw error;
-      version = McVersion.latest();
-      versionText = config.version;
-    }
-    const memory = config.memory
-      ? Memory.create(config.memory)
-      : type.isModpack
-        ? Memory.create('6G') // Default 6G for modpacks
-        : Memory.default();
-
-    // Determine world options
-    let worldOptions: WorldOptions;
-    if (config.worldUrl) {
-      worldOptions = WorldOptions.downloadWorld(config.worldUrl);
-    } else if (config.worldName) {
-      worldOptions = WorldOptions.existingWorld(config.worldName);
-    } else if (config.seed) {
-      worldOptions = WorldOptions.newWorld(config.seed);
-    } else {
-      worldOptions = WorldOptions.default();
-    }
-
-    // Whitelist is off unless explicitly enabled or players are given;
-    // an explicit false always wins
-    const enableWhitelist =
-      config.enableWhitelist ?? (config.whitelistPlayers?.length ?? 0) > 0;
-
-    // Build modpack options if this is a modpack server
-    const modpackOptions =
-      type.isModpack && config.modpackSlug
-        ? ModpackOptions.modrinth(config.modpackSlug, {
-            version: config.modpackVersion,
-            loader: config.modLoader,
-            excludeFiles: config.modpackExcludeFiles,
-          })
-        : undefined;
-
-    // Create server
-    const server = Server.create({
-      name,
-      type,
-      version,
-      memory,
-      worldOptions,
-      modpackOptions,
-    });
-    return { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server };
-  }
-
-  /**
    * Execute server creation with provided configuration
    */
   async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
     const { name, type, version, versionText, memory, worldOptions, enableWhitelist, modpackOptions, server } =
-      this.parseConfig(config);
+      parseCreateServerConfig(config, { versionText: !!this.provision });
 
     // Check if server already exists
     if (await this.serverRepo.exists(name.value)) {
