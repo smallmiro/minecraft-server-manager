@@ -60,9 +60,6 @@ function createProxyStream(response: Response, upstream: AbortController): Reada
         return;
       }
 
-      const decoder = new TextDecoder();
-      const encoder = new TextEncoder();
-
       try {
         while (true) {
           const { done, value } = await reader.read();
@@ -73,7 +70,8 @@ function createProxyStream(response: Response, upstream: AbortController): Reada
             break;
           }
 
-          controller.enqueue(encoder.encode(decoder.decode(value, { stream: true })));
+          // Forward the bytes as-is; SSE frames need no re-encoding
+          controller.enqueue(value);
         }
       } catch (error) {
         if (cancelled || upstream.signal.aborted) return;
