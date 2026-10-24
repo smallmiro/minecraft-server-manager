@@ -41,20 +41,23 @@ missing=()
 case "$(get MODE)" in
     issue)
         n=$(get ISSUE)
+        # n goes into jq programs below; anything but digits would be a jq error read as a gh failure.
+        [[ "$n" =~ ^[0-9]+$ ]] || { rm -f "$STATE"; allow "/work: ISSUE 값이 숫자가 아님(\"$n\")이라 검증을 건너뜁니다."; }
         # REST only (gh api): GraphQL-backed subcommands such as `gh issue view` fail in
         # sessions without GraphQL access, which used to skip the whole check (#789).
         body=$(gh api "repos/{owner}/{repo}/issues/$n" --jq .body 2>/dev/null) || allow "$GH_FAIL"
+        # Most recently updated first: the PR that just merged is on the first page (as with --limit 100 before).
         match="(.title | contains(\"(#$n)\")) or (.head.ref | test(\"^(feature|bugfix)/$n-\"))"
         if [[ "$(get ROLE)" == contributor ]]; then
             # Closed-unmerged PRs don't count. Fork PRs are listed by number, not branch.
-            prs=$(gh api "repos/{owner}/{repo}/pulls?state=all&per_page=100" \
+            prs=$(gh api "repos/{owner}/{repo}/pulls?state=all&sort=updated&direction=desc&per_page=100" \
                 --jq "[.[] | select(.state == \"open\" or .merged_at != null) | select($match)] | length" \
                 2>/dev/null) || allow "$GH_FAIL"
             (( ${prs:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 생성되지 않음")
         else
             grep -qE '^[[:space:]]*- \[ \]' <<< "$body" \
                 && missing+=("이슈 #$n 본문에 미완료 체크박스가 있음")
-            merged=$(gh api "repos/{owner}/{repo}/pulls?state=closed&per_page=100" \
+            merged=$(gh api "repos/{owner}/{repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100" \
                 --jq "[.[] | select(.merged_at != null) | select($match)] | length" \
                 2>/dev/null) || allow "$GH_FAIL"
             (( ${merged:-0} > 0 )) || missing+=("이슈 #$n의 PR이 아직 merge되지 않음")
@@ -71,8 +74,9 @@ case "$(get MODE)" in
             || allow "$GH_FAIL"
         if (( ${open_count:-0} > 0 )); then
             # open_issues counts open PRs too; the issues endpoint marks them with pull_request.
-            open=$(gh api "repos/{owner}/{repo}/issues?milestone=$m&state=open&per_page=100" \
-                --jq '[.[] | select(.pull_request | not) | "#\(.number)"] | join(", ")' 2>/dev/null) \
+            open=$(gh api "repos/{owner}/{repo}/issues?milestone=$m&state=open&per_page=100" --paginate \
+                --jq '.[] | select(.pull_request | not) | "#\(.number)"' 2>/dev/null) \
+                && open=$(paste -sd, <<< "$open" | sed 's/,/, /g') \
                 || open="${open_count}건"
             [[ -n "$open" ]] && missing+=("마일스톤 $m에 열린 이슈: $open")
         fi

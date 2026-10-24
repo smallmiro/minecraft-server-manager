@@ -25,6 +25,7 @@ cat > "$TMP/bin/gh" <<'STUB'
 [[ -f "$STUB_DIR/gh_fail" ]] && exit 1
 [[ "$1" == api ]] || exit 1
 path="$2"; filter="."
+echo "$*" >> "$STUB_DIR/gh_calls"
 shift 2
 while [[ $# -gt 0 ]]; do [[ "$1" == --jq ]] && filter="$2"; shift; done
 case "$path" in
@@ -32,8 +33,8 @@ case "$path" in
     "repos/{owner}/{repo}/milestones/"*) exit 1 ;;
     "repos/{owner}/{repo}/issues?milestone=3&state=open&per_page=100") file=milestone_issues ;;
     "repos/{owner}/{repo}/issues/7") file=issue ;;
-    "repos/{owner}/{repo}/pulls?state=all&per_page=100") file=pulls ;;
-    "repos/{owner}/{repo}/pulls?state=closed&per_page=100") file=pulls_closed ;;
+    "repos/{owner}/{repo}/pulls?state=all&sort=updated&direction=desc&per_page=100") file=pulls ;;
+    "repos/{owner}/{repo}/pulls?state=closed&sort=updated&direction=desc&per_page=100") file=pulls_closed ;;
     *) exit 1 ;;
 esac
 jq -r "$filter" "$STUB_DIR/$file.json"
@@ -134,7 +135,7 @@ assert_contains "issue #77's PR does not count for #7" "merge되지 않음" "$(r
 echo "contributor mode"
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
 issue_body '- [ ] b'
-set_pulls "$(pull 'feat: x (#7)' 'contributor:feature/7-x' open false)"
+set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' open false)"
 assert_contains "open PR + unchecked boxes allows stop" "완료 조건을 모두 충족" "$(run)"
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
@@ -148,6 +149,10 @@ assert_contains "pending review still blocks" "코드 리뷰 미완료" "$(run)"
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
 set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' closed false)"
 assert_contains "only a closed, unmerged PR blocks" "PR이 아직 생성되지 않음" "$(run)"
+
+reset 'MODE=issue\nISSUE=7\nREVIEW=done\nROLE=contributor\n'
+set_pulls "$(pull 'Add the thing' 'feature/7-thing' open false)"
+assert_contains "a PR matched only by its feature/<n>- branch counts" "완료 조건을 모두 충족" "$(run)"
 
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
 set_pulls "$(pull 'feat: x (#7)' 'feature/7-x' open false)"
@@ -167,10 +172,21 @@ echo '{"open_issues": 1}' > "$STUB_DIR/milestone.json"
 echo '[{"number": 6, "pull_request": {"url": "x"}}]' > "$STUB_DIR/milestone_issues.json"
 assert_contains "an open PR in the milestone is not an open issue" "완료 조건을 모두 충족" "$(run)"
 
+reset 'MODE=milestone\nMILESTONE=3\n'
+echo '{"open_issues": 2}' > "$STUB_DIR/milestone.json"
+echo '[{"number": 4}, {"number": 5}]' > "$STUB_DIR/milestone_issues.json"
+run > /dev/null
+assert_contains "milestone issues are read across all pages" "--paginate" "$(grep 'issues?milestone' "$STUB_DIR/gh_calls")"
+
 reset 'MODE=milestone\nMILESTONE=99\n'
 assert_contains "unknown milestone is not treated as complete" "건너뜁니다" "$(run)"
 
 echo "safety valves"
+reset 'MODE=issue\nISSUE=7"x\nREVIEW=done\n'
+out=$(run)
+assert_contains "a non-numeric ISSUE is reported, not silently skipped" "ISSUE 값이 숫자가 아님" "$out"
+assert_empty "a non-numeric ISSUE never reaches gh" "$(cat "$STUB_DIR/gh_calls" 2>/dev/null)"
+
 reset 'MODE=issue\nISSUE=7\nREVIEW=done\n'
 touch "$STUB_DIR/gh_fail"
 assert_contains "gh failure allows stop" "건너뜁니다" "$(run)"
