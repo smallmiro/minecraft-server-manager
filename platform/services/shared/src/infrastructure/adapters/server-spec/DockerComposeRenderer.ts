@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import yaml from 'js-yaml';
 import { applyEnvChanges, parseEnvDocument } from '../../../utils/env-file.js';
 import { ServerSpecError, routerHosts, type ServerSpecDocument } from '../../../domain/server-spec/ServerSpecDocument.js';
@@ -133,11 +134,31 @@ function readInclude(current: string | undefined, name: string): { parsed: Recor
 }
 
 /** Add `<name>/docker-compose.yml` unless an entry already names it; never rewrite a file it cannot read. */
-export function renderInclude(name: string, current: string | undefined): string {
+function renderInclude(name: string, current: string | undefined): string {
   const entry = `${name}/docker-compose.yml`;
   const { parsed, list } = readInclude(current, name);
   if (list.some((e) => includePaths(e).includes(entry))) return current!;
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
+}
+
+/**
+ * `current` with the entries naming `<name>/docker-compose.yml` back as
+ * `before` had them (the delete restore, #735): an entry that only lost that
+ * path is replaced by its original, a removed entry is put back whole near its
+ * old position. Other entries of `current` stay; refuses a file it cannot read.
+ */
+export function restoreIncludeEntry(current: string | undefined, before: string, name: string): string {
+  const entry = `${name}/docker-compose.yml`;
+  const { parsed, list } = readInclude(current, name);
+  const restored = [...list];
+  readInclude(before, name).list.forEach((e, index) => {
+    if (!includePaths(e).includes(entry)) return;
+    const reduced = withoutPath(e, entry);
+    const at = reduced === undefined ? -1 : restored.findIndex((x) => isDeepStrictEqual(x, reduced));
+    if (at >= 0) restored[at] = e;
+    else restored.splice(Math.min(index, restored.length), 0, reduced === undefined ? e : { ...(e as object), path: [entry] });
+  });
+  return INCLUDE_HEADER + yaml.dump({ ...parsed, include: restored }, DUMP_OPTIONS);
 }
 
 /** An include entry naming `path` without it: undefined when no path is left. */

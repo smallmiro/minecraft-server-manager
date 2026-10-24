@@ -27,7 +27,7 @@ import {
   hasIncludeEntry,
   includeEntries,
   removeIncludeEntry,
-  renderInclude,
+  restoreIncludeEntry,
   type RenderContext,
   type RenderedFile,
   type ServerSpecRenderer,
@@ -285,8 +285,8 @@ export class FileServerSpecRepository implements IServerSpecRepository {
 
   /**
    * Put the server's servers/compose.yml entry back after a failed move: the
-   * text delete replaced when nobody changed the file since, else the entry
-   * added; not when servers/<n>/docker-compose.yml is gone. '' when done (or
+   * text delete replaced when nobody changed the file since, else its original
+   * entry merged in; not when servers/<n>/docker-compose.yml is gone. '' when done (or
    * already back), else what happened or how to add it by hand.
    */
   private async restoreInclude(name: string, removed: { before: string; after: string }): Promise<string> {
@@ -299,7 +299,8 @@ export class FileServerSpecRepository implements IServerSpecRepository {
         }
         const current = readOptionalSync(includePath);
         if (hasIncludeEntry(current, name)) return '';
-        await atomicWriteFile(includePath, current === removed.after ? removed.before : renderInclude(name, current));
+        const text = current === removed.after ? removed.before : restoreIncludeEntry(current, removed.before, name);
+        await atomicWriteFile(includePath, text);
         return '';
       });
     } catch (err) {
