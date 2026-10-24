@@ -16,9 +16,30 @@ const idleMutation = { mutate: vi.fn(), isPending: false };
 vi.mock('@/hooks/useMcctl', () => ({
   useServers: vi.fn(),
   useWorlds: vi.fn(),
+  useRouterStatus: vi.fn(() => ({
+    data: {
+      router: {
+        name: 'mc-router',
+        status: 'running',
+        health: 'healthy',
+        port: 25565,
+        routes: [{ hostname: 'a', target: 'mc-a:25565', serverStatus: 'running' }],
+      },
+    },
+    isLoading: false,
+    error: null,
+  })),
   useStartServer: () => idleMutation,
   useStopServer: () => idleMutation,
   useRestartServer: () => idleMutation,
+}));
+
+vi.mock('@/hooks/usePlayit', () => ({
+  usePlayitStatus: () => ({
+    data: { enabled: false, agentRunning: false, secretKeyConfigured: false, containerStatus: 'not_created', servers: [] },
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 // Mock useServersSSE to avoid EventSource dependency
@@ -109,12 +130,13 @@ describe('DashboardPage', () => {
       expect(screen.getByText('Total Servers')).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
 
-      expect(screen.getByText('Online Servers')).toBeInTheDocument();
-      expect(screen.getByText('Total Worlds')).toBeInTheDocument();
+      expect(screen.getByText('Online Players')).toBeInTheDocument();
+      expect(screen.getByText('Worlds')).toBeInTheDocument();
+      expect(screen.getByText('mc-router')).toBeInTheDocument();
+      expect(screen.queryByText('Online Servers')).not.toBeInTheDocument();
 
-      // Both Online Servers and Total Worlds show 2, so check they both exist
-      const twos = screen.getAllByText('2');
-      expect(twos.length).toBeGreaterThanOrEqual(2);
+      // Worlds shows 2 total
+      expect(within(screen.getByText('Worlds').closest('article')!).getByText('2')).toBeInTheDocument();
     });
   });
 
@@ -229,7 +251,7 @@ describe('DashboardPage', () => {
     renderWithProviders(<DashboardPage />);
 
     expect(screen.getByText('0 of 1 servers online')).toBeInTheDocument();
-    expect(within(screen.getByText('Online Servers').closest('article')!).getByText('0')).toBeInTheDocument();
+    expect(screen.getByText('Total Servers').closest('article')).toHaveTextContent('0 running · 1 stopped');
   });
 
   it('labels failed operational summaries as unavailable instead of zero or empty', () => {
@@ -252,7 +274,7 @@ describe('DashboardPage', () => {
     expect(screen.getByText('Servers unavailable')).toBeInTheDocument();
     expect(screen.queryByText(/No servers found/i)).not.toBeInTheDocument();
     expect(screen.getByText('Total Servers').closest('article')).toHaveTextContent('Unavailable');
-    expect(screen.getByText('Total Worlds').closest('article')).toHaveTextContent('Unavailable');
+    expect(screen.getByText('Worlds').closest('article')).toHaveTextContent('Unavailable');
   });
 
   it('should display zero when no servers', async () => {
@@ -353,5 +375,76 @@ describe('DashboardPage', () => {
     expect(card).toHaveTextContent('Player data unavailable');
     expect(within(card).queryByText('0')).not.toBeInTheDocument();
     expect(card).toHaveAttribute('data-accent', 'info');
+  });
+
+  describe('layout', () => {
+    const loaded = () => {
+      vi.mocked(useServers).mockReturnValue({
+        data: {
+          servers: [
+            { name: 'survival', status: 'running', health: 'healthy', container: 'mc-survival', hostname: 'survival.local' },
+          ],
+          total: 1,
+        },
+        isLoading: false,
+        error: null,
+      } as any);
+      vi.mocked(useWorlds).mockReturnValue({
+        data: { worlds: [{ name: 'w', path: '/w', isLocked: true }, { name: 'v', path: '/v', isLocked: false }], total: 2 },
+        isLoading: false,
+        error: null,
+      } as any);
+      vi.mocked(useServersSSE).mockReturnValue({ statusMap: {}, isConnected: true } as any);
+    };
+
+    it('renders the four KPI cards in order', () => {
+      loaded();
+      renderWithProviders(<DashboardPage />);
+
+      const titles = screen.getAllByTestId('bento-metric-card').map((card) => card.getAttribute('aria-label'));
+      expect(titles).toEqual(['Total Servers', 'Online Players', 'Worlds', 'mc-router']);
+    });
+
+    it('shows worlds assigned/free and the router port and route count', () => {
+      loaded();
+      renderWithProviders(<DashboardPage />);
+
+      expect(screen.getByText('Worlds').closest('article')).toHaveTextContent('1 assigned · 1 free');
+      const router = screen.getByText('mc-router').closest('article')!;
+      expect(router).toHaveTextContent(':25565');
+      expect(router).toHaveTextContent('1 route');
+    });
+
+    it('offers a Create Server link in the hero that opens the create flow', () => {
+      loaded();
+      renderWithProviders(<DashboardPage />);
+
+      const hero = screen.getByTestId('page-hero');
+      expect(within(hero).getByRole('link', { name: /create server/i })).toHaveAttribute(
+        'href',
+        '/servers?create=1'
+      );
+      expect(within(hero).getByText('1 of 1 servers online')).toBeInTheDocument();
+    });
+
+    it('places the hero, servers panel and side panels in the dashboard grid', () => {
+      loaded();
+      renderWithProviders(<DashboardPage />);
+
+      const grid = screen.getByRole('region', { name: 'Dashboard overview' });
+      const order = ['page-hero', 'bento-metric-card'].map((id) => within(grid).getAllByTestId(id)[0]);
+      expect(order[0].compareDocumentPosition(order[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      const headings = within(grid).getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+      expect(headings).toEqual(['Servers', 'External Access', 'Recent Activity', 'Recent Updates']);
+    });
+
+    it('keeps the skeleton free of metric values while loading', () => {
+      vi.mocked(useServers).mockReturnValue({ data: undefined, isLoading: true, error: null } as any);
+      vi.mocked(useWorlds).mockReturnValue({ data: undefined, isLoading: true, error: null } as any);
+      renderWithProviders(<DashboardPage />);
+
+      expect(screen.getByRole('region', { name: 'Dashboard overview' })).toHaveAttribute('aria-busy', 'true');
+      expect(screen.queryByTestId('bento-metric-card')).not.toBeInTheDocument();
+    });
   });
 });
