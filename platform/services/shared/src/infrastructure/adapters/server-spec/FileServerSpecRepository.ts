@@ -138,7 +138,17 @@ async function renameOrCopy(from: string, to: string): Promise<'renamed' | 'copi
   }
   await mkdir(to);
   try {
-    await cp(from, to, { recursive: true, errorOnExist: true, force: false, preserveTimestamps: true, verbatimSymlinks: true });
+    // Entry by entry into the claimed folder: newer Node 22 cp() refuses an
+    // existing destination directory when errorOnExist is set
+    for (const entry of await readdir(from)) {
+      await cp(join(from, entry), join(to, entry), {
+        recursive: true,
+        errorOnExist: true,
+        force: false,
+        preserveTimestamps: true,
+        verbatimSymlinks: true,
+      });
+    }
   } catch (copyErr) {
     await rm(to, { recursive: true, force: true }); // the folder we claimed; the original is untouched
     throw copyErr;
