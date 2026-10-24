@@ -31,7 +31,7 @@ export function BentoPanelHeader({
       sx={{ px: 2.5, pt: 2.5, pb: 1.5, minWidth: 0 }}
     >
       <Stack direction="row" alignItems="center" spacing={1.25} sx={{ minWidth: 0 }}>
-        {icon && (
+        {icon != null && (
           <Box
             sx={{
               width: 32,
@@ -55,14 +55,14 @@ export function BentoPanelHeader({
           >
             {title}
           </Typography>
-          {subtitle && (
+          {subtitle != null && (
             <Typography variant="body2" color="text.secondary">
               {subtitle}
             </Typography>
           )}
         </Box>
       </Stack>
-      {action && <Box sx={{ flexShrink: 0 }}>{action}</Box>}
+      {action != null && <Box sx={{ flexShrink: 0 }}>{action}</Box>}
     </Stack>
   );
 }

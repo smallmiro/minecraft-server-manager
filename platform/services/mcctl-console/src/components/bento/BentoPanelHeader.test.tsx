@@ -42,4 +42,10 @@ describe('BentoPanelHeader', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.queryByTestId('header-icon')).not.toBeInTheDocument();
   });
+
+  it('keeps a zero subtitle inside the subtitle slot', () => {
+    renderHeader({ subtitle: 0 });
+
+    expect(screen.getByText('0').tagName).toBe('P');
+  });
 });
