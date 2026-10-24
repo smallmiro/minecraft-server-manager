@@ -57,6 +57,7 @@ export {
   getDetailedServerInfo,
   getDetailedServerInfoWithPlayers,
   getRouterDetailInfo,
+  getRouterDetailInfoAsync,
   formatBytes,
   // Configured servers from filesystem
   getConfiguredServers,
