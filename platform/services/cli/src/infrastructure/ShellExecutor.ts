@@ -91,6 +91,15 @@ export class ShellExecutor {
     });
   }
 
+  /** The local image ID of a reference (`docker image inspect`), or null when it cannot be read. */
+  localImageId(ref: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      execFile('docker', ['image', 'inspect', '-f', '{{.Id}}', '--', ref], (err, stdout) =>
+        resolve(err || !stdout.trim() ? null : stdout.trim())
+      );
+    });
+  }
+
   /**
    * Execute docker compose command
    */

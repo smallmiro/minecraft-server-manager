@@ -231,7 +231,7 @@ export async function updateDockerImages(serversDir: string, rootDir: string): P
  */
 export async function recreateStoppedServers(
   serversDir: string,
-  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>,
+  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState' | 'localImageId'>,
   confirm: (() => Promise<boolean>) | null
 ): Promise<void> {
   const servers = existsSync(serversDir)
@@ -244,12 +244,20 @@ export async function recreateStoppedServers(
   const stopped: Array<{ server: string; container: string }> = [];
   const running: string[] = [];
   const skipped: string[] = [];
+  const upToDate: string[] = [];
   for (const server of servers) {
     const container = `mc-${server}`;
     try {
       const state = await shell.containerState(container);
       if (!state) skipped.push(server);
-      else if (isStopped(state.status)) stopped.push({ server, container });
+      else if (isStopped(state.status)) {
+        // Already on the local image for its compose reference: nothing to recreate (#810).
+        // An unreadable reference or local ID keeps it a candidate.
+        const ref = composeImages(readFileSync(join(serversDir, server, 'docker-compose.yml'), 'utf-8'))[0];
+        const local = ref ? await shell.localImageId(ref) : null;
+        if (local && local === state.imageId) upToDate.push(server);
+        else stopped.push({ server, container });
+      }
       else running.push(`${server}: ${state.status}`);
     } catch {
       skipped.push(server);
@@ -259,6 +267,10 @@ export async function recreateStoppedServers(
   console.log(colors.bold('Applying new images to stopped servers...'));
   for (const server of skipped) {
     console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim('(no container, or docker inspect failed)')}`);
+  }
+
+  for (const server of upToDate) {
+    console.log(`  ${colors.green('✓')} ${server}: up to date`);
   }
 
   if (stopped.length > 0) {
