@@ -134,13 +134,21 @@ function renderInclude(name: string, current: string | undefined): string {
   return INCLUDE_HEADER + yaml.dump({ ...parsed, include: [...list, entry] }, DUMP_OPTIONS);
 }
 
-/** servers/compose.yml text without the entries naming exactly `<name>/docker-compose.yml`; unchanged when there is none. */
+/**
+ * servers/compose.yml text without `<name>/docker-compose.yml`; unchanged when no entry names it.
+ * An entry whose `path` lists other files too keeps them; one left with no path goes.
+ */
 export function removeIncludeEntry(current: string, name: string): string {
   const entry = `${name}/docker-compose.yml`;
   const parsed = yaml.load(current) as Record<string, unknown> | null;
   const list = parsed?.['include'];
   if (!Array.isArray(list) || !list.some((e) => includePaths(e).includes(entry))) return current;
-  const doc: Record<string, unknown> = { ...parsed, include: list.filter((e) => !includePaths(e).includes(entry)) };
+  const kept = list.flatMap((e) => {
+    if (!includePaths(e).includes(entry)) return [e];
+    const path = isMapping(e) && Array.isArray(e['path']) ? e['path'].filter((p) => p !== entry) : [];
+    return path.length > 0 ? [{ ...(e as Record<string, unknown>), path }] : [];
+  });
+  const doc: Record<string, unknown> = { ...parsed, include: kept };
   // No entry left: no include: key, like a fresh servers/compose.yml (#660)
   if ((doc['include'] as unknown[]).length === 0) delete doc['include'];
   return INCLUDE_HEADER + (Object.keys(doc).length > 0 ? yaml.dump(doc, DUMP_OPTIONS) : '');
