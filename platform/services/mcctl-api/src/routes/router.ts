@@ -81,18 +81,75 @@ const LOG_TAIL_MAX = 500;
 
 /** Clamp ?tail= to 1..500; non-numeric falls back to the default. */
 export function clampLogTail(value: unknown): number {
+  if (value === '' || value === undefined || value === null) return LOG_TAIL_DEFAULT;
   const n = typeof value === 'number' ? value : Number(value);
   if (!Number.isFinite(n)) return LOG_TAIL_DEFAULT;
   return Math.min(LOG_TAIL_MAX, Math.max(1, Math.trunc(n)));
 }
 
 /**
- * Stable change-detection key for a status payload. Volatile fields (uptime
- * strings/seconds) are excluded so a ticking uptime does not emit events.
+ * Stable change-detection key for a status payload. `uptimeSeconds` ticks every
+ * poll and is left out; the displayed `uptime` string stays in, because clients
+ * stop polling while the stream is live and would otherwise show a frozen uptime.
  */
 export function routerStatusChangeKey(payload: RouterStatusResponse): string {
-  const { uptime: _uptime, uptimeSeconds: _uptimeSeconds, ...router } = payload.router;
+  const { uptimeSeconds: _uptimeSeconds, ...router } = payload.router;
   return JSON.stringify({ ...payload, router });
+}
+
+interface RouterStatusSubscriber {
+  onPayload(payload: RouterStatusResponse): void;
+  onError(): void;
+}
+
+/**
+ * One status poll per interval shared by every stream connection, so N open
+ * tabs cost one docker/avahi/playit round per interval instead of N.
+ */
+class RouterStatusPoller {
+  private readonly subscribers = new Set<RouterStatusSubscriber>();
+  private timer: ReturnType<typeof setInterval> | undefined;
+  private inFlight = false;
+  private last: RouterStatusResponse | undefined;
+
+  constructor(
+    private readonly interval: number,
+    private readonly load: () => Promise<RouterStatusResponse>,
+    private readonly onFailure: (error: unknown) => void,
+    private readonly onIdle: () => void
+  ) {}
+
+  subscribe(subscriber: RouterStatusSubscriber): () => void {
+    this.subscribers.add(subscriber);
+    if (this.last) subscriber.onPayload(this.last);
+    if (!this.timer) {
+      void this.poll();
+      this.timer = setInterval(() => void this.poll(), this.interval);
+    }
+    return () => {
+      this.subscribers.delete(subscriber);
+      if (this.subscribers.size === 0) {
+        clearInterval(this.timer);
+        this.timer = undefined;
+        this.onIdle();
+      }
+    };
+  }
+
+  private async poll(): Promise<void> {
+    if (this.inFlight) return;
+    this.inFlight = true;
+    try {
+      this.last = await this.load();
+      for (const subscriber of this.subscribers) subscriber.onPayload(this.last);
+    } catch (error) {
+      this.last = undefined;
+      this.onFailure(error);
+      for (const subscriber of this.subscribers) subscriber.onError();
+    } finally {
+      this.inFlight = false;
+    }
+  }
 }
 
 const sseHeaders = {
@@ -107,6 +164,21 @@ const sseHeaders = {
  * Provides REST API for mc-router status
  */
 const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  const pollers = new Map<number, RouterStatusPoller>();
+  const pollerFor = (interval: number): RouterStatusPoller => {
+    let poller = pollers.get(interval);
+    if (!poller) {
+      poller = new RouterStatusPoller(
+        interval,
+        () => buildRouterStatusPayload(fastify.log),
+        (error) => fastify.log.warn(error, 'Failed to poll router status for stream'),
+        () => pollers.delete(interval)
+      );
+      pollers.set(interval, poller);
+    }
+    return poller;
+  };
+
   /**
    * GET /api/router/status
    * Get mc-router status and routes
@@ -152,36 +224,30 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     reply.raw.writeHead(200, sseHeaders);
 
     let closed = false;
-    let inFlight = false;
     let lastKey: string | undefined;
 
-    const poll = async () => {
-      if (closed || inFlight) return;
-      inFlight = true;
-      try {
-        const payload = await buildRouterStatusPayload(fastify.log);
+    const unsubscribe = pollerFor(interval).subscribe({
+      onPayload(payload) {
         if (closed) return;
         const key = routerStatusChangeKey(payload);
-        if (key !== lastKey) {
-          lastKey = key;
-          reply.raw.write(`event: router-status\ndata: ${JSON.stringify(payload)}\n\n`);
-        }
-      } catch (error) {
-        fastify.log.warn(error, 'Failed to poll router status for stream');
-      } finally {
-        inFlight = false;
-      }
-    };
-
-    void poll();
-    const polling = setInterval(() => void poll(), interval);
+        if (key === lastKey) return;
+        lastKey = key;
+        reply.raw.write(`event: router-status\ndata: ${JSON.stringify(payload)}\n\n`);
+      },
+      onError() {
+        if (closed) return;
+        // Clients fall back to polling GET /status; resend the next good payload even if unchanged.
+        lastKey = undefined;
+        reply.raw.write(`event: router-status-error\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+      },
+    });
     const heartbeat = setInterval(() => {
       reply.raw.write(': heartbeat\n\n');
     }, SSE_HEARTBEAT_MS);
 
     request.raw.on('close', () => {
       closed = true;
-      clearInterval(polling);
+      unsubscribe();
       clearInterval(heartbeat);
       reply.raw.end();
     });

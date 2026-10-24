@@ -30,7 +30,7 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 }));
 
 import authPlugin from '../src/plugins/auth.js';
-import { routerPlugin } from '../src/routes/router.js';
+import { routerPlugin, clampLogTail } from '../src/routes/router.js';
 import { getRouterDetailInfoAsync } from '@minecraft-docker/shared';
 
 const API_KEY = 'test-api-key-12345';
@@ -235,22 +235,57 @@ describe('Router SSE streams (#769)', () => {
       expect(payload.avahi).toEqual({ name: 'avahi-daemon', status: 'running', type: 'system' });
     });
 
-    it('does not send an event when only uptime changes, and sends one when a route status changes', async () => {
+    it('ignores uptimeSeconds ticks but sends the displayed uptime and route status changes', async () => {
       fakeIntervals();
       vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo());
       const c = await open('/api/router/status/stream?interval=1000');
       await waitFor(() => events(c.text(), 'router-status').length === 1);
 
-      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo({ uptime: '2 minutes', uptimeSeconds: 120 }));
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo({ uptimeSeconds: 61 }));
       await tick(1000);
       await tick(1000);
       expect(vi.mocked(getRouterDetailInfoAsync).mock.calls.length).toBeGreaterThanOrEqual(3);
       expect(events(c.text(), 'router-status')).toHaveLength(1);
 
-      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo({ uptime: '3 minutes', uptimeSeconds: 180 }, 'stopped'));
+      // Polling is off while the stream is live, so the shown uptime must still move
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo({ uptime: '2 minutes', uptimeSeconds: 120 }));
       await tick(1000);
       await waitFor(() => events(c.text(), 'router-status').length === 2);
-      expect(events(c.text(), 'router-status')[1].router.routes[0].serverStatus).toBe('stopped');
+      expect(events(c.text(), 'router-status')[1].router.uptime).toBe('2 minutes');
+
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo({ uptime: '2 minutes', uptimeSeconds: 125 }, 'stopped'));
+      await tick(1000);
+      await waitFor(() => events(c.text(), 'router-status').length === 3);
+      expect(events(c.text(), 'router-status')[2].router.routes[0].serverStatus).toBe('stopped');
+    });
+
+    it('tells the client when a poll fails, then resends the status once polling recovers', async () => {
+      fakeIntervals();
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo());
+      const c = await open('/api/router/status/stream?interval=1000');
+      await waitFor(() => events(c.text(), 'router-status').length === 1);
+
+      vi.mocked(getRouterDetailInfoAsync).mockRejectedValue(new Error('docker unavailable'));
+      await tick(1000);
+      await waitFor(() => events(c.text(), 'router-status-error').length === 1);
+
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo());
+      await tick(1000);
+      await waitFor(() => events(c.text(), 'router-status').length === 2);
+    });
+
+    it('shares one poll between connections with the same interval', async () => {
+      fakeIntervals();
+      vi.mocked(getRouterDetailInfoAsync).mockResolvedValue(baseInfo());
+      const a = await open('/api/router/status/stream?interval=1000');
+      await waitFor(() => events(a.text(), 'router-status').length === 1);
+      const b = await open('/api/router/status/stream?interval=1000');
+      await waitFor(() => events(b.text(), 'router-status').length === 1);
+
+      const before = vi.mocked(getRouterDetailInfoAsync).mock.calls.length;
+      await tick(1000);
+      await waitFor(() => vi.mocked(getRouterDetailInfoAsync).mock.calls.length > before);
+      expect(vi.mocked(getRouterDetailInfoAsync).mock.calls.length).toBe(before + 1);
     });
 
     it('sends a heartbeat comment every 30 seconds', async () => {
@@ -272,5 +307,9 @@ describe('Router SSE streams (#769)', () => {
       c.close();
       await waitFor(() => vi.getTimerCount() === 0);
     });
+  });
+
+  it('falls back to the default tail for an empty ?tail=', () => {
+    expect(clampLogTail('')).toBe(100);
   });
 });
