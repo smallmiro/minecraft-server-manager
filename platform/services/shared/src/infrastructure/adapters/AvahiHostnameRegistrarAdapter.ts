@@ -51,9 +51,11 @@ function run(cmd: string, args: string[], input?: string): Promise<number> {
  */
 export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
   private readonly hostsFile: string;
+  private readonly sudoPassword?: string;
 
-  constructor(private readonly options: AvahiHostnameRegistrarOptions = {}) {
+  constructor(options: AvahiHostnameRegistrarOptions = {}) {
     this.hostsFile = options.hostsFile ?? '/etc/avahi/hosts';
+    this.sudoPassword = options.sudoPassword;
   }
 
   /**
@@ -107,11 +109,7 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
     }
     if (registered(current, hostname)) return { status: 'unchanged' };
 
-    if (this.options.sudoPassword) {
-      if ((await run('sudo', ['-S', '-p', '', '-v'], `${this.options.sudoPassword}\n`)) !== 0) {
-        return skipped('sudo authentication failed; check the sudo password');
-      }
-    }
+    if (!(await this.authenticate())) return skipped('sudo authentication failed; check the sudo password');
     const manual = `echo '${ip} ${hostname}' | sudo tee -a ${this.hostsFile}`;
     if ((await run('sudo', ['-n', 'tee', '-a', this.hostsFile], `${ip} ${hostname}\n`)) !== 0) {
       return skipped(`failed to write ${this.hostsFile} with sudo; pass a sudo password, or add it manually: ${manual}`);
@@ -120,5 +118,46 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
       return skipped(`${hostname} was added to ${this.hostsFile} but avahi-daemon could not be restarted`);
     }
     return { status: 'changed' };
+  }
+
+  /**
+   * Remove the lines that list exactly `hostname` before any comment, then
+   * restart avahi-daemon, with the commands the README sudoers lines allow
+   * (#751): `sudo -n sed -i <expr> /etc/avahi/hosts`, `sudo -n systemctl
+   * restart avahi-daemon`. GNU sed -i renames a temp file, so a failure
+   * leaves the file intact; avahi is Linux-only.
+   */
+  async unregister(hostname: string): Promise<HostnameChangeResult> {
+    const skipped = (reason: string): HostnameChangeResult => ({ status: 'skipped', reason });
+    const hostError = validateHostname(hostname);
+    if (hostError) return skipped(`invalid hostname '${hostname}': ${hostError}`);
+
+    let current: string;
+    try {
+      current = await readFile(this.hostsFile, 'utf-8');
+    } catch {
+      return { status: 'unchanged' }; // no hosts file: avahi is not configured
+    }
+    if (!registered(current, hostname)) return { status: 'unchanged' };
+
+    if (!(await this.authenticate())) return skipped('sudo authentication failed; check the sudo password');
+    // A host field equal to `hostname`: whitespace before it, whitespace, `#` or the line end after it.
+    // `d` drops the whole line, so other names on that line go too. Same as the #751 bash;
+    // mcctl registers one name per line (`<ip> <hostname>`), so only hand-edited lines can hold more.
+    const host = hostname.replace(/[[\]\\.*^$/]/g, '\\$&');
+    const expr = `/^[^#]*[[:space:]]${host}\\([[:space:]]\\|#\\|$\\)/d`;
+    if ((await run('sudo', ['-n', 'sed', '-i', expr, this.hostsFile])) !== 0) {
+      return skipped(`failed to edit ${this.hostsFile} with sudo; pass a sudo password, or remove the ${hostname} line manually`);
+    }
+    if ((await run('sudo', ['-n', 'systemctl', 'restart', 'avahi-daemon'])) !== 0) {
+      return skipped(`${hostname} was removed from ${this.hostsFile} but avahi-daemon could not be restarted`);
+    }
+    return { status: 'changed' };
+  }
+
+  /** With a password, `sudo -S -p '' -v` reads it on stdin, so the commands that follow never see it (#682). */
+  private async authenticate(): Promise<boolean> {
+    if (!this.sudoPassword) return true; // absent or empty: sudo -n (#675)
+    return (await run('sudo', ['-S', '-p', '', '-v'], `${this.sudoPassword}\n`)) === 0;
   }
 }

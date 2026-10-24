@@ -6,7 +6,6 @@
 load helpers
 
 setup() {
-    unset MCCTL_ROOT
     # shellcheck source=../lib/common.sh
     source "$SCRIPTS_DIR/lib/common.sh"
     LONG32=$(printf '%032d' 0 | tr 0 a)

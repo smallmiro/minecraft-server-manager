@@ -238,6 +238,16 @@ export const DeleteServerResponseSchema = Type.Object({
   success: Type.Boolean(),
   server: Type.String(),
   message: Type.String(),
+  /** The server was deleted but its mDNS hostname was not removed (#735). */
+  warning: Type.Optional(Type.String()),
+});
+
+// Delete Server Request Schema (optional body, #735). As in create, the sudo
+// password is a body field, never a query parameter (URLs end up in logs).
+export const DeleteServerRequestSchema = Type.Object({
+  sudoPassword: Type.Optional(
+    Type.String({ writeOnly: true, description: 'Sudo password for removing the mDNS hostname (avahi)' })
+  ),
 });
 
 // Delete Server Query Schema
@@ -263,3 +273,4 @@ export type StatusResponse = Static<typeof StatusResponseSchema>;
 export type CreateServerRequest = Static<typeof CreateServerRequestSchema>;
 export type CreateServerQuery = Static<typeof CreateServerQuerySchema>;
 export type DeleteServerQuery = Static<typeof DeleteServerQuerySchema>;
+export type DeleteServerRequest = Static<typeof DeleteServerRequestSchema>;

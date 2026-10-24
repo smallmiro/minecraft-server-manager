@@ -22,7 +22,7 @@
 2. **작은 타입 필드 + `env` 통과값.** mcctl이 판단하거나 렌더러가 변환해야 하는 것(type, version, memory, image, world, routing)만 타입으로 둔다. 나머지 `config.env` 키는 `env`에 그대로 두므로 가져오기에서 손실이 없다.
 3. **v2.x에서 읽는 코드는 바꾸지 않는다.** 저장할 때마다 생성물을 다시 쓰므로 기존 리더는 계속 `config.env`와 compose를 읽는다. 쓰는 코드만 옮긴다.
 4. **손으로 고친 내용은 잃지 않고 흡수한다.** 헤더 해시로 감지한다. `config.env` 수정과 compose의 스펙 소유 필드(`image`, `mc-router.*` 라벨) 수정은 다음 쓰기 전에 스펙에 흡수한다. 그 밖의 compose 차이는 보호하고 조용히 덮어쓰지 않는다.
-5. **새 포트도, 깨지는 export도 없다**(#715, v2.x 규칙). `IServerSpecRepository`와 `ServerSpec`은 v2 모양을 유지한다. 전체 타입은 새 이름 `ServerSpecDocument`이고, 새 동작은 메서드 추가(`load`, `write`)로 얻는다. #670이 `IWorldAssignmentPort`에 쓴 방식과 같다. 렌더링은 저장소 어댑터 안의 인프라 세부 사항이다. `IHostnameRegistrarPort`에 `register`(#735용 `unregister`)를 추가한다.
+5. **새 포트도, 깨지는 export도 없다**(#715, v2.x 규칙). `IServerSpecRepository`와 `ServerSpec`은 v2 모양을 유지한다. 전체 타입은 새 이름 `ServerSpecDocument`이고, 새 동작은 메서드 추가(`load`, `write`)로 얻는다. #670이 `IWorldAssignmentPort`에 쓴 방식과 같다. 렌더링은 저장소 어댑터 안의 인프라 세부 사항이다. `IHostnameRegistrarPort`에 `register`를 추가한다(`unregister`는 #735에서 삭제와 함께 추가).
 6. **잠금 파일 없음.** 생성은 `mkdir`로 디렉터리를 선점하고, 수정은 낙관적 리비전(`server.yaml`의 sha256)으로 충돌을 막는다. #749의 API 내부 대기열은 그대로 둔다.
 7. **가져오기는 지연 또는 명시적으로만, 일괄로 하지 않는다.** `server.yaml`이 없는 서버는 첫 쓰기 때 메모리에서 가져오고, `mcctl migrate spec`으로 요청할 때 가져온다. `mcctl upgrade`는 아직 가져오지 않은 서버를 보고만 한다. 한 번도 가져오지 않은 서버도 지금처럼 동작한다.
 8. **provision이 `create-server.sh`를 대신한다.** `CreateServerUseCase` 안에서 API SSE가 이미 쓰는 이름으로 진행 이벤트를 내고, 실패하면 전부 되돌려 바로 다시 시도할 수 있게 한다.
@@ -63,7 +63,7 @@
 
 ## 2. 저장소, 저장, 동시성
 
-- **포트**(전문은 ADR-0001): v2 메서드 `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, v3.0.0에서 삭제), `save(spec)`(전체 문서인지 검사 후 `write`), `delete`(#735)는 그대로 둔다. #675가 `load(name)` → `{ document, revision, warnings }`와 `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`를 추가한다.
+- **포트**(전문은 ADR-0001): v2 메서드 `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, v3.0.0에서 삭제), `save(spec)`(전체 문서인지 검사 후 `write`), `delete`는 그대로 둔다(#735가 선택 인자 `{ deleteWorld?, dryRun? }`와 결과를 더함, v2 호출은 그대로 컴파일됨). #675가 `load(name)` → `{ document, revision, warnings }`와 `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`를 추가한다.
 - `servers/<n>/server.yaml`, 고정 키 순서, `atomicWriteFile`(#749).
 - **생성**: `mkdir servers/<n>`(재귀 아님)이 선점이다. `EEXIST`는 `already_exists`.
 - **수정**: `load`가 읽은 바이트의 sha256을 `revision`으로 돌려주고, `write`는 시작할 때와 첫 쓰기 직전(호스트 주소, 가져오기, 월드 스냅샷 같은 await 검사가 모두 끝난 뒤)에 비교하고, 계획의 기준이 된 생성 파일도 그 시점에 다시 읽는다. 다르면 `conflict`이고 `updateServerSpec`이 한 번 재시도한다. `ponytail:` 남는 창은 `atomicWriteFile`의 임시 파일 쓰기와 fsync(밀리초)다. 갱신 유실이 실제로 보이면 서버별 잠금을 추가한다.
@@ -72,7 +72,7 @@
 
 ## 3. 렌더링
 
-- **경계**: 인프라 내부 인터페이스 `ServerSpecRenderer { render(doc, ctx) }`. `FileServerSpecRepository`가 생성자로 받는다. 애플리케이션 코드는 렌더러를 부르지 않으므로 포트가 아니다. 지금은 `DockerComposeRenderer`만 구현하고, `KubernetesManifestRenderer`(StatefulSet, Service, PVC)는 #641까지 인터페이스로만 둔다. #641은 렌더러와 함께 스펙 저장·매니페스트 적용에 필요한 k8s 저장소 어댑터를 추가한다. ADR-0001의 `apply(spec)`는 필요 없다. 삭제 시 렌더링할 것(include 항목)은 #735에서 정한다.
+- **경계**: 인프라 내부 인터페이스 `ServerSpecRenderer { render(doc, ctx) }`. `FileServerSpecRepository`가 생성자로 받는다. 애플리케이션 코드는 렌더러를 부르지 않으므로 포트가 아니다. 지금은 `DockerComposeRenderer`만 구현하고, `KubernetesManifestRenderer`(StatefulSet, Service, PVC)는 #641까지 인터페이스로만 둔다. #641은 렌더러와 함께 스펙 저장·매니페스트 적용에 필요한 k8s 저장소 어댑터를 추가한다. ADR-0001의 `apply(spec)`는 필요 없다. 삭제(#735)는 월드를 옮기기 전에 `removeIncludeEntry`로 생성된 include 항목 `<n>/docker-compose.yml`(남은 항목이 없으면 `include:` 자체)을 지우고(그 서버의 손으로 쓴 항목이 있으면 거부), 옮긴 뒤 `servers/<n>`을 지운다. [ADR-0001 S7](0001-container-runtime-ports.ko.md#스크립트-제거-s7-delete-serversh735) 참고.
 
 | 파일 | 방법 | 수정 감지 |
 |------|------|-----------|
@@ -130,7 +130,7 @@
 
 **옵션 동등성**: 영어판 §5 표가 CLI와 API가 넘기는 모든 옵션을 대응시킨다. 요점: `-t`의 위치 인자 형식은 없앤다. 모드팩 타입에 버전이 없으면 `VERSION`을 쓰지 않는다(명시한 `LATEST`는 쓴다). 메모리를 반영한다(#737). `--modpack`/`--modpack-version`/`--mod-loader`/`--exclude-files`는 `MODRINTH`면 `MODRINTH_MODPACK`/`MODRINTH_VERSION`/`MODRINTH_LOADER`/`MODRINTH_EXCLUDE_FILES`, `AUTO_CURSEFORGE`면 `CF_SLUG`/`CF_VERSION`/`CF_LOADER`/`CF_EXCLUDE_MODS`. 화이트리스트는 `ENABLE_WHITELIST`/`WHITELIST`(`--no-whitelist` 우선). **의도된 차이**: 스크립트는 호스트 IP를 찾았을 때만 `--playit-domain` 값을 라우터 호스트에 넣었지만 TS는 항상 넣는다. `--no-playit-domain`과 `--start`는 아무것도 하지 않는다.
 
-**bats → vitest**: `get_host_ip` 4개 → `resolveHostIps`. `register_avahi_hostname` 5개 → 가짜 `sudo`/`avahi-daemon`으로 avahi 어댑터 시험. 생성 시험 → 임시 루트에서 provision 시험(실패 뒤 재시도 성공 포함). "compose config 실패 시 중단" → "`servers/compose.yml`을 읽지 못하면 아무것도 쓰지 않고 중단". 심링크 `_template` → "렌더러는 `templatesDir`에 쓰지 않는다". 화이트리스트 3개 → 렌더링 시험. `sudo-password.bats`는 #735까지 남는다.
+**bats → vitest**: `get_host_ip` 4개 → `resolveHostIps`. `register_avahi_hostname` 5개 → 가짜 `sudo`/`avahi-daemon`으로 avahi 어댑터 시험. 생성 시험 → 임시 루트에서 provision 시험(실패 뒤 재시도 성공 포함). "compose config 실패 시 중단" → "`servers/compose.yml`을 읽지 못하면 아무것도 쓰지 않고 중단". 심링크 `_template` → "렌더러는 `templatesDir`에 쓰지 않는다". 화이트리스트 3개 → 렌더링 시험. `sudo-password.bats`는 #735까지 남았고, #735가 사례를 avahi 어댑터 시험으로 옮기고 `delete-server.sh`와 함께 지웠다.
 
 ## 6. 쓰기 경로
 

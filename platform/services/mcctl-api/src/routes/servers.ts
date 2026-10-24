@@ -9,7 +9,6 @@ import {
   serverExists,
   getContainerStatus,
   getContainerHealth,
-  stopContainer,
   getServerPlayitDomain,
   getOnlinePlayers,
   WorldInfoUseCase,
@@ -23,6 +22,7 @@ import {
   buildModpackCompatibilityMatrix,
   isModpackCompatible,
   CreateServerUseCase,
+  DeleteServerUseCase,
   ServerStartError,
   ServerSpecError,
   parseCreateServerConfig,
@@ -56,6 +56,7 @@ import {
   CreateServerResponseSchema,
   DeleteServerResponseSchema,
   DeleteServerQuerySchema,
+  DeleteServerRequestSchema,
   type ServerSummary,
   type ServerDetail,
   type ServerNameParams,
@@ -65,24 +66,16 @@ import {
   type CreateServerRequest,
   type CreateServerQuery,
   type DeleteServerQuery,
+  type DeleteServerRequest,
 } from '../schemas/server.js';
 import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
 import { config, childProcessEnv } from '../config/index.js';
-import { resolveScriptPath } from '../lib/script-resolver.js';
 import { getContainerName } from '../lib/rcon.js';
 import { worldFailure } from '../lib/world-use-case.js';
 import { serverSpecFailure } from '../lib/server-spec.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
-import { delay, runScript, startScriptGroup } from '../lib/script-process.js';
 
-/**
- * Time limits for the create/delete scripts (#656). Scripts run in their own
- * process group (no shell: arguments carry user input, #720). A script past its
- * limit gets SIGTERM, then SIGKILL after killGraceMs, and the create/delete
- * queue moves on once it exits or killGraceMs after SIGKILL.
- * Mutable so tests can shorten them.
- */
 /**
  * How POST /api/servers builds its CreateServerUseCase (#675, ADR-0003 §5):
  * TypeScript provisioning with the ServerSpec repository, avahi (the
@@ -116,17 +109,44 @@ export const serverProvision = {
       }
     );
   },
+  /**
+   * DELETE /api/servers/:name (#735): TypeScript deprovision with the runtime,
+   * the ServerSpec repository and avahi (the request's sudo password as an
+   * adapter option, as in create). Tests replace deleteUseCase.
+   */
+  deleteUseCase(options: { sudoPassword?: string }): Pick<DeleteServerUseCase, 'deprovision'> {
+    const paths = new Paths(config.mcctlRoot);
+    const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
+    return new DeleteServerUseCase(
+      new ApiPromptAdapter({}),
+      new ShellAdapter({ paths }),
+      new ServerRepository(paths),
+      undefined,
+      undefined,
+      runtime,
+      {
+        specRepo: new FileServerSpecRepository(paths, undefined, runtime),
+        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: options.sudoPassword }),
+      }
+    );
+  },
 };
 
+/**
+ * How long the create/delete queue (#656) waits for a request before the next
+ * one runs. Create and delete run in TypeScript (#675, #735): nothing is
+ * killed, the queue only stops waiting. Mutable so tests can shorten them.
+ */
 export const lifecycleLimits = {
   /** JSON create (no follow): how long the reply waits for the container start before answering with a warning. */
   createTimeoutMs: 120_000,
   /** Create (TypeScript provisioning): how long the queue waits for it, and the container start timeout. */
   sseCreateTimeoutMs: 30 * 60_000,
-  /** Delete. */
-  deleteTimeoutMs: 60_000,
-  /** SIGTERM to SIGKILL, and SIGKILL to giving up on the exit. */
-  killGraceMs: 10_000,
+  /**
+   * Delete: how long the queue waits for it. Each container step can take a
+   * minute and a world copy to another filesystem longer, so as long as a create.
+   */
+  deleteHoldMs: 30 * 60_000,
 };
 
 
@@ -185,6 +205,7 @@ interface CreateServerRoute {
 interface DeleteServerRoute {
   Params: ServerNameParams;
   Querystring: DeleteServerQuery;
+  Body?: DeleteServerRequest;
 }
 
 interface LogsRoute {
@@ -212,8 +233,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // get the normal 201/200/404/409 answers instead of racing on servers/.
   // ponytail: in-process queue; a second API process would need a file lock.
   // The queue moves on when the task settles or after maxHoldMs, whichever is
-  // first, so a script that never returns cannot block it for good.
+  // first, so a task that never returns cannot block it for good.
   let lifecycleTail: Promise<unknown> = Promise.resolve();
+  const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms).unref());
   const runSerial = <T>(task: () => Promise<T>, maxHoldMs: () => number): Promise<T> => {
     const started = lifecycleTail.then(() => {
       const run = task();
@@ -1027,67 +1049,42 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    * Delete a server
    */
   fastify.delete<DeleteServerRoute>('/api/servers/:name', {
+    // The body is optional: a DELETE without one is validated as {}.
+    preValidation: async (request) => {
+      request.body ??= {};
+    },
     schema: {
       description: 'Delete a Minecraft server. Create and delete requests run one at a time; a request waits for the running one.',
       tags: ['servers'],
       params: ServerNameParamsSchema,
       querystring: DeleteServerQuerySchema,
+      body: DeleteServerRequestSchema,
       response: {
         200: DeleteServerResponseSchema,
+        400: ErrorResponseSchema,
         404: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
   }, (request: FastifyRequest<DeleteServerRoute>, reply: FastifyReply) => runSerial(async () => {
     const { name } = request.params;
     const { force, deleteWorld } = request.query;
-    const containerName = `mc-${name}`;
+    const sudoPassword = request.body?.sudoPassword;
 
+    if (!serverExists(name)) {
+      return reply.code(404).send({
+        error: 'NotFound',
+        message: `Server '${name}' not found`,
+      });
+    }
+
+    // TypeScript deprovision replaces delete-server.sh (#735). It stops and
+    // removes the container itself, so `force` no longer changes anything here.
     try {
-      // Check if server exists
-      if (!serverExists(name)) {
-        return reply.code(404).send({
-          error: 'NotFound',
-          message: `Server '${name}' not found`,
-        });
-      }
-
-      // Check if running and stop if needed
-      const status = getContainerStatus(containerName);
-      if (status === 'running') {
-        if (!force) {
-          // Stop the server first
-          stopContainer(containerName);
-        }
-      }
-
-      // Resolve delete-server.sh: prefer the bundled (version-matched) script,
-      // fall back to the deployed platform copy, then the global mcctl CLI.
-      const mcctlRoot = config.mcctlRoot;
-      const resolvedScript = resolveScriptPath('delete-server.sh', mcctlRoot);
-
-      // Build command (the world is moved to worlds/ unless deleteWorld)
-      const deleteArgs = [name, '--force', ...(deleteWorld ? ['--delete-world'] : [])];
-      let command: string;
-      let commandArgs: string[];
-      if (resolvedScript) {
-        command = 'bash';
-        commandArgs = [resolvedScript.scriptPath, ...deleteArgs];
-      } else {
-        // Use mcctl CLI if script not found
-        command = 'mcctl';
-        commandArgs = ['delete', ...deleteArgs];
-      }
-
-      const { stdout, stderr } = await runScript(command, commandArgs, {
-        cwd: mcctlRoot,
-        env: childProcessEnv({
-          MCCTL_ROOT: mcctlRoot,
-          ...(resolvedScript ? { MCCTL_SCRIPTS: resolvedScript.scriptsDir } : {}),
-        }),
-      }, { timeoutMs: lifecycleLimits.deleteTimeoutMs, graceMs: lifecycleLimits.killGraceMs });
-
-      fastify.log.info({ stdout, stderr }, 'Server deleted');
+      const result = await serverProvision.deleteUseCase({ sudoPassword }).deprovision(name, { deleteWorld });
+      const { hostname, ...world } = result;
+      fastify.log.info({ server: name, ...world, hostname: hostname?.status }, 'Server deleted');
 
       await writeAuditLog({
         action: AuditActionEnum.SERVER_DELETE,
@@ -1099,15 +1096,22 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         errorMessage: null,
       });
 
+      const warning =
+        [
+          world.warning,
+          hostname?.status === 'skipped' ? `mDNS hostname ${name}.local was not removed: ${hostname.reason}` : undefined,
+        ]
+          .filter(Boolean)
+          .join('; ') || undefined;
       return reply.send({
         success: true,
         server: name,
         message: 'Server deleted successfully',
+        ...(warning && { warning }),
       });
     } catch (error) {
-      const execError = error as { stderr?: string; message?: string };
       fastify.log.error(error, 'Failed to delete server');
-      const errorMessage = execError.stderr || execError.message || 'Failed to delete server';
+      const errorMessage = error instanceof Error ? error.message : String(error);
 
       await writeAuditLog({
         action: AuditActionEnum.SERVER_DELETE,
@@ -1119,12 +1123,18 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         errorMessage,
       });
 
+      // A refusal after the container was removed comes wrapped with that news (DeleteServerUseCase.deprovision).
+      const specError = error instanceof ServerSpecError ? error : (error as Error | undefined)?.cause;
+      if (specError instanceof ServerSpecError) {
+        const failure = serverSpecFailure(specError, errorMessage);
+        return reply.code(failure.status).send(failure.body);
+      }
       return reply.code(500).send({
         error: 'InternalServerError',
         message: errorMessage,
       });
     }
-  }, () => lifecycleLimits.deleteTimeoutMs + 3 * lifecycleLimits.killGraceMs));
+  }, () => lifecycleLimits.deleteHoldMs));
 };
 
 export default fp(serversPlugin, {

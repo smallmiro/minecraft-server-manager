@@ -20,7 +20,9 @@ export interface IShellPort {
   ): Promise<ShellResult>;
 
   /**
-   * Delete a server. Its world is moved to worlds/ unless deleteWorld is true.
+   * Delete a server
+   * @deprecated delete-server.sh was removed in #735: implementations reject.
+   * Use DeleteServerUseCase with ServerSpec deprovision. Removed in v3.0.0 (#736).
    */
   deleteServer(name: ServerName, force?: boolean, deleteWorld?: boolean): Promise<ShellResult>;
 

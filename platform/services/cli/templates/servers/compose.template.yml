@@ -1,7 +1,7 @@
 # =============================================================================
 # Server Include List (managed automatically by mcctl)
 # =============================================================================
-# This file is modified by mcctl create and scripts/delete-server.sh
+# This file is modified by mcctl create and mcctl delete
 # Do NOT modify docker-compose.yml - only this file is updated for server changes
 # =============================================================================
 

@@ -4,7 +4,7 @@
 |---|---|
 | **Status** | Proposed (2026-10-23) |
 | **Issue** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), milestone M2 (#643), epic #640 |
-| **Follow-ups that change this ADR** | #665 (D4, [port boundary cleanup](#port-boundary-cleanup-665-d4)), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), #670 (A4: `IWorldAssignmentPort` final, [ADR-0002](0002-world-server-assignment.md)) |
+| **Follow-ups that change this ADR** | #665 (D4, [port boundary cleanup](#port-boundary-cleanup-665-d4)), #669 (A7), C2, #675 (D5), #641 (k8s adapter), #732 (S3, [backup port](#backup-port-732-s3)), #670 (A4: `IWorldAssignmentPort` final, [ADR-0002](0002-world-server-assignment.md)), #735 (S7, [server delete](#script-removal-s7-delete-serversh-735)) |
 | **Consumers** | #667 (D2, API), #668 (D3, CLI), #666 (E3, contract tests), #715 (script removal) |
 
 ## Context
@@ -73,6 +73,8 @@ export interface IContainerRuntimePort {
   start(name: ServerName | string): Promise<RuntimeActionResult>;
   stop(name: ServerName | string): Promise<RuntimeActionResult>;
   restart(name: ServerName | string): Promise<RuntimeActionResult>;
+  /** #735: stop and remove the workload. Absent = success; a runtime that cannot be queried = failure. Server data is not the runtime's. */
+  remove(name: ServerName | string): Promise<RuntimeActionResult>;
 
   /** Timestamped lines since `since`, at most `tail` lines. Rejects on failure. */
   readLogs(name: ServerName | string, options: { since: string; tail: number }): Promise<string[]>;
@@ -125,7 +127,7 @@ export interface IHostnameRegistrarPort {
   /** #675: add `<ip> <hostname>` (exact-match check, #660). Never rejects. */
   register(hostname: string, ip: string): Promise<HostnameChangeResult>;
   /**
-   * #735 (not added yet; added with delete): remove the lines that list exactly `hostname` before any comment. Never rejects.
+   * #735: remove the lines that list exactly `hostname` before any comment; 'unchanged' when none does. Never rejects.
    * Command (README sudoers shape, #751): argv, no shell:
    *   sudo -n sed -i '/^[^#]*[[:space:]]<host>\([[:space:]]\|#\|$\)/d' /etc/avahi/hosts
    * <host> is a validated hostname with `[ ] \ . * ^ $ /` escaped; the field-boundary
@@ -174,8 +176,8 @@ export interface IServerSpecRepository {
   get(name: string): Promise<ServerSpec | null>;
   /** write(spec) after checking that `spec` is a full document; a bare { name } → 'invalid_spec' listing the missing fields. */
   save(spec: ServerSpec): Promise<void>;
-  /** #735: removes the include entry (exact name) and the definition files; data/ and worlds/ are the use case's. */
-  delete(name: string): Promise<void>;
+  /** #735: see [Script Removal S7](#script-removal-s7-delete-serversh-735). `delete(name)` (v2) still compiles. */
+  delete(name: string, options?: { deleteWorld?: boolean; dryRun?: boolean }): Promise<ServerSpecDeleteResult>;
   // added by #675
   /** Imports in memory when server.yaml is missing; absorbs hand edits. No writes. */
   load(name: string): Promise<LoadedServerSpec | null>;
@@ -244,7 +246,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
   - `DockerPlayitAgentAdapter({ root?: string })`. The playit commands keep inheriting `process.env`, as today.
 - **Legacy extras**: three exports have no port equivalent. They stay as `@deprecated` methods on the adapter, outside every port, and are deleted once they have no callers (D3/D4):
   - `startContainer` (`docker start`) has no production caller.
-  - `stopContainer` (synchronous `docker stop`) has one caller (the API delete route) that moves to `stop()`.
+  - `stopContainer` (synchronous `docker stop`) had one caller, the API delete route; since #735 the route deprovisions through `remove()`, so it has none.
   - `checkDockerCompose` has no caller.
 - **Composition**: export the classes from `infrastructure/adapters/index.ts` (and therefore from the package root). Do not export instances. The facade creates its own private instances at module load. The constructors have no side effects, so import-time behaviour is unchanged.
 
@@ -262,6 +264,7 @@ docker/index.ts                                 legacy facade: 48 exports, leaf 
 | `start(name)` | `docker compose up -d <name>`, cwd = root, env + `COMPOSE_FILE=docker-compose.yml`, timeout 60 s | `mcctl.sh start` (`:426`), API `executeServerAction('start')` |
 | `stop(name)` | `docker stop -- <name>`, env, no timeout | `mcctl.sh stop` (`:464`), `stopContainer`, CLI `migrate.ts:557`, API delete route |
 | `restart(name)` | `docker compose restart <name>`, cwd = root, env + `COMPOSE_FILE`, timeout 60 s | API `executeServerAction('restart')` (only caller) |
+| `remove(name)` (#735) | `docker ps -a --format {{.Names}}` (exact name; failure = failure, not "absent"); in the compose project (`docker compose ps <name>` lists it): `docker compose stop <name>`, then `docker compose rm -f <name>` (cwd = root, `COMPOSE_FILE`, timeout 60 s each); otherwise `docker rm -f -- <name>`. A failed stop returns before `rm` | `delete-server.sh` step 1 (removed in #735) |
 
 - `start` means "create if missing". `docker start` cannot start a server whose container was never created (`not_created` in the UI). For k8s, `start` is a scale to 1 after the k8s `IServerSpecRepository` adapter has written the spec and applied the manifests (ADR-0003, #641).
 - `stop` follows the majority (3 of 4 paths use `docker stop`). The API actions route uses `docker compose stop` today, so its move in D2 is a behaviour change and needs its own commit (see open questions).
@@ -337,7 +340,7 @@ Production code that imports `child_process` outside `src/infrastructure/**` (23
 | 5 | api `services/player-session-collector.ts:30` | `docker logs --timestamps --since --tail` | `runtime.readLogs` (fits the existing `LogFetcher`) | D2 | same argv plus `--` |
 | 6 | api `utils/docker-compose.ts:85` | `docker compose up -d / stop / restart` | `runtime.start` / `.stop` / `.restart` | D2 | `stop` changes from compose stop to `docker stop` (open question 2) |
 | 7 | api `routes/servers.ts:1111` | facade `stopContainer` (sync) | `runtime.stop` | D2 | becomes awaited |
-| 8 | api `routes/servers.ts:61,858` (create and delete routes), `routes/backup.ts`, `services/backup-scheduler.ts` | `create-server.sh`, `delete-server.sh`, `backup.sh`, `git` | not a runtime port; move under `mcctl-api/src/infrastructure/` | D2; backup paths: #732 | needed before the rule becomes an error. #732 removes the backup ones (see [Backup Port](#backup-port-732-s3)) |
+| 8 | api `routes/servers.ts:61,858` (create and delete routes), `routes/backup.ts`, `services/backup-scheduler.ts` | `create-server.sh`, `delete-server.sh`, `backup.sh`, `git` | not a runtime port; move under `mcctl-api/src/infrastructure/` | D2; backup paths: #732 | needed before the rule becomes an error. #732 removes the backup ones (see [Backup Port](#backup-port-732-s3)); #675 and #735 removed create and delete (TypeScript use cases, no script) |
 | 9 | cli `lib/rcon.ts:16` | `docker inspect -f {{.State.Running}}` | `runtime.getStatusAsync` in `running`/`paused`/`restarting` | D3, done (#668) | `isContainerRunning` keeps the `{{.State.Running}}` meaning (paused and restarting count as running); the server comes from `serverOfContainer` |
 | 10 | cli `lib/rcon.ts:43` | `docker exec <c> rcon-cli ...` | `console.command` | D3, done (#668) | `execRconWithOutput` keeps `output = stdout \|\| stderr`; adds `--` |
 | 11 | cli `lib/shell.ts:265` | `docker exec` with inherited stdio | `console.command` then print | D3, done (#668) | `mcctl exec`; output is buffered instead of streamed (stdout, then stderr) and written fully before exit. A `docker exec` killed by a signal now exits 1 (was 0). `ShellExecutor.execRcon` was removed |
@@ -388,7 +391,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 |--------|--------------|---------------------|-------------------|
 | `logs.sh` (removed in #731) | tail, follow, `--since`, `--timestamps` | `getLogs`, `followLogs({ tail, follow })`, `readLogs` | `--file`/`--json` formatting is CLI presentation, not a port. The avahi `journalctl` view was dropped; run `journalctl -u avahi-daemon` directly. `followLogs` gained optional `tail` (default 0) and `follow` (default true), so existing callers are unchanged. "Last N lines, then follow" is one stream, and `follow: false` prints the last N lines from stdout and stderr, and `onExit` lets a caller turn a failed `docker logs` into a non-zero exit code |
 | `mcctl.sh` | start/stop/status, `docker exec -i rcon-cli` console | `start`, `stop`, `getStatus`; console via `getEndpoint` + the existing TCP client (`rcon-client`) | an interactive `attach()` with TTY passthrough; use TCP instead |
-| `delete-server.sh` | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove({ purgeData })`, `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete` (signatures recorded by #675; implemented in #735) |
+| `delete-server.sh` (removed in #735) | stop, remove container, remove compose include, avahi unregister, keep world (D-2) | `stop` | `remove(name)` (no `purgeData`: data is files), `IHostnameRegistrarPort.unregister`, `IServerSpecRepository.delete(name, { deleteWorld, dryRun })`; see [Script Removal S7](#script-removal-s7-delete-serversh-735) |
 | `lock.sh` | world locks | — | replaced by `IWorldAssignmentPort.assign`/`release` derived from `LEVEL`; `lock.sh` removed in #670 ([ADR-0002](0002-world-server-assignment.md)) |
 | `player.sh` | Mojang API lookup | — | removed in #730 (`mcctl player info` covers it) |
 | `backup.sh` | git backup of worlds | flush via `console.command`: `save-off`, `save-all flush`, `save-on` | git storage is `IWorldBackupPort`, not runtime ([Backup Port](#backup-port-732-s3)) |
@@ -746,10 +749,31 @@ Settled at re-review: option names CLI `--allow-missing` / API `allowMissing`; `
 |------|--------|-------|
 | CLI `start`/`stop <server>` | `ShellExecutor.mcctl` → `mcctl.sh` | `IContainerRuntimePort.start`/`stop` with a `ServerName` (`commands/lifecycle.ts`). Exit codes kept: 2 = already running (start) / not running (stop), 1 = no `servers/<name>/docker-compose.yml` or the runtime cannot be queried (`not_found` confirmed by `list({ strict: true })`, replacing `check_docker`) |
 | CLI `console <server>` | `docker exec -i mc-<name> rcon-cli` | the `mcctl rcon` session: `getStatus` + `IServerConsolePort.getEndpoint` + `rcon-client` over TCP (row `mcctl.sh` in [Alignment with #715](#alignment-with-715-script-removal)). Lines run in order; EOF closes after the last reply; the client's `end` ends the session (0), `error` exits 1 |
-| Auto-backup on stop | `mcctl.sh stop` → `mcctl backup push --auto` | `autoBackupOnStop(backup, server)` (shared): `status()` → `configured && autoOnStop` → `push({ lockWaitMs: 600000 })`, never `allowMissing`, never rejects. CLI `stop <server>` awaits it (warning on failure, exit 0); the API stop route runs it in the background, logs the result, and an `onClose` hook waits for running ones (at most `AUTO_BACKUP_CLOSE_WAIT_MS`, 2 min; after 90 s it aborts them through `push`'s `signal`, and the adapter stops before the next save-off or copied file, sends `save-on`, and fails with `aborted`; the generated PM2 config gives mcctl-api `kill_timeout` `API_PM2_KILL_TIMEOUT_MS`, 130 s) so the adapter's `save-on` recovery is not cut off by shutdown (B-Q9 closed). Start, restart, `stop --all` and the pre-delete stop do not back up |
+| Auto-backup on stop | `mcctl.sh stop` → `mcctl backup push --auto` | `autoBackupOnStop(backup, server)` (shared): `status()` → `configured && autoOnStop` → `push({ lockWaitMs: 600000 })`, never `allowMissing`, never rejects. CLI `stop <server>` awaits it (warning on failure, exit 0); the API stop route runs it in the background, logs the result, and an `onClose` hook waits for running ones (at most `AUTO_BACKUP_CLOSE_WAIT_MS`, 2 min; after 90 s it aborts them through `push`'s `signal`, and the adapter stops before the next save-off or copied file, sends `save-on`, and fails with `aborted`; the generated PM2 config gives mcctl-api `kill_timeout` `API_PM2_KILL_TIMEOUT_MS`, 130 s) so the adapter's `save-on` recovery is not cut off by shutdown (B-Q9 closed). Start, restart, `stop --all` and server delete (S7) do not back up |
 | `createWorld` SEED | `IShellPort.setServerConfig` → `mcctl.sh config` | `IWorldAssignmentPort.assign(world, server, { seed })`: one write with `LEVEL` (through the ServerSpec since #675, ADR-0003 §6); `SEED` is written even when `LEVEL` is unchanged. `WorldManagementUseCase`'s `shell` parameter is unused (`@deprecated`) |
 | Stopped check | `checkServerStopped` passed `not_found` | `not_found` passes only when `list({ strict: true })` succeeds, so an unreachable runtime is `undetermined` (fail-closed) |
-| Pre-delete stop | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: `runtime.stop` when given (CLI); `delete-server.sh` still stops the container itself |
+| Pre-delete stop | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: `runtime.stop` when given (CLI), then `delete-server.sh`. Since #735 there is no separate stop: `deprovision` stops and removes the container with `runtime.remove` ([S7](#script-removal-s7-delete-serversh-735)) |
 | API | `new ShellAdapter({ paths })` in `lib/world-use-case.ts` | none: the API no longer resolves `<root>/scripts` for world operations |
 
 `IShellPort`/`ShellAdapter` `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status` keep their v2 signatures and return `mcctl.sh was removed (#734); use …` without running a script (removed in #736). The API stop route keeps `executeServerAction` (`docker compose stop`); open question 2 is unchanged.
+
+## Script Removal S7: `delete-server.sh` (#735)
+
+`mcctl delete` and `DELETE /api/servers/:name` delete in TypeScript. No new port: three existing ports gain a method (none of them shipped in v2.33.0, so this is not breaking).
+
+| Step | `delete-server.sh` | TypeScript (`DeleteServerUseCase.deprovision(name, { deleteWorld })`) |
+|------|--------------------|------------------------------------------------------------------------|
+| Plan the worlds | `plan_worlds`, `worlds_outside_server` before anything | `specRepo.delete(name, { deleteWorld, dryRun: true })`: same rules (see below). An unsafe plan rejects before the container is touched |
+| Stop and remove the container | `docker ps -a`, `compose stop` + `compose rm -f`, or `docker rm -f` | `IContainerRuntimePort.remove(name)`. A failure rejects with "Nothing was deleted" |
+| Plan again (the server may write while it stops), drop the include entry, move the world, delete `servers/<n>` | steps 2 and 4, include before the move | `specRepo.delete(name, { deleteWorld })`: plan, drop the include entry under the `servers/.compose.yml.lock` lock (#675 `acquireFileLock`), move (`rename`; on `EXDEV`, as `mv` did, claim `worlds/<w>` with a non-recursive `mkdir`, copy, remove the original), then delete `servers/<n>`. Delete handles only the entry mcctl writes: the server's entries (paths inside `servers/<n>/`, `./alpha/x` normalised, not `alphabet/x`) must be the one string `<n>/docker-compose.yml`. A hand-written entry for the server (long form, path group, another file, a custom compose file, the entry twice) is refused with `conflict` right after the delete lock, dry runs included, before the container is touched; entries of other servers are never changed. The entry goes first, as in the script: `mcctl start` and `POST /api/servers/:name/start` skip the delete queue, and `docker compose up -d mc-<n>` must not recreate the server while its world is copied. The move and the `rm` stay outside the lock, so a long copy does not make other writers fail with `locked`. A failed move takes the lock again and puts the entry back (the replaced text when the file is unchanged, else the string entry added unless one names it; skipped when `servers/<n>/docker-compose.yml` is gone); if that fails too, the error adds how to put it back by hand. The whole delete, dry runs included, holds `servers/.<n>.delete.lock` (`acquireFileLock`, no wait), so a second delete of the server from any process (CLI or API) fails with `locked`. A failure says the container is already gone and which worlds already moved. Files `rm` cannot remove are a warning with a `sudo rm -rf` hint (the delete succeeds and the hostname step runs) |
+| Hostname | step 3, before the directory | `IHostnameRegistrarPort.unregister('<name>.local')` after the files, best effort (a skip is a warning) |
+| Validate the compose project | `docker compose config` after the include edit, restore the backup on failure | dropped: the include edit is a YAML edit of one key (`removeIncludeEntry`), which keeps the file valid |
+
+- **World plan** (`infrastructure/adapters/server-spec/serverWorldPlan.ts`, #652): `data/<LEVEL>`, `_nether`, `_the_end` (real folders, not symlinks) move to `worlds/`. Refused, changing nothing: `worlds/<w>` exists (`conflict`); dimension folders without `data/<LEVEL>`; a symlinked `servers/<n>` or `data/`; any other world folder in the server (`level.dat`, `level.dat_old`, `region/`, `*.mca`); a symlink whose target is inside the server (all `undetermined`). `deleteWorld` overrides these. `worlds/` resolving inside the server is refused even with `deleteWorld`. **`LEVEL` is read by the ADR-0002 snapshot reader** (Compose semantics: quotes, inline comments, last definition), not by the script's "one plain `LEVEL=` line" rule; a server the reader cannot determine (invalid or interpolated `LEVEL`, unsupported `--universe`) aborts unless `deleteWorld`. The world-folder scan keeps a misread `LEVEL` from losing data: the other world is found and the delete stops.
+- **Assignment release**: nothing to call. The assignment is the server's `LEVEL` (ADR-0002 R3, R5), so it goes with `servers/<n>/config.env`; `IWorldAssignmentPort.release` (fall back to `<server>`) is for servers that stay.
+- **No backup before the delete.** `remove` stops the container without the auto-backup on stop (S5), so the delete does not run `BACKUP_AUTO_ON_STOP`: the world is kept in `worlds/` (#652), and `--delete-world` is an explicit request to drop it.
+- **`unregister` command shape** (README sudoers, #751): `sudo -n sed -i '/^[^#]*[[:space:]]<host>\([[:space:]]\|#\|$\)/d' /etc/avahi/hosts`, then `sudo -n systemctl restart avahi-daemon`, argv without a shell. `<host>` is the validated hostname with `[ ] \ . * ^ $ /` escaped (the expression of the removed `avahi_remove_host`). A password (CLI `--sudo-password` / `MCCTL_SUDO_PASSWORD` / prompt, API request body `sudoPassword`) goes to `sudo -S -p '' -v` on stdin first and never to `sed` or an environment variable (#682); an empty password is none. No hosts file or no exact entry is `unchanged`.
+- **API**: `DELETE /api/servers/:name` takes an optional JSON body `{ "sudoPassword": "..." }` (write-only, as in create; not a query parameter because URLs are logged). Before #735 the route ran the script without it, so the avahi entry stayed unless sudo needed no password. The 200 body gains an optional `warning` when the hostname was not removed. `force` no longer changes anything (`remove` stops the container). The create/delete queue (#656) is unchanged.
+- **Deprecated** (removed in #736): `IShellPort.deleteServer`, `ShellAdapter.deleteServer` (rejects with "delete-server.sh was removed in #735; …" and runs nothing). `DeleteServerUseCase` without `runtime?` (#734) and its new optional trailing parameter `deprovision?` (`{ specRepo, hostnames? }`) rejects with the same message.
+- **Removed scripts and tests**: `delete-server.sh`, `delete-server.bats`, `sudo-password.bats` (its cases are vitest tests of the avahi adapter), `tests/fake-bin/docker`, and every `lib/common.sh` and `tests/helpers.bash` helper that only `delete-server.sh`, `mcctl.sh` (S5) or their tests used. `lib/common.sh` keeps the naming validators that `naming-rules.bats` tests; `platform/scripts/` has no `*.sh` left at its top level.
+
