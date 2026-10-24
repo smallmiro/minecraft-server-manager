@@ -37,10 +37,13 @@ function open() {
     try {
       const payload = JSON.parse((event as MessageEvent).data) as RouterStatusResponse;
       clients.forEach((_count, client) => client.setQueryData(ROUTER_STATUS_QUERY_KEY, payload));
+      setConnected(true);
     } catch {
       // ignore malformed frames; the next event (or polling) corrects the state
     }
   });
+  // The server could not read the status: poll GET /status until the next good frame.
+  es.addEventListener('router-status-error', () => setConnected(false));
   es.onerror = () => {
     setConnected(false);
     // The browser retries on its own while CONNECTING; a CLOSED source (e.g. 401 from the proxy) never will.

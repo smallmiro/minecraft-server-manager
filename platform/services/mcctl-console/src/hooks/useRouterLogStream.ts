@@ -5,6 +5,7 @@ import type { RouterLogEvent } from '@/types/events';
 
 export const ROUTER_LOG_MAX_EVENTS = 500;
 const STREAM_URL = '/api/sse/router/logs/stream';
+const RECONNECT_DELAY_MS = 5000;
 
 export type RouterLogStreamStatus = 'connecting' | 'live' | 'disconnected' | 'ended';
 
@@ -39,9 +40,9 @@ export function useRouterLogStream(): UseRouterLogStreamReturn {
     if (typeof EventSource === 'undefined') return;
 
     let seq = 0;
-    let ended = false;
-    let hadError = false;
-    const source = new EventSource(STREAM_URL);
+    let disposed = false;
+    let source: EventSource | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     const parse = <T,>(event: Event): T | null => {
       try {
@@ -51,33 +52,59 @@ export function useRouterLogStream(): UseRouterLogStreamReturn {
       }
     };
 
-    source.addEventListener('connected', () => {
-      if (hadError) {
-        // The server replays the tail on reconnect: drop the old list instead of duplicating lines.
-        setEvents([]);
-        hadError = false;
-      }
-      setStatus('live');
-    });
-    source.addEventListener('router-log', (event) => {
-      const payload = parse<RouterLogEvent>(event);
-      if (!payload) return;
-      const entry: RouterLogEntry = { ...payload, id: seq++ };
-      setEvents((prev) => appendCapped(prev, entry, ROUTER_LOG_MAX_EVENTS));
-    });
-    source.addEventListener('end', () => {
-      ended = true;
-      setStatus('ended');
-      source.close();
-    });
-    source.onerror = () => {
-      if (ended) return;
-      hadError = true;
-      setStatus('disconnected');
+    // Reconnect later: the stream ends when mc-router stops (e.g. after Restart), and the browser
+    // never retries a CLOSED source (e.g. mcctl-api briefly down behind the proxy).
+    const scheduleReconnect = () => {
+      if (disposed || retryTimer) return;
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        connect();
+      }, RECONNECT_DELAY_MS);
     };
 
+    function connect() {
+      if (disposed) return;
+      let ended = false;
+      let hadError = false;
+      const es = new EventSource(STREAM_URL);
+      source = es;
+      setStatus('connecting');
+
+      es.addEventListener('connected', () => {
+        // The server replays the tail on every (re)connect: drop the old list instead of duplicating lines.
+        if (hadError || seq > 0) setEvents([]);
+        hadError = false;
+        setStatus('live');
+      });
+      es.addEventListener('router-log', (event) => {
+        const payload = parse<RouterLogEvent>(event);
+        if (!payload) return;
+        const entry: RouterLogEntry = { ...payload, id: seq++ };
+        setEvents((prev) => appendCapped(prev, entry, ROUTER_LOG_MAX_EVENTS));
+      });
+      es.addEventListener('end', () => {
+        ended = true;
+        setStatus('ended');
+        es.close();
+        scheduleReconnect();
+      });
+      es.onerror = () => {
+        if (ended) return;
+        hadError = true;
+        setStatus('disconnected');
+        if (es.readyState === 2) {
+          es.close();
+          scheduleReconnect();
+        }
+      };
+    }
+
+    connect();
+
     return () => {
-      source.close();
+      disposed = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      source?.close();
     };
   }, []);
 

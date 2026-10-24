@@ -116,6 +116,45 @@ describe('useRouterLogStream', () => {
     expect(result.current.status).toBe('ended');
   });
 
+  describe('reconnecting', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('reconnects after the stream ends, e.g. when mc-router was restarted', () => {
+      const { result } = renderHook(() => useRouterLogStream());
+      act(() => es().emit('end', { code: 0 }));
+      expect(result.current.status).toBe('ended');
+
+      act(() => vi.advanceTimersByTime(5000));
+      expect(MockEventSource.instances).toHaveLength(2);
+      expect(result.current.status).toBe('connecting');
+      act(() => MockEventSource.instances[1].emit('connected', {}));
+      expect(result.current.status).toBe('live');
+    });
+
+    it('reconnects when the browser gave up on the connection (CLOSED), but not while it retries itself', () => {
+      renderHook(() => useRouterLogStream());
+      act(() => es().onerror?.());
+      act(() => vi.advanceTimersByTime(5000));
+      expect(MockEventSource.instances).toHaveLength(1);
+
+      act(() => {
+        es().readyState = 2;
+        es().onerror?.();
+      });
+      act(() => vi.advanceTimersByTime(5000));
+      expect(MockEventSource.instances).toHaveLength(2);
+    });
+
+    it('does not reconnect after unmount', () => {
+      const { unmount } = renderHook(() => useRouterLogStream());
+      act(() => es().emit('end', { code: 0 }));
+      unmount();
+      act(() => vi.advanceTimersByTime(10000));
+      expect(MockEventSource.instances).toHaveLength(1);
+    });
+  });
+
   it('clear empties the list', () => {
     const { result } = renderHook(() => useRouterLogStream());
     act(() => es().emit('router-log', { kind: 'info', raw: 'x' }));

@@ -110,6 +110,21 @@ describe('useRouterStatus (SSE with polling fallback)', () => {
     await waitFor(() => expect(refetchInterval(queryClient)).toBe(false));
   });
 
+  it('polls while the server reports failed status polls, and stops again on the next status', async () => {
+    const { wrapper, queryClient } = setup();
+    const { result } = renderHook(() => useRouterStatus(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeDefined());
+    act(() => MockEventSource.instances[0].open());
+    await waitFor(() => expect(refetchInterval(queryClient)).toBe(false));
+
+    // The connection stays open, but the server could not read the status
+    act(() => MockEventSource.instances[0].emit('router-status-error', { timestamp: 'x' }));
+    await waitFor(() => expect(refetchInterval(queryClient)).toBe(30000));
+
+    act(() => MockEventSource.instances[0].emit('router-status', status(25565)));
+    await waitFor(() => expect(refetchInterval(queryClient)).toBe(false));
+  });
+
   it('keeps the last data when a fallback refetch fails', async () => {
     const { wrapper } = setup();
     const { result } = renderHook(() => useRouterStatus(), { wrapper });
