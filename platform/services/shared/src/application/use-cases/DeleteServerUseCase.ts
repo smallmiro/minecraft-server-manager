@@ -1,4 +1,4 @@
-import { Server, ServerStatus } from '../../domain/index.js';
+import { Server, ServerName } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 import type {
   IDeleteServerUseCase,
@@ -9,22 +9,94 @@ import type {
   IAuditLogPort,
   IServerConsolePort,
   IContainerRuntimePort,
+  IServerSpecRepository,
+  IHostnameRegistrarPort,
+  HostnameChangeResult,
+  ServerSpecDeleteResult,
 } from '../ports/index.js';
+
+/** Why deletion fails without deprovision deps since #735. */
+const DELETE_SERVER_SCRIPT_REMOVED =
+  'delete-server.sh was removed in #735; pass specRepo / use ServerSpec deprovision';
+
+/**
+ * What TypeScript deprovisioning needs besides the runtime (#735). Without
+ * it deletion fails: delete-server.sh was removed.
+ */
+export interface ServerDeprovisionDeps {
+  specRepo: IServerSpecRepository;
+  /** avahi `<name>.local`; skipped when absent. */
+  hostnames?: IHostnameRegistrarPort;
+}
+
+/** What deprovision did with the world, and the hostname result (undefined without a registrar). */
+export interface ServerDeprovisionResult extends ServerSpecDeleteResult {
+  hostname?: HostnameChangeResult;
+}
+
+/**
+ * Lines that say what happened to the world (#652: the message matches
+ * what was done; delete-server.sh's summary).
+ */
+function describeWorldOutcome(result: ServerSpecDeleteResult, deleteWorld: boolean): string[] {
+  const kept = result.keptWorld
+    ? [`World worlds/${result.keptWorld} was kept; it is no longer assigned to this server.`]
+    : [];
+  if (deleteWorld) return ['World data inside the server was deleted with it (--delete-world).', ...kept];
+  if (result.movedWorlds.length > 0) {
+    return [`World moved to worlds/${result.level}; it can be assigned to another server.`];
+  }
+  return kept.length > 0 ? kept : [`No world data found for LEVEL '${result.level}'.`];
+}
 
 /**
  * Delete Server Use Case
  * Orchestrates server deletion with confirmation
  */
 export class DeleteServerUseCase implements IDeleteServerUseCase {
+  /**
+   * @param runtime removes the server's container (#735). #734 added it for the stop before deletion, which `remove` now does.
+   * @param deprovision the ServerSpec repository and hostname registrar (#735).
+   */
   constructor(
     private readonly prompt: IPromptPort,
     private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
     private readonly auditLog?: IAuditLogPort,
     private readonly serverConsole?: IServerConsolePort,
-    /** Stops a running server before deletion (#734). Without it the deprecated shell path is used. */
-    private readonly runtime?: IContainerRuntimePort
+    private readonly runtime?: IContainerRuntimePort,
+    private readonly deprovisionDeps?: ServerDeprovisionDeps
   ) {}
+
+  /**
+   * Remove a server without asking (delete-server.sh in TypeScript, #735).
+   * Order: plan its worlds (nothing is touched when that is unsafe, #652),
+   * remove its container (a failed stop deletes nothing), move the world and
+   * remove the files, then unregister `<name>.local` (best effort).
+   * Rejects with what happened when the server is not deleted.
+   * No backup before the delete: the world is kept in worlds/ (#652).
+   */
+  async deprovision(name: string, options: { deleteWorld?: boolean } = {}): Promise<ServerDeprovisionResult> {
+    if (!this.deprovisionDeps) throw new Error(DELETE_SERVER_SCRIPT_REMOVED);
+    if (!this.runtime) throw new Error(`Cannot delete server '${name}': no container runtime configured`);
+    const { specRepo, hostnames } = this.deprovisionDeps;
+    const deleteWorld = options.deleteWorld === true;
+
+    await specRepo.delete(name, { deleteWorld, dryRun: true });
+    const removed = await this.runtime.remove(ServerName.fromExisting(name));
+    if (!removed.success) {
+      throw new Error(`${removed.error || removed.stderr || `Failed to remove container mc-${name}`}. Nothing was deleted.`);
+    }
+    let result: ServerSpecDeleteResult;
+    try {
+      result = await specRepo.delete(name, { deleteWorld });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Container mc-${name} was stopped and removed. ${message}`, { cause: error });
+    }
+    const hostname = hostnames ? await hostnames.unregister(`${name}.local`) : undefined;
+    return { ...result, hostname };
+  }
 
   /**
    * Fill in who is online (the repository does not). Returns false when the
@@ -159,59 +231,39 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
    * Perform the actual deletion
    */
   private async performDeletion(server: Server, deleteWorld: boolean): Promise<boolean> {
+    const name = server.name.value;
     const spinner = this.prompt.spinner();
-
-    try {
-      // Stop server if running
-      if (server.isRunning) {
-        spinner.start('Stopping server...');
-        // delete-server.sh stops the container too, so a failed stop is not fatal here
-        if (this.runtime) await this.runtime.stop(server.name);
-        else await this.shell.stopServer(server.name);
-        spinner.stop('Server stopped');
-      }
-
-      // Delete server - stop spinner before running script to avoid output conflicts
-      // Always pass force=true since confirmation was already handled by UseCase
-      spinner.start('Removing server...');
-      spinner.stop('Running delete script...');
-
-      const result = await this.shell.deleteServer(server.name, true, deleteWorld);
-
-      if (!result.success) {
-        this.prompt.error(result.stderr || 'Unknown error occurred');
-        // Log audit failure
-        await this.auditLog?.log({
-          action: AuditActionEnum.SERVER_DELETE,
-          actor: 'cli:local',
-          targetType: 'server',
-          targetName: server.name.value,
-          status: 'failure',
-          errorMessage: result.stderr || 'Unknown error occurred',
-          details: null,
-        });
-        return false;
-      }
-
-      // Log audit success
-      await this.auditLog?.log({
+    const audit = (status: 'success' | 'failure', errorMessage: string | null) =>
+      this.auditLog?.log({
         action: AuditActionEnum.SERVER_DELETE,
         actor: 'cli:local',
         targetType: 'server',
-        targetName: server.name.value,
-        status: 'success',
+        targetName: name,
+        status,
+        errorMessage,
         details: null,
-        errorMessage: null,
       });
 
-      // The script's summary already says what happened to the world.
-      this.prompt.success(`Server '${server.name.value}' deleted`);
-
-      this.prompt.outro('Server removed successfully');
-      return true;
+    spinner.start('Removing server...');
+    let result: ServerDeprovisionResult;
+    try {
+      result = await this.deprovision(name, { deleteWorld });
     } catch (error) {
       spinner.stop('Deletion failed');
-      throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      this.prompt.error(message);
+      await audit('failure', message);
+      return false;
     }
+    spinner.stop('Server removed');
+
+    for (const line of describeWorldOutcome(result, deleteWorld)) this.prompt.info(line);
+    if (result.hostname?.status === 'skipped') {
+      this.prompt.warn(`mDNS hostname ${name}.local was not removed: ${result.hostname.reason}`);
+    }
+    await audit('success', null);
+    this.prompt.success(`Server '${name}' deleted`);
+    this.prompt.outro('Server removed successfully');
+    return true;
   }
 }

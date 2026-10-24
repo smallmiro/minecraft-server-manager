@@ -279,7 +279,11 @@ export class Container {
       this.serverRepository,
       this.auditLogPort,
       this.serverConsolePort,
-      this.containerRuntime
+      this.containerRuntime,
+      {
+        specRepo: this.serverSpecRepository,
+        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
+      }
     );
   }
 
