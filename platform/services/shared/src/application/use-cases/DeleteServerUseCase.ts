@@ -4,7 +4,6 @@ import type {
   IDeleteServerUseCase,
   DeleteServerOptions,
   IPromptPort,
-  IShellPort,
   IServerRepository,
   IAuditLogPort,
   IServerConsolePort,
@@ -15,14 +14,7 @@ import type {
   ServerSpecDeleteResult,
 } from '../ports/index.js';
 
-/** Why deletion fails without deprovision deps since #735. */
-const DELETE_SERVER_SCRIPT_REMOVED =
-  'delete-server.sh was removed in #735; pass specRepo / use ServerSpec deprovision';
-
-/**
- * What TypeScript deprovisioning needs besides the runtime (#735). Without
- * it deletion fails: delete-server.sh was removed.
- */
+/** What TypeScript deprovisioning needs besides the runtime (#735). */
 export interface ServerDeprovisionDeps {
   specRepo: IServerSpecRepository;
   /** avahi `<name>.local`; skipped when absent. */
@@ -55,21 +47,20 @@ function describeWorldOutcome(result: ServerSpecDeleteResult, deleteWorld: boole
  */
 export class DeleteServerUseCase implements IDeleteServerUseCase {
   /**
-   * @param runtime removes the server's container (#735). #734 added it for the stop before deletion, which `remove` now does.
+   * @param runtime removes the server's container (#735).
    * @param deprovisionDeps the ServerSpec repository and hostname registrar (#735).
    */
   constructor(
     private readonly prompt: IPromptPort,
-    private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
+    private readonly runtime: IContainerRuntimePort,
+    private readonly deprovisionDeps: ServerDeprovisionDeps,
     private readonly auditLog?: IAuditLogPort,
-    private readonly serverConsole?: IServerConsolePort,
-    private readonly runtime?: IContainerRuntimePort,
-    private readonly deprovisionDeps?: ServerDeprovisionDeps
+    private readonly serverConsole?: IServerConsolePort
   ) {}
 
   /**
-   * Remove a server without asking (delete-server.sh in TypeScript, #735).
+   * Remove a server without asking (#735).
    * Order: plan its worlds (nothing is touched when that is unsafe, #652),
    * remove its container (a failed stop deletes nothing), move the world and
    * remove the files, then unregister `<name>.local` (best effort).
@@ -77,8 +68,6 @@ export class DeleteServerUseCase implements IDeleteServerUseCase {
    * No backup before the delete: the world is kept in worlds/ (#652).
    */
   async deprovision(name: string, options: { deleteWorld?: boolean } = {}): Promise<ServerDeprovisionResult> {
-    if (!this.deprovisionDeps) throw new Error(DELETE_SERVER_SCRIPT_REMOVED);
-    if (!this.runtime) throw new Error(`Cannot delete server '${name}': no container runtime configured`);
     const { specRepo, hostnames } = this.deprovisionDeps;
     const deleteWorld = options.deleteWorld === true;
 

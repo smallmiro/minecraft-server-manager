@@ -16,12 +16,10 @@ import {
   type ServerSpecDocument,
 } from '../../domain/index.js';
 import { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
-import { Config, type Paths } from '../../utils/index.js';
 import type {
   ICreateServerUseCase,
   CreateServerConfig,
   IPromptPort,
-  IShellPort,
   IServerRepository,
   IWorldRepository,
   IAuditLogPort,
@@ -33,12 +31,28 @@ import type {
   IHostnameRegistrarPort,
   IContainerRuntimePort,
 } from '../ports/index.js';
-import type { CreateServerOptions } from '../ports/outbound/IShellPort.js';
+/** What the new server is made of, after the prompts or the config were validated. */
+interface CreateServerOptions {
+  type: ServerType;
+  version: McVersion;
+  worldOptions: WorldOptions;
+  memory?: Memory;
+  autoStart?: boolean;
+  modpackSlug?: string;
+  modpackVersion?: string;
+  modLoader?: string;
+  /**
+   * Mods to exclude from modpack installation (e.g. client-only mods that
+   * crash a dedicated server). Maps to MODRINTH_EXCLUDE_FILES / CF_EXCLUDE_MODS.
+   */
+  modpackExcludeFiles?: string[];
+  enableWhitelist?: boolean;
+  whitelistPlayers?: string[];
+  playitDomain?: string;
+  noPlayitDomain?: boolean;
+}
 
-/**
- * What TypeScript provisioning needs (#675, ADR-0003 §5). Without it create
- * fails: create-server.sh was removed.
- */
+/** What TypeScript provisioning needs (#675, ADR-0003 §5). */
 export interface ServerProvisionDeps {
   specRepo: IServerSpecRepository;
   /** avahi `<name>.local`; skipped when absent. */
@@ -202,25 +216,20 @@ function createSpecDocument(name: ServerName, options: CreateServerOptions, vers
  * Orchestrates interactive server creation flow
  */
 export class CreateServerUseCase implements ICreateServerUseCase {
-  private readonly config: IPlatformSettingsPort;
-
   /**
-   * @param settings Platform settings (#665). Passing `Paths`, or nothing, is the
-   *   deprecated v2 form: `.mcctl.json` is then read under those paths.
+   * @param config platform settings (`.mcctl.json`; the CLI passes `new Config(paths)`).
+   * @param assignments without it creation fails closed (R7, #670).
    */
   constructor(
     private readonly prompt: IPromptPort,
-    private readonly shell: IShellPort,
     private readonly serverRepo: IServerRepository,
-    settings?: IPlatformSettingsPort | Paths,
+    private readonly config: IPlatformSettingsPort,
+    private readonly provision: ServerProvisionDeps,
     private readonly worldRepo?: IWorldRepository,
     private readonly auditLog?: IAuditLogPort,
     private readonly modSource?: IModSourcePort,
-    private readonly assignments?: IWorldAssignmentPort,
-    private readonly provision?: ServerProvisionDeps
-  ) {
-    this.config = settings && 'load' in settings ? settings : new Config(settings);
-  }
+    private readonly assignments?: IWorldAssignmentPort
+  ) {}
 
   /**
    * R1 for the world the new server will use (#670): `--world`, else its
@@ -241,8 +250,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
   }
 
   /**
-   * Write the new server's files and bring it up: TypeScript provisioning
-   * (ADR-0003 §5) when provision deps are given, else create-server.sh.
+   * Write the new server's files and bring it up (ADR-0003 §5).
    * Rejects when the server was not created; a start failure is returned.
    * @param version VERSION as written; undefined writes none (the modpack decides).
    */
@@ -252,10 +260,6 @@ export class CreateServerUseCase implements ICreateServerUseCase {
     run: CreateServerRunOptions,
     version: string | undefined
   ): Promise<{ startError?: string }> {
-    if (!this.provision) {
-      // create-server.sh was removed in #675; the shell port is kept for v2 callers (#736).
-      throw new Error('create-server.sh was removed in #675; pass specRepo / use ServerSpec provision');
-    }
     const { specRepo, hostnames, runtime, hostIps } = this.provision;
 
     run.onProgress?.('creating', 'Creating server directory...');
@@ -514,7 +518,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
    */
   async executeWithConfig(config: CreateServerConfig, options: CreateServerRunOptions = {}): Promise<Server> {
     const { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite } =
-      parseCreateServerConfig(config, { versionText: !!this.provision });
+      parseCreateServerConfig(config, { versionText: true });
 
     // Check if server already exists
     if (await this.serverRepo.exists(name.value)) {

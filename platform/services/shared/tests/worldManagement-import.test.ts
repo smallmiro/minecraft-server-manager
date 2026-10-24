@@ -11,7 +11,6 @@ import { describe, test, expect } from 'vitest';
 import { WorldManagementUseCase } from '../src/application/use-cases/WorldManagementUseCase.js';
 import type {
   IPromptPort,
-  IShellPort,
   IWorldRepository,
   IServerRepository,
 } from '../src/application/ports/index.js';
@@ -39,9 +38,8 @@ function makeUseCase(
   } as unknown as IServerRepository;
 
   const prompt = {} as IPromptPort;
-  const shell = {} as IShellPort;
 
-  return new WorldManagementUseCase(prompt, shell, worldRepo, serverRepo);
+  return new WorldManagementUseCase(prompt, worldRepo, serverRepo);
 }
 
 // ---------------------------------------------------------------------------

@@ -13,11 +13,11 @@ import ts from 'typescript';
 const V2_CONSUMER = `
 import type {
   IContainerRuntimePort, IServerConsolePort, IRouterStatusPort, IRconPort, IShellPort,
-  IPromptPort, IServerRepository, ContainerStatus,
+  ContainerStatus,
   PlayerListResult, RuntimeActionResult, ShellResult,
 } from '../src/index.js';
 import {
-  ServerName, Server, Paths, ServerRepository, WorldRepository, CreateServerUseCase,
+  ServerName, Server, Paths, ServerRepository, WorldRepository,
   DockerComposeRuntimeAdapter, DockerServerConsoleAdapter, RconCliAdapter, ConfigEnvWorldAssignmentAdapter,
 } from '../src/index.js';
 
@@ -32,7 +32,7 @@ export class V2Rcon implements IRconPort {
 // v2 callers: container-name strings, deprecated getters and members, old constructors
 export async function use(
   runtime: IContainerRuntimePort, console: IServerConsolePort, router: IRouterStatusPort,
-  rcon: IRconPort, shell: IShellPort, prompt: IPromptPort, repo: IServerRepository, server: Server
+  rcon: IRconPort, shell: IShellPort, server: Server
 ): Promise<void> {
   const status: ContainerStatus = runtime.getStatus('mc-a');
   const started: RuntimeActionResult = await runtime.start('mc-a');
@@ -46,8 +46,6 @@ export async function use(
   const paths = new Paths('/srv/mc');
   new ServerRepository(paths);
   new WorldRepository(paths, new ConfigEnvWorldAssignmentAdapter(paths));
-  new CreateServerUseCase(prompt, shell, repo, paths);
-  new CreateServerUseCase(prompt, shell, repo);
   new DockerComposeRuntimeAdapter().getStatus('mc-a');
   await new DockerServerConsoleAdapter().command('mc-a', ['list']);
   await new RconCliAdapter().getEntityPosition('mc-a', 'Steve');

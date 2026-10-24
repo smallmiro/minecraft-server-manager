@@ -14,7 +14,6 @@ import { describe, test, expect } from 'vitest';
 import { WorldManagementUseCase } from '../src/application/use-cases/WorldManagementUseCase.js';
 import type {
   IPromptPort,
-  IShellPort,
   IWorldRepository,
   IServerRepository,
 } from '../src/application/ports/index.js';
@@ -44,8 +43,7 @@ function makeUseCase(worlds: World[]): WorldManagementUseCase {
     findAll: async () => worlds,
   } as unknown as IWorldRepository;
   const prompt = {} as IPromptPort;
-  const shell = {} as IShellPort;
-  return new WorldManagementUseCase(prompt, shell, worldRepo, makeMinimalServerRepo());
+  return new WorldManagementUseCase(prompt, worldRepo, makeMinimalServerRepo());
 }
 
 // ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CreateServerUseCase, ServerStartError, parseCreateServerConfig } from '../src/application/use-cases/CreateServerUseCase.js';
-import { Paths, parseEnvDocument } from '../src/utils/index.js';
+import { Config, Paths, parseEnvDocument } from '../src/utils/index.js';
 import { McVersion, Memory, ServerName, ServerType, WorldOptions } from '../src/domain/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ConfigEnvWorldAssignmentAdapter } from '../src/infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.js';
@@ -16,7 +16,6 @@ import type {
   IHostnameRegistrarPort,
   IPromptPort,
   IServerRepository,
-  IShellPort,
 } from '../src/application/ports/index.js';
 
 let root: string;
@@ -24,7 +23,6 @@ let events: string[];
 let started: string[];
 let startResult: { success: boolean; error?: string };
 let registerResult: { status: 'changed' | 'unchanged' | 'skipped'; reason?: string };
-let shell: { createServer: ReturnType<typeof vi.fn> };
 
 const file = (...p: string[]) => join(root, 'servers', ...p);
 
@@ -43,22 +41,20 @@ function useCase(opts: { hostIps?: string[]; prompt?: IPromptPort } = {}) {
       return registerResult;
     }),
   } as unknown as IHostnameRegistrarPort;
-  shell = { createServer: vi.fn() };
   return new CreateServerUseCase(
     opts.prompt ?? ({} as IPromptPort),
-    shell as unknown as IShellPort,
     { exists: vi.fn(async () => false) } as unknown as IServerRepository,
-    paths,
-    undefined,
-    undefined,
-    undefined,
-    new ConfigEnvWorldAssignmentAdapter(paths),
+    new Config(paths),
     {
       specRepo: new FileServerSpecRepository(paths, undefined, runtime, () => opts.hostIps ?? ['192.168.1.10']),
       hostnames,
       runtime,
       hostIps: () => opts.hostIps ?? ['192.168.1.10'],
-    }
+    },
+    undefined,
+    undefined,
+    undefined,
+    new ConfigEnvWorldAssignmentAdapter(paths)
   );
 }
 
@@ -85,7 +81,6 @@ describe('CreateServerUseCase.executeWithConfig with provisioning', () => {
     expect(server.name.value).toBe('beta');
     expect(events).toEqual(['creating', 'configuring', 'register beta.local 192.168.1.10', 'starting']);
     expect(started).toEqual(['mc-beta']);
-    expect(shell.createServer).not.toHaveBeenCalled();
     expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.get('MEMORY')).toBe('2G');
     expect(readFileSync(file('compose.yml'), 'utf-8')).toContain('beta/docker-compose.yml');
   });

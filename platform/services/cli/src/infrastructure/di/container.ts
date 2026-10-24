@@ -255,42 +255,39 @@ export class Container {
   get createServerUseCase(): ICreateServerUseCase {
     return new CreateServerUseCase(
       this.promptPort,
-      this.shellPort,
       this.serverRepository,
       new Config(this.paths),
-      this.worldRepository,
-      this.auditLogPort,
-      this.modSourcePort,
-      this.worldAssignmentPort,
       {
         specRepo: this.serverSpecRepository,
         hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
-        // The first start can pull the image: create-server.sh ran compose up without a timeout.
+        // The first start can pull the image (no timeout before #675 either).
         runtime: new DockerComposeRuntimeAdapter({ root: this.paths.root, startTimeoutMs: 30 * 60_000 }),
         hostIps: () => resolveHostIps(this.paths),
-      }
+      },
+      this.worldRepository,
+      this.auditLogPort,
+      this.modSourcePort,
+      this.worldAssignmentPort
     );
   }
 
   get deleteServerUseCase(): IDeleteServerUseCase {
     return new DeleteServerUseCase(
       this.promptPort,
-      this.shellPort,
       this.serverRepository,
-      this.auditLogPort,
-      this.serverConsolePort,
       this.containerRuntime,
       {
         specRepo: this.serverSpecRepository,
         hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
-      }
+      },
+      this.auditLogPort,
+      this.serverConsolePort
     );
   }
 
   get worldManagementUseCase(): WorldManagementUseCase {
     return new WorldManagementUseCase(
       this.promptPort,
-      undefined, // no shell since mcctl.sh was removed (#734)
       this.worldRepository,
       this.serverRepository,
       this.worldAssignmentPort,

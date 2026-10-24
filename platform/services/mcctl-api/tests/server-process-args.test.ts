@@ -41,11 +41,11 @@ import {
   serverExists,
   CreateServerUseCase,
   ApiPromptAdapter,
-  ShellAdapter,
   ServerRepository,
   ConfigEnvWorldAssignmentAdapter,
   FileServerSpecRepository,
   Paths,
+  Config,
 } from '@minecraft-docker/shared';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { serverProvision } from '../src/routes/servers.js';
@@ -57,14 +57,13 @@ function fileProvision(): void {
     const paths = new Paths(ROOT);
     return new CreateServerUseCase(
       new ApiPromptAdapter({}),
-      new ShellAdapter({ paths }),
       new ServerRepository(paths),
-      paths,
+      new Config(paths),
+      { specRepo: new FileServerSpecRepository(paths, undefined, undefined, () => []) },
       undefined,
       undefined,
       undefined,
-      new ConfigEnvWorldAssignmentAdapter(paths),
-      { specRepo: new FileServerSpecRepository(paths, undefined, undefined, () => []) }
+      new ConfigEnvWorldAssignmentAdapter(paths)
     );
   };
 }

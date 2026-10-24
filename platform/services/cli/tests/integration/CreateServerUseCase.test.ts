@@ -8,7 +8,6 @@ import {
 } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
-  MockShellAdapter,
   MockServerRepository,
   MockWorldAssignmentPort,
 } from '../mocks/index.js';
@@ -41,7 +40,6 @@ const whitelistOf = (doc: ServerSpecDocument) => ({
 
 describe('CreateServerUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
-  let shellAdapter: MockShellAdapter;
   let serverRepo: MockServerRepository;
   let assignments: MockWorldAssignmentPort;
   let useCase: CreateServerUseCase;
@@ -49,14 +47,13 @@ describe('CreateServerUseCase Integration', () => {
   const makeUseCase = () =>
     new CreateServerUseCase(
       promptAdapter,
-      shellAdapter,
       serverRepo,
+      { load: () => null },
+      provision(),
       undefined,
       undefined,
       undefined,
-      undefined,
-      assignments,
-      provision()
+      assignments
     );
 
   beforeEach(() => {
@@ -70,7 +67,6 @@ describe('CreateServerUseCase Integration', () => {
       memory: '4G',
       worldSetup: 'new',
     });
-    shellAdapter = new MockShellAdapter();
     serverRepo = new MockServerRepository();
     assignments = new MockWorldAssignmentPort();
     useCase = makeUseCase();
@@ -97,14 +93,13 @@ describe('CreateServerUseCase Integration', () => {
       const settings = { load: vi.fn(() => null) };
       await new CreateServerUseCase(
         promptAdapter,
-        shellAdapter,
         serverRepo,
         settings,
+        provision(),
         undefined,
         undefined,
         undefined,
-        assignments,
-        provision()
+        assignments
       ).execute();
 
       assert.strictEqual(settings.load.mock.calls.length, 1);

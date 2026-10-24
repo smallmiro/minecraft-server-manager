@@ -12,7 +12,6 @@ import type {
 } from '@minecraft-docker/shared';
 import {
   MockPromptAdapter,
-  MockShellAdapter,
   MockServerRepository,
 } from '../mocks/index.js';
 
@@ -44,13 +43,12 @@ function fakeDeprovision() {
 
 describe('DeleteServerUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
-  let shellAdapter: MockShellAdapter;
   let serverRepo: MockServerRepository;
   let fake: ReturnType<typeof fakeDeprovision>;
   let useCase: DeleteServerUseCase;
 
   const build = (opts: { console?: IServerConsolePort; audit?: IAuditLogPort } = {}) =>
-    new DeleteServerUseCase(promptAdapter, shellAdapter, serverRepo, opts.audit, opts.console, fake.runtime, fake.deps);
+    new DeleteServerUseCase(promptAdapter, serverRepo, fake.runtime, fake.deps, opts.audit, opts.console);
   /** Servers whose files were deleted (the real, not the dry-run, delete). */
   const deleted = () => fake.state.deletes.filter((d) => !d.dryRun).map((d) => d.name);
 
@@ -59,7 +57,6 @@ describe('DeleteServerUseCase Integration', () => {
       confirm: true,
       selectIndex: 0,
     });
-    shellAdapter = new MockShellAdapter();
     serverRepo = new MockServerRepository([
       { name: 'server1', status: ServerStatus.RUNNING, playerCount: 0 },
       { name: 'server2', status: ServerStatus.STOPPED },
@@ -90,8 +87,6 @@ describe('DeleteServerUseCase Integration', () => {
         fake.state.deletes.map((d) => d.dryRun === true),
         [true, false]
       );
-      assert.ok(!shellAdapter.wasCommandCalled('stopServer'));
-      assert.ok(!shellAdapter.wasCommandCalled('deleteServer'));
     });
 
     it('removes the container of a stopped server too (an absent one is fine)', async () => {

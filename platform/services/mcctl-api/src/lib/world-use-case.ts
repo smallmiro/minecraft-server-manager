@@ -37,8 +37,7 @@ export function createWorldUseCase(options?: {
   const worldRepo = new WorldRepository(paths, assignments);
   const serverRepo = new ServerRepository(paths);
 
-  // No shell: SEED is written with LEVEL by the assignment port (#734)
-  return new WorldManagementUseCase(prompt, undefined, worldRepo, serverRepo, assignments, runtime);
+  return new WorldManagementUseCase(prompt, worldRepo, serverRepo, assignments, runtime);
 }
 
 /**

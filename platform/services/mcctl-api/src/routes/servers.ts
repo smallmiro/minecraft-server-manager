@@ -28,7 +28,7 @@ import {
   parseCreateServerConfig,
   WorldAssignmentError,
   ApiPromptAdapter,
-  ShellAdapter,
+  Config,
   ServerRepository,
   FileServerSpecRepository,
   AvahiHostnameRegistrarAdapter,
@@ -94,19 +94,18 @@ export const serverProvision = {
     const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
     return new CreateServerUseCase(
       new ApiPromptAdapter({}),
-      new ShellAdapter({ paths }),
       new ServerRepository(paths),
-      paths,
-      undefined,
-      undefined,
-      undefined,
-      assignments,
+      new Config(paths),
       {
         specRepo: new FileServerSpecRepository(paths, undefined, runtime),
         hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: options.sudoPassword }),
         runtime,
         hostIps: () => resolveHostIps(paths),
-      }
+      },
+      undefined,
+      undefined,
+      undefined,
+      assignments
     );
   },
   /**
@@ -119,10 +118,7 @@ export const serverProvision = {
     const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
     return new DeleteServerUseCase(
       new ApiPromptAdapter({}),
-      new ShellAdapter({ paths }),
       new ServerRepository(paths),
-      undefined,
-      undefined,
       runtime,
       {
         specRepo: new FileServerSpecRepository(paths, undefined, runtime),
