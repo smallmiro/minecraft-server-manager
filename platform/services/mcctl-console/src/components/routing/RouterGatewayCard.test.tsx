@@ -41,6 +41,7 @@ describe('RouterGatewayCard', () => {
   it('shows port, mode, uptime and active routes once each', () => {
     renderCard();
     expect(screen.getAllByText('25565')).toHaveLength(1);
+    expect(screen.getByLabelText('Port')).toBeInTheDocument();
     expect(screen.getAllByText('auto-scale')).toHaveLength(1);
     expect(screen.getByText('3d 14h 22m')).toBeInTheDocument();
     expect(screen.getByText('2 / 3')).toBeInTheDocument();
