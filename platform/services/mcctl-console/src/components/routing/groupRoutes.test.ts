@@ -44,15 +44,16 @@ describe('groupRoutesByServer', () => {
     ]);
   });
 
-  it('counts hostnames per type, in display order, leaving out absent types', () => {
+  it('puts hostnames mc-router has not registered after the routed ones, so they are never primary while a routed one exists', () => {
     const [group] = groupRoutesByServer(
-      [route('s.local', 's'), route('s.1.1.1.1.nip.io', 's'), route('s.2.2.2.2.nip.io', 's')],
+      [
+        route('s.1.1.1.1.nip.io', 's', { discoveredByRouter: false }),
+        route('play.example.com', 's'),
+        route('s.local', 's', { discoveredByRouter: true }),
+      ],
       []
     );
-    expect(group.typeCounts).toEqual([
-      { type: 'nipio', count: 2 },
-      { type: 'mdns', count: 1 },
-    ]);
+    expect(group.hostnames.map((h) => h.hostname)).toEqual(['s.local', 'play.example.com', 's.1.1.1.1.nip.io']);
   });
 
   it('counts only hostnames mc-router reported as missing as not routed', () => {

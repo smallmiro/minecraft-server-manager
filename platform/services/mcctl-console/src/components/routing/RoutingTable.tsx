@@ -61,9 +61,8 @@ const visuallyHiddenSx = {
   whiteSpace: 'nowrap',
 } as const;
 
-function TypeBadge({ type, count = 1 }: { type: HostnameType; count?: number }) {
-  const label = count > 1 ? `${HOSTNAME_TYPE_LABEL[type]} ×${count}` : HOSTNAME_TYPE_LABEL[type];
-  return <Chip label={label} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
+function TypeBadge({ type }: { type: HostnameType }) {
+  return <Chip label={HOSTNAME_TYPE_LABEL[type]} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
 }
 
 function StatusBadge({ route }: { route: RouteInfo }) {
@@ -226,25 +225,27 @@ function ExpandToggle({ open, serverName, controls, onToggle }: ToggleProps) {
   );
 }
 
-/** Collapsed view of a server's hostnames: primary address, how many more, types, unrouted count. */
-function DomainsSummary({ group }: { group: ServerRouteGroup }) {
+/** Collapsed view of a server's hostnames: the primary address, its type and how many more there are. */
+function PrimaryAddress({ group }: { group: ServerRouteGroup }) {
   const [primary, ...rest] = group.hostnames;
   return (
-    <Stack spacing={0.5} sx={{ minWidth: 0 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, gap: 0.5 }}>
-        <HostnameCell hostname={primary.hostname} />
-        {rest.length > 0 && (
-          <Typography variant="caption" color="text.secondary">
-            +{rest.length}
-          </Typography>
-        )}
-      </Box>
-      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-        {group.typeCounts.map(({ type, count }) => (
-          <TypeBadge key={type} type={type} count={count} />
-        ))}
-        {group.notRoutedCount > 0 && <NotRoutedChip count={group.notRoutedCount} />}
-      </Stack>
+    <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', minWidth: 0, gap: 0.5, mt: 0.5 }}>
+      <TypeBadge type={primary.type} />
+      <HostnameCell hostname={primary.hostname} />
+      {rest.length > 0 && (
+        <Typography variant="caption" color="text.secondary">
+          +{rest.length}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+function StatusCell({ group }: { group: ServerRouteGroup }) {
+  return (
+    <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
+      <StatusBadge route={group.route} />
+      {group.notRoutedCount > 0 && <NotRoutedChip count={group.notRoutedCount} />}
     </Stack>
   );
 }
@@ -386,11 +387,11 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                     onToggle={() => toggle(group.serverName)}
                   />
                 </Box>
-                <Box sx={{ mt: 1 }}>
-                  <StatusBadge route={group.route} />
+                <Box sx={{ minWidth: 0 }}>
+                  <PrimaryAddress group={group} />
                 </Box>
-                <Box sx={{ mt: 1, minWidth: 0 }}>
-                  <DomainsSummary group={group} />
+                <Box sx={{ mt: 1 }}>
+                  <StatusCell group={group} />
                 </Box>
                 <Box id={domainsId}>
                   <Collapse in={open} unmountOnExit>
@@ -411,7 +412,6 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
               <TableRow>
                 <TableCell padding="checkbox" />
                 <TableCell>Server</TableCell>
-                <TableCell>Domains</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="right">
                   <Box component="span" sx={visuallyHiddenSx}>
@@ -459,20 +459,18 @@ function ServerRows({ group, domainsId, open, needle, onToggle }: ServerRowsProp
         <TableCell sx={wrapSx}>
           <Stack>
             <TargetCell serverName={group.serverName} detail={group.detail} />
+            <PrimaryAddress group={group} />
           </Stack>
         </TableCell>
-        <TableCell sx={wrapSx}>
-          <DomainsSummary group={group} />
-        </TableCell>
         <TableCell>
-          <StatusBadge route={group.route} />
+          <StatusCell group={group} />
         </TableCell>
         <TableCell align="right">
           <RowActions route={group.route} serverName={group.serverName} />
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell id={domainsId} colSpan={5} sx={{ py: 0, ...(open ? {} : { borderBottom: 0 }) }}>
+        <TableCell id={domainsId} colSpan={4} sx={{ py: 0, ...(open ? {} : { borderBottom: 0 }) }}>
           <Collapse in={open} unmountOnExit>
             <Box sx={{ pb: 1.5, pl: { sm: 6 } }}>
               <DomainList group={group} needle={needle} />
