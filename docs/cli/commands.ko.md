@@ -624,7 +624,7 @@ mcctl delete [name] [options]
 
 `worlds/`의 실제 경로가 서버 안(예: `servers/<name>/`을 가리키는 심볼릭 링크)이면 `--delete-world`를 줘도 중단합니다. 서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 `mcctl delete <name>`은 `--force` 없이는 삭제를 거부합니다.
 
-삭제 전에 백업은 하지 않습니다. 월드는 `worlds/`에 남습니다(`--delete-world`가 아니면). mDNS 호스트명 `<name>.local`은 서버 파일을 지운 뒤 README의 sudoers `NOPASSWD` 줄이 허용하는 명령인 `sudo sed -i … /etc/avahi/hosts`로 `/etc/avahi/hosts`에서 지웁니다. sudo 비밀번호는 `--sudo-password`, [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password), 프롬프트 중 하나로 받습니다. 지우지 못해도(예: 비밀번호도 `NOPASSWD` 규칙도 없음) 서버는 삭제되고 `mcctl delete`가 경고를 출력합니다. 이때는 `<name>.local` 줄을 직접 지우세요. `servers/compose.yml`에서 빠진 뒤 `servers/<name>/`에서 지우지 못한 파일(예: 컨테이너가 root로 만든 파일)도 경고로 출력합니다. 출력된 `sudo rm -rf` 명령으로 지우세요.
+삭제 전에 백업은 하지 않습니다. 월드는 `worlds/`에 남습니다(`--delete-world`가 아니면). 한 서버의 삭제는 한 번에 하나만 실행됩니다. 삭제가 도는 동안 같은 서버에 대한 두 번째 `mcctl delete`(또는 API 삭제)는 실패합니다. mDNS 호스트명 `<name>.local`은 서버 파일을 지운 뒤 README의 sudoers `NOPASSWD` 줄이 허용하는 명령인 `sudo sed -i … /etc/avahi/hosts`로 `/etc/avahi/hosts`에서 지웁니다. sudo 비밀번호는 `--sudo-password`, [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password), 프롬프트 중 하나로 받습니다. 지우지 못해도(예: 비밀번호도 `NOPASSWD` 규칙도 없음) 서버는 삭제되고 `mcctl delete`가 경고를 출력합니다. 이때는 `<name>.local` 줄을 직접 지우세요. `servers/compose.yml`에서 빠진 뒤 `servers/<name>/`에서 지우지 못한 파일(예: 컨테이너가 root로 만든 파일)도 경고로 출력합니다. 출력된 `sudo rm -rf` 명령으로 지우세요.
 
 **예제:**
 
