@@ -16,7 +16,7 @@ import * as prompts from '@clack/prompts';
 import * as yaml from 'js-yaml';
 import { printTelemetryNotice } from '../lib/telemetry-notice.js';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
-import { updateServer } from '../lib/server-config.js';
+import { serverSpecRepository, updateServer } from '../lib/server-config.js';
 
 const PACKAGE_NAME = '@minecraft-docker/mcctl';
 
@@ -79,6 +79,16 @@ function parseVersionFromConfig(configContent: string): string | null {
 const SERVER_IMAGE = 'itzg/minecraft-server:';
 
 /**
+ * A release tag (2026.10.0-java21) or a digest is a deliberate pin, e.g.
+ * around an upstream regression (#798): mcctl update keeps it.
+ */
+const isPinnedTag = (tag: string): boolean => /^\d{4}\.\d+\.\d+/.test(tag) || tag.includes('@');
+const javaOf = (tag: string): number | undefined => {
+  const match = /java(\d+)/.exec(tag);
+  return match ? Number(match[1]) : undefined;
+};
+
+/**
  * Extract the image tag from a docker-compose.yml content.
  * Returns null if no service uses an itzg/minecraft-server: image.
  */
@@ -116,6 +126,8 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
   }
 
   const entries = readdirSync(serversDir);
+  const paths = new Paths(dirname(serversDir));
+  const specs = serverSpecRepository(paths);
   let updatedCount = 0;
 
   console.log(colors.bold('Checking server image compatibility...'));
@@ -135,7 +147,15 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
     if (!version) continue;
 
     const composeContent = readFileSync(composePath, 'utf-8');
-    const currentTag = extractImageTag(composeContent);
+    // The spec image with hand edits absorbed (#798), so a pin or unpin in
+    // server.yaml counts before it is rendered; the compose file if it cannot load
+    const specImage = await specs.load(entry).then((spec) => spec?.document.image, () => undefined);
+    const currentTag =
+      specImage === undefined
+        ? extractImageTag(composeContent)
+        : specImage.startsWith(SERVER_IMAGE)
+          ? specImage.slice(SERVER_IMAGE.length)
+          : null;
 
     if (!currentTag) continue;
 
@@ -147,8 +167,14 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
       continue;
     }
 
-    const tagChange = currentTag !== recommendedTag;
-    if (tagChange) {
+    const pinned = isPinnedTag(currentTag);
+    const tagChange = !pinned && currentTag !== recommendedTag;
+    const pinnedJava = pinned ? javaOf(currentTag) : undefined;
+    if (pinnedJava !== undefined && pinnedJava < (javaOf(recommendedTag) ?? 0)) {
+      console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} is pinned, but VERSION=${version} needs ${recommendedTag} - keeping`);
+    } else if (pinned) {
+      console.log(`  ${colors.dim(`- ${entry}: ${currentTag} - pinned tag, keeping`)}`);
+    } else if (tagChange) {
       console.log(`  ${colors.yellow('⚠')} ${entry}: ${currentTag} → ${recommendedTag} (VERSION=${version})`);
     } else {
       console.log(`  ${colors.green('✓')} ${entry}: ${currentTag} (VERSION=${version} - compatible)`);
@@ -159,7 +185,7 @@ export async function upgradeServerImageTags(serversDir: string): Promise<number
 
     try {
       // Through the ServerSpec (#675): server.yaml image, compose rendered from it
-      await updateServer(new Paths(dirname(serversDir)), entry, (doc) =>
+      await updateServer(paths, entry, (doc) =>
         tagChange && doc.image.startsWith('itzg/minecraft-server')
           ? { ...doc, image: `itzg/minecraft-server:${recommendedTag}` }
           : doc

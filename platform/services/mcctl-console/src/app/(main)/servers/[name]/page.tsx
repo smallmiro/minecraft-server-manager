@@ -92,6 +92,8 @@ export default function ServerDetailPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteConfirmInput, setDeleteConfirmInput] = useState('');
   const [deleteWorld, setDeleteWorld] = useState(false);
+  const [deleteSudoPassword, setDeleteSudoPassword] = useState('');
+  const [deleteWarning, setDeleteWarning] = useState<string | null>(null);
 
   const startServer = useStartServer();
   const stopServer = useStopServer();
@@ -150,9 +152,30 @@ export default function ServerDetailPage() {
   const handleDeleteServer = () => {
     if (deleteConfirmInput !== serverName) return;
     deleteServer.mutate(
-      { name: serverName, force: true, deleteWorld },
-      { onSuccess: () => router.push('/servers') },
+      {
+        name: serverName,
+        force: true,
+        deleteWorld,
+        ...(deleteSudoPassword && { sudoPassword: deleteSudoPassword }),
+      },
+      {
+        onSuccess: (data) => {
+          setDeleteSudoPassword('');
+          deleteServer.reset();
+          if (data.warning) setDeleteWarning(data.warning);
+          else router.push('/servers');
+        },
+      },
     );
+  };
+
+  const closeDeleteDialog = () => {
+    if (deleteServer.isPending) return;
+    deleteServer.reset();
+    setDeleteDialogOpen(false);
+    setDeleteConfirmInput('');
+    setDeleteSudoPassword('');
+    if (deleteWarning) router.push('/servers');
   };
 
   const actionGroup = server ? (
@@ -209,6 +232,8 @@ export default function ServerDetailPage() {
             setDeleteDialogOpen(true);
             setDeleteConfirmInput('');
             setDeleteWorld(false);
+            setDeleteSudoPassword('');
+            setDeleteWarning(null);
           }}
           sx={{ color: 'error.main' }}
         >
@@ -365,66 +390,80 @@ export default function ServerDetailPage() {
         ) : null}
       </BentoGrid>
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setDeleteConfirmInput('');
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Delete Server</DialogTitle>
-        <DialogContent>
-          <Typography sx={{ mb: 2 }}>
-            This action cannot be undone. Type <strong>{serverName}</strong> to confirm deletion.
-          </Typography>
-          <TextField
-            label="Server name"
-            value={deleteConfirmInput}
-            onChange={(event) => setDeleteConfirmInput(event.target.value)}
-            fullWidth
-            autoFocus
-          />
-          <FormControl sx={{ mt: 2 }}>
-            <FormLabel id="delete-world-label">World</FormLabel>
-            <RadioGroup
-              aria-labelledby="delete-world-label"
-              value={deleteWorld ? 'delete' : 'keep'}
-              onChange={(event) => setDeleteWorld(event.target.value === 'delete')}
-            >
-              <FormControlLabel
-                value="keep"
-                control={<Radio />}
-                label="Keep the world (move to worlds/)"
+      <Dialog open={deleteDialogOpen} onClose={closeDeleteDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>{deleteWarning ? 'Server deleted' : 'Delete Server'}</DialogTitle>
+        {deleteWarning ? (
+          <>
+            <DialogContent>
+              <Alert severity="warning">{deleteWarning}</Alert>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button variant="contained" onClick={closeDeleteDialog}>
+                Close
+              </Button>
+            </DialogActions>
+          </>
+        ) : (
+          <>
+            <DialogContent>
+              <Typography sx={{ mb: 2 }}>
+                This action cannot be undone. Type <strong>{serverName}</strong> to confirm deletion.
+              </Typography>
+              <TextField
+                label="Server name"
+                value={deleteConfirmInput}
+                onChange={(event) => setDeleteConfirmInput(event.target.value)}
+                fullWidth
+                autoFocus
+                disabled={deleteServer.isPending}
               />
-              <FormControlLabel
-                value="delete"
-                control={<Radio />}
-                label="Delete the world inside the server too"
+              <FormControl sx={{ mt: 2 }} disabled={deleteServer.isPending}>
+                <FormLabel id="delete-world-label">World</FormLabel>
+                <RadioGroup
+                  aria-labelledby="delete-world-label"
+                  value={deleteWorld ? 'delete' : 'keep'}
+                  onChange={(event) => setDeleteWorld(event.target.value === 'delete')}
+                >
+                  <FormControlLabel
+                    value="keep"
+                    control={<Radio />}
+                    label="Keep the world (move to worlds/)"
+                  />
+                  <FormControlLabel
+                    value="delete"
+                    control={<Radio />}
+                    label="Delete the world inside the server too"
+                  />
+                </RadioGroup>
+              </FormControl>
+              <TextField
+                label="Sudo Password"
+                type="password"
+                value={deleteSudoPassword}
+                onChange={(event) => setDeleteSudoPassword(event.target.value)}
+                helperText="Optional. Used to remove the mDNS hostname (avahi); leave empty if sudo needs no password"
+                autoComplete="new-password"
+                disabled={deleteServer.isPending}
+                fullWidth
+                sx={{ mt: 2 }}
               />
-            </RadioGroup>
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => {
-              setDeleteDialogOpen(false);
-              setDeleteConfirmInput('');
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDeleteServer}
-            disabled={deleteConfirmInput !== serverName || deleteServer.isPending}
-            startIcon={deleteServer.isPending ? <CircularProgress size={16} /> : null}
-          >
-            {deleteServer.isPending ? 'Deleting...' : 'Delete'}
-          </Button>
-        </DialogActions>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2 }}>
+              <Button onClick={closeDeleteDialog} disabled={deleteServer.isPending}>
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteServer}
+                disabled={deleteConfirmInput !== serverName || deleteServer.isPending}
+                startIcon={deleteServer.isPending ? <CircularProgress size={16} /> : null}
+              >
+                {deleteServer.isPending ? 'Deleting...' : 'Delete'}
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
     </>
   );
