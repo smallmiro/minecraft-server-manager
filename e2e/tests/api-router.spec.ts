@@ -53,4 +53,39 @@ test.describe('Router API', () => {
       expect(contentType).toContain('application/json');
     });
   });
+
+  test.describe('GET /api/router/status - optional detail fields (#768)', () => {
+    test('new fields are absent or well-typed', async ({ request }) => {
+      const response = await request.get(`${API_BASE_URL}/api/router/status`);
+      expect(response.status()).toBe(200);
+      const { router } = await response.json();
+
+      if (router.image !== undefined) expect(typeof router.image).toBe('string');
+      if (router.autoScale !== undefined) {
+        expect(typeof router.autoScale.up).toBe('boolean');
+        expect(typeof router.autoScale.down).toBe('boolean');
+        if (router.autoScale.downAfter !== undefined) expect(typeof router.autoScale.downAfter).toBe('string');
+        if (router.autoScale.asleepMotd !== undefined) expect(typeof router.autoScale.asleepMotd).toBe('string');
+      }
+      if (router.resolver !== undefined) {
+        expect(Array.isArray(router.resolver.hostIps)).toBe(true);
+        if (router.resolver.hostIp !== undefined) expect(typeof router.resolver.hostIp).toBe('string');
+      }
+      for (const route of router.routes ?? []) {
+        for (const key of ['autoScaleUp', 'autoScaleDown', 'discoveredByRouter']) {
+          if (route[key] !== undefined) expect(typeof route[key]).toBe('boolean');
+        }
+      }
+    });
+  });
+
+  test.describe('POST /api/router/restart - Auth (#768)', () => {
+    // Only meaningful when the stack enforces auth; with AUTH_MODE=disabled this
+    // request would really restart mc-router, so it is opt-in.
+    test('should reject unauthenticated requests with 401', async ({ request }) => {
+      test.skip(process.env.E2E_API_AUTH_ENABLED !== 'true', 'API auth is disabled in this stack');
+      const response = await request.post(`${API_BASE_URL}/api/router/restart`);
+      expect(response.status()).toBe(401);
+    });
+  });
 });

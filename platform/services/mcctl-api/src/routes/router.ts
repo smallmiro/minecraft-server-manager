@@ -1,8 +1,17 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import { getRouterDetailInfo, getAvahiStatus, getPlayitAgentStatus } from '@minecraft-docker/shared';
+import {
+  getRouterDetailInfoAsync,
+  getAvahiStatus,
+  getPlayitAgentStatus,
+  DockerComposeRuntimeAdapter,
+  AuditActionEnum,
+} from '@minecraft-docker/shared';
+import { writeAuditLog } from '../services/audit-log-service.js';
+import { config, childProcessEnv } from '../config/index.js';
 import {
   RouterStatusResponseSchema,
+  RouterRestartResponseSchema,
   ErrorResponseSchema,
   type RouterDetail,
 } from '../schemas/router.js';
@@ -28,7 +37,7 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (_request, reply) => {
     try {
-      const info = getRouterDetailInfo();
+      const info = await getRouterDetailInfoAsync();
 
       const router: RouterDetail = {
         name: info.name,
@@ -44,7 +53,13 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           serverStatus: route.serverStatus,
           serverType: route.serverType,
           serverVersion: route.serverVersion,
+          autoScaleUp: route.autoScaleUp,
+          autoScaleDown: route.autoScaleDown,
+          discoveredByRouter: route.discoveredByRouter,
         })),
+        image: info.image,
+        autoScale: info.autoScale,
+        resolver: info.resolver,
       };
 
       const avahi = {
@@ -73,6 +88,58 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get router status',
+      });
+    }
+  });
+
+  /**
+   * POST /api/router/restart
+   * Restart the mc-router container (compose service `router`).
+   * Authentication is enforced by the global auth plugin.
+   */
+  fastify.post('/api/router/restart', {
+    schema: {
+      description: 'Restart the mc-router container',
+      tags: ['router'],
+      response: {
+        200: RouterRestartResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (_request, reply) => {
+    const audit = (status: 'success' | 'failure', errorMessage: string | null) =>
+      writeAuditLog({
+        action: AuditActionEnum.ROUTER_RESTART,
+        actor: 'api:console',
+        targetType: 'service',
+        targetName: 'mc-router',
+        status,
+        details: null,
+        errorMessage,
+      });
+
+    try {
+      const runtime = new DockerComposeRuntimeAdapter({
+        root: config.mcctlRoot,
+        env: () => childProcessEnv(),
+      });
+      // The compose service is `router` (container_name mc-router)
+      const result = await runtime.restart('router');
+
+      if (!result.success) {
+        const errorMsg = result.error || 'Failed to restart mc-router';
+        await audit('failure', errorMsg);
+        return reply.code(500).send({ error: 'InternalServerError', message: errorMsg });
+      }
+
+      await audit('success', null);
+      return reply.send({ success: true, message: 'mc-router restarted' });
+    } catch (error) {
+      fastify.log.error(error, 'Failed to restart mc-router');
+      await audit('failure', error instanceof Error ? error.message : 'Unknown error');
+      return reply.code(500).send({
+        error: 'InternalServerError',
+        message: 'Failed to restart mc-router',
       });
     }
   });
