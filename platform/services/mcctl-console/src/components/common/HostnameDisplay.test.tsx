@@ -155,4 +155,18 @@ describe('HostnameDisplay', () => {
       expect(screen.getByText('+1')).toBeInTheDocument();
     });
   });
+
+  it('copies the primary hostname when several hostnames are set', () => {
+    renderWithTheme(
+      <HostnameDisplay hostname="server.local,server.192.168.1.10.nip.io" showCopyButton />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Copy to clipboard' })).toBeInTheDocument();
+  });
+
+  it('keeps the multi-hostname view free of a copy button by default', () => {
+    renderWithTheme(<HostnameDisplay hostname="server.local,server.192.168.1.10.nip.io" />);
+
+    expect(screen.queryByRole('button', { name: 'Copy to clipboard' })).not.toBeInTheDocument();
+  });
 });
