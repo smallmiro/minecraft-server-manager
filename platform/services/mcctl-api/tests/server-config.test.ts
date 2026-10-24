@@ -621,6 +621,30 @@ GID=1000
         expect(mockWriteFileSync).not.toHaveBeenCalled();
       });
 
+      it.each([
+        ['edit_conflict', 409],
+        ['locked', 409],
+        ['invalid_spec', 400],
+      ])('answers a ServerSpec refusal %s of the level write with %i (#675)', async (specErrorCode, status) => {
+        mockedServerExists.mockReturnValue(true);
+        worldUseCase.assignWorldByName.mockResolvedValueOnce({
+          success: false,
+          worldName: 'new_world',
+          serverName: 'testserver',
+          error: 'spec refused',
+          specErrorCode,
+        });
+
+        const response = await app.inject({
+          method: 'PATCH',
+          url: '/api/servers/testserver/config',
+          payload: { level: 'new_world' },
+        });
+
+        expect(response.statusCode).toBe(status);
+        expect(JSON.parse(response.body).message).toBe('spec refused');
+      });
+
       it('keeps saving when an existing legacy level is sent back unchanged', async () => {
         mockedServerExists.mockReturnValue(true);
         mockReadFileSync.mockReturnValue(sampleConfigContent.replace('LEVEL=world', 'LEVEL=My World'));

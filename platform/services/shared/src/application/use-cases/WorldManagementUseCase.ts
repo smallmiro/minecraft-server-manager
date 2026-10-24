@@ -29,6 +29,8 @@ import {
   findDuplicates,
   planRelease,
   resolveWorldName,
+  ServerSpecError,
+  type ServerSpecErrorCode,
   type WorldAssignmentErrorCode,
   type WorldAssignmentSnapshot,
 } from '../../domain/index.js';
@@ -48,8 +50,14 @@ function invalidSeed(seed: string | undefined): Error | null {
   }
 }
 
-function toFailure(error: unknown): { error: string; errorCode?: WorldAssignmentErrorCode } {
+function toFailure(error: unknown): {
+  error: string;
+  errorCode?: WorldAssignmentErrorCode;
+  specErrorCode?: ServerSpecErrorCode;
+} {
   if (error instanceof WorldAssignmentError) return { error: error.message, errorCode: error.code };
+  // The assignment adapter writes LEVEL through the ServerSpec repository (#675)
+  if (error instanceof ServerSpecError) return { error: error.message, specErrorCode: error.code };
   return { error: error instanceof Error ? error.message : String(error) };
 }
 

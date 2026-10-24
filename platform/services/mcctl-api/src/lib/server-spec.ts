@@ -49,7 +49,7 @@ export function updateServer(
  * -> 409.
  */
 export function serverSpecFailure(
-  error: ServerSpecError,
+  error: Pick<ServerSpecError, 'code' | 'message'>,
   message: string = error.message
 ): { status: 400 | 409; body: { error: string; message: string } } {
   return error.code === 'invalid_spec'
