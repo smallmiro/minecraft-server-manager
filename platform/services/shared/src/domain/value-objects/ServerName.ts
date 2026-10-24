@@ -1,4 +1,4 @@
-import { containerNameOf, serverHostnameOf } from '../../infrastructure/adapters/workloadNames.js';
+import { containerNameOf } from '../../infrastructure/adapters/workloadNames.js';
 
 /**
  * Server name rules: the single source for the CLI, API, console and scripts
@@ -42,26 +42,6 @@ export class ServerName {
 
   get value(): string {
     return this._value;
-  }
-
-  /**
-   * Docker container/service name of this server.
-   *
-   * @deprecated A runtime rule, not a domain one (#665). Pass the ServerName to
-   * the runtime ports instead; adapters use `containerNameOf`. Removed in v3.0.0 (#736).
-   */
-  get containerName(): string {
-    return containerNameOf(this._value);
-  }
-
-  /**
-   * Server hostname for mc-router.
-   *
-   * @deprecated A runtime rule, not a domain one (#665). Use `serverHostnameOf`
-   * (infrastructure). Removed in v3.0.0 (#736).
-   */
-  get hostname(): string {
-    return serverHostnameOf(this._value);
   }
 
   /**

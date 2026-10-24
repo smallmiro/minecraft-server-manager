@@ -14,7 +14,6 @@ import {
   WorldRepository,
   ServerRepository,
   ConfigEnvWorldAssignmentAdapter,
-  ShellAdapter,
   FileServerSpecRepository,
   type IContainerRuntimePort,
   type IPromptPort,
@@ -75,7 +74,6 @@ beforeEach(() => {
     worldAssignmentPort: assignments,
     worldManagementUseCase: new WorldManagementUseCase(
       prompt,
-      new ShellAdapter({ paths }),
       new WorldRepository(paths, assignments),
       new ServerRepository(paths),
       assignments,

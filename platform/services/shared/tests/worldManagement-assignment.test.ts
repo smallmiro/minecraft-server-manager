@@ -1,6 +1,6 @@
 /**
  * WorldManagementUseCase goes through IWorldAssignmentPort and the runtime
- * port instead of ShellAdapter -> mcctl.sh world -> lock.sh (#670, ADR-0002).
+ * port (#670, ADR-0002).
  */
 import { describe, test, expect, vi } from 'vitest';
 import { WorldManagementUseCase } from '../src/application/use-cases/WorldManagementUseCase.js';
@@ -8,7 +8,6 @@ import { checkAssign, planRelease, WorldAssignmentError } from '../src/domain/se
 import type {
   IContainerRuntimePort,
   IPromptPort,
-  IShellPort,
   IWorldAssignmentPort,
   IWorldRepository,
   IServerRepository,
@@ -66,15 +65,6 @@ function setup(opts: Setup = {}) {
     start: vi.fn().mockResolvedValue({ success: true }),
   };
 
-  const shell = {
-    worldAssign: vi.fn(),
-    worldRelease: vi.fn(),
-    serverStatus: vi.fn(),
-    stopServer: vi.fn(),
-    startServer: vi.fn(),
-    setServerConfig: vi.fn().mockResolvedValue({ success: true }),
-  };
-
   const worldRepo = {
     findByName: vi.fn(async (name: string) =>
       worlds.has(name) ? { name, sizeFormatted: '1 MB', isLocked: false } : null
@@ -104,28 +94,20 @@ function setup(opts: Setup = {}) {
 
   const useCase = new WorldManagementUseCase(
     prompt as unknown as IPromptPort,
-    shell as unknown as IShellPort,
     worldRepo as unknown as IWorldRepository,
     serverRepo as unknown as IServerRepository,
     opts.noPort ? undefined : port,
     opts.noRuntime ? undefined : (runtime as unknown as IContainerRuntimePort)
   );
-  return { useCase, port, runtime, shell, worldRepo, levels, worlds };
+  return { useCase, port, runtime, worldRepo, levels, worlds };
 }
 
 const ACTIVE: ContainerStatus[] = ['running', 'paused', 'restarting', 'created'];
 const INACTIVE: ContainerStatus[] = ['exited', 'dead', 'not_found', 'not_created'];
 
-function expectNoShellWorldCalls(shell: ReturnType<typeof setup>['shell']) {
-  expect(shell.worldAssign).not.toHaveBeenCalled();
-  expect(shell.worldRelease).not.toHaveBeenCalled();
-  expect(shell.serverStatus).not.toHaveBeenCalled();
-  expect(shell.setServerConfig).not.toHaveBeenCalledWith(expect.anything(), 'LEVEL', expect.anything());
-}
-
 describe('assignWorldByName', () => {
-  test('writes the assignment through the port, never through the shell', async () => {
-    const { useCase, port, runtime, shell, levels } = setup();
+  test('writes the assignment through the port', async () => {
+    const { useCase, port, runtime, levels } = setup();
 
     const result = await useCase.assignWorldByName('free', 'srv');
 
@@ -133,7 +115,6 @@ describe('assignWorldByName', () => {
     expect(port.assign).toHaveBeenCalledWith('free', 'srv');
     expect(runtime.getStatus).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
     expect(levels.get('srv')).toBe('free');
-    expectNoShellWorldCalls(shell);
   });
 
   test.each(['../escape', 'my world', 'world.old', 'w_nether'])('rejects %s as invalid_world', async (name) => {
@@ -274,7 +255,7 @@ describe('assignWorldByName', () => {
 
 describe('releaseWorldByName', () => {
   test("switches the holder back to its own world '<server>'", async () => {
-    const { useCase, port, shell, levels } = setup({ levels: { alpha: 'held' }, worlds: ['held'] });
+    const { useCase, port, levels } = setup({ levels: { alpha: 'held' }, worlds: ['held'] });
 
     const result = await useCase.releaseWorldByName('held');
 
@@ -287,7 +268,6 @@ describe('releaseWorldByName', () => {
     });
     expect(port.release).toHaveBeenCalledWith('held');
     expect(levels.get('alpha')).toBe('alpha');
-    expectNoShellWorldCalls(shell);
   });
 
   test('says when the holder adopts an existing free worlds/<server>', async () => {
@@ -348,30 +328,25 @@ describe('releaseWorldByName', () => {
 
 describe('createWorld with a server', () => {
   test('creates the directory, assigns LEVEL and SEED through the port, starts through the runtime', async () => {
-    const { useCase, port, runtime, shell, worldRepo, levels } = setup();
+    const { useCase, port, runtime, worldRepo, levels } = setup();
 
     const result = await useCase.createWorld({ name: 'fresh', seed: '42', serverName: 'srv', autoStart: true });
 
     expect(result).toMatchObject({ success: true, worldName: 'fresh', serverName: 'srv', started: true });
     expect(worldRepo.create).toHaveBeenCalledWith('fresh', '42');
-    // One config.env write for LEVEL and SEED; mcctl.sh config is gone (#734)
+    // One config.env write for LEVEL and SEED (#734)
     expect(port.assign).toHaveBeenCalledWith('fresh', 'srv', { seed: '42' });
     expect(levels.get('srv')).toBe('fresh');
-    expect(shell.setServerConfig).not.toHaveBeenCalled();
     expect(runtime.start).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
-    expect(shell.startServer).not.toHaveBeenCalled();
-    expect(shell.stopServer).not.toHaveBeenCalled();
-    expectNoShellWorldCalls(shell);
   });
 
   test.each(ACTIVE)('refuses a %s server before creating the directory (no auto-stop)', async (status) => {
-    const { useCase, worldRepo, shell, runtime } = setup({ status });
+    const { useCase, worldRepo, runtime } = setup({ status });
 
     const result = await useCase.createWorld({ name: 'fresh', serverName: 'srv' });
 
     expect(result).toMatchObject({ success: false, errorCode: 'server_running' });
     expect(worldRepo.create).not.toHaveBeenCalled();
-    expect(shell.stopServer).not.toHaveBeenCalled();
     expect(runtime.start).not.toHaveBeenCalled();
   });
 
@@ -394,10 +369,9 @@ describe('createWorld with a server', () => {
   });
 
   test('assigns without a seed option when no seed is given', async () => {
-    const { useCase, port, shell } = setup();
+    const { useCase, port } = setup();
     expect((await useCase.createWorld({ name: 'fresh', serverName: 'srv' })).success).toBe(true);
     expect(port.assign).toHaveBeenCalledWith('fresh', 'srv', {});
-    expect(shell.setServerConfig).not.toHaveBeenCalled();
   });
 
   // seed$VAR\ needs quotes, and 'seed$VAR\' never closes for Compose (#675)

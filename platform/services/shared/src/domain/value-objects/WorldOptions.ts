@@ -51,33 +51,6 @@ export class WorldOptions {
     return this._data.setupType === WorldSetupType.DOWNLOAD;
   }
 
-  /**
-   * Convert to CLI arguments for create-server.sh
-   * @deprecated create-server.sh was removed in #675. Removed in v3.0.0 (#736).
-   */
-  toCliArgs(): string[] {
-    const args: string[] = [];
-
-    switch (this._data.setupType) {
-      case WorldSetupType.NEW:
-        if (this._data.seed) {
-          args.push('-s', this._data.seed);
-        }
-        break;
-      case WorldSetupType.EXISTING:
-        if (this._data.worldName) {
-          args.push('-w', this._data.worldName);
-        }
-        break;
-      case WorldSetupType.DOWNLOAD:
-        if (this._data.downloadUrl) {
-          args.push('-u', this._data.downloadUrl);
-        }
-        break;
-    }
-
-    return args;
-  }
 
   /**
    * Create new world options (optionally with seed)

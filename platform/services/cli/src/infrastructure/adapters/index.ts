@@ -4,7 +4,6 @@ export { Pm2ServiceManagerAdapter } from './Pm2ServiceManagerAdapter.js';
 
 // Re-export shared adapters for backward compatibility
 export {
-  ShellAdapter,
   ServerRepository,
   WorldRepository,
   DocsAdapter,

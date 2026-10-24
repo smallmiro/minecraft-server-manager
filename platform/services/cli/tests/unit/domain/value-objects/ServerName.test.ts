@@ -70,18 +70,6 @@ describe('ServerName Value Object', () => {
     });
   });
 
-  describe('derived properties', () => {
-    it('should generate container name with mc- prefix', () => {
-      const name = ServerName.create('myserver');
-      assert.strictEqual(name.containerName, 'mc-myserver');
-    });
-
-    it('should generate hostname with .local suffix', () => {
-      const name = ServerName.create('myserver');
-      assert.strictEqual(name.hostname, 'myserver.local');
-    });
-  });
-
   describe('equality', () => {
     it('should be equal for same value', () => {
       const name1 = ServerName.create('myserver');

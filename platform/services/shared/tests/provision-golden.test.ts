@@ -13,10 +13,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { CreateServerUseCase } from '../src/application/use-cases/CreateServerUseCase.js';
-import { Paths, parseEnvDocument } from '../src/utils/index.js';
+import { Config, Paths, parseEnvDocument } from '../src/utils/index.js';
 import { FileServerSpecRepository } from '../src/infrastructure/adapters/server-spec/FileServerSpecRepository.js';
 import { ConfigEnvWorldAssignmentAdapter } from '../src/infrastructure/adapters/ConfigEnvWorldAssignmentAdapter.js';
-import type { CreateServerConfig, IPromptPort, IServerRepository, IShellPort } from '../src/application/ports/index.js';
+import type { CreateServerConfig, IPromptPort, IServerRepository } from '../src/application/ports/index.js';
 
 const GOLDEN = join(dirname(fileURLToPath(import.meta.url)), 'fixtures', 'create-server-golden');
 
@@ -91,14 +91,13 @@ describe('TypeScript provision matches create-server.sh', () => {
     const specRepo = new FileServerSpecRepository(paths, undefined, undefined, noHostIp ? () => [] : undefined);
     await new CreateServerUseCase(
       {} as IPromptPort,
-      {} as IShellPort,
       { exists: async () => false } as unknown as IServerRepository,
-      paths,
+      new Config(paths),
+      { specRepo },
       undefined,
       undefined,
       undefined,
-      new ConfigEnvWorldAssignmentAdapter(paths),
-      { specRepo }
+      new ConfigEnvWorldAssignmentAdapter(paths)
     ).executeWithConfig({ ...config, autoStart: false });
 
     const golden = (f: string) => readFileSync(join(GOLDEN, name, f), 'utf-8');

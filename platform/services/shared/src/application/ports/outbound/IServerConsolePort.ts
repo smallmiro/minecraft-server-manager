@@ -17,7 +17,8 @@ export interface ConsoleEndpoint {
  * Server Console Port - Outbound Port (ADR-0001)
  *
  * RCON access to a server workload. `name` is the server (#665); a string is the
- * container name itself (`mc-<server>`, @deprecated, narrowed in v3.0.0 #736).
+ * container name itself (`mc-<server>`, @deprecated, narrowed once every caller
+ * passes a ServerName, #667).
  */
 export interface IServerConsolePort {
   /** `list` via RCON. null when offline or unparseable. */

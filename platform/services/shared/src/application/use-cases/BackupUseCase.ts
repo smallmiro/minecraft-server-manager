@@ -7,7 +7,6 @@ import type {
   BackupRestoreResult,
   BackupPushOptions,
   IPromptPort,
-  IShellPort,
   IWorldBackupPort,
 } from '../ports/index.js';
 
@@ -17,21 +16,11 @@ import type {
  */
 export class BackupUseCase implements IBackupUseCase {
   private configSaveCallback?: (config: Record<string, string | boolean>) => void | Promise<void>;
-  /** @deprecated path, removed with IShellPort.backup* in #736 */
-  private readonly shell?: IShellPort;
-  private readonly port?: IWorldBackupPort;
 
-  /**
-   * @param backend IWorldBackupPort (#732). An IShellPort keeps the legacy
-   *   backup.sh path, which fails once the script is gone; narrowed in #736.
-   */
   constructor(
     private readonly prompt: IPromptPort,
-    backend: IWorldBackupPort | IShellPort
-  ) {
-    if ('backupPush' in backend) this.shell = backend;
-    else this.port = backend;
-  }
+    private readonly port: IWorldBackupPort
+  ) {}
 
   /**
    * Set callback for saving configuration (called by CLI layer)
@@ -221,41 +210,8 @@ export class BackupUseCase implements IBackupUseCase {
     token: string,
     repository: string
   ): Promise<{ success: boolean; error?: string }> {
-    if (this.port) {
-      const r = await this.port.testConnection({ token, repository });
-      return r.ok ? { success: true } : { success: false, error: r.error.message };
-    }
-
-    // Use git ls-remote to test connection
-    const result = await this.shell!.exec('git', [
-      'ls-remote',
-      '--heads',
-      `https://${token}@github.com/${repository}.git`,
-    ]);
-
-    if (result.success) {
-      return { success: true };
-    }
-
-    // Parse error message
-    if (result.stderr.includes('not found') || result.stderr.includes('404')) {
-      return {
-        success: false,
-        error: 'Repository not found. Please check the repository name.',
-      };
-    }
-
-    if (result.stderr.includes('Authentication failed') || result.stderr.includes('403')) {
-      return {
-        success: false,
-        error: 'Authentication failed. Please check your token permissions.',
-      };
-    }
-
-    return {
-      success: false,
-      error: result.stderr || 'An unknown error occurred.',
-    };
+    const r = await this.port.testConnection({ token, repository });
+    return r.ok ? { success: true } : { success: false, error: r.error.message };
   }
 
   /**
@@ -316,95 +272,32 @@ export class BackupUseCase implements IBackupUseCase {
     const spinner = this.prompt.spinner();
     spinner.start('Backing up worlds...');
 
-    if (this.port) {
-      const r = await this.port.push({ message, ...options });
-      if (!r.ok) {
-        spinner.stop('Backup failed');
-        this.prompt.error(r.error.message);
-        return { success: false, message, error: r.error.message, errorCode: r.error.code };
-      }
-      const { changed, commit, warnings } = r.value;
-      spinner.stop(changed ? 'Backup complete' : 'No changes to backup');
-      for (const w of warnings) this.prompt.warn(w);
-      if (commit) this.prompt.note(`Commit: ${commit.substring(0, 7)}`, 'Backup Info');
-      this.prompt.outro('Backup complete');
-      return { success: true, commitHash: commit, message, noChanges: !changed, warnings };
-    }
-
-    const result = await this.shell!.backupPush(message);
-
-    if (!result.success) {
+    const r = await this.port.push({ message, ...options });
+    if (!r.ok) {
       spinner.stop('Backup failed');
-      this.prompt.error(result.stderr || 'Unknown error');
-      return {
-        success: false,
-        message,
-        error: result.stderr,
-      };
+      this.prompt.error(r.error.message);
+      return { success: false, message, error: r.error.message, errorCode: r.error.code };
     }
-
-    spinner.stop('Backup complete');
-
-    // Parse commit hash from output
-    const commitMatch = result.stdout.match(/commit:\s*([a-f0-9]+)/i);
-    const commitHash = commitMatch ? commitMatch[1] : undefined;
-
-    this.prompt.success('Worlds backed up successfully');
-    if (commitHash) {
-      this.prompt.note(`Commit: ${commitHash}`, 'Backup Info');
-    }
-
+    const { changed, commit, warnings } = r.value;
+    spinner.stop(changed ? 'Backup complete' : 'No changes to backup');
+    for (const w of warnings) this.prompt.warn(w);
+    if (commit) this.prompt.note(`Commit: ${commit.substring(0, 7)}`, 'Backup Info');
     this.prompt.outro('Backup complete');
-
-    return {
-      success: true,
-      commitHash,
-      message,
-    };
+    return { success: true, commitHash: commit, message, noChanges: !changed, warnings };
   }
 
   /**
    * Get backup status
    */
   async status(): Promise<BackupStatusResult> {
-    if (this.port) {
-      const r = await this.port.status();
-      if (!r.ok || !r.value.configured) return { configured: false };
-      return {
-        configured: true,
-        repository: r.value.repository,
-        branch: r.value.branch,
-        lastBackup: r.value.lastBackup?.date,
-        autoBackupEnabled: r.value.autoOnStop,
-      };
-    }
-
-    const result = await this.shell!.backupStatus();
-
-    if (!result.success) {
-      return {
-        configured: false,
-      };
-    }
-
-    // Parse status output
-    const output = result.stdout;
-
-    const repoMatch = output.match(/Repository:\s*(.+)/i);
-    const branchMatch = output.match(/Branch:\s*(.+)/i);
-    const lastBackupMatch = output.match(/Last backup:\s*(.+)/i);
-    const autoMatch = output.match(/Auto backup:\s*(enabled|disabled)/i);
-
+    const r = await this.port.status();
+    if (!r.ok || !r.value.configured) return { configured: false };
     return {
       configured: true,
-      repository: repoMatch ? repoMatch[1]?.trim() : undefined,
-      branch: branchMatch ? branchMatch[1]?.trim() : undefined,
-      lastBackup: lastBackupMatch
-        ? new Date(lastBackupMatch[1]!.trim())
-        : undefined,
-      autoBackupEnabled: autoMatch
-        ? autoMatch[1]?.toLowerCase() === 'enabled'
-        : undefined,
+      repository: r.value.repository,
+      branch: r.value.branch,
+      lastBackup: r.value.lastBackup?.date,
+      autoBackupEnabled: r.value.autoOnStop,
     };
   }
 
@@ -412,29 +305,9 @@ export class BackupUseCase implements IBackupUseCase {
    * Get backup history
    */
   async history(): Promise<BackupHistoryResult[]> {
-    if (this.port) {
-      const r = await this.port.history();
-      if (!r.ok) return [];
-      return r.value.map((c) => ({ commitHash: c.hash, message: c.message, date: c.date, author: c.author }));
-    }
-
-    const result = await this.shell!.backupHistory(true);
-
-    if (!result.success) {
-      return [];
-    }
-
-    try {
-      const data = JSON.parse(result.stdout);
-      return data.map((entry: Record<string, unknown>) => ({
-        commitHash: entry.hash as string,
-        message: entry.message as string,
-        date: new Date(entry.date as string),
-        author: entry.author as string,
-      }));
-    } catch {
-      return [];
-    }
+    const r = await this.port.history();
+    if (!r.ok) return [];
+    return r.value.map((c) => ({ commitHash: c.hash, message: c.message, date: c.date, author: c.author }));
   }
 
   /**
@@ -513,40 +386,17 @@ export class BackupUseCase implements IBackupUseCase {
     const spinner = this.prompt.spinner();
     spinner.start('Restoring from backup...');
 
-    if (this.port) {
-      const r = await this.port.restore(commitHash);
-      if (!r.ok) {
-        spinner.stop('Restore failed');
-        this.prompt.error(r.error.message);
-        return { success: false, commitHash, error: r.error.message, errorCode: r.error.code };
-      }
-      spinner.stop('Restore complete');
-      for (const s of r.value.skipped) this.prompt.warn(`Skipped ${s}`);
-      this.prompt.success(`Restored from ${r.value.commit.substring(0, 7)}`);
-      this.prompt.note(`Previous data kept in ${r.value.previousDir}`, 'Restore Info');
-      this.prompt.outro('Restore complete');
-      return { success: true, commitHash: r.value.commit, previousDir: r.value.previousDir };
-    }
-
-    const result = await this.shell!.backupRestore(commitHash);
-
-    if (!result.success) {
+    const r = await this.port.restore(commitHash);
+    if (!r.ok) {
       spinner.stop('Restore failed');
-      this.prompt.error(result.stderr || 'Unknown error');
-      return {
-        success: false,
-        commitHash,
-        error: result.stderr,
-      };
+      this.prompt.error(r.error.message);
+      return { success: false, commitHash, error: r.error.message, errorCode: r.error.code };
     }
-
     spinner.stop('Restore complete');
-    this.prompt.success(`Restored from ${commitHash.substring(0, 7)}`);
+    for (const s of r.value.skipped) this.prompt.warn(`Skipped ${s}`);
+    this.prompt.success(`Restored from ${r.value.commit.substring(0, 7)}`);
+    this.prompt.note(`Previous data kept in ${r.value.previousDir}`, 'Restore Info');
     this.prompt.outro('Restore complete');
-
-    return {
-      success: true,
-      commitHash,
-    };
+    return { success: true, commitHash: r.value.commit, previousDir: r.value.previousDir };
   }
 }

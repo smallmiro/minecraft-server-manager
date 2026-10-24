@@ -16,7 +16,8 @@ export interface RuntimeActionResult {
  * `name` is the server (#665): the adapter maps a ServerName to its workload
  * (Docker: `mc-<server>`). A string is the runtime workload name itself
  * (`mc-<server>`, `mc-router`, `playit-agent`); that form is @deprecated for
- * servers and narrowed in v3.0.0 (#736).
+ * servers and is narrowed once every caller passes a ServerName (#667; router
+ * and playit-agent need #641 first).
  * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
  * Synchronous methods stay synchronous until C2.
  */

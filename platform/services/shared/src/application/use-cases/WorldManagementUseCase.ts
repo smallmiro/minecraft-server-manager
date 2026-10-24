@@ -9,7 +9,6 @@ import type {
   WorldImportOptions,
   WorldImportResult,
   IPromptPort,
-  IShellPort,
   IWorldRepository,
   IServerRepository,
   IWorldAssignmentPort,
@@ -71,13 +70,8 @@ function toFailure(error: unknown): {
  * world delete is refused (fail-closed).
  */
 export class WorldManagementUseCase implements IWorldManagementUseCase {
-  /**
-   * @param _shell Unused since #734 (mcctl.sh was removed); pass undefined.
-   *   @deprecated Kept for constructor compatibility; removed in v3.0.0 (#736).
-   */
   constructor(
     private readonly prompt: IPromptPort,
-    _shell: IShellPort | undefined,
     private readonly worldRepo: IWorldRepository,
     private readonly serverRepo: IServerRepository,
     private readonly assignments?: IWorldAssignmentPort,

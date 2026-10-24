@@ -97,8 +97,8 @@ export class ApiModeError extends Error {
  * });
  *
  * // Use with UseCase
- * const useCase = new CreateServerUseCase(adapter, shell, serverRepo);
- * await useCase.execute({ mode: 'cli' }); // Uses pre-configured values
+ * const useCase = new CreateServerUseCase(adapter, serverRepo, settings, provision);
+ * await useCase.execute(); // Uses pre-configured values
  * ```
  */
 export class ApiPromptAdapter implements IPromptPort {

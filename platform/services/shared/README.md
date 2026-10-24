@@ -32,7 +32,7 @@ import { ICreateServerUseCase, IServerRepository } from '@minecraft-docker/share
 ### Infrastructure Layer
 
 ```typescript
-import { ShellAdapter, ServerRepository } from '@minecraft-docker/shared/infrastructure';
+import { ServerRepository, GitWorldBackupAdapter } from '@minecraft-docker/shared/infrastructure';
 ```
 
 ## Architecture

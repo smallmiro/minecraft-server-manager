@@ -1,5 +1,5 @@
 /**
- * DeleteServerUseCase.deprovision (#735): delete-server.sh in TypeScript.
+ * DeleteServerUseCase.deprovision (#735).
  * The real ServerSpec repository on a temp root; fake runtime and avahi.
  * Order: plan (dryRun) → remove the container → files → hostname.
  */
@@ -16,7 +16,6 @@ import type {
   IHostnameRegistrarPort,
   IPromptPort,
   IServerRepository,
-  IShellPort,
   RuntimeActionResult,
 } from '../src/application/ports/index.js';
 import type { ServerName } from '../src/domain/value-objects/ServerName.js';
@@ -48,22 +47,12 @@ const hostnames = {
   }),
 } as unknown as IHostnameRegistrarPort;
 
-function useCase(deps: { runtime?: boolean; deprovision?: boolean; hostnames?: boolean } = {}) {
+function useCase(deps: { hostnames?: boolean } = {}) {
   const paths = new Paths(root);
-  return new DeleteServerUseCase(
-    {} as IPromptPort,
-    { deleteServer: vi.fn() } as unknown as IShellPort,
-    {} as IServerRepository,
-    undefined,
-    undefined,
-    deps.runtime === false ? undefined : runtime,
-    deps.deprovision === false
-      ? undefined
-      : {
-          specRepo: new FileServerSpecRepository(paths, undefined, undefined, () => []),
-          hostnames: deps.hostnames === false ? undefined : hostnames,
-        }
-  );
+  return new DeleteServerUseCase({} as IPromptPort, {} as IServerRepository, runtime, {
+    specRepo: new FileServerSpecRepository(paths, undefined, undefined, () => []),
+    hostnames: deps.hostnames === false ? undefined : hostnames,
+  });
 }
 
 beforeEach(() => {
@@ -150,15 +139,5 @@ describe('DeleteServerUseCase.deprovision', () => {
     const result = await useCase({ hostnames: false }).deprovision('alpha');
     expect(result.hostname).toBeUndefined();
     expect(events).toEqual(['remove mc-alpha']);
-  });
-
-  it('without deprovision deps it fails clearly: delete-server.sh is gone', async () => {
-    await expect(useCase({ deprovision: false }).deprovision('alpha')).rejects.toThrow(/delete-server\.sh was removed in #735/);
-    expect(existsSync(at('servers', 'alpha'))).toBe(true);
-  });
-
-  it('without a runtime it refuses before changing anything', async () => {
-    await expect(useCase({ runtime: false }).deprovision('alpha')).rejects.toThrow(/container runtime/);
-    expect(existsSync(at('servers', 'alpha'))).toBe(true);
   });
 });

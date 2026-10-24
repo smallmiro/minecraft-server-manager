@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PlayitSummaryCard } from './PlayitSummaryCard';
 import * as usePlayitHooks from '@/hooks/usePlayit';
@@ -7,6 +7,12 @@ import type { PlayitAgentStatus } from '@/ports/api/IMcctlApiClient';
 
 // Mock hooks
 vi.mock('@/hooks/usePlayit');
+
+const copyHook = vi.hoisted(() => ({
+  status: 'idle' as 'idle' | 'copied' | 'failed',
+  copy: vi.fn(),
+}));
+vi.mock('@/hooks/useCopy', () => ({ useCopy: () => copyHook }));
 
 // Mock Next.js Link
 vi.mock('next/link', () => ({
@@ -45,6 +51,8 @@ describe('PlayitSummaryCard', () => {
   };
 
   beforeEach(() => {
+    copyHook.status = 'idle';
+    copyHook.copy.mockReset();
     queryClient = new QueryClient({
       defaultOptions: {
         queries: { retry: false },
@@ -190,5 +198,94 @@ describe('PlayitSummaryCard', () => {
     renderComponent();
 
     expect(screen.getByText('0 / 0 servers')).toBeInTheDocument();
+  });
+
+  describe('public addresses', () => {
+    const withStatus = (overrides: Partial<PlayitAgentStatus>) =>
+      vi.mocked(usePlayitHooks.usePlayitStatus).mockReturnValue({
+        data: { ...mockPlayitStatus, ...overrides },
+        isLoading: false,
+        error: null,
+      } as any);
+
+    it('lists servers that have a public domain with their address', () => {
+      withStatus({});
+
+      renderComponent();
+
+      expect(screen.getByText('survival')).toBeInTheDocument();
+      expect(screen.getByText('survival.example.playit.gg')).toBeInTheDocument();
+      expect(screen.getByText('creative')).toBeInTheDocument();
+      expect(screen.getByText('creative.example.playit.gg')).toBeInTheDocument();
+      expect(screen.queryByText('vanilla')).not.toBeInTheDocument();
+    });
+
+    it('shows at most three servers', () => {
+      withStatus({
+        servers: ['a', 'b', 'c', 'd'].map((n) => ({
+          serverName: `srv-${n}`,
+          playitDomain: `${n}.playit.gg`,
+          lanHostname: `${n}.nip.io`,
+        })),
+      });
+
+      renderComponent();
+
+      expect(screen.getByText('srv-a')).toBeInTheDocument();
+      expect(screen.getByText('srv-c')).toBeInTheDocument();
+      expect(screen.queryByText('srv-d')).not.toBeInTheDocument();
+      // summary still counts every configured server
+      expect(screen.getByText('4 / 4 servers')).toBeInTheDocument();
+    });
+
+    it('copies the public address', () => {
+      withStatus({});
+
+      renderComponent();
+      fireEvent.click(screen.getByRole('button', { name: 'Copy address of creative' }));
+
+      expect(copyHook.copy).toHaveBeenCalledWith('creative.example.playit.gg');
+    });
+
+    it.each([
+      ['copied', 'Copied!'],
+      ['failed', 'Copy failed'],
+    ] as const)('shows %s feedback on the copy button tooltip', async (status, text) => {
+      copyHook.status = status;
+      withStatus({});
+
+      renderComponent();
+      fireEvent.mouseOver(screen.getByRole('button', { name: 'Copy address of survival' }));
+
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(text);
+    });
+
+    it('shows the agent uptime when the status payload has one', () => {
+      withStatus({});
+
+      renderComponent();
+
+      expect(screen.getByText(/uptime 2h 15m/i)).toBeInTheDocument();
+    });
+
+    it('does not invent an uptime when the payload has none', () => {
+      withStatus({ uptime: undefined, uptimeSeconds: undefined });
+
+      renderComponent();
+
+      expect(screen.queryByText(/uptime/i)).not.toBeInTheDocument();
+    });
+
+    it('does not list addresses when playit is not configured', () => {
+      vi.mocked(usePlayitHooks.usePlayitStatus).mockReturnValue({
+        data: { ...mockPlayitStatus, enabled: false },
+        isLoading: false,
+        error: null,
+      } as any);
+
+      renderComponent();
+
+      expect(screen.queryByText('survival.example.playit.gg')).not.toBeInTheDocument();
+    });
   });
 });

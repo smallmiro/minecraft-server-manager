@@ -15,7 +15,8 @@ export interface IRconPort {
    * is not online, or the command fails.
    *
    * @param server The server (#665). A string is the container name
-   *   (`mc-<server>`): @deprecated, narrowed in v3.0.0 (#736).
+   *   (`mc-<server>`): @deprecated, narrowed once every caller passes a
+   *   ServerName (#667).
    * @param player Player username.
    */
   getEntityPosition(

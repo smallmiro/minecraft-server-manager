@@ -1,6 +1,5 @@
 export type { ICreateServerUseCase, CreateServerConfig, CreateServerRunOptions } from './ICreateServerUseCase.js';
 export type { IDeleteServerUseCase, DeleteServerResult, DeleteServerOptions } from './IDeleteServerUseCase.js';
-export type { IServerStatusUseCase, ServerStatusResult } from './IServerStatusUseCase.js';
 export type {
   IWorldManagementUseCase,
   WorldListResult,
@@ -21,12 +20,6 @@ export type {
   BackupHistoryResult,
   BackupRestoreResult,
 } from './IBackupUseCase.js';
-export type {
-  IPlayerLookupUseCase,
-  PlayerLookupResult,
-  PlayerNameHistory,
-  PlayerUuidResult,
-} from './IPlayerLookupUseCase.js';
 export type {
   IBackupScheduleUseCase,
   CreateBackupScheduleParams,

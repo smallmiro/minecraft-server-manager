@@ -47,8 +47,6 @@ export {
   startContainer,
   stopContainer,
   getContainerLogs,
-  execScript,
-  execScriptInteractive,
   // New detailed functions
   getContainerStats,
   getContainerUptime,
@@ -75,9 +73,7 @@ export {
   startPlayitAgent,
   stopPlayitAgent,
   getServerPlayitDomain,
-  setServerPlayitDomain,
   parseRouterHosts,
-  replaceRouterHosts,
   resolvePlayitDomain,
 } from './docker/index.js';
 

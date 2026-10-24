@@ -387,13 +387,6 @@ describe('v2 methods', () => {
     expect(await repo.list()).toEqual([]);
   });
 
-  it('get returns the document or null', async () => {
-    serverDir('survival', VALID, COMPOSE('survival'));
-    await repo.write(spec());
-    expect(await repo.get('survival')).toEqual(spec());
-    expect(await repo.get('missing')).toBeNull();
-  });
-
   it('save writes a full document and rejects a bare { name } listing the missing fields', async () => {
     serverDir('survival', VALID, COMPOSE('survival'));
     const error = await rejection(repo.save({ name: 'survival' }));

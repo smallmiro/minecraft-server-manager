@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'fs';
 import { join, resolve } from 'path';
 import { tmpdir } from 'os';
-import { resolveBlueMapDockerDir, getRepoDockerDir } from '../src/lib/script-resolver.js';
+import { resolveBlueMapDockerDir, getRepoDockerDir } from '../src/lib/docker-dir.js';
 
-const TMP = join(import.meta.dirname, '.tmp-script-resolver-test');
+const TMP = join(import.meta.dirname, '.tmp-docker-dir-test');
 const PLATFORM = join(TMP, 'platform');
 
 describe('resolveBlueMapDockerDir', () => {

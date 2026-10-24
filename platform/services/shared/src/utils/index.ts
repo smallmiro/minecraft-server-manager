@@ -35,7 +35,7 @@ export function getPackageRoot(): string {
 }
 
 /**
- * Get the CLI package root directory (for scripts/templates)
+ * Get the CLI package root directory (for templates)
  */
 export function getCliPackageRoot(): string {
   const currentFile = fileURLToPath(import.meta.url);
@@ -89,32 +89,15 @@ export function getCliPackageRoot(): string {
  */
 export class Paths {
   private readonly dataDir: string;
-  private readonly packageRoot: string;
   private readonly cliPackageRoot: string;
-  private readonly _scriptsPath: string;
   private readonly _templatesPath: string;
 
   constructor(dataDir?: string) {
-    this.packageRoot = getPackageRoot();
     this.cliPackageRoot = getCliPackageRoot();
     this.dataDir = dataDir ?? resolveMcctlRoot();
 
     // Cache resolved paths at construction time
-    this._scriptsPath = this.resolveScriptsPath();
     this._templatesPath = this.resolveTemplatesPath();
-  }
-
-  private resolveScriptsPath(): string {
-    if (process.env['MCCTL_SCRIPTS']) {
-      return process.env['MCCTL_SCRIPTS'];
-    }
-    // Monorepo: always run the original platform/scripts so a generated copy can't go stale
-    const repoScripts = join(this.packageRoot, '..', '..', 'scripts');
-    if (existsSync(repoScripts)) {
-      return repoScripts;
-    }
-    // npm install: scripts bundled into the CLI package at pack time
-    return join(this.cliPackageRoot, 'scripts');
   }
 
   private resolveTemplatesPath(): string {
@@ -135,11 +118,6 @@ export class Paths {
     return this.dataDir;
   }
 
-  /** Scripts directory (from CLI package) */
-  get scripts(): string {
-    return this._scriptsPath;
-  }
-
   /** Templates directory (from CLI package) */
   get templates(): string {
     return this._templatesPath;
@@ -153,16 +131,6 @@ export class Paths {
   /** Worlds directory */
   get worlds(): string {
     return join(this.dataDir, 'worlds');
-  }
-
-  /**
-   * Locks directory
-   *
-   * @deprecated worlds/.locks is no longer read or written by mcctl (#670).
-   * Removed in v3.0.0 (#736).
-   */
-  get locks(): string {
-    return join(this.dataDir, 'worlds', '.locks');
   }
 
   /** Shared plugins directory */
@@ -218,16 +186,6 @@ export class Paths {
   /** Get world directory */
   worldDir(name: string): string {
     return join(this.worlds, name);
-  }
-
-  /**
-   * Get lock file path
-   *
-   * @deprecated worlds/.locks is no longer read or written by mcctl (#670).
-   * Removed in v3.0.0 (#736).
-   */
-  lockFile(world: string): string {
-    return join(this.locks, `${world}.lock`);
   }
 }
 

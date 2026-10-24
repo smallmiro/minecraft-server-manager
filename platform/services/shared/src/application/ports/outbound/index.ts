@@ -9,13 +9,6 @@ export type {
 } from './IPromptPort.js';
 
 export type {
-  IShellPort,
-  CreateServerOptions,
-  LogsOptions,
-  ShellResult,
-} from './IShellPort.js';
-
-export type {
   IDocProvider,
   DocServerTypeInfo,
   DocEnvVarInfo,
@@ -30,7 +23,6 @@ export type {
 
 export type {
   IWorldRepository,
-  WorldLockData,
   WorldWithServerStatus,
   ServerStatus,
   WorldAvailabilityCategory,

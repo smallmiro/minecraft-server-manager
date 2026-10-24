@@ -3,7 +3,6 @@ import {
   Paths,
   Config,
   // Infrastructure adapters from shared
-  ShellAdapter,
   DockerServerConsoleAdapter,
   ServerRepository,
   WorldRepository,
@@ -32,7 +31,6 @@ import {
   ConfigSnapshotScheduleUseCaseImpl,
   // Port types from shared
   type IPromptPort,
-  type IShellPort,
   type IContainerRuntimePort,
   type IServerConsolePort,
   type IWorldBackupPort,
@@ -70,7 +68,6 @@ export class Container {
 
   // Adapters (singleton)
   private _promptPort?: IPromptPort;
-  private _shellPort?: IShellPort;
   private _worldBackupPort?: IWorldBackupPort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
@@ -109,16 +106,6 @@ export class Container {
       this._promptPort = new ClackPromptAdapter();
     }
     return this._promptPort;
-  }
-
-  get shellPort(): IShellPort {
-    if (!this._shellPort) {
-      this._shellPort = new ShellAdapter({
-        paths: this.paths,
-        sudoPassword: this.sudoPassword,
-      });
-    }
-    return this._shellPort;
   }
 
   /** Same adapter as {@link containerRuntime} (kept for the logs command). */
@@ -255,42 +242,39 @@ export class Container {
   get createServerUseCase(): ICreateServerUseCase {
     return new CreateServerUseCase(
       this.promptPort,
-      this.shellPort,
       this.serverRepository,
       new Config(this.paths),
-      this.worldRepository,
-      this.auditLogPort,
-      this.modSourcePort,
-      this.worldAssignmentPort,
       {
         specRepo: this.serverSpecRepository,
         hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
-        // The first start can pull the image: create-server.sh ran compose up without a timeout.
+        // The first start can pull the image (no timeout before #675 either).
         runtime: new DockerComposeRuntimeAdapter({ root: this.paths.root, startTimeoutMs: 30 * 60_000 }),
         hostIps: () => resolveHostIps(this.paths),
-      }
+      },
+      this.worldRepository,
+      this.auditLogPort,
+      this.modSourcePort,
+      this.worldAssignmentPort
     );
   }
 
   get deleteServerUseCase(): IDeleteServerUseCase {
     return new DeleteServerUseCase(
       this.promptPort,
-      this.shellPort,
       this.serverRepository,
-      this.auditLogPort,
-      this.serverConsolePort,
       this.containerRuntime,
       {
         specRepo: this.serverSpecRepository,
         hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
-      }
+      },
+      this.auditLogPort,
+      this.serverConsolePort
     );
   }
 
   get worldManagementUseCase(): WorldManagementUseCase {
     return new WorldManagementUseCase(
       this.promptPort,
-      undefined, // no shell since mcctl.sh was removed (#734)
       this.worldRepository,
       this.serverRepository,
       this.worldAssignmentPort,
@@ -336,13 +320,11 @@ export class Container {
    */
   static createWithAdapters(
     promptPort: IPromptPort,
-    shellPort: IShellPort,
     serverRepo: IServerRepository,
     worldRepo: IWorldRepository
   ): Container {
     const container = new Container();
     container._promptPort = promptPort;
-    container._shellPort = shellPort;
     container._serverRepo = serverRepo;
     container._worldRepo = worldRepo;
     return container;
