@@ -33,6 +33,12 @@ describe('HostnameSection', () => {
       </QueryClientProvider>
     );
 
+  it('keeps the #hostnames anchor while loading, so the Routing deep link has a target', () => {
+    vi.mocked(mcctl.useServerHostnames).mockReturnValue({ data: undefined, isLoading: true } as any);
+    const { container } = renderIt();
+    expect(container.querySelector('#hostnames')).not.toBeNull();
+  });
+
   it('marks only the playit domain with a chip', () => {
     renderIt();
     expect(screen.getAllByText('playit')).toHaveLength(1);
