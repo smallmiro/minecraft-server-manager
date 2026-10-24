@@ -56,17 +56,6 @@ describe('groupRoutesByServer', () => {
     expect(group.hostnames.map((h) => h.hostname)).toEqual(['s.local', 'play.example.com', 's.1.1.1.1.nip.io']);
   });
 
-  it('counts hostnames per type, in display order, leaving out absent types', () => {
-    const [group] = groupRoutesByServer(
-      [route('s.local', 's'), route('s.1.1.1.1.nip.io', 's'), route('s.2.2.2.2.nip.io', 's')],
-      []
-    );
-    expect(group.typeCounts).toEqual([
-      { type: 'nipio', count: 2 },
-      { type: 'mdns', count: 1 },
-    ]);
-  });
-
   it('counts only hostnames mc-router reported as missing as not routed', () => {
     const [group] = groupRoutesByServer(
       [

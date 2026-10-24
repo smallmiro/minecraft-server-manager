@@ -61,9 +61,8 @@ const visuallyHiddenSx = {
   whiteSpace: 'nowrap',
 } as const;
 
-function TypeBadge({ type, count = 1 }: { type: HostnameType; count?: number }) {
-  const label = count > 1 ? `${HOSTNAME_TYPE_LABEL[type]} ×${count}` : HOSTNAME_TYPE_LABEL[type];
-  return <Chip label={label} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
+function TypeBadge({ type }: { type: HostnameType }) {
+  return <Chip label={HOSTNAME_TYPE_LABEL[type]} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
 }
 
 function StatusBadge({ route }: { route: RouteInfo }) {

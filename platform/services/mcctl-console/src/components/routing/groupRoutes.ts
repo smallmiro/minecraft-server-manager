@@ -20,7 +20,6 @@ export interface ServerRouteGroup {
   route: RouteInfo;
   /** Routed hostnames first, then by HOSTNAME_TYPE_ORDER; never empty. */
   hostnames: ServerHostname[];
-  typeCounts: Array<{ type: HostnameType; count: number }>;
   notRoutedCount: number;
 }
 
@@ -57,10 +56,6 @@ export function groupRoutesByServer(
       detail: serverRoutes.map(routeDetail).find(Boolean) ?? '',
       route: serverRoutes[0],
       hostnames,
-      typeCounts: HOSTNAME_TYPE_ORDER.map((type) => ({
-        type,
-        count: hostnames.filter((h) => h.type === type).length,
-      })).filter((entry) => entry.count > 0),
       notRoutedCount: hostnames.filter((h) => h.discoveredByRouter === false).length,
     };
   });
