@@ -22,6 +22,8 @@ import type { IPlayitAgentPort } from '../../application/ports/outbound/IPlayitA
 import type { IRuntimeEnvironmentPort, ToolVersion } from '../../application/ports/outbound/IRuntimeEnvironmentPort.js';
 
 const execFilePromise = promisify(execFile);
+/** `docker stats --no-stream` samples twice (~2 s); past this the child is killed. */
+const STATS_TIMEOUT_MS = 5000;
 
 /**
  * Get container status
@@ -239,16 +241,17 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
   /** getStats through an awaited `docker stats` (#764). Non-zero exit or unparseable → null. */
   async getStatsAsync(name: ServerName | string): Promise<ContainerStats | null> {
-    const result = await execCommandAsync('docker', [
-      'stats',
-      '--no-stream',
-      '--format',
-      '{{.MemUsage}},{{.CPUPerc}}',
-      '--',
-      workloadNameOf(name),
-    ]);
-    if (result.code !== 0) return null;
-    return parseDockerStats(result.stdout);
+    try {
+      // The timeout kills a hung `docker stats`; callers that stop waiting earlier do not leave it running
+      const { stdout } = await execFilePromise(
+        'docker',
+        ['stats', '--no-stream', '--format', '{{.MemUsage}},{{.CPUPerc}}', '--', workloadNameOf(name)],
+        { encoding: 'utf-8', timeout: STATS_TIMEOUT_MS, env: this.env() }
+      );
+      return parseDockerStats(String(stdout).trim());
+    } catch {
+      return null;
+    }
   }
 
   /**

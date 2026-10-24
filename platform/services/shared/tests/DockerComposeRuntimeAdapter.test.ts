@@ -191,25 +191,28 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
   });
 
   it('getStatsAsync runs docker stats without blocking and parses it like getStats (#764)', async () => {
-    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, '2GiB / 4GiB,15.23%\n'));
+    execFileCalls({ stdout: '2GiB / 4GiB,15.23%\n' });
     expect(await runtime.getStatsAsync(ServerName.create('ab'))).toEqual({
       memoryUsage: 2 * 1024 ** 3,
       memoryLimit: 4 * 1024 ** 3,
       memoryPercent: 50,
       cpuPercent: 15.23,
     });
-    expect(spawn).toHaveBeenCalledWith(
+    expect(execFile).toHaveBeenCalledWith(
       'docker',
       ['stats', '--no-stream', '--format', '{{.MemUsage}},{{.CPUPerc}}', '--', 'mc-ab'],
-      { stdio: ['pipe', 'pipe', 'pipe'], cwd: undefined }
+      expect.objectContaining({ timeout: 5000 }),
+      expect.any(Function)
     );
     expect(spawnSync).not.toHaveBeenCalled();
   });
 
-  it('getStatsAsync returns null on failure or unparseable output (#764)', async () => {
-    vi.mocked(spawn).mockReturnValueOnce(fakeChild(1, '', 'No such container'));
+  it('getStatsAsync returns null on failure, timeout or unparseable output (#764)', async () => {
+    execFileCalls(new Error('No such container'));
     expect(await runtime.getStatsAsync('mc-a')).toBeNull();
-    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'garbage'));
+    execFileCalls(Object.assign(new Error('killed'), { killed: true, signal: 'SIGTERM' }));
+    expect(await runtime.getStatsAsync('mc-a')).toBeNull();
+    execFileCalls({ stdout: 'garbage' });
     expect(await runtime.getStatsAsync('mc-a')).toBeNull();
   });
 
