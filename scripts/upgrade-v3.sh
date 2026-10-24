@@ -870,7 +870,7 @@ step7b_images() {
     [ "$name" = _template ] && continue
     st=$(capture docker inspect --format '{{.State.Status}}' "mc-$name")
     case "$st" in
-      exited | created) stopped="$stopped mc-$name" ;;
+      exited | created) stopped="$stopped $name" ;;
       running | restarting | paused) running="$running $name" ;;
     esac
   done
@@ -885,7 +885,7 @@ step7b_images() {
   say "Stopped:$stopped"
   say "An auto-scale start reuses the old container and its image. Recreating the container (it stays stopped; worlds and config are kept) makes the next start use the image the update pulled."
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would ask (default: yes), then run for each: docker compose up --no-start --no-deps <container>"
+    say "[dry-run] would ask (default: yes), then run for each: docker compose up --no-start --no-deps mc-<server>"
     record 7b "Server images" skipped "dry-run"
     return 0
   fi
@@ -894,11 +894,11 @@ step7b_images() {
     return 0
   fi
   for s in $stopped; do
-    old=$(capture docker inspect --format '{{.Image}}' "$s")
-    ref=$(capture docker inspect --format '{{.Config.Image}}' "$s")
-    if run docker compose up --no-start --no-deps "$s"; then
-      if [ -n "$old" ] && [ "$(capture docker inspect --format '{{.Image}}' "$s")" != "$old" ]; then
-        IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $ref && docker compose up --no-start --no-deps $s"$'\n'
+    old=$(capture docker inspect --format '{{.Image}}' "mc-$s")
+    ref=$(capture docker inspect --format '{{.Config.Image}}' "mc-$s")
+    if run docker compose up --no-start --no-deps "mc-$s"; then
+      if [ -n "$old" ] && [ "$(capture docker inspect --format '{{.Image}}' "mc-$s")" != "$old" ]; then
+        IMAGE_UNDO="${IMAGE_UNDO}      docker tag $old $ref && docker compose up --no-start --no-deps mc-$s"$'\n'
       fi
     else
       failed="$failed $s"

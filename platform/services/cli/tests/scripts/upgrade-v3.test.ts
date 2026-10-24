@@ -706,7 +706,7 @@ describe('upgrade-v3.sh', () => {
       expect(calls()).toMatch(/^docker compose up --no-start --no-deps mc-alpha$/m);
       expect(calls()).not.toMatch(/up --no-start --no-deps mc-beta/);
       expect(r.out).toMatch(/Running: beta .*mcctl stop <server> && mcctl start <server>/);
-      expect(r.out).toMatch(/\[ok\] Step 7b/);
+      expect(r.out).toMatch(/\[ok\] Step 7b .* - recreated: alpha$/m);
       expect(r.code).toBe(0);
       expect(r.out.slice(r.out.indexOf('Rollback'))).toContain(
         'docker tag sha256:old itzg/minecraft-server:java21 && docker compose up --no-start --no-deps mc-alpha',
@@ -716,7 +716,7 @@ describe('upgrade-v3.sh', () => {
     it('only shows the plan on a dry run', () => {
       server('alpha', 'exited');
       const r = run({ args: ['--dry-run'] });
-      expect(r.out).toContain('Stopped: mc-alpha');
+      expect(r.out).toContain('Stopped: alpha');
       expect(r.out).toMatch(/\[dry-run\] would ask .*docker compose up --no-start --no-deps/);
       expect(calls()).not.toMatch(/compose up/);
       expect(readFileSync(join(ctx.fake, 'mc-alpha.image'), 'utf8')).toBe('sha256:old\n');
@@ -732,7 +732,7 @@ describe('upgrade-v3.sh', () => {
     it('fails the step when recreating a server fails', () => {
       server('alpha', 'exited');
       const r = run({ args: ['--yes'], env: { FAKE_COMPOSE_FAIL: '1' } });
-      expect(r.out).toMatch(/\[failed\] Step 7b .*mc-alpha/);
+      expect(r.out).toMatch(/\[failed\] Step 7b .* - failed for: alpha$/m);
       expect(r.code).toBe(1);
     });
   });
