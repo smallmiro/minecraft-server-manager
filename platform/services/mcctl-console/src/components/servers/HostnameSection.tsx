@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -20,6 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import LanguageIcon from '@mui/icons-material/Language';
 import CloseIcon from '@mui/icons-material/Close';
+import { BentoPanel } from '@/components/bento';
 import { useQueryClient } from '@tanstack/react-query';
 import { useServerHostnames, useUpdateHostnames } from '@/hooks/useMcctl';
 import { usePlayitStatus } from '@/hooks/usePlayit';
@@ -127,20 +126,20 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
 
   if (isLoading) {
     return (
-      <Card id="hostnames" sx={{ mb: 3, borderRadius: 3, scrollMarginTop: 16 }}>
-        <CardContent>
+      <BentoPanel id="hostnames" sx={{ mb: 3, scrollMarginTop: 16 }}>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress size={24} />
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   return (
     <>
-      <Card id="hostnames" sx={{ mb: 3, borderRadius: 3, scrollMarginTop: 16 }}>
-        <CardContent>
+      <BentoPanel id="hostnames" sx={{ mb: 3, scrollMarginTop: 16 }}>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <LanguageIcon color="primary" />
             <Typography variant="h6" fontWeight={600}>
@@ -280,8 +279,8 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
               {updateHostnames.isPending ? 'Saving...' : 'Save Hostnames'}
             </Button>
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Snackbar */}
       <Snackbar

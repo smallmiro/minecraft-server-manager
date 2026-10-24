@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -30,6 +28,7 @@ import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FolderZipIcon from '@mui/icons-material/FolderZip';
 import BlockIcon from '@mui/icons-material/Block';
+import { BentoPanel } from '@/components/bento';
 import { useServerMods, useModSearch, useModProjects, useAddMod, useRemoveMod, useInstalledMods, useToggleModExclude } from '@/hooks/useMods';
 import type { ModProjectDetail, InstalledModEntry } from '@/ports/api/IMcctlApiClient';
 
@@ -65,8 +64,8 @@ function InstalledModCard({
   // Loading skeleton
   if (isLoading) {
     return (
-      <Card variant="outlined" sx={{ borderRadius: 2 }}>
-        <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+      <BentoPanel sx={{ borderRadius: 2 }}>
+        <Box sx={{ py: 1.5, px: 2 }}>
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
             <Skeleton variant="rounded" width={40} height={40} />
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -75,16 +74,16 @@ function InstalledModCard({
               <Skeleton variant="text" width="30%" height={16} />
             </Box>
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   // Fallback card (API failed or project not found)
   if (!detail) {
     return (
-      <Card variant="outlined" sx={{ borderRadius: 2 }}>
-        <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+      <BentoPanel sx={{ borderRadius: 2 }}>
+        <Box sx={{ py: 1.5, px: 2 }}>
           <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
             <Avatar variant="rounded" sx={{ width: 40, height: 40, bgcolor: 'action.hover' }}>
               <ExtensionIcon />
@@ -116,15 +115,15 @@ function InstalledModCard({
               </IconButton>
             </Tooltip>
           </Box>
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
     );
   }
 
   // Full detail card
   return (
-    <Card variant="outlined" sx={{ borderRadius: 2 }}>
-      <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+    <BentoPanel sx={{ borderRadius: 2 }}>
+      <Box sx={{ py: 1.5, px: 2 }}>
         <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
           <Avatar
             src={detail.iconUrl || undefined}
@@ -191,8 +190,8 @@ function InstalledModCard({
             </Box>
           </Box>
         </Box>
-      </CardContent>
-    </Card>
+      </Box>
+    </BentoPanel>
   );
 }
 
@@ -330,8 +329,8 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
       )}
 
       {/* Installed Mods */}
-      <Card sx={{ borderRadius: 3 }}>
-        <CardContent>
+      <BentoPanel>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight={600}>
               Installed Mods
@@ -382,12 +381,12 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
               </Box>
             ))
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Installed Jar Files — modpack installed mods (#523) */}
-      <Card sx={{ borderRadius: 3, mt: 3 }}>
-        <CardContent>
+      <BentoPanel sx={{ mt: 3 }}>
+        <Box sx={{ p: 2.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <FolderZipIcon sx={{ color: 'text.secondary' }} />
             <Typography variant="h6" fontWeight={600}>
@@ -417,16 +416,16 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
               {installedModsData.mods.map((entry: InstalledModEntry) => (
-                <Card
+                <BentoPanel
                   key={entry.filename}
-                  variant="outlined"
+                  component="div"
                   sx={{
                     borderRadius: 2,
                     opacity: entry.excluded ? 0.6 : 1,
                     borderColor: entry.excluded ? 'warning.main' : 'divider',
                   }}
                 >
-                  <CardContent sx={{ py: 1, px: 2, '&:last-child': { pb: 1 } }}>
+                  <Box sx={{ py: 1, px: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {entry.excluded ? (
                         <BlockIcon sx={{ fontSize: 18, color: 'warning.main', flexShrink: 0 }} />
@@ -470,13 +469,13 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
                         />
                       </Tooltip>
                     </Box>
-                  </CardContent>
-                </Card>
+                  </Box>
+                </BentoPanel>
               ))}
             </Box>
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Search Dialog */}
       <Dialog
@@ -526,12 +525,8 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
               {searchData.hits.map((hit) => {
                 const isInstalled = installedSlugs.has(hit.slug);
                 return (
-                  <Card
-                    key={hit.slug}
-                    variant="outlined"
-                    sx={{ borderRadius: 2 }}
-                  >
-                    <CardContent sx={{ py: 1.5, px: 2, '&:last-child': { pb: 1.5 } }}>
+                  <BentoPanel key={hit.slug} component="div" sx={{ borderRadius: 2 }}>
+                    <Box sx={{ py: 1.5, px: 2 }}>
                       <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
                         <Avatar
                           src={hit.iconUrl || undefined}
@@ -584,8 +579,8 @@ export function ServerModsTab({ serverName }: ServerModsTabProps) {
                           </Box>
                         </Box>
                       </Box>
-                    </CardContent>
-                  </Card>
+                    </Box>
+                  </BentoPanel>
                 );
               })}
             </Box>

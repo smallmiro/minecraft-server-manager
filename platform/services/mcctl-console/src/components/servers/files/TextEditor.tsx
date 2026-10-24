@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
@@ -13,6 +11,7 @@ import Dialog from '@mui/material/Dialog';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { BentoPanel } from '@/components/bento';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightSpecialChars, drawSelection, rectangularSelection } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
@@ -197,7 +196,7 @@ export function TextEditor({ serverName, filePath, onBack }: TextEditorProps) {
 
   return (
     <>
-      <Card sx={{ borderRadius: 3, display: 'flex', flexDirection: 'column', minHeight: 600 }}>
+      <BentoPanel sx={{ display: 'flex', flexDirection: 'column', minHeight: 600 }}>
         {/* Header */}
         <Box
           sx={{
@@ -230,7 +229,7 @@ export function TextEditor({ serverName, filePath, onBack }: TextEditorProps) {
         </Box>
 
         {/* Content */}
-        <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: 0, '&:last-child': { pb: 0 } }}>
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', p: 0 }}>
           {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1 }}>
               <CircularProgress />
@@ -275,8 +274,8 @@ export function TextEditor({ serverName, filePath, onBack }: TextEditorProps) {
               dirty={dirty}
             />
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      </BentoPanel>
 
       {/* Unsaved Changes Confirmation */}
       <Dialog open={backRequested} onClose={() => setBackRequested(false)} maxWidth="xs" fullWidth>
