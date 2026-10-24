@@ -207,6 +207,16 @@ describe('getRouterDetailInfoAsync (#768)', () => {
     expect(info.routes.every((r) => !('discoveredByRouter' in r))).toBe(true);
   });
 
+  it('does not flag stopped routes as not routed when the global AUTO_SCALE_UP is off', async () => {
+    const config = { ...ROUTER_CONFIG, Env: ROUTER_CONFIG.Env.filter((e) => !e.startsWith('AUTO_SCALE_UP=')) };
+    fakeDocker({ routerStatus: 'running', routerConfig: config, containers: CONTAINERS });
+    const info = await getRouterDetailInfoAsync({ routerApi: api({ 'alpha.local': { backend: 'mc-alpha:25565' } }) });
+    const beta = info.routes.find((r) => r.hostname === 'beta.local')!;
+    expect(beta.serverStatus).toBe('exited');
+    expect('discoveredByRouter' in beta).toBe(false);
+    expect(info.routes.find((r) => r.hostname === 'Alpha.192.168.1.10.nip.io')!.discoveredByRouter).toBe(false);
+  });
+
   it('does not call the API when the router is not running', async () => {
     fakeDocker({ routerStatus: 'exited', routerConfig: ROUTER_CONFIG, containers: CONTAINERS });
     const routerApi = api({ 'alpha.local': { backend: 'mc-alpha:25565' } });

@@ -360,7 +360,9 @@ export async function getRouterDetailInfoAsync(
   if (detailed.status !== 'running') return detailed;
 
   const listed = await (options.routerApi ?? routerApi).listRoutes();
-  detailed.routes = markDiscoveredRoutes(detailed.routes, listed ? listed.keys() : null);
+  detailed.routes = markDiscoveredRoutes(detailed.routes, listed ? listed.keys() : null, {
+    stoppedRoutesListed: detailed.autoScale?.up !== false,
+  });
   return detailed;
 }
 

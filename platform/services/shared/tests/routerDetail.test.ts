@@ -54,6 +54,14 @@ describe('resolveRouteAutoScale', () => {
     ).toEqual({ up: false, down: true });
   });
 
+  it('a stopped server cannot wake when the global is off, whatever its label says', () => {
+    // mc-router 1.47.1 drops stopped containers entirely unless the global AUTO_SCALE_UP is on (docker.go).
+    expect(resolveRouteAutoScale({ 'mc-router.auto-scale-up': 'true' }, { up: false, down: false })).toEqual({
+      up: false,
+      down: false,
+    });
+  });
+
   it('an absent or invalid label falls back to the global', () => {
     expect(resolveRouteAutoScale({ 'mc-router.auto-scale-up': 'maybe' }, global)).toEqual({ up: true, down: false });
   });
@@ -114,6 +122,16 @@ describe('markDiscoveredRoutes', () => {
     const marked = markDiscoveredRoutes(routes, null);
     expect(marked).toEqual(routes);
     expect(marked.every((r) => !('discoveredByRouter' in r))).toBe(true);
+  });
+
+  it('leaves stopped routes unjudged when mc-router does not list stopped containers', () => {
+    const mixed = [
+      { hostname: 'up.local', serverStatus: 'running' },
+      { hostname: 'down.local', serverStatus: 'exited' },
+    ];
+    const marked = markDiscoveredRoutes(mixed, [], { stoppedRoutesListed: false });
+    expect(marked[0]).toEqual({ hostname: 'up.local', serverStatus: 'running', discoveredByRouter: false });
+    expect('discoveredByRouter' in marked[1]!).toBe(false);
   });
 
   it('does not mutate its input', () => {

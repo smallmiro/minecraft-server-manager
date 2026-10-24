@@ -64,11 +64,14 @@ export const AUTO_SCALE_DOWN_LABEL = 'mc-router.auto-scale-down';
 
 /**
  * Effective auto-scale of one server, as mc-router computes it: a label that
- * parses as a bool (trimmed) wins, otherwise the router global.
+ * parses as a bool (trimmed) wins, otherwise the router global. Scale-up also
+ * needs the global on: with AUTO_SCALE_UP off mc-router ignores stopped
+ * containers entirely, so no label can make them wake (docker.go, v1.47.1).
  */
 export function resolveRouteAutoScale(labels: EnvValues, global: RouterAutoScale | undefined): RouteAutoScale {
+  const up = global?.up === false ? false : (parseGoBool(labels[AUTO_SCALE_UP_LABEL]?.trim()) ?? global?.up);
   return {
-    up: parseGoBool(labels[AUTO_SCALE_UP_LABEL]?.trim()) ?? global?.up,
+    up,
     down: parseGoBool(labels[AUTO_SCALE_DOWN_LABEL]?.trim()) ?? global?.down,
   };
 }
@@ -87,14 +90,22 @@ export function parseResolverEnv(env: EnvValues): RouterResolver {
 /**
  * Copies of `routes` with `discoveredByRouter` set from the hostnames the
  * management API lists (case-insensitive). `null` means the list is unknown:
- * the field is left out.
+ * the field is left out. With `stoppedRoutesListed: false` (global
+ * AUTO_SCALE_UP off) mc-router never lists stopped containers, so their
+ * absence says nothing and those routes are left out too.
  */
-export function markDiscoveredRoutes<T extends { hostname: string }>(
+export function markDiscoveredRoutes<T extends { hostname: string; serverStatus?: string }>(
   routes: readonly T[],
-  discovered: Iterable<string> | null
+  discovered: Iterable<string> | null,
+  options: { stoppedRoutesListed?: boolean } = {}
 ): Array<T & { discoveredByRouter?: boolean }> {
   if (discovered === null) return routes.map((route) => ({ ...route }));
   const known = new Set<string>();
   for (const hostname of discovered) known.add(hostname.toLowerCase());
-  return routes.map((route) => ({ ...route, discoveredByRouter: known.has(route.hostname.toLowerCase()) }));
+  const stoppedListed = options.stoppedRoutesListed ?? true;
+  return routes.map((route) =>
+    !stoppedListed && route.serverStatus !== 'running'
+      ? { ...route }
+      : { ...route, discoveredByRouter: known.has(route.hostname.toLowerCase()) }
+  );
 }
