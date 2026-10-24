@@ -142,6 +142,8 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
 
     if (!(await this.authenticate())) return skipped('sudo authentication failed; check the sudo password');
     // A host field equal to `hostname`: whitespace before it, whitespace, `#` or the line end after it.
+    // `d` drops the whole line, so other names on that line go too. Same as the #751 bash;
+    // mcctl registers one name per line (`<ip> <hostname>`), so only hand-edited lines can hold more.
     const host = hostname.replace(/[[\]\\.*^$/]/g, '\\$&');
     const expr = `/^[^#]*[[:space:]]${host}\\([[:space:]]\\|#\\|$\\)/d`;
     if ((await run('sudo', ['-n', 'sed', '-i', expr, this.hostsFile])) !== 0) {
