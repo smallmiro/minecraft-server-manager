@@ -87,7 +87,7 @@ export type {
   ConsoleCommandResult,
   ConsoleEndpoint,
 } from './IServerConsolePort.js';
-export type { IRouterStatusPort } from './IRouterStatusPort.js';
+export type { IRouterStatusPort, RouterContainerConfig } from './IRouterStatusPort.js';
 export type { IPlayitAgentPort } from './IPlayitAgentPort.js';
 export type { IHostnameRegistrarPort, HostnameRegistrarStatus, HostnameChangeResult } from './IHostnameRegistrarPort.js';
 export type { IRuntimeEnvironmentPort, ToolVersion } from './IRuntimeEnvironmentPort.js';

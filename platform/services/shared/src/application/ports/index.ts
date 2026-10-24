@@ -98,6 +98,7 @@ export type {
   ConsoleCommandResult,
   ConsoleEndpoint,
   IRouterStatusPort,
+  RouterContainerConfig,
   IPlayitAgentPort,
   IHostnameRegistrarPort,
   HostnameRegistrarStatus,
