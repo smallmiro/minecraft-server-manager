@@ -29,7 +29,11 @@ export function parseArgs(args: string[]): {
   while (i < args.length) {
     const arg = args[i]!;
 
-    if (arg.startsWith('--') && arg.includes('=')) {
+    if (arg === '--') {
+      // The rest is positional, e.g. a server command: mcctl exec srv -- say -h
+      result.positional.push(...args.slice(i + 1));
+      break;
+    } else if (arg.startsWith('--') && arg.includes('=')) {
       const eq = arg.indexOf('=');
       result.flags[arg.slice(2, eq)] = arg.slice(eq + 1);
       i++;
@@ -50,7 +54,7 @@ export function parseArgs(args: string[]): {
         result.flags[key] = true;
         i++;
       }
-    } else if (arg.startsWith('-') && arg.length === 2) {
+    } else if (arg.startsWith('-') && arg.length === 2 && !/^-\d$/.test(arg)) {
       const key = arg.slice(1);
       const nextArg = args[i + 1];
 

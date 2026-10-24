@@ -17,6 +17,18 @@ describe('parseArgs', () => {
     expect(positional).toEqual(['alpha']);
   });
 
+  it('keeps negative numbers in a command as positionals (#728)', () => {
+    const { flags, positional } = parseArgs(['exec', 'srv', 'tp', '@s', '-1', '64', '-5']);
+    expect(positional).toEqual(['srv', 'tp', '@s', '-1', '64', '-5']);
+    expect(flags).toEqual({});
+  });
+
+  it('reads everything after -- as positionals (#728)', () => {
+    const { flags, positional } = parseArgs(['exec', 'srv', '--', 'say', '-h', '--json']);
+    expect(positional).toEqual(['srv', 'say', '-h', '--json']);
+    expect(flags).toEqual({});
+  });
+
   it('does not take a flag as the value', () => {
     expect(parseArgs(['create', 'alpha', '-s', '--no-start']).flags).toEqual({ seed: true, 'no-start': true });
   });
