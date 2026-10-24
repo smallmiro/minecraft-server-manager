@@ -141,6 +141,31 @@ describe('ServersPage', () => {
     expect(screen.getByRole('dialog', { name: 'Create New Server' })).toBeInTheDocument();
   });
 
+  it('drops ?create=1 from the URL once the dialog is open so a reload does not reopen it', () => {
+    navigation.query = 'create=1';
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
+    renderPage();
+
+    expect(replaceState).toHaveBeenCalledWith(window.history.state, '', window.location.pathname);
+    replaceState.mockRestore();
+  });
+
+  it('opens the create dialog when ?create=1 arrives after the page mounted', () => {
+    navigation.query = '';
+    const { rerender } = renderPage();
+    expect(screen.queryByRole('dialog', { name: 'Create New Server' })).not.toBeInTheDocument();
+
+    navigation.query = 'create=1';
+    rerender(
+      <ThemeProvider>
+        <ServersPage />
+      </ThemeProvider>
+    );
+
+    expect(screen.getByRole('dialog', { name: 'Create New Server' })).toBeInTheDocument();
+  });
+
   it.each(['', 'create=0', 'other=1'])('does not open the create dialog for query "%s"', (query) => {
     navigation.query = query;
 

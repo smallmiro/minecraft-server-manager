@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -41,7 +41,15 @@ export default function ServersPage() {
   const router = useAppRouter();
   // The dashboard hero links here with ?create=1 to open the create dialog straight away
   const searchParams = useSearchParams();
-  const [createDialogOpen, setCreateDialogOpen] = useState(searchParams.get('create') === '1');
+  const createRequested = searchParams.get('create') === '1';
+  const [createDialogOpen, setCreateDialogOpen] = useState(createRequested);
+
+  useEffect(() => {
+    if (!createRequested) return;
+    setCreateDialogOpen(true);
+    // Drop the param without a navigation so a reload or Back does not reopen the dialog
+    window.history.replaceState(window.history.state, '', window.location.pathname);
+  }, [createRequested]);
   const [loadingServers, setLoadingServers] = useState<string[]>([]);
 
   const { data, isLoading, error } = useServers();
