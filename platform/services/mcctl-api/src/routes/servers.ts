@@ -33,6 +33,8 @@ import {
   FileServerSpecRepository,
   AvahiHostnameRegistrarAdapter,
   DockerComposeRuntimeAdapter,
+  DockerServerConsoleAdapter,
+  GetServerSummariesUseCase,
   resolveHostIps,
   type CreateServerConfig,
   type CreateServerRunOptions,
@@ -42,6 +44,7 @@ import '@minecraft-docker/mod-source-modrinth';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
 import {
   ServerListResponseSchema,
+  ServerListQuerySchema,
   ServerDetailResponseSchema,
   ExecCommandResponseSchema,
   ExecCommandRequestSchema,
@@ -57,6 +60,7 @@ import {
   DeleteServerResponseSchema,
   DeleteServerQuerySchema,
   type ServerSummary,
+  type ServerListQuery,
   type ServerDetail,
   type ServerNameParams,
   type ExecCommandRequest,
@@ -223,18 +227,30 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     return started.then(({ run }) => run);
   };
 
+  // One instance for the plugin's lifetime: its 10s TTL cache lives on it (#764).
+  // statsTimeoutMs 2000 bounds the whole summary call at about 2s.
+  const serverSummaries = new GetServerSummariesUseCase(
+    new ServerRepository(),
+    new DockerComposeRuntimeAdapter(),
+    new DockerServerConsoleAdapter(),
+    { statsTimeoutMs: 2000 },
+  );
+
   /**
    * GET /api/servers
    * List all Minecraft servers
    */
-  fastify.get('/api/servers', {
+  fastify.get<{ Querystring: ServerListQuery }>('/api/servers', {
     schema: {
+      description: 'List all servers. Pass include=summary to add type, version, memory, players, stats per server and a totals object (RCON queried in parallel, 2s timeout per server, cached 10s).',
+      tags: ['servers'],
+      querystring: ServerListQuerySchema,
       response: {
         200: ServerListResponseSchema,
         500: ErrorResponseSchema,
       },
     },
-  }, async (_request, reply) => {
+  }, async (request, reply) => {
     try {
       // Get all servers (both configured and running containers)
       const serverNames = getAllServers();
@@ -248,6 +264,15 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           hostname: info.hostname,
         };
       });
+
+      if (request.query.include === 'summary') {
+        const summary = await serverSummaries.execute(servers);
+        return reply.send({
+          servers: summary.servers,
+          total: summary.servers.length,
+          totals: summary.totals,
+        });
+      }
 
       return reply.send({
         servers,

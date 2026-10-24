@@ -43,12 +43,27 @@ export const ContainerStatsSchema = Type.Object({
 });
 
 // Server Schemas
+// The optional fields are present only for `?include=summary` (#764).
+// `players: null` means the RCON query failed or timed out (running servers only).
 export const ServerSummarySchema = Type.Object({
   name: Type.String(),
   container: Type.String(),
   status: ContainerStatusSchema,
   health: HealthStatusSchema,
   hostname: Type.String(),
+  type: Type.Optional(Type.String()),
+  version: Type.Optional(Type.String()),
+  memory: Type.Optional(Type.String()),
+  players: Type.Optional(Type.Union([PlayerListSchema, Type.Null()])),
+  stats: Type.Optional(Type.Object({
+    memoryUsage: Type.Number(),
+    memoryLimit: Type.Number(),
+  })),
+});
+
+// GET /api/servers query: `include=summary` opts in to type/version/memory/players/stats + totals
+export const ServerListQuerySchema = Type.Object({
+  include: Type.Optional(Type.Literal('summary')),
 });
 
 export const ServerDetailSchema = Type.Object({
@@ -78,6 +93,11 @@ export const ExecCommandRequestSchema = Type.Object({
 export const ServerListResponseSchema = Type.Object({
   servers: Type.Array(ServerSummarySchema),
   total: Type.Number(),
+  totals: Type.Optional(Type.Object({
+    playersOnline: Type.Number(),
+    playersMax: Type.Number(),
+    running: Type.Number(),
+  })),
 });
 
 export const ServerDetailResponseSchema = Type.Object({
@@ -254,6 +274,7 @@ export const DeleteServerQuerySchema = Type.Object({
 
 // Type exports
 export type ServerSummary = Static<typeof ServerSummarySchema>;
+export type ServerListQuery = Static<typeof ServerListQuerySchema>;
 export type ServerDetail = Static<typeof ServerDetailSchema>;
 export type ServerNameParams = Static<typeof ServerNameParamsSchema>;
 export type ExecCommandRequest = Static<typeof ExecCommandRequestSchema>;
