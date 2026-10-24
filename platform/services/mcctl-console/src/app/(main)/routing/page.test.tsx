@@ -12,6 +12,10 @@ vi.mock('@/hooks/useMcctl', () => ({
   useStartServer: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }));
 
+vi.mock('@/hooks/useRouterLogStream', () => ({
+  useRouterLogStream: vi.fn(() => ({ events: [], status: 'live', clear: vi.fn() })),
+}));
+
 const mockRestart = vi.fn();
 const mockSession = vi.fn(() => ({ data: { user: { role: 'admin' } }, isPending: false }));
 
@@ -188,7 +192,9 @@ describe('RoutingPage', () => {
 
     renderComponent();
 
-    expect(screen.getByText('WAN')).toBeInTheDocument();
+    // the diagram also names the access type, so scope to the routes table
+    expect(within(screen.getByRole('region', { name: 'Router routes' })).getByText('WAN')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Routing flow' })).getByText('WAN')).toBeInTheDocument();
   });
 
   it('shows port and mode only once (no duplicate platform/network cards)', () => {
@@ -257,6 +263,30 @@ describe('RoutingPage', () => {
     } as any);
     renderComponent();
     expect(screen.getByText('survival.192.168.1.5.nip.io')).toBeInTheDocument();
+  });
+
+  describe('flow diagram and live log', () => {
+    it('renders the flow diagram panel from the router routes', () => {
+      mockLoaded();
+      renderComponent();
+      const region = screen.getByRole('region', { name: 'Routing flow' });
+      expect(within(region).getByRole('img')).toHaveAttribute('aria-label', expect.stringContaining('2 servers'));
+      expect(within(region).getAllByTestId('flow-server-node')).toHaveLength(2);
+    });
+
+    it('renders the live router log panel', () => {
+      mockLoaded();
+      renderComponent();
+      const region = screen.getByRole('region', { name: 'Live router log' });
+      expect(within(region).getByRole('heading', { name: 'Live Router Log' })).toBeInTheDocument();
+      expect(within(region).getByLabelText('Log stream status')).toHaveTextContent('Live');
+    });
+
+    it('does not open the log stream while router data is loading', () => {
+      vi.mocked(useRouterStatus).mockReturnValue({ data: undefined, isLoading: true, error: null } as any);
+      renderComponent();
+      expect(screen.queryByRole('region', { name: 'Live router log' })).not.toBeInTheDocument();
+    });
   });
 
   describe('Restart mc-router', () => {
