@@ -72,7 +72,7 @@
 
 ## 3. 렌더링
 
-- **경계**: 인프라 내부 인터페이스 `ServerSpecRenderer { render(doc, ctx) }`. `FileServerSpecRepository`가 생성자로 받는다. 애플리케이션 코드는 렌더러를 부르지 않으므로 포트가 아니다. 지금은 `DockerComposeRenderer`만 구현하고, `KubernetesManifestRenderer`(StatefulSet, Service, PVC)는 #641까지 인터페이스로만 둔다. #641은 렌더러와 함께 스펙 저장·매니페스트 적용에 필요한 k8s 저장소 어댑터를 추가한다. ADR-0001의 `apply(spec)`는 필요 없다. 삭제(#735)는 월드를 옮긴 뒤 `removeIncludeEntry`로 서버의 include 항목(남은 항목이 없으면 `include:` 자체)을 지우고 `servers/<n>`을 지운다. [ADR-0001 S7](0001-container-runtime-ports.ko.md#스크립트-제거-s7-delete-serversh735) 참고.
+- **경계**: 인프라 내부 인터페이스 `ServerSpecRenderer { render(doc, ctx) }`. `FileServerSpecRepository`가 생성자로 받는다. 애플리케이션 코드는 렌더러를 부르지 않으므로 포트가 아니다. 지금은 `DockerComposeRenderer`만 구현하고, `KubernetesManifestRenderer`(StatefulSet, Service, PVC)는 #641까지 인터페이스로만 둔다. #641은 렌더러와 함께 스펙 저장·매니페스트 적용에 필요한 k8s 저장소 어댑터를 추가한다. ADR-0001의 `apply(spec)`는 필요 없다. 삭제(#735)는 월드를 옮기기 전에 `removeIncludeEntry`로 서버의 include 항목(남은 항목이 없으면 `include:` 자체)을 지우고, 옮긴 뒤 `servers/<n>`을 지운다. [ADR-0001 S7](0001-container-runtime-ports.ko.md#스크립트-제거-s7-delete-serversh735) 참고.
 
 | 파일 | 방법 | 수정 감지 |
 |------|------|-----------|
