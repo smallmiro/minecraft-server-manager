@@ -13,7 +13,7 @@ vi.mock('@/lib/auth-utils', () => {
       this.statusCode = statusCode;
     }
   }
-  return { requireAuth: vi.fn(), AuthError };
+  return { requireAuth: vi.fn(), requireAdmin: vi.fn(), AuthError };
 });
 
 const mockRestartRouter = vi.fn();
@@ -35,7 +35,7 @@ vi.mock('@/adapters/McctlApiAdapter', () => {
 });
 
 import { POST } from '../restart/route';
-import { requireAuth, AuthError } from '@/lib/auth-utils';
+import { requireAdmin, AuthError } from '@/lib/auth-utils';
 import { McctlApiError } from '@/adapters/McctlApiAdapter';
 
 const mockSession = {
@@ -46,7 +46,7 @@ const mockSession = {
 describe('POST /api/router/restart', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockResolvedValue(mockSession as any);
+    vi.mocked(requireAdmin).mockResolvedValue(mockSession as any);
   });
 
   it('proxies the restart to mcctl-api', async () => {
@@ -60,12 +60,21 @@ describe('POST /api/router/restart', () => {
   });
 
   it('returns 401 when unauthenticated', async () => {
-    vi.mocked(requireAuth).mockRejectedValue(new AuthError('Authentication required', 401));
+    vi.mocked(requireAdmin).mockRejectedValue(new AuthError('Authentication required', 401));
 
     const response = await POST();
 
     expect(response.status).toBe(401);
     expect((await response.json()).error).toBe('Unauthorized');
+    expect(mockRestartRouter).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 for non-admins: a restart drops every player on every server', async () => {
+    vi.mocked(requireAdmin).mockRejectedValue(new AuthError('Forbidden: Admin access required', 403));
+
+    const response = await POST();
+
+    expect(response.status).toBe(403);
     expect(mockRestartRouter).not.toHaveBeenCalled();
   });
 

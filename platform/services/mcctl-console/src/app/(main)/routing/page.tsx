@@ -21,6 +21,7 @@ import {
 } from '@/components/routing';
 import { PlayitSection } from '@/components/settings';
 import { useRestartRouter, useRouterStatus } from '@/hooks/useMcctl';
+import { useSession } from '@/lib/auth-client';
 import { usePlayitStatus } from '@/hooks/usePlayit';
 
 const embeddedCardSx = {
@@ -61,6 +62,8 @@ export default function RoutingPage() {
   const { data: playit } = usePlayitStatus();
   const playitDomains = useMemo(() => (playit?.servers ?? []).map((server) => server.playitDomain), [playit?.servers]);
   const restartRouter = useRestartRouter();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
@@ -99,15 +102,20 @@ export default function RoutingPage() {
         eyebrow="Network"
         icon={<RouterIcon />}
         actions={
-          <Button
-            variant="outlined"
-            color="warning"
-            startIcon={restartRouter.isPending ? <CircularProgress size={16} color="inherit" /> : <RestartAltIcon />}
-            disabled={restartRouter.isPending || !router}
-            onClick={() => setConfirmOpen(true)}
-          >
-            Restart mc-router
-          </Button>
+          isAdmin && (
+            <Button
+              variant="outlined"
+              color="warning"
+              startIcon={restartRouter.isPending ? <CircularProgress size={16} color="inherit" /> : <RestartAltIcon />}
+              // No container to restart: compose would no-op and still report success
+              disabled={
+                restartRouter.isPending || !router || router.status === 'not_found' || router.status === 'not_created'
+              }
+              onClick={() => setConfirmOpen(true)}
+            >
+              Restart mc-router
+            </Button>
+          )
         }
         status={
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
@@ -122,11 +130,7 @@ export default function RoutingPage() {
         }
       />
 
-      {error && (
-        <Alert severity="error">
-          Failed to load router status: {error.message}
-        </Alert>
-      )}
+      {error && <Alert severity="error">Failed to load router status: {error.message}</Alert>}
 
       {isLoading ? (
         <BentoGrid aria-label="Routing content loading">

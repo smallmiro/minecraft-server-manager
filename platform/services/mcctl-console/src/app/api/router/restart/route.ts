@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createMcctlApiClient, McctlApiError, UserContext } from '@/adapters/McctlApiAdapter';
-import { requireAuth, AuthError } from '@/lib/auth-utils';
+import { requireAdmin, AuthError } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -17,11 +17,12 @@ function getUserContext(session: { user: { name?: string | null; email: string; 
 
 /**
  * POST /api/router/restart
- * Proxy to mcctl-api: Restart mc-router
+ * Proxy to mcctl-api: Restart mc-router (admin only)
  */
 export async function POST() {
   try {
-    const session = await requireAuth(await headers());
+    // Admin only: restarting mc-router drops every player on every server
+    const session = await requireAdmin(await headers());
 
     const client = createMcctlApiClient(getUserContext(session));
     const data = await client.restartRouter();

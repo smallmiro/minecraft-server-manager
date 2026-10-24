@@ -13,6 +13,11 @@ vi.mock('@/hooks/useMcctl', () => ({
 }));
 
 const mockRestart = vi.fn();
+const mockSession = vi.fn(() => ({ data: { user: { role: 'admin' } }, isPending: false }));
+
+vi.mock('@/lib/auth-client', () => ({
+  useSession: () => mockSession(),
+}));
 
 vi.mock('@/hooks/usePlayit', () => ({
   usePlayitStatus: vi.fn(() => ({
@@ -289,6 +294,24 @@ describe('RoutingPage', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Restart mc-router' }));
       fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Restart' }));
       expect(await screen.findByText(/docker restart failed/)).toBeInTheDocument();
+    });
+
+    it('is not offered to non-admins, since the restart route is admin only', () => {
+      mockLoaded();
+      mockSession.mockReturnValueOnce({ data: { user: { role: 'user' } }, isPending: false });
+      renderComponent();
+      expect(screen.queryByRole('button', { name: 'Restart mc-router' })).not.toBeInTheDocument();
+    });
+
+    it('is disabled when the mc-router container does not exist', () => {
+      vi.mocked(useRouterStatus).mockReturnValue({
+        data: { ...mockRouterStatusData, router: { ...mockRouterStatusData.router, status: 'not_found' } },
+        isLoading: false,
+        error: null,
+      } as any);
+      vi.mocked(useRestartRouter).mockReturnValue({ mutate: mockRestart, isPending: false } as any);
+      renderComponent();
+      expect(screen.getByRole('button', { name: 'Restart mc-router' })).toBeDisabled();
     });
 
     it('disables the hero action while a restart is pending', () => {
