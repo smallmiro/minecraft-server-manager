@@ -36,6 +36,8 @@ interface RoutingTableProps {
 }
 
 interface RouteRow {
+  /** hostname alone can repeat across servers. */
+  key: string;
   hostname: string;
   serverName: string;
   detail: string;
@@ -139,12 +141,14 @@ function EmptyState({ message }: { message: string }) {
 
 export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
   const theme = useTheme();
-  const isXs = useMediaQuery(theme.breakpoints.down('sm'));
+  // Rendered only on the client after data loads, so read the query on the first pass.
+  const isXs = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
   const [query, setQuery] = useState('');
 
   const rows = useMemo<RouteRow[]>(
     () =>
-      routes.map((route) => ({
+      routes.map((route, index) => ({
+        key: `${route.hostname}|${route.target}|${index}`,
         hostname: route.hostname,
         serverName: extractServerName(route.target),
         detail: [route.serverType, route.serverVersion].filter(Boolean).join(' '),
@@ -195,7 +199,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
           {visible.map((row) => (
             <Box
               component="li"
-              key={row.hostname}
+              key={row.key}
               sx={{ border: 1, borderColor: 'divider', borderRadius: 2, p: 1.5, minWidth: 0 }}
             >
               <HostnameCell hostname={row.hostname} />
@@ -229,7 +233,7 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
           </TableHead>
           <TableBody>
             {visible.map((row) => (
-              <TableRow key={row.hostname} hover>
+              <TableRow key={row.key} hover>
                 <TableCell sx={wrapSx}>
                   <HostnameCell hostname={row.hostname} />
                 </TableCell>

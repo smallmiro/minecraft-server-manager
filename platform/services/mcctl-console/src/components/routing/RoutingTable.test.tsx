@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { ThemeProvider } from '@/theme';
 import { RoutingTable } from './RoutingTable';
 import type { RouteInfo } from '@/ports/api/IMcctlApiClient';
@@ -126,5 +127,27 @@ describe('RoutingTable', () => {
     const label = screen.getByText('Actions');
     expect(getComputedStyle(label).width).toBe('1px');
     expect(getComputedStyle(label).height).toBe('1px');
+  });
+
+  it('renders rows that share a hostname without duplicate keys', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    renderTable([
+      { hostname: 'play.example.com', target: 'mc-a:25565', serverStatus: 'running' },
+      { hostname: 'play.example.com', target: 'mc-b:25565', serverStatus: 'exited' },
+    ]);
+    expect(screen.getAllByText('play.example.com')).toHaveLength(2);
+    expect(errorSpy.mock.calls.flat().join(' ')).not.toMatch(/same key/);
+    errorSpy.mockRestore();
+  });
+
+  it('picks the xs card list on the first render, without a table pass', () => {
+    setMobile(true);
+    const html = renderToString(
+      <ThemeProvider>
+        <RoutingTable routes={routes} playitDomains={[]} />
+      </ThemeProvider>
+    );
+    expect(html).toContain('aria-label="Routes"');
+    expect(html).not.toContain('<table');
   });
 });
