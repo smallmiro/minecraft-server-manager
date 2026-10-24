@@ -53,7 +53,7 @@ mcctl migrate spec --all --dry-run   # 가져올 내용 미리 보기
 mcctl migrate spec --all             # 가져오고 파일 쓰기
 ```
 
-가져오기는 `config.env` 키를 하나도 잃지 않습니다. `docker-compose.yml`의 `environment` 항목은 `env`로 옮깁니다(Compose가 `config.env`보다 우선했으므로, 충돌은 보고합니다). 월드나 이미지를 `${...}` 보간으로 정한 서버는 값을 리터럴로 바꿀 때까지 가져오지 않습니다. `VERSION=`처럼 빈 값은 비어 있는 채로 남깁니다(`version: ""`). 빈 값도 `servers/global.env`보다 우선하기 때문입니다. mcctl은 `config.env` 값의 `$`는 작은따옴표 안에, compose 이미지나 라우터 라벨의 `$`는 `$$`로 써서 Docker Compose가 보간하지 않게 합니다. `mcctl upgrade`는 아직 `server.yaml`이 없는 서버를 알려 줍니다.
+가져오기는 `config.env` 키를 하나도 잃지 않습니다. `docker-compose.yml`의 `environment` 항목은 `env`로 옮깁니다(Compose가 `config.env`보다 우선했으므로, 충돌은 보고합니다). 월드나 이미지를 `${...}` 보간으로 정한 서버는 값을 리터럴로 바꿀 때까지 가져오지 않습니다. `VERSION=`처럼 빈 값은 비어 있는 채로 남깁니다(`version: ""`). 빈 값도 `servers/global.env`보다 우선하기 때문입니다. mcctl은 `config.env` 값의 `$`는 작은따옴표 안에(이런 값은 `\`로 끝날 수 없습니다), compose 이미지나 라우터 라벨의 `$`는 `$$`로 써서 Docker Compose가 보간하지 않게 합니다. `mcctl upgrade`는 아직 `server.yaml`이 없는 서버를 알려 줍니다.
 
 ## 손으로 고친 경우
 

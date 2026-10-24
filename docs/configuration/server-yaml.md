@@ -53,7 +53,7 @@ mcctl migrate spec --all --dry-run   # what would be imported
 mcctl migrate spec --all             # import and write the files
 ```
 
-The import keeps every `config.env` key. A `docker-compose.yml` `environment` entry moves into `env` (Compose gave it precedence over `config.env`; a clash is reported). A server whose world or image is set through `${...}` interpolation cannot be imported until the value is literal. An empty value such as `VERSION=` stays empty (`version: ""`), because it still overrides `servers/global.env`. mcctl writes a `$` in a `config.env` value inside single quotes and a `$` in the compose image or router labels as `$$`, so Docker Compose does not interpolate it. `mcctl upgrade` lists the servers that have no `server.yaml` yet.
+The import keeps every `config.env` key. A `docker-compose.yml` `environment` entry moves into `env` (Compose gave it precedence over `config.env`; a clash is reported). A server whose world or image is set through `${...}` interpolation cannot be imported until the value is literal. An empty value such as `VERSION=` stays empty (`version: ""`), because it still overrides `servers/global.env`. mcctl writes a `$` in a `config.env` value inside single quotes (such a value must not end with `\`) and a `$` in the compose image or router labels as `$$`, so Docker Compose does not interpolate it. `mcctl upgrade` lists the servers that have no `server.yaml` yet.
 
 ## Hand edits
 
