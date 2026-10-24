@@ -15,6 +15,7 @@ import { rm } from 'node:fs/promises';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { hostname, tmpdir, uptime } from 'node:os';
 import { join } from 'node:path';
+import yaml from 'js-yaml';
 import { Paths } from '../src/utils/index.js';
 import { ServerSpecError } from '../src/domain/server-spec/ServerSpecDocument.js';
 import {
@@ -36,6 +37,7 @@ beforeEach(() => {
   mkdirSync(at('servers', 'alpha', 'data', 'alpha'), { recursive: true });
   mkdirSync(at('worlds'));
   writeFileSync(at('servers', 'alpha', 'config.env'), 'LEVEL=alpha\n');
+  writeFileSync(at('servers', 'alpha', 'docker-compose.yml'), '');
   writeFileSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'), 'level');
   writeFileSync(at('servers', 'compose.yml'), 'include:\n  - alpha/docker-compose.yml\n  - beta/docker-compose.yml\n');
   repo = new FileServerSpecRepository(new Paths(root), undefined, undefined, () => []);
@@ -47,19 +49,27 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-/** Another live mcctl process holds servers/compose.yml. */
-function holdIncludeLock(): void {
+/** Another live mcctl process holds the lock file `servers/<file>`. */
+function holdLock(file: string, op: string): void {
   const holder = {
     pid: process.pid,
     hostname: hostname(),
     bootTime: Math.round(Date.now() - uptime() * 1000),
     nonce: 'someone-else',
-    op: 'compose-include',
+    op,
     startedAt: new Date().toISOString(),
   };
-  writeFileSync(at('servers', '.compose.yml.lock'), JSON.stringify(holder));
+  writeFileSync(at('servers', file), JSON.stringify(holder));
+}
+
+/** Another live mcctl process holds servers/compose.yml. */
+function holdIncludeLock(): void {
+  holdLock('.compose.yml.lock', 'compose-include');
   serverSpecTestHooks.includeLockWaitMs = 50;
 }
+
+/** servers/compose.yml's include list. */
+const includeList = () => (yaml.load(compose()) as { include?: unknown[] } | null)?.include;
 
 /** A second world folder, so a move can fail after the first one moved. */
 function addNether(): void {
@@ -85,6 +95,36 @@ describe('delete: the include entry goes before the world moves (#735 review)', 
     expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
     expect(existsSync(at('worlds', 'alpha'))).toBe(false);
     expect(includeEntries(compose())).toContain('alpha/docker-compose.yml');
+  });
+});
+
+describe('delete: one delete of a server at a time, across processes (#735 re-review)', () => {
+  it('a second delete of the same server fails with locked and changes nothing', async () => {
+    let second: unknown;
+    serverSpecTestHooks.beforeWorldMove = async () => {
+      second = await repo.delete('alpha', { deleteWorld: true }).catch((e: unknown) => e);
+    };
+    await repo.delete('alpha');
+
+    expect(second).toBeInstanceOf(ServerSpecError);
+    expect((second as ServerSpecError).code).toBe('locked');
+    expect((second as ServerSpecError).message).toMatch(/servers\/alpha is already being deleted by pid \d+/);
+    expect(existsSync(at('worlds', 'alpha', 'level.dat'))).toBe(true);
+    expect(existsSync(at('servers', '.alpha.delete.lock'))).toBe(false);
+  });
+
+  it.each([false, true])('a delete held by another process refuses before any change (dryRun %s)', async (dryRun) => {
+    holdLock('.alpha.delete.lock', 'server-delete');
+    const error = await rejection(repo.delete('alpha', { dryRun }));
+    expect(error.code).toBe('locked');
+    expect(existsSync(at('servers', 'alpha', 'data', 'alpha', 'level.dat'))).toBe(true);
+    expect(includeEntries(compose())).toContain('alpha/docker-compose.yml');
+  });
+
+  it('releases the lock when the delete fails', async () => {
+    mkdirSync(at('worlds', 'alpha'));
+    await expect(repo.delete('alpha')).rejects.toThrow(/worlds\/alpha/);
+    expect(existsSync(at('servers', '.alpha.delete.lock'))).toBe(false);
   });
 });
 
@@ -123,6 +163,39 @@ describe('delete: a failed move puts the include entry back (#735 review)', () =
     };
     await expect(repo.delete('alpha')).rejects.toThrow(/worlds\/alpha appeared/);
     expect(compose()).toBe('include:\n  - alpha/docker-compose.yml\n');
+  });
+
+  it('does not put the entry back once servers/alpha/docker-compose.yml is gone, and says so (#735 re-review)', async () => {
+    serverSpecTestHooks.beforeWorldMove = async () => {
+      rmSync(at('servers', 'alpha', 'docker-compose.yml'));
+      mkdirSync(at('worlds', 'alpha'));
+    };
+    const error = await rejection(repo.delete('alpha'));
+    expect(error.message).toMatch(/worlds\/alpha appeared/);
+    expect(error.message).toContain(
+      'servers/alpha/docker-compose.yml no longer exists, so its servers/compose.yml entry was not put back'
+    );
+    expect(includeEntries(compose())).toEqual(['beta/docker-compose.yml']);
+  });
+
+  it.each([
+    [
+      'a long-form entry with options',
+      [{ path: 'alpha/docker-compose.yml', project_directory: '.', env_file: 'alpha.env' }, 'beta/docker-compose.yml'],
+    ],
+    [
+      'a multi-path entry, which only lost alpha',
+      [{ path: ['alpha/docker-compose.yml', 'beta/docker-compose.yml'], env_file: 'shared.env' }],
+    ],
+  ])('restores %s in its form when another process changed servers/compose.yml meanwhile (#735 re-review)', async (_, original) => {
+    writeFileSync(at('servers', 'compose.yml'), yaml.dump({ include: original }));
+    serverSpecTestHooks.beforeWorldMove = async () => {
+      writeFileSync(at('servers', 'compose.yml'), yaml.dump({ include: [...(includeList() ?? []), 'gamma/docker-compose.yml'] }));
+      mkdirSync(at('worlds', 'alpha'));
+    };
+
+    await expect(repo.delete('alpha')).rejects.toThrow(/worlds\/alpha appeared/);
+    expect(includeList()).toEqual([...original, 'gamma/docker-compose.yml']);
   });
 
   it.each([
