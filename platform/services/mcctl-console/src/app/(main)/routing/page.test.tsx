@@ -144,12 +144,12 @@ describe('RoutingPage', () => {
     await waitFor(() => {
       expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
       expect(screen.getByLabelText('Router status')).toHaveTextContent('running');
-      expect(screen.getByLabelText('Route count')).toHaveTextContent('2 routes');
+      expect(screen.getByLabelText('Route count')).toHaveTextContent('2 servers · 2 hostnames');
       expect(screen.getByText('mc-router Gateway')).toBeInTheDocument();
     });
   });
 
-  it('lists every hostname in the routing table without expanding anything', () => {
+  it('lists one row per server in the routing table', () => {
     vi.mocked(useRouterStatus).mockReturnValue({
       data: mockRouterStatusData,
       isLoading: false,

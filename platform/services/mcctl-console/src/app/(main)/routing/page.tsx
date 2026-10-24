@@ -38,6 +38,8 @@ const embeddedCardSx = {
   },
 };
 
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
 function SkeletonPanel({ featured = false }: { featured?: boolean }) {
   return (
     <BentoPanel
@@ -75,6 +77,10 @@ export default function RoutingPage() {
   });
   const router = data?.router;
   const firstRoute = router?.routes[0];
+  const serverCount = useMemo(
+    () => new Set((router?.routes ?? []).map((route) => extractServerName(route.target))).size,
+    [router?.routes],
+  );
 
   const handleRestart = () => {
     restartRouter.mutate(undefined, {
@@ -125,7 +131,11 @@ export default function RoutingPage() {
             <Chip aria-label="Router status" label={statusLabel} color={statusColor} size="small" />
             <Chip
               aria-label="Route count"
-              label={router ? `${router.routes.length} routes` : 'No route data'}
+              label={
+                router
+                  ? `${plural(serverCount, 'server')} · ${plural(router.routes.length, 'hostname')}`
+                  : 'No route data'
+              }
               size="small"
               variant="outlined"
             />

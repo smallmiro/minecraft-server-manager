@@ -1,11 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
+import Collapse from '@mui/material/Collapse';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
@@ -20,6 +21,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import DnsIcon from '@mui/icons-material/Dns';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import RouterIcon from '@mui/icons-material/Router';
@@ -28,29 +30,13 @@ import { BentoPanelHeader } from '@/components/bento';
 import { CopyButton } from '@/components/common';
 import { useStartServer } from '@/hooks/useMcctl';
 import type { RouteInfo } from '@/ports/api/IMcctlApiClient';
-import {
-  HOSTNAME_TYPE_LABEL,
-  classifyRouteHostname,
-  extractServerName,
-  isRouteStartable,
-  routeStatusDisplay,
-  type HostnameType,
-} from './hostnameType';
+import { groupRoutesByServer, type ServerRouteGroup } from './groupRoutes';
+import { HOSTNAME_TYPE_LABEL, isRouteStartable, routeStatusDisplay, type HostnameType } from './hostnameType';
 
 interface RoutingTableProps {
   routes: RouteInfo[];
   /** playitDomain values from usePlayitStatus().servers (null when unassigned). */
   playitDomains: ReadonlyArray<string | null | undefined>;
-}
-
-interface RouteRow {
-  /** hostname alone can repeat across servers. */
-  key: string;
-  hostname: string;
-  serverName: string;
-  detail: string;
-  type: HostnameType;
-  route: RouteInfo;
 }
 
 const TYPE_COLOR: Record<HostnameType, 'info' | 'secondary' | 'primary' | 'default'> = {
@@ -75,8 +61,9 @@ const visuallyHiddenSx = {
   whiteSpace: 'nowrap',
 } as const;
 
-function TypeBadge({ type }: { type: HostnameType }) {
-  return <Chip label={HOSTNAME_TYPE_LABEL[type]} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
+function TypeBadge({ type, count = 1 }: { type: HostnameType; count?: number }) {
+  const label = count > 1 ? `${HOSTNAME_TYPE_LABEL[type]} ×${count}` : HOSTNAME_TYPE_LABEL[type];
+  return <Chip label={label} size="small" color={TYPE_COLOR[type]} variant="outlined" />;
 }
 
 function StatusBadge({ route }: { route: RouteInfo }) {
@@ -98,20 +85,16 @@ const NOT_ROUTED_HINT =
   'mc-router has not registered this hostname, so connections to it will not reach the server. ' +
   'Check the server container labels and restart mc-router.';
 
-function NotRoutedChip() {
+function NotRoutedChip({ count }: { count?: number }) {
   return (
     <Tooltip title={NOT_ROUTED_HINT}>
-      <Chip label="Not routed" size="small" color="warning" variant="outlined" />
+      <Chip
+        label={count === undefined ? 'Not routed' : `${count} not routed`}
+        size="small"
+        color="warning"
+        variant="outlined"
+      />
     </Tooltip>
-  );
-}
-
-function StatusCell({ route }: { route: RouteInfo }) {
-  return (
-    <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
-      <StatusBadge route={route} />
-      {route.discoveredByRouter === false && <NotRoutedChip />}
-    </Stack>
   );
 }
 
@@ -213,62 +196,174 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
+interface ToggleProps {
+  open: boolean;
+  serverName: string;
+  controls: string;
+  onToggle: () => void;
+}
+
+function ExpandToggle({ open, serverName, controls, onToggle }: ToggleProps) {
+  return (
+    <IconButton
+      size="small"
+      aria-label={`Show domains of ${serverName}`}
+      aria-expanded={open}
+      aria-controls={controls}
+      onClick={(event) => {
+        // The row toggles on click too; stop here so one click toggles once.
+        event.stopPropagation();
+        onToggle();
+      }}
+    >
+      <KeyboardArrowRightIcon
+        fontSize="small"
+        sx={{ transition: 'transform 150ms', transform: open ? 'rotate(90deg)' : 'none' }}
+      />
+    </IconButton>
+  );
+}
+
+/** Collapsed view of a server's hostnames: primary address, how many more, types, unrouted count. */
+function DomainsSummary({ group }: { group: ServerRouteGroup }) {
+  const [primary, ...rest] = group.hostnames;
+  return (
+    <Stack spacing={0.5} sx={{ minWidth: 0 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, gap: 0.5 }}>
+        <HostnameCell hostname={primary.hostname} />
+        {rest.length > 0 && (
+          <Typography variant="caption" color="text.secondary">
+            +{rest.length}
+          </Typography>
+        )}
+      </Box>
+      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+        {group.typeCounts.map(({ type, count }) => (
+          <TypeBadge key={type} type={type} count={count} />
+        ))}
+        {group.notRoutedCount > 0 && <NotRoutedChip count={group.notRoutedCount} />}
+      </Stack>
+    </Stack>
+  );
+}
+
+function DomainList({ group, needle }: { group: ServerRouteGroup; needle: string }) {
+  return (
+    <Box
+      component="ul"
+      aria-label={`Domains of ${group.serverName}`}
+      sx={{ listStyle: 'none', m: 0, p: 0, border: 1, borderColor: 'divider', borderRadius: 1 }}
+    >
+      {group.hostnames.map((host) => {
+        const match = needle !== '' && host.hostname.toLowerCase().includes(needle);
+        return (
+          <Box
+            component="li"
+            key={host.key}
+            data-match={match ? 'true' : undefined}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1,
+              px: 1.5,
+              py: 0.75,
+              minWidth: 0,
+              bgcolor: match ? 'action.selected' : undefined,
+              '&:not(:last-of-type)': { borderBottom: 1, borderColor: 'divider' },
+            }}
+          >
+            <Box sx={{ flex: '1 1 16rem', minWidth: 0 }}>
+              <HostnameCell hostname={host.hostname} />
+            </Box>
+            <Stack direction="row" spacing={0.5} alignItems="center">
+              <TypeBadge type={host.type} />
+              {host.discoveredByRouter === false && <NotRoutedChip />}
+            </Stack>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+interface VisibleGroup {
+  group: ServerRouteGroup;
+  domainsId: string;
+  open: boolean;
+}
+
 export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
   const theme = useTheme();
   // Rendered only on the client after data loads, so read the query on the first pass.
   const isXs = useMediaQuery(theme.breakpoints.down('sm'), { noSsr: true });
+  const idPrefix = useId();
   const [query, setQuery] = useState('');
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
 
-  const rows = useMemo<RouteRow[]>(
-    () =>
-      routes.map((route, index) => ({
-        key: `${route.hostname}|${route.target}|${index}`,
-        hostname: route.hostname,
-        serverName: extractServerName(route.target),
-        detail: [route.serverType, route.serverVersion].filter(Boolean).join(' '),
-        type: classifyRouteHostname(route.hostname, playitDomains),
-        route,
-      })),
-    [routes, playitDomains],
-  );
+  const groups = useMemo(() => groupRoutesByServer(routes, playitDomains), [routes, playitDomains]);
 
   const needle = query.trim().toLowerCase();
-  const visible = needle
-    ? rows.filter((r) => r.hostname.toLowerCase().includes(needle) || r.serverName.toLowerCase().includes(needle))
-    : rows;
+  const visible: VisibleGroup[] = groups.flatMap((group, index) => {
+    const hostMatch = needle !== '' && group.hostnames.some((h) => h.hostname.toLowerCase().includes(needle));
+    if (needle && !hostMatch && !group.serverName.toLowerCase().includes(needle)) return [];
+    // A hostname match opens the server so the match is visible; clearing the search restores the user's choice.
+    return [{ group, domainsId: `${idPrefix}-domains-${index}`, open: expanded.has(group.serverName) || hostMatch }];
+  });
+
+  const allExpanded = groups.length > 0 && groups.every((g) => expanded.has(g.serverName));
+  const toggle = (serverName: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(serverName)) next.add(serverName);
+      return next;
+    });
 
   return (
     <>
       <BentoPanelHeader
         title="Routing Table"
-        subtitle={`${rows.length} ${rows.length === 1 ? 'hostname' : 'hostnames'}`}
+        subtitle={`${plural(groups.length, 'server')} · ${plural(routes.length, 'hostname')}`}
         icon={<RouterIcon fontSize="small" />}
       />
       <Box sx={{ px: 2.5, pb: 2.5 }}>
-        <TextField
-          size="small"
-          placeholder="Search hostname or server"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          inputProps={{ 'aria-label': 'Search routes' }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 2, width: { xs: '100%', sm: 320 } }}
-        />
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+          <TextField
+            size="small"
+            placeholder="Search server or hostname"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            inputProps={{ 'aria-label': 'Search routes' }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: { xs: '100%', sm: 320 } }}
+          />
+          {groups.length > 0 && (
+            <Button
+              size="small"
+              color="inherit"
+              onClick={() => setExpanded(allExpanded ? new Set() : new Set(groups.map((g) => g.serverName)))}
+            >
+              {allExpanded ? 'Collapse all' : 'Expand all'}
+            </Button>
+          )}
+        </Stack>
 
         {visible.length === 0 ? (
-          <EmptyState message={rows.length === 0 ? 'No routes configured' : `No routes match "${query.trim()}"`} />
+          <EmptyState message={groups.length === 0 ? 'No routes configured' : `No routes match "${query.trim()}"`} />
         ) : isXs ? (
           <Stack component="ul" aria-label="Routes" spacing={1.5} sx={{ listStyle: 'none', m: 0, p: 0 }}>
-            {visible.map((row) => (
+            {visible.map(({ group, domainsId, open }) => (
               <Box
                 component="li"
-                key={row.key}
+                key={group.serverName}
                 sx={{
                   border: 1,
                   borderColor: 'divider',
@@ -277,16 +372,35 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
                   minWidth: 0,
                 }}
               >
-                <HostnameCell hostname={row.hostname} />
-                <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-                  <TypeBadge type={row.type} />
-                  <StatusCell route={row.route} />
-                </Stack>
-                <Box sx={{ mt: 1, minWidth: 0 }}>
-                  <TargetCell serverName={row.serverName} detail={row.detail} />
+                <Box
+                  onClick={() => toggle(group.serverName)}
+                  sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, cursor: 'pointer', minWidth: 0 }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <TargetCell serverName={group.serverName} detail={group.detail} />
+                  </Box>
+                  <ExpandToggle
+                    open={open}
+                    serverName={group.serverName}
+                    controls={domainsId}
+                    onToggle={() => toggle(group.serverName)}
+                  />
                 </Box>
                 <Box sx={{ mt: 1 }}>
-                  <RowActions route={row.route} serverName={row.serverName} />
+                  <StatusBadge route={group.route} />
+                </Box>
+                <Box sx={{ mt: 1, minWidth: 0 }}>
+                  <DomainsSummary group={group} />
+                </Box>
+                <Box id={domainsId}>
+                  <Collapse in={open} unmountOnExit>
+                    <Box sx={{ mt: 1 }}>
+                      <DomainList group={group} needle={needle} />
+                    </Box>
+                  </Collapse>
+                </Box>
+                <Box sx={{ mt: 1 }}>
+                  <RowActions route={group.route} serverName={group.serverName} />
                 </Box>
               </Box>
             ))}
@@ -295,9 +409,9 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
           <Table size="small" sx={{ width: '100%', tableLayout: 'auto' }}>
             <TableHead>
               <TableRow>
-                <TableCell>Hostname</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Target</TableCell>
+                <TableCell padding="checkbox" />
+                <TableCell>Server</TableCell>
+                <TableCell>Domains</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="right">
                   <Box component="span" sx={visuallyHiddenSx}>
@@ -307,31 +421,65 @@ export function RoutingTable({ routes, playitDomains }: RoutingTableProps) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {visible.map((row) => (
-                <TableRow key={row.key} hover>
-                  <TableCell sx={wrapSx}>
-                    <HostnameCell hostname={row.hostname} />
-                  </TableCell>
-                  <TableCell>
-                    <TypeBadge type={row.type} />
-                  </TableCell>
-                  <TableCell sx={wrapSx}>
-                    <Stack>
-                      <TargetCell serverName={row.serverName} detail={row.detail} />
-                    </Stack>
-                  </TableCell>
-                  <TableCell>
-                    <StatusCell route={row.route} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <RowActions route={row.route} serverName={row.serverName} />
-                  </TableCell>
-                </TableRow>
+              {visible.map(({ group, domainsId, open }) => (
+                <ServerRows
+                  key={group.serverName}
+                  group={group}
+                  domainsId={domainsId}
+                  open={open}
+                  needle={needle}
+                  onToggle={() => toggle(group.serverName)}
+                />
               ))}
             </TableBody>
           </Table>
         )}
       </Box>
+    </>
+  );
+}
+
+interface ServerRowsProps extends VisibleGroup {
+  needle: string;
+  onToggle: () => void;
+}
+
+function ServerRows({ group, domainsId, open, needle, onToggle }: ServerRowsProps) {
+  return (
+    <>
+      <TableRow
+        hover
+        selected={open}
+        onClick={onToggle}
+        sx={{ cursor: 'pointer', '& > td': open ? { borderBottom: 0 } : undefined }}
+      >
+        <TableCell padding="checkbox">
+          <ExpandToggle open={open} serverName={group.serverName} controls={domainsId} onToggle={onToggle} />
+        </TableCell>
+        <TableCell sx={wrapSx}>
+          <Stack>
+            <TargetCell serverName={group.serverName} detail={group.detail} />
+          </Stack>
+        </TableCell>
+        <TableCell sx={wrapSx}>
+          <DomainsSummary group={group} />
+        </TableCell>
+        <TableCell>
+          <StatusBadge route={group.route} />
+        </TableCell>
+        <TableCell align="right">
+          <RowActions route={group.route} serverName={group.serverName} />
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell id={domainsId} colSpan={5} sx={{ py: 0, ...(open ? {} : { borderBottom: 0 }) }}>
+          <Collapse in={open} unmountOnExit>
+            <Box sx={{ pb: 1.5, pl: { sm: 6 } }}>
+              <DomainList group={group} needle={needle} />
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
     </>
   );
 }
