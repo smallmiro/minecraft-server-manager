@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { E2E_API_URL } from '../env';
 
-const API_BASE_URL = process.env.E2E_API_URL || 'http://localhost:5001';
+const API_BASE_URL = E2E_API_URL;
 
 /**
  * Integration tests that combine multiple API endpoints

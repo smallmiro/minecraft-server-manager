@@ -9,6 +9,7 @@
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:ci": "E2E_STOP_SERVICES=true playwright test",
+    "test:unit": "node --experimental-strip-types --test env.test.ts",
     "test:skip-start": "E2E_SKIP_SERVICE_START=true playwright test",
     "report": "playwright show-report"
   },

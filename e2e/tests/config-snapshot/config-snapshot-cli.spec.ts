@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { E2E_API_URL } from '../../env';
 import { execSync, spawnSync } from 'child_process';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -84,7 +85,7 @@ function runMcctl(args: string[]): { stdout: string; stderr: string; exitCode: n
       stdio: ['pipe', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        MCCTL_API_URL: process.env.E2E_API_URL || 'http://localhost:5001',
+        MCCTL_API_URL: E2E_API_URL,
         AUTH_MODE: 'disabled',
       },
       timeout: 30000,

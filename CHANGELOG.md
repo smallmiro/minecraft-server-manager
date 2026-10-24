@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Routing Table grouped by server** (#799) - The console Routing page shows one row per server instead of one per hostname. A row shows the primary address (with copy), how many more hostnames there are, the hostname types and an **N not routed** warning; **Wake/Start** and the links appear once per server. Click a row to list all its hostnames; **Expand all** / **Collapse all** toggles every server. Searching a hostname opens its server and highlights the match. The page header counts servers and hostnames.
+- **Developer: root `pnpm test` no longer runs e2e, and e2e needs explicit targets** (#797) - `pnpm test` is now `pnpm -r --filter '!e2e' test` (same as CI). The e2e suite no longer defaults to `localhost:5000/5001` (often a live mcctl-api on a dev host); set both `E2E_BASE_URL` and `E2E_API_URL` or it fails before sending any request. `platform-settings.spec.ts` skips unless `E2E_PLATFORM_ENV` is set (it no longer falls back to the host's platform `.env`). `.github/workflows/e2e.yml` now sets `E2E_BASE_URL`.
 
 ### Fixed
 - **`mcctl console service` without a terminal** (#795) - `start`, `stop`, `restart` and `logs` no longer crash with `TTY initialization failed: uv_tty_init returned EINVAL` when both services are installed and neither `--api` nor `--console` is given. They exit 1 with `No terminal to ask which services to <action>. Pass --console (API + Console) or --api.` and choose nothing. Prompts in a terminal are unchanged.
