@@ -116,3 +116,4 @@ export type {
   WorldBackupRestoreOutcome,
   WorldBackupPruneOutcome,
 } from './IWorldBackupPort.js';
+export type { IMcRouterApiPort, McRouterRoute } from './IMcRouterApiPort.js';
