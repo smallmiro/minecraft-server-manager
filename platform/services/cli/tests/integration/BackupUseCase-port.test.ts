@@ -40,15 +40,16 @@ class FakePort implements IWorldBackupPort {
     this.calls.push(['status', []]);
     return this.statusResult;
   }
+  historyResult: Awaited<ReturnType<IWorldBackupPort['history']>> = {
+    ok: true,
+    value: [
+      { hash: HASH, date: new Date('2026-10-20T10:00:00Z'), author: 'Minecraft Backup', message: 'a | "b"' },
+      { hash: 'f'.repeat(40), date: new Date('2026-10-19T10:00:00Z'), author: 'Minecraft Backup', message: 'older' },
+    ],
+  };
   async history(limit?: number) {
     this.calls.push(['history', [limit]]);
-    return {
-      ok: true as const,
-      value: [
-        { hash: HASH, date: new Date('2026-10-20T10:00:00Z'), author: 'Minecraft Backup', message: 'a | "b"' },
-        { hash: 'f'.repeat(40), date: new Date('2026-10-19T10:00:00Z'), author: 'Minecraft Backup', message: 'older' },
-      ],
-    };
+    return this.historyResult;
   }
   async push(options?: WorldBackupPushOptions) {
     this.calls.push(['push', [options]]);
@@ -173,5 +174,144 @@ describe('BackupUseCase with IWorldBackupPort (#732)', () => {
     const result = await useCase.init();
     expect(result.success).toBe(false);
     expect(result.error).toContain('Authentication failed');
+  });
+});
+
+/** The prompt flows, independent of the backend (moved from the removed IShellPort tests, #736). */
+describe('BackupUseCase prompt flows', () => {
+  const NOT_CONFIGURED = { ok: true as const, value: { configured: false, branch: 'main', autoOnStop: false } };
+  let prompt: MockPromptAdapter;
+  let port: FakePort;
+  let useCase: BackupUseCase;
+  const called = (method: string) => port.calls.some(([m]) => m === method);
+
+  beforeEach(() => {
+    prompt = new MockPromptAdapter({ confirm: true, selectIndex: 0 });
+    port = new FakePort();
+    useCase = new BackupUseCase(prompt, port);
+  });
+
+  describe('push', () => {
+    it('pushes with the message the user typed', async () => {
+      prompt.textValues = ['My backup message'];
+      const result = await useCase.push();
+      expect(result).toMatchObject({ success: true, message: 'My backup message' });
+      expect(port.calls).toContainEqual(['push', [{ message: 'My backup message' }]]);
+      expect(prompt.introMessage).toBe('Backup Worlds to GitHub');
+    });
+
+    it('returns "not configured" without pushing', async () => {
+      port.statusResult = NOT_CONFIGURED;
+      const result = await useCase.push();
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not configured');
+    });
+
+    it('handles cancellation', async () => {
+      prompt.setCancelled(true);
+      expect(await useCase.push()).toMatchObject({ success: false, error: 'Cancelled' });
+      expect(called('push')).toBe(false);
+    });
+  });
+
+  describe('restore', () => {
+    it('shows the intro', async () => {
+      await useCase.restore();
+      expect(prompt.introMessage).toBe('Restore from Backup');
+    });
+
+    it('fails when there is no history', async () => {
+      port.historyResult = { ok: true, value: [] };
+      const result = await useCase.restore();
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('No backup history');
+    });
+
+    it('does not restore when the user declines', async () => {
+      prompt = new MockPromptAdapter({ confirm: false });
+      useCase = new BackupUseCase(prompt, port);
+      expect((await useCase.restore()).success).toBe(false);
+      expect(called('restore')).toBe(false);
+    });
+
+    it('handles cancellation', async () => {
+      prompt.setCancelled(true);
+      expect(await useCase.restore()).toMatchObject({ success: false, error: 'Cancelled' });
+    });
+  });
+
+  describe('init', () => {
+    let saved: Record<string, string | boolean> | null;
+
+    function initWith(options: ConstructorParameters<typeof MockPromptAdapter>[0], texts: string[]) {
+      prompt = new MockPromptAdapter(options);
+      prompt.textValues = texts;
+      useCase = new BackupUseCase(prompt, port);
+      useCase.setConfigSaveCallback((config) => {
+        saved = config;
+      });
+    }
+
+    beforeEach(() => {
+      saved = null;
+      port.statusResult = NOT_CONFIGURED;
+      initWith({ password: 'ghp_test_token_12345', confirm: true, selectIndex: 0 }, ['user/minecraft-backup']);
+    });
+
+    it('saves the answers', async () => {
+      const result = await useCase.init();
+      expect(result).toMatchObject({ success: true, repository: 'user/minecraft-backup', branch: 'main', autoBackupEnabled: true });
+      expect(prompt.introMessage).toBe('GitHub Backup Setup');
+      expect(saved).toEqual({
+        BACKUP_GITHUB_TOKEN: 'ghp_test_token_12345',
+        BACKUP_GITHUB_REPO: 'user/minecraft-backup',
+        BACKUP_GITHUB_BRANCH: 'main',
+        BACKUP_AUTO_ON_STOP: true,
+      });
+    });
+
+    it('overwrites an existing configuration after confirmation', async () => {
+      port.statusResult = new FakePort().statusResult;
+      initWith({ password: 'ghp_new_token', confirm: true, selectIndex: 0 }, ['new/repo']);
+      expect(await useCase.init()).toMatchObject({ success: true, repository: 'new/repo' });
+    });
+
+    it('keeps an existing configuration when the user declines', async () => {
+      port.statusResult = new FakePort().statusResult;
+      initWith({ confirm: false }, []);
+      const result = await useCase.init();
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('existing configuration preserved');
+      expect(called('testConnection')).toBe(false);
+    });
+
+    it('does not ask to overwrite with force', async () => {
+      port.statusResult = new FakePort().statusResult;
+      initWith({ password: 'ghp_force_token', confirm: true, selectIndex: 0 }, ['force/repo']);
+      const confirm = prompt.confirm.bind(prompt);
+      const asked: string[] = [];
+      prompt.confirm = async (options) => {
+        asked.push(options.message);
+        return confirm(options);
+      };
+      expect(await useCase.init(true)).toMatchObject({ success: true, repository: 'force/repo' });
+      expect(asked.some((m) => m.includes('overwrite'))).toBe(false);
+    });
+
+    it('handles cancellation at the token prompt', async () => {
+      prompt.setCancelled(true);
+      expect(await useCase.init()).toMatchObject({ success: false, error: 'Cancelled' });
+    });
+
+    it('takes a custom branch', async () => {
+      initWith({ password: 'ghp_token', confirm: true, selectIndex: 2 }, ['user/repo', 'develop']);
+      expect(await useCase.init()).toMatchObject({ success: true, branch: 'develop' });
+    });
+
+    it('disables auto backup when the user declines it', async () => {
+      const confirm = prompt.confirm.bind(prompt);
+      prompt.confirm = async (options) => (options.message.includes('auto backup') ? false : confirm(options));
+      expect(await useCase.init()).toMatchObject({ success: true, autoBackupEnabled: false });
+    });
   });
 });
