@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
@@ -7,8 +8,10 @@ import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import RouterIcon from '@mui/icons-material/Router';
 import { BentoGrid, BentoPanel, PageHero } from '@/components/bento';
-import { PlatformInfo, RouterStatus, NetworkSettings, AvahiStatus, PlayitSection } from '@/components/settings';
+import { RoutingTable, RouterGatewayCard } from '@/components/routing';
+import { AvahiStatus, PlayitSection } from '@/components/settings';
 import { useRouterStatus } from '@/hooks/useMcctl';
+import { usePlayitStatus } from '@/hooks/usePlayit';
 
 const embeddedCardSx = {
   height: '100%',
@@ -29,7 +32,7 @@ function SkeletonPanel({ featured = false }: { featured?: boolean }) {
       sx={{
         p: 2.5,
         minHeight: featured ? 320 : 176,
-        gridColumn: { xs: 'span 1', sm: featured ? 'span 6' : 'span 3', md: featured ? 'span 8' : 'span 4' },
+        gridColumn: { xs: 'span 1', sm: featured ? 'span 6' : 'span 3', md: featured ? 'span 12' : 'span 4' },
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
@@ -45,6 +48,8 @@ function SkeletonPanel({ featured = false }: { featured?: boolean }) {
 
 export default function RoutingPage() {
   const { data, isLoading, error } = useRouterStatus();
+  const { data: playit } = usePlayitStatus();
+  const playitDomains = useMemo(() => (playit?.servers ?? []).map((server) => server.playitDomain), [playit?.servers]);
   const router = data?.router;
   const statusLabel = isLoading ? 'Checking' : router?.status ?? 'Unavailable';
   const statusColor = isLoading ? 'default' : router?.status === 'running' ? 'success' : router ? 'warning' : 'error';
@@ -82,7 +87,6 @@ export default function RoutingPage() {
           <SkeletonPanel />
           <SkeletonPanel />
           <SkeletonPanel />
-          <SkeletonPanel />
         </BentoGrid>
       ) : router ? (
         <BentoGrid aria-label="Routing configuration">
@@ -90,23 +94,16 @@ export default function RoutingPage() {
             role="region"
             aria-label="Router routes"
             accent="primary"
-            sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 8' } }}
+            sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 12' } }}
           >
-            <RouterStatus router={router} />
+            <RoutingTable routes={router.routes} playitDomains={playitDomains} />
           </BentoPanel>
           <BentoPanel
             role="region"
-            aria-label="Platform information"
-            sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 4' } }}
+            aria-label="mc-router Gateway"
+            sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 4' } }}
           >
-            <PlatformInfo router={router} />
-          </BentoPanel>
-          <BentoPanel
-            role="region"
-            aria-label="Network settings"
-            sx={{ ...embeddedCardSx, gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 4' } }}
-          >
-            <NetworkSettings router={router} />
+            <RouterGatewayCard router={router} />
           </BentoPanel>
           <BentoPanel
             role="region"
