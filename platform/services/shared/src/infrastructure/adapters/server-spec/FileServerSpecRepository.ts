@@ -220,6 +220,11 @@ export class FileServerSpecRepository implements IServerSpecRepository {
     if (!(await isDirectory(dir))) {
       throw new ServerSpecError('not_found', `Server '${name}' not found (no servers/${name} directory)`, name);
     }
+    return this.deleteServer(name, dir, options);
+  }
+
+  /** delete() once the server directory is known to exist. */
+  private async deleteServer(name: string, dir: string, options: DeleteServerSpecOptions): Promise<ServerSpecDeleteResult> {
     const deleteWorld = options.deleteWorld === true;
     const plan = await planServerWorlds(this.paths, name, deleteWorld);
     const includePath = join(this.paths.servers, 'compose.yml');
