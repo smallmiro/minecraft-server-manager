@@ -35,13 +35,17 @@ function registered(content: string, hostname: string): boolean {
 }
 
 /** Run argv (no shell) with optional stdin; resolves the exit code (-1 when it cannot start). */
-function run(cmd: string, args: string[], input?: string): Promise<number> {
+/** @internal exported for tests */
+export function run(cmd: string, args: string[], input?: string): Promise<number> {
   return new Promise((resolve) => {
     const env = { ...process.env };
     delete env['MCCTL_SUDO_PASSWORD']; // the password only ever travels on stdin (#682)
     const child = spawn(cmd, args, { env, stdio: ['pipe', 'ignore', 'ignore'] });
     child.on('error', () => resolve(-1));
     child.on('close', (code) => resolve(code ?? -1));
+    // A child that exits before reading stdin (sudo -n refusing) closes the pipe; the
+    // exit code from 'close' is the answer, so the EPIPE on stdin is not an error.
+    child.stdin.on('error', () => {});
     child.stdin.end(input ?? '');
   });
 }
