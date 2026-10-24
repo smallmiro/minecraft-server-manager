@@ -79,24 +79,46 @@ describe('RoutingTable', () => {
     expect(screen.getByText('1 server · 1 hostname')).toBeInTheDocument();
   });
 
-  it('shows the primary address, how many more there are, and the types in the collapsed row', () => {
+  it('has no separate Domains column', () => {
+    renderTable();
+    const headers = screen.getAllByRole('columnheader').map((h) => h.textContent);
+    expect(headers).toEqual(['', 'Server', 'Status', 'Actions']);
+  });
+
+  it('shows only the primary address, its type and how many more there are in the collapsed row', () => {
     renderTable();
     const row = rowOf('survival');
     expect(within(row).getByText('survival.192.168.1.5.nip.io')).toBeInTheDocument();
     expect(within(row).getByText('+2')).toBeInTheDocument();
     expect(within(row).getByText('nip.io')).toBeInTheDocument();
-    expect(within(row).getByText('mDNS')).toBeInTheDocument();
-    expect(within(row).getByText('WAN')).toBeInTheDocument();
+    expect(within(row).queryByText('mDNS')).not.toBeInTheDocument();
+    expect(within(row).queryByText('WAN')).not.toBeInTheDocument();
     expect(within(rowOf('modded')).getByText('Custom')).toBeInTheDocument();
     expect(within(rowOf('creative')).queryByText(/^\+/)).not.toBeInTheDocument();
   });
 
-  it('shows how many hostnames share a type', () => {
+  it('shows the primary address under the server name', () => {
+    renderTable();
+    const cell = within(rowOf('survival')).getByText('survival').closest('td') as HTMLElement;
+    expect(within(cell).getByText('survival.192.168.1.5.nip.io')).toBeInTheDocument();
+  });
+
+  it('does not count hostnames per type in the collapsed row', () => {
     renderTable([
       { hostname: 'a.1.1.1.1.nip.io', target: 'mc-a:25565', serverStatus: 'running' },
       { hostname: 'a.2.2.2.2.nip.io', target: 'mc-a:25565', serverStatus: 'running' },
     ]);
-    expect(within(rowOf('a')).getByText('nip.io ×2')).toBeInTheDocument();
+    expect(within(rowOf('a')).queryByText(/×/)).not.toBeInTheDocument();
+    expect(within(rowOf('a')).getByText('+1')).toBeInTheDocument();
+  });
+
+  it('does not show an unrouted hostname as the primary address when a routed one exists', () => {
+    renderTable([
+      { hostname: 'a.1.1.1.1.nip.io', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: false },
+      { hostname: 'a.local', target: 'mc-a:25565', serverStatus: 'running', discoveredByRouter: true },
+    ]);
+    expect(within(rowOf('a')).getByText('a.local')).toBeInTheDocument();
+    expect(within(rowOf('a')).queryByText('a.1.1.1.1.nip.io')).not.toBeInTheDocument();
   });
 
   it('offers a copy button for the primary address of each collapsed server', () => {

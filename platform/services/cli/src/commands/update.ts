@@ -219,17 +219,20 @@ export async function updateDockerImages(serversDir: string, rootDir: string): P
 }
 
 /**
- * Recreate the stopped servers' containers so they use the freshly pulled image.
- * mc-router auto-scale only `docker start`s existing containers, so a stopped
- * container would otherwise keep waking up on the old image (#796). Compose
- * recreates only when image/config changed; a changed container ID tells us.
+ * Offer to recreate the stopped servers' containers so they use the freshly
+ * pulled image. mc-router auto-scale only `docker start`s existing containers,
+ * so a stopped container keeps waking up on the old image (#796). A new image
+ * can also be a regression, so this is opt-in: `confirm` asks (default No);
+ * null (--yes or no terminal) never recreates and only prints the manual command.
+ * Compose recreates only when image/config changed; a changed container ID tells us.
  * Only `exited`/`created` containers are touched: compose would stop a running
  * one, so an unknown state (inspect failed) is skipped, not guessed.
  * Failures are reported per server, never fatal.
  */
 export async function recreateStoppedServers(
   serversDir: string,
-  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>
+  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>,
+  confirm: (() => Promise<boolean>) | null
 ): Promise<void> {
   const servers = existsSync(serversDir)
     ? readdirSync(serversDir).filter(
@@ -238,19 +241,63 @@ export async function recreateStoppedServers(
     : [];
   if (servers.length === 0) return;
 
-  console.log(colors.bold('Applying new images to stopped servers...'));
+  const stopped: Array<{ server: string; container: string }> = [];
   const running: string[] = [];
-
+  const skipped: string[] = [];
   for (const server of servers) {
     const container = `mc-${server}`;
     try {
-      const before = await shell.containerState(container);
-      if (!before) {
-        console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim('(no container, or docker inspect failed)')}`);
-        continue;
+      const state = await shell.containerState(container);
+      if (!state) skipped.push(server);
+      else if (isStopped(state.status)) stopped.push({ server, container });
+      else running.push(`${server}: ${state.status}`);
+    } catch {
+      skipped.push(server);
+    }
+  }
+
+  console.log(colors.bold('Applying new images to stopped servers...'));
+  for (const server of skipped) {
+    console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim('(no container, or docker inspect failed)')}`);
+  }
+
+  if (stopped.length > 0) {
+    console.log(`  Stopped servers still using their old image: ${stopped.map((s) => s.server).join(', ')}`);
+    const proceed = confirm ? await confirm() : false;
+    if (!proceed) {
+      console.log(colors.dim('  Not recreated. mc-router auto-scale only starts existing containers, so these'));
+      console.log(colors.dim('  servers wake up on the old image until their container is recreated. From the platform directory:'));
+      for (const { container } of stopped) {
+        console.log(`    docker compose up --no-start --no-deps ${container}`);
       }
-      if (before.status !== 'exited' && before.status !== 'created') {
-        running.push(`${server}: ${before.status}`);
+      console.log(colors.dim('  Or run `mcctl update` in a terminal again and answer yes.'));
+    } else {
+      await recreate(stopped, shell);
+    }
+  }
+
+  for (const entry of running) {
+    console.log(`  ${colors.yellow('-')} ${entry}, keeps its current image`);
+  }
+  if (running.length > 0) {
+    console.log(colors.dim('  Apply it in a quiet moment: mcctl stop <server> && mcctl start <server>'));
+  }
+  console.log('');
+}
+
+const isStopped = (status: string) => status === 'exited' || status === 'created';
+
+async function recreate(
+  stopped: Array<{ server: string; container: string }>,
+  shell: Pick<ShellExecutor, 'dockerCompose' | 'containerState'>
+): Promise<void> {
+  const rollbacks: string[] = [];
+  for (const { server, container } of stopped) {
+    try {
+      // Read again: auto-scale may have started it while the prompt waited, and compose would stop it
+      const before = await shell.containerState(container);
+      if (!before || !isStopped(before.status)) {
+        console.log(`  ${colors.yellow('-')} ${server}: skipped ${colors.dim(`(${before ? `${before.status} now` : 'docker inspect failed'})`)}`);
         continue;
       }
       const code = await shell.dockerCompose(['up', '--no-start', '--no-deps', container]);
@@ -263,23 +310,21 @@ export async function recreateStoppedServers(
         console.log(`  ${colors.red('✗')} ${server} ${colors.dim('(no container after docker compose up --no-start)')}`);
         continue;
       }
-      console.log(
-        before.id !== after.id
-          ? `  ${colors.green('✓')} ${server}: recreated`
-          : `  ${colors.green('✓')} ${server}: up to date`
-      );
+      if (before.id === after.id) {
+        console.log(`  ${colors.green('✓')} ${server}: up to date`);
+        continue;
+      }
+      console.log(`  ${colors.green('✓')} ${server}: recreated ${colors.dim(`(previous image ${before.imageId})`)}`);
+      // Tag the reference compose uses now (after any tag change), not the old one
+      rollbacks.push(`docker tag ${before.imageId} ${after.imageRef} && docker compose up --no-start --no-deps ${container}`);
     } catch (error) {
       console.log(`  ${colors.red('✗')} ${server} ${colors.dim(`(${error instanceof Error ? error.message : String(error)})`)}`);
     }
   }
-
-  for (const entry of running) {
-    console.log(`  ${colors.yellow('-')} ${entry}, keeps its current image`);
+  if (rollbacks.length > 0) {
+    console.log(colors.dim('  If a recreated server fails to start on the new image, roll it back:'));
+    for (const cmd of rollbacks) console.log(`    ${cmd}`);
   }
-  if (running.length > 0) {
-    console.log(colors.dim('  Apply it in a quiet moment: mcctl stop <server> && mcctl start <server>'));
-  }
-  console.log('');
 }
 
 const SERVICE_PACKAGES = {
@@ -702,7 +747,17 @@ export async function updateServices(
     await upgradeServerImageTags(paths.servers);
     const dockerResult = await updateDockerImages(paths.servers, rootDir);
     // Pulled images do not reach existing stopped containers by themselves
-    await recreateStoppedServers(paths.servers, new ShellExecutor(paths));
+    await recreateStoppedServers(
+      paths.servers,
+      new ShellExecutor(paths),
+      options.yes || !process.stdin.isTTY
+        ? null
+        : async () =>
+            (await prompts.confirm({
+              message: 'Recreate the stopped servers now so they use the new image?',
+              initialValue: false,
+            })) === true
+    );
     if (dockerResult !== 0) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(colors.dim(`  Completed in ${elapsed}s`));

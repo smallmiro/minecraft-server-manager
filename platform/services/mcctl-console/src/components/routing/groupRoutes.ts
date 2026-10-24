@@ -18,11 +18,14 @@ export interface ServerRouteGroup {
   detail: string;
   /** Server-level fields (status, auto-scale): every hostname of a server targets the same container. */
   route: RouteInfo;
-  /** Sorted by HOSTNAME_TYPE_ORDER; never empty. */
+  /** Routed hostnames first, then by HOSTNAME_TYPE_ORDER; never empty. */
   hostnames: ServerHostname[];
-  typeCounts: Array<{ type: HostnameType; count: number }>;
   notRoutedCount: number;
 }
+
+// An unrouted hostname gives an address that does not connect, so it is never primary while a routed one exists.
+const hostnameRank = (host: ServerHostname) =>
+  (host.discoveredByRouter === false ? HOSTNAME_TYPE_ORDER.length : 0) + HOSTNAME_TYPE_ORDER.indexOf(host.type);
 
 const routeDetail = (route: RouteInfo) => [route.serverType, route.serverVersion].filter(Boolean).join(' ');
 
@@ -46,17 +49,13 @@ export function groupRoutesByServer(
         type: classifyRouteHostname(route.hostname, playitDomains),
         discoveredByRouter: route.discoveredByRouter,
       }))
-      .sort((a, b) => HOSTNAME_TYPE_ORDER.indexOf(a.type) - HOSTNAME_TYPE_ORDER.indexOf(b.type));
+      .sort((a, b) => hostnameRank(a) - hostnameRank(b));
 
     return {
       serverName,
       detail: serverRoutes.map(routeDetail).find(Boolean) ?? '',
       route: serverRoutes[0],
       hostnames,
-      typeCounts: HOSTNAME_TYPE_ORDER.map((type) => ({
-        type,
-        count: hostnames.filter((h) => h.type === type).length,
-      })).filter((entry) => entry.count > 0),
       notRoutedCount: hostnames.filter((h) => h.discoveredByRouter === false).length,
     };
   });

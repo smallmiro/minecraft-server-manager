@@ -117,7 +117,7 @@ hash -r && mcctl --version    # = $NEW
 ```
 
 - If you see `Updated (restart manually)`, do step 4.
-- If `mcctl update` retags a server's compose image, note the `⚠ <server>: A → B` output. mc-router auto-scale only starts existing containers and never recreates them, so a stopped server keeps its old image until its container is recreated. `mcctl update` does that for every stopped server when the CLI that starts it is v3.0.1 or later, and prints `recreated` or `up to date` per server (see step 5).
+- If `mcctl update` retags a server's compose image, note the `⚠ <server>: A → B` output. mc-router auto-scale only starts existing containers and never recreates them, so a stopped server keeps its old image until its container is recreated. When the CLI that starts it is v3.0.1 or later, `mcctl update` offers to recreate the stopped servers (default No; `--yes` skips it, see step 5).
 
 **Rollback point:** `npm install -g @minecraft-docker/mcctl@<previous>` then `mcctl console service restart --console --force`.
 
@@ -231,7 +231,7 @@ Instead of editing the file, you can re-run `mcctl console init --force`, which 
 
 ## 5. Apply server images
 
-Stopped servers are not updated by starting them: auto-scale only runs `docker start` on the existing container, so it wakes up on the old image. From v3.0.1, `mcctl update` recreates each stopped server's container (without starting it) and reports `recreated`, `up to date` or the failure per server. The whole update runs in the CLI process that started it, so if that CLI was older than v3.0.1 (this includes v3.0.0 → v3.0.1), the new step did not run: run `mcctl update` once more, or run this in the platform directory for each stopped server:
+Stopped servers are not updated by starting them: auto-scale only runs `docker start` on the existing container, so it wakes up on the old image. From v3.0.1, `mcctl update` lists the stopped servers and, in a terminal, asks whether to recreate their containers (without starting them). The default is No, because a new image can be a regression; `--yes` or no terminal never recreates, it only prints the commands. On yes it reports `recreated` (with the previous image ID), `up to date` or the failure per server, and prints how to roll back: `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`. The whole update runs in the CLI process that started it, so if that CLI was older than v3.0.1 (this includes v3.0.0 → v3.0.1), the new step did not run: run `mcctl update` once more in a terminal and answer yes, or run this in the platform directory for each stopped server:
 
 ```bash
 docker compose up --no-start --no-deps mc-<server>

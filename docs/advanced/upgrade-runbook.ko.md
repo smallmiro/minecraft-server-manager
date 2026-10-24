@@ -118,7 +118,7 @@ hash -r && mcctl --version    # = $NEW
 ```
 
 - `Updated (restart manually)`가 보이면 4단계를 수행합니다.
-- `mcctl update`가 서버 compose의 이미지 태그를 바꾸면 `⚠ <server>: A → B` 출력을 기록합니다. mc-router auto-scale은 기존 컨테이너를 `docker start`만 하고 다시 만들지 않으므로, 중지된 서버는 컨테이너를 다시 만들기 전까지 옛 이미지로 뜹니다. `mcctl update`를 시작한 CLI가 v3.0.1 이상이면 중지된 서버마다 컨테이너를 다시 만들고 서버별로 `recreated` 또는 `up to date`를 출력합니다(5단계 참고).
+- `mcctl update`가 서버 compose의 이미지 태그를 바꾸면 `⚠ <server>: A → B` 출력을 기록합니다. mc-router auto-scale은 기존 컨테이너를 `docker start`만 하고 다시 만들지 않으므로, 중지된 서버는 컨테이너를 다시 만들기 전까지 옛 이미지로 뜹니다. `mcctl update`를 시작한 CLI가 v3.0.1 이상이면 중지된 서버의 컨테이너를 다시 만들지 묻습니다(기본 No, `--yes`면 건너뜀, 5단계 참고).
 
 **롤백 지점:** `npm install -g @minecraft-docker/mcctl@<이전버전>` 후 `mcctl console service restart --console --force`.
 
@@ -232,7 +232,7 @@ mcctl console service restart --console --force     # 파일에서 앱을 다시
 
 ## 5. 서버 이미지 반영
 
-중지된 서버는 기동만으로는 새 이미지가 적용되지 않습니다. auto-scale은 기존 컨테이너를 `docker start`만 하므로 옛 이미지로 뜹니다. v3.0.1부터 `mcctl update`가 중지된 서버의 컨테이너를 (기동하지 않고) 다시 만들고 서버별로 `recreated`, `up to date`, 실패 사유를 보고합니다. 업데이트 전체는 `mcctl update`를 시작한 CLI 프로세스에서 실행되므로, 그 CLI가 v3.0.1보다 낮았다면(v3.0.0 → v3.0.1 포함) 이 단계는 실행되지 않았습니다. `mcctl update`를 한 번 더 실행하거나, 플랫폼 디렉터리에서 중지된 서버마다 직접 실행합니다.
+중지된 서버는 기동만으로는 새 이미지가 적용되지 않습니다. auto-scale은 기존 컨테이너를 `docker start`만 하므로 옛 이미지로 뜹니다. v3.0.1부터 `mcctl update`가 중지된 서버를 나열하고, 터미널에서는 컨테이너를 (기동하지 않고) 다시 만들지 묻습니다. 새 이미지가 회귀일 수 있어 기본값은 No이고, `--yes`이거나 터미널이 없으면 다시 만들지 않고 명령만 출력합니다. Yes이면 서버별로 `recreated`(이전 이미지 ID 포함), `up to date`, 실패 사유를 보고하고 되돌리는 명령 `docker tag <이전 이미지 ID> <이미지> && docker compose up --no-start --no-deps mc-<server>`를 출력합니다. 업데이트 전체는 `mcctl update`를 시작한 CLI 프로세스에서 실행되므로, 그 CLI가 v3.0.1보다 낮았다면(v3.0.0 → v3.0.1 포함) 이 단계는 실행되지 않았습니다. 터미널에서 `mcctl update`를 한 번 더 실행해 Yes로 답하거나, 플랫폼 디렉터리에서 중지된 서버마다 직접 실행합니다.
 
 ```bash
 docker compose up --no-start --no-deps mc-<server>
