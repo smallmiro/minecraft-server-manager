@@ -71,7 +71,7 @@ export function RouterGatewayCard({ router }: RouterGatewayCardProps) {
           variant="outlined"
         />
       </Stack>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 1.5 }}>
         <BentoMetricCard title="Port" value={router.port} accent="info" icon={<LanIcon fontSize="small" />} />
         <BentoMetricCard
           title="Active routes"
