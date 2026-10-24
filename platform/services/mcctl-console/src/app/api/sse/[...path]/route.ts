@@ -8,6 +8,41 @@ import { NextRequest } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Re-stream the upstream SSE body to the client.
+ */
+function createProxyStream(response: Response): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    async start(controller) {
+      const reader = response.body?.getReader();
+      if (!reader) {
+        controller.close();
+        return;
+      }
+
+      const decoder = new TextDecoder();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            controller.close();
+            break;
+          }
+
+          // Decode and forward chunk
+          const chunk = decoder.decode(value, { stream: true });
+          controller.enqueue(new TextEncoder().encode(chunk));
+        }
+      } catch (error) {
+        console.error('SSE stream error:', error);
+        controller.error(error);
+      }
+    },
+  });
+}
+
+/**
  * GET /api/sse/[...path]
  * Proxy SSE requests to mcctl-api
  */
@@ -56,36 +91,7 @@ export async function GET(
       return new Response('Invalid SSE response', { status: 500 });
     }
 
-    // Create SSE response with proper headers
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) {
-          controller.close();
-          return;
-        }
-
-        const decoder = new TextDecoder();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              controller.close();
-              break;
-            }
-
-            // Decode and forward chunk
-            const chunk = decoder.decode(value, { stream: true });
-            controller.enqueue(new TextEncoder().encode(chunk));
-          }
-        } catch (error) {
-          console.error('SSE stream error:', error);
-          controller.error(error);
-        }
-      },
-    });
+    const stream = createProxyStream(response);
 
     return new Response(stream, {
       headers: {
@@ -158,36 +164,7 @@ export async function POST(
       });
     }
 
-    // Create SSE response with proper headers
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) {
-          controller.close();
-          return;
-        }
-
-        const decoder = new TextDecoder();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-              controller.close();
-              break;
-            }
-
-            // Decode and forward chunk
-            const chunk = decoder.decode(value, { stream: true });
-            controller.enqueue(new TextEncoder().encode(chunk));
-          }
-        } catch (error) {
-          console.error('SSE stream error:', error);
-          controller.error(error);
-        }
-      },
-    });
+    const stream = createProxyStream(response);
 
     return new Response(stream, {
       headers: {
