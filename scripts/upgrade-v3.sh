@@ -212,7 +212,7 @@ backup_ecosystem_once() {
   fi
 }
 
-# pm2_apps: "<name> <status> <node version>" per PM2 app
+# pm2_apps: "<name> <status> <node version> <kill_timeout or ->" per PM2 app
 pm2_apps() {
   command -v pm2 >/dev/null 2>&1 || return 0
   command -v node >/dev/null 2>&1 || return 0
@@ -223,7 +223,7 @@ pm2_apps() {
       if (i < 0) return;
       let a;
       try { a = JSON.parse(s.slice(i)); } catch (e) { return; }
-      a.forEach((p) => { const e = p.pm2_env || {}; console.log(p.name + " " + (e.status || "?") + " " + (e.node_version || "?")); });
+      a.forEach((p) => { const e = p.pm2_env || {}; console.log(p.name + " " + (e.status || "?") + " " + (e.node_version || "?") + " " + (e.kill_timeout !== undefined ? e.kill_timeout : "-")); });
     });' || true
 }
 
@@ -301,7 +301,7 @@ step0_precheck() {
     major_shell=$(capture node -p 'process.versions.node.split(".")[0]')
     t=$(pm2_apps)
     if [ -n "$t" ]; then
-      say "PM2 apps (name status node):"
+      say "PM2 apps (name status node kill_timeout):"
       say "$(printf '%s\n' "$t" | sed 's/^/      /')"
       n=$(printf '%s\n' "$t" | awk -v m="$major_shell" '$3 != "?" { split($3, a, "."); if (a[1] != m) { print $3; exit } }')
       if [ -n "$n" ]; then
@@ -772,9 +772,9 @@ step7_worlds() {
 
 step8_verify() {
   step 8 "Verification"
-  local bad=0 v out port apps line tries
+  local bad=0 v out port apps line tries want have
   if [ "$DRY" = 1 ]; then
-    say "[dry-run] would run: mcctl --version, docker compose config -q, PM2 status, API /health"
+    say "[dry-run] would run: mcctl --version, docker compose config -q, PM2 status and kill_timeout, API /health"
     record 8 "Verify" skipped "dry-run"
     return 0
   fi
@@ -807,6 +807,18 @@ step8_verify() {
     done <<EOF
 $apps
 EOF
+    # PM2 keeps the kill_timeout it registered; the file counts only after a restart
+    if [ -f "$ROOT/ecosystem.config.cjs" ]; then
+      want=$(state_get "$(eco_state "$ROOT/ecosystem.config.cjs")" kill)
+      have=$(printf '%s\n' "$apps" | awk '$1 == "mcctl-api" { print $4; exit }')
+      if [ -n "$want" ] && [ -n "$have" ]; then
+        if [ "$have" = "$want" ]; then say "PM2 mcctl-api kill_timeout: $have (ok)"; else
+          say "PM2 mcctl-api kill_timeout: $have, but ecosystem.config.cjs has $want (restart with: $RESTART_CMD)"
+          NEED_RESTART=1
+          bad=1
+        fi
+      fi
+    fi
   else
     say "PM2: no apps to check"
   fi

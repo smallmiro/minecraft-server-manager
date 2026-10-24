@@ -61,6 +61,8 @@ case "$1" in
       *) echo "[ERROR] Unexpected error: TTY initialization failed: uv_tty_init returned EINVAL" >&2; exit 1 ;;
     esac
     [ -n "$FAKE_RESTART_FAIL" ] && { echo "restart failed" >&2; exit 1; }
+    # PM2 registers the apps again from the file: the fake pm2 reports this kill_timeout
+    [ -z "$FAKE_RESTART_NOOP" ] && grep -oE 'kill_timeout: [0-9]+' "$MCCTL_ROOT/ecosystem.config.cjs" 2>/dev/null | head -n 1 | grep -oE '[0-9]+' > "$D/pm2_kill"
     echo "service restarted" ;;
   backup) echo "pushed" ;;
 esac
@@ -125,9 +127,10 @@ beforeEach(() => {
   put(join(bin, 'npm'), FAKE_LOGGER('[ "$1" = view ] && echo "$FAKE_NPM_LATEST"'), 0o755);
   put(
     join(bin, 'pm2'),
-    FAKE_LOGGER(
-      `[ "$1" = jlist ] && echo '[{"name":"mcctl-api","pm2_env":{"status":"online","node_version":"'"$(node -p process.versions.node)"'"}},{"name":"mcctl-console","pm2_env":{"status":"online","node_version":"'"$(node -p process.versions.node)"'"}}]'`,
-    ),
+    FAKE_LOGGER(`if [ "$1" = jlist ]; then
+  v=$(node -p process.versions.node); k=$(cat "$FAKE_DIR/pm2_kill" 2>/dev/null)
+  echo '[{"name":"mcctl-api","pm2_env":{"status":"online","node_version":"'"$v"'"'"\${k:+,\\"kill_timeout\\":$k}"'}},{"name":"mcctl-console","pm2_env":{"status":"online","node_version":"'"$v"'"}}]'
+fi`),
     0o755,
   );
   put(join(bin, 'docker'), FAKE_LOGGER(''), 0o755);
@@ -537,6 +540,23 @@ describe('upgrade-v3.sh', () => {
   it('exits 1 when any step failed and lists the restart to do by hand', () => {
     const r = run({ args: ['--yes'], env: { FAKE_RESTART_FAIL: '1' } });
     expect(r.out).toMatch(/\[failed\] Step 5/);
+    expect(r.code).toBe(1);
+    const todo = r.out.slice(r.out.indexOf('Still to do by hand'), r.out.indexOf('Rollback'));
+    expect(todo).toContain('mcctl console service restart --console --force');
+  });
+
+  it('checks that PM2 runs mcctl-api with the kill_timeout of the file', () => {
+    const ok = run({ args: ['--yes'] });
+    expect(ok.out).toContain('PM2 mcctl-api kill_timeout: 130000 (ok)');
+    expect(ok.code).toBe(0);
+  });
+
+  it('fails step 8 when PM2 did not pick up the new kill_timeout', () => {
+    // the restart "succeeds" but PM2 keeps the old registration
+    const r = run({ args: ['--yes'], env: { FAKE_RESTART_NOOP: '1' } });
+    expect(r.out).toMatch(/\[ok\] Step 5/);
+    expect(r.out).toMatch(/PM2 mcctl-api kill_timeout: -, but ecosystem\.config\.cjs has 130000/);
+    expect(r.out).toMatch(/\[failed\] Step 8 Verify/);
     expect(r.code).toBe(1);
     const todo = r.out.slice(r.out.indexOf('Still to do by hand'), r.out.indexOf('Rollback'));
     expect(todo).toContain('mcctl console service restart --console --force');
