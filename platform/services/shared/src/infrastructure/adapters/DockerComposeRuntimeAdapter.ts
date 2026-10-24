@@ -74,6 +74,58 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
 }
 
 /**
+ * Parse `docker stats --no-stream --format '{{.MemUsage}},{{.CPUPerc}}'` output
+ * (e.g. "2.1GiB / 4GiB,15.23%"). null when empty or unparseable.
+ */
+function parseDockerStats(result: string): ContainerStats | null {
+  if (!result) return null;
+
+  try {
+    const [memUsage, cpuPerc] = result.split(',');
+    if (!memUsage || !cpuPerc) return null;
+
+    // Parse memory: "2.1GiB / 4GiB" or "512MiB / 4GiB"
+    const memParts = memUsage.split('/').map((s) => s.trim());
+    if (memParts.length !== 2) return null;
+
+    const parseMemory = (mem: string): number => {
+      const match = mem.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)?$/i);
+      if (!match || !match[1]) return 0;
+      const value = parseFloat(match[1]);
+      const unit = (match[2] ?? 'B').toUpperCase();
+      const multipliers: Record<string, number> = {
+        B: 1,
+        KIB: 1024,
+        MIB: 1024 ** 2,
+        GIB: 1024 ** 3,
+        TIB: 1024 ** 4,
+        KB: 1000,
+        MB: 1000 ** 2,
+        GB: 1000 ** 3,
+        TB: 1000 ** 4,
+      };
+      return value * (multipliers[unit] || 1);
+    };
+
+    const memoryUsage = parseMemory(memParts[0]!);
+    const memoryLimit = parseMemory(memParts[1]!);
+    const memoryPercent = memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
+
+    // Parse CPU: "15.23%" or "0.00%"
+    const cpuPercent = parseFloat(cpuPerc.replace('%', '')) || 0;
+
+    return {
+      memoryUsage,
+      memoryLimit,
+      memoryPercent,
+      cpuPercent,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * IContainerRuntimePort over the Docker CLI. A ServerName maps to its container (`mc-<server>`, workloadNames.ts);
  * a string is the container name itself (deprecated v2 form, still used by the legacy facade).
  * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart only.
@@ -176,51 +228,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
       container,
     ]);
 
-    if (!result) return null;
-
-    try {
-      const [memUsage, cpuPerc] = result.split(',');
-      if (!memUsage || !cpuPerc) return null;
-
-      // Parse memory: "2.1GiB / 4GiB" or "512MiB / 4GiB"
-      const memParts = memUsage.split('/').map((s) => s.trim());
-      if (memParts.length !== 2) return null;
-
-      const parseMemory = (mem: string): number => {
-        const match = mem.match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)?$/i);
-        if (!match || !match[1]) return 0;
-        const value = parseFloat(match[1]);
-        const unit = (match[2] ?? 'B').toUpperCase();
-        const multipliers: Record<string, number> = {
-          B: 1,
-          KIB: 1024,
-          MIB: 1024 ** 2,
-          GIB: 1024 ** 3,
-          TIB: 1024 ** 4,
-          KB: 1000,
-          MB: 1000 ** 2,
-          GB: 1000 ** 3,
-          TB: 1000 ** 4,
-        };
-        return value * (multipliers[unit] || 1);
-      };
-
-      const memoryUsage = parseMemory(memParts[0]!);
-      const memoryLimit = parseMemory(memParts[1]!);
-      const memoryPercent = memoryLimit > 0 ? (memoryUsage / memoryLimit) * 100 : 0;
-
-      // Parse CPU: "15.23%" or "0.00%"
-      const cpuPercent = parseFloat(cpuPerc.replace('%', '')) || 0;
-
-      return {
-        memoryUsage,
-        memoryLimit,
-        memoryPercent,
-        cpuPercent,
-      };
-    } catch {
-      return null;
-    }
+    return parseDockerStats(result);
   }
 
   /**
