@@ -491,7 +491,7 @@ mc-router 상태와 라우팅 정보를 조회합니다.
       "up": true,
       "down": true,
       "downAfter": "10m",
-      "asleepMotd": "Server is asleep. Join to wake it up."
+      "asleepMotd": "§e§lServer is sleeping§r\\n§7Connect to wake up!"
     },
     "resolver": {
       "hostIp": "192.168.1.100",
