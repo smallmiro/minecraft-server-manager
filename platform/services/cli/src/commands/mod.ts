@@ -10,7 +10,8 @@ import '@minecraft-docker/mod-source-modrinth';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
-import { applyEnvChanges, atomicWriteFile, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-config.js';
 
 /**
  * Mod command options
@@ -211,10 +212,7 @@ async function modAdd(
     const newMods = [...new Set([...currentMods, ...modsToAdd])];
 
     // Write updated config (only this key; comments and other lines are kept)
-    await atomicWriteFile(
-      configPath,
-      applyEnvChanges(configContent, { set: { [envKey]: newMods.join(',') } }, { raw: true })
-    );
+    await writeServerConfig(paths, serverName, { set: { [envKey]: newMods.join(',') } });
 
     console.log('');
     console.log(colors.green(`✓ Added ${modsToAdd.length} mod(s) to ${serverName}`));
@@ -374,7 +372,7 @@ async function modRemove(
       return 0;
     }
 
-    await atomicWriteFile(configPath, applyEnvChanges(configContent, { set: changed }, { raw: true }));
+    await writeServerConfig(paths, serverName, { set: changed });
 
     console.log('');
     console.log(colors.green(`✓ Removed ${removed} mod(s) from ${serverName}`));

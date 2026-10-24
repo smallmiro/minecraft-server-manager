@@ -53,6 +53,7 @@ export class WorldOptions {
 
   /**
    * Convert to CLI arguments for create-server.sh
+   * @deprecated create-server.sh was removed in #675. Removed in v3.0.0 (#736).
    */
   toCliArgs(): string[] {
     const args: string[] = [];

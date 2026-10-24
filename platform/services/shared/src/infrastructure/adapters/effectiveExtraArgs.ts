@@ -5,6 +5,9 @@ import type { Paths } from '../../utils/index.js';
 import { parseEnvDocument, type EnvDocument } from '../../utils/env-file.js';
 import { EXISTING_WORLD_NAME_PATTERN, resolveWorldName } from '../../domain/value-objects/WorldName.js';
 import type { WorldAssignment, WorldAssignmentSnapshot } from '../../domain/services/worldAssignment.js';
+import { universeLocation } from '../../domain/server-spec/extraArgs.js';
+
+export { universeLocation };
 
 /**
  * How a server's effective EXTRA_ARGS (and so where its world lives) is
@@ -28,22 +31,6 @@ export function isInterpolated(doc: EnvDocument, key: string): boolean {
   if (!line) return false;
   const raw = line.raw.slice(line.raw.indexOf('=') + 1).trim();
   return !raw.startsWith("'") && raw.includes('$');
-}
-
-/**
- * Where --universe puts worlds: 'worlds' for /worlds, 'internal' for none or
- * /data (the container's working directory), undefined for anything else.
- */
-export function universeLocation(extraArgs: string): 'worlds' | 'internal' | undefined {
-  const args = extraArgs.trim().split(/\s+/).filter(Boolean);
-  const i = args.findIndex((a) => a === '--universe' || a.startsWith('--universe='));
-  if (i < 0) return 'internal';
-  const value = args[i]!.startsWith('--universe=') ? args[i]!.slice('--universe='.length) : args[i + 1];
-  if (!value || value.includes('$')) return undefined;
-  const path = value.replace(/\/+$/, '') || '/';
-  if (path === '/worlds') return 'worlds';
-  if (path === '/data' || path === '.' || path === './') return 'internal';
-  return undefined;
 }
 
 /**

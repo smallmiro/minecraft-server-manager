@@ -170,8 +170,8 @@ export const CreateServerRequestSchema = Type.Object({
     Type.Literal('AUTO_CURSEFORGE'),
   ])),
   version: Type.Optional(Type.String({
-    // Minecraft version (1.21.1, LATEST, 24w14a, 1.20.5-rc1); also a sed
-    // replacement in create-server.sh, so no '/', '&' or '\\'.
+    // Minecraft version (1.21.1, LATEST, 24w14a, 1.20.5-rc1); the same rule
+    // as MC_VERSION_INPUT_PATTERN (ServerSpec create, #675).
     pattern: '^[A-Za-z0-9][A-Za-z0-9._-]*$',
     maxLength: 64,
   })),
@@ -229,6 +229,8 @@ export const CreateServerResponseSchema = Type.Object({
     container: Type.String(),
     status: Type.String(),
   }),
+  /** The server was created but did not start (#675): status is 'created'. */
+  warning: Type.Optional(Type.String()),
 });
 
 // Delete Server Response Schema
@@ -236,6 +238,16 @@ export const DeleteServerResponseSchema = Type.Object({
   success: Type.Boolean(),
   server: Type.String(),
   message: Type.String(),
+  /** The server was deleted but its mDNS hostname was not removed (#735). */
+  warning: Type.Optional(Type.String()),
+});
+
+// Delete Server Request Schema (optional body, #735). As in create, the sudo
+// password is a body field, never a query parameter (URLs end up in logs).
+export const DeleteServerRequestSchema = Type.Object({
+  sudoPassword: Type.Optional(
+    Type.String({ writeOnly: true, description: 'Sudo password for removing the mDNS hostname (avahi)' })
+  ),
 });
 
 // Delete Server Query Schema
@@ -261,3 +273,4 @@ export type StatusResponse = Static<typeof StatusResponseSchema>;
 export type CreateServerRequest = Static<typeof CreateServerRequestSchema>;
 export type CreateServerQuery = Static<typeof CreateServerQuerySchema>;
 export type DeleteServerQuery = Static<typeof DeleteServerQuerySchema>;
+export type DeleteServerRequest = Static<typeof DeleteServerRequestSchema>;

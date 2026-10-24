@@ -36,6 +36,14 @@ function worldLockRemoved(replacement: string): ShellResult {
  * ShellAdapter
  * Implements IShellPort by executing bash scripts
  */
+/** Why the shell create path fails since #675 (ADR-0003 §5). */
+export const CREATE_SERVER_SCRIPT_REMOVED =
+  'create-server.sh was removed in #675; pass specRepo / use ServerSpec provision';
+
+/** Why the shell delete path fails since #735. */
+const DELETE_SERVER_SCRIPT_REMOVED =
+  'delete-server.sh was removed in #735; use DeleteServerUseCase with ServerSpec deprovision';
+
 export class ShellAdapter implements IShellPort {
   private readonly paths: Paths;
   private readonly env: Record<string, string>;
@@ -108,69 +116,20 @@ export class ShellAdapter implements IShellPort {
   // Server Operations
   // ========================================
 
-  async createServer(
-    name: ServerName,
-    options: CreateServerOptions
-  ): Promise<ShellResult> {
-    const args: string[] = [name.value];
-
-    args.push('-t', options.type.value);
-    args.push('-v', options.version.value);
-
-    if (options.memory) {
-      args.push('-m', options.memory.formatted);
-    }
-
-    // Add world options
-    args.push(...options.worldOptions.toCliArgs());
-
-    // Add modpack options if provided
-    if (options.modpackSlug) {
-      args.push('--modpack', options.modpackSlug);
-    }
-    if (options.modpackVersion) {
-      args.push('--modpack-version', options.modpackVersion);
-    }
-    if (options.modLoader) {
-      args.push('--mod-loader', options.modLoader);
-    }
-    if (options.modpackExcludeFiles && options.modpackExcludeFiles.length > 0) {
-      args.push('--exclude-files', options.modpackExcludeFiles.join(','));
-    }
-
-    // create-server.sh defaults to whitelist off
-    if (options.enableWhitelist === false) {
-      args.push('--no-whitelist');
-    } else if (options.whitelistPlayers && options.whitelistPlayers.length > 0) {
-      args.push('--whitelist', options.whitelistPlayers.join(','));
-    } else if (options.enableWhitelist) {
-      args.push('--enable-whitelist');
-    }
-
-    // Add playit domain options
-    if (options.playitDomain) {
-      args.push('--playit-domain', options.playitDomain);
-    }
-    if (options.noPlayitDomain) {
-      args.push('--no-playit-domain');
-    }
-
-    if (options.autoStart === false) {
-      args.push('--no-start');
-    }
-
-    return this.executeScript('create-server.sh', args);
+  /**
+   * @deprecated create-server.sh was removed in #675: use CreateServerUseCase
+   * with ServerSpec provisioning. Rejects without running anything; removed in v3.0.0 (#736).
+   */
+  async createServer(_name: ServerName, _options: CreateServerOptions): Promise<ShellResult> {
+    throw new Error(CREATE_SERVER_SCRIPT_REMOVED);
   }
 
-  async deleteServer(name: ServerName, force = false, deleteWorld = false): Promise<ShellResult> {
-    const args: string[] = [name.value];
-    if (force) {
-      args.push('--force');
-    }
-    if (deleteWorld) {
-      args.push('--delete-world');
-    }
-    return this.executeScript('delete-server.sh', args);
+  /**
+   * @deprecated delete-server.sh was removed in #735: use DeleteServerUseCase
+   * with ServerSpec deprovision. Rejects without running anything; removed in v3.0.0 (#736).
+   */
+  async deleteServer(_name: ServerName, _force = false, _deleteWorld = false): Promise<ShellResult> {
+    throw new Error(DELETE_SERVER_SCRIPT_REMOVED);
   }
 
   /**

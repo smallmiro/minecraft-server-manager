@@ -79,7 +79,13 @@ export function parseRconPlayerList(raw: string): PlayerListResult | null {
  * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart only.
  */
 export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
-  constructor(private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv } = {}) {}
+  /**
+   * @param options.startTimeoutMs how long `start` (docker compose up) may take; default 60 s.
+   *   A first start can pull the image (#675: create passes a longer one).
+   */
+  constructor(
+    private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv; startTimeoutMs?: number } = {}
+  ) {}
 
   getStatus(name: ServerName | string): ContainerStatus {
     const container = workloadNameOf(name);
@@ -264,7 +270,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /** Create the container if missing, then run it (`docker compose up -d`) */
   start(name: ServerName | string): Promise<RuntimeActionResult> {
     const container = workloadNameOf(name);
-    return this.compose(['compose', 'up', '-d', container]);
+    return this.compose(['compose', 'up', '-d', container], this.options.startTimeoutMs);
   }
 
   stop(name: ServerName | string): Promise<RuntimeActionResult> {
@@ -275,6 +281,35 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   restart(name: ServerName | string): Promise<RuntimeActionResult> {
     const container = workloadNameOf(name);
     return this.compose(['compose', 'restart', container]);
+  }
+
+  /**
+   * delete-server.sh step 1 (#735): `docker ps -a` decides whether the
+   * container exists; a container of the compose project is stopped and
+   * removed with compose, any other with `docker rm -f`.
+   */
+  async remove(name: ServerName | string): Promise<RuntimeActionResult> {
+    const container = workloadNameOf(name);
+    const failed = (what: string, r: RuntimeActionResult): RuntimeActionResult => ({
+      ...r,
+      success: false,
+      error: `Failed to ${what} container ${container}: ${r.error ?? 'unknown error'}`,
+    });
+    const ps = await this.run(['ps', '-a', '--format', '{{.Names}}'], { env: this.env() });
+    if (!ps.success) return { ...ps, error: `Cannot list Docker containers (is Docker running?): ${ps.error}` };
+    if (!ps.stdout?.split('\n').includes(container)) return { success: true, stdout: `Container ${container} not found` };
+
+    const project = await this.compose(['compose', 'ps', container]);
+    if (project.success && project.stdout?.includes(container)) {
+      const stop = await this.compose(['compose', 'stop', container]);
+      if (!stop.success) return failed('stop', stop);
+      const rm = await this.compose(['compose', 'rm', '-f', container]);
+      if (!rm.success) return failed('remove', rm);
+      return { success: true, stdout: `Container ${container} stopped and removed` };
+    }
+    // Not in the compose project (e.g. its include entry is already gone)
+    const rm = await this.run(['rm', '-f', '--', container], { env: this.env() });
+    return rm.success ? { success: true, stdout: `Container ${container} removed` } : failed('remove', rm);
   }
 
   /** Copied from mcctl-api player-session-collector (defaultLogFetcher) */
@@ -337,10 +372,10 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /** Copied from mcctl-api executeServerAction */
-  private compose(args: string[]): Promise<RuntimeActionResult> {
+  private compose(args: string[], timeout = 60000): Promise<RuntimeActionResult> {
     return this.run(args, {
       cwd: this.options.root ?? resolveMcctlRoot(),
-      timeout: 60000, // 60 second timeout
+      timeout,
       // Ensure Docker Compose uses the correct compose file
       env: { ...this.env(), COMPOSE_FILE: 'docker-compose.yml' },
     });

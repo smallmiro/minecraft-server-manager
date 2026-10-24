@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
+import { fakeProvision } from './fake-provision.js';
 
 // Mock child_process module
 vi.mock('child_process', async (importOriginal) => {
@@ -99,6 +100,22 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
 // Mock @minecraft-docker/mod-source-modrinth (auto-register)
 vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
 
+// ServerSpec writes (#675) land on the mocked file writer, as the direct writes did
+vi.mock('../src/lib/server-spec.js', async (importOriginal) => {
+  const utils = await import('@minecraft-docker/shared/utils');
+  const fs = await import('fs');
+  const { join } = await import('path');
+  return {
+    ...(await importOriginal<typeof import('../src/lib/server-spec.js')>()),
+    writeServerConfig: vi.fn(async (root: string, server: string, changes: { set?: Record<string, string>; remove?: string[] }) => {
+      const file = join(root, 'servers', server, 'config.env');
+      const content = fs.existsSync(file) ? String(fs.readFileSync(file, 'utf-8')) : '';
+      utils.atomicWriteFileSync(file, utils.applyEnvChanges(content, changes, { raw: true }));
+      return {};
+    }),
+  };
+});
+
 vi.mock('@minecraft-docker/shared/utils', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared/utils')>()),
   atomicWriteFileSync: vi.fn(),
@@ -120,7 +137,9 @@ vi.mock('fs', async (importOriginal) => {
 import {
   serverExists,
   ModSourceFactory,
+  ServerSpecError,
 } from '@minecraft-docker/shared';
+import { writeServerConfig } from '../src/lib/server-spec.js';
 import { existsSync, readFileSync } from 'fs';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
@@ -155,6 +174,7 @@ MEMORY=4G
 
   beforeEach(() => {
     vi.clearAllMocks();
+    fakeProvision(); // POST /api/servers never provisions for real in tests (#675)
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue(sampleConfigWithMods);
     mockWriteFileSync.mockImplementation(() => {});
@@ -321,6 +341,31 @@ MEMORY=4G
       expect(body.success).toBe(true);
       expect(body.removed).toBe('lithium');
       expect(mockWriteFileSync).toHaveBeenCalled();
+    });
+  });
+
+  describe('a refused ServerSpec write (#675)', () => {
+    const requests = [
+      ['POST /mods', { method: 'POST', url: '/api/servers/myserver/mods', payload: { slugs: ['fabric-api'] } }],
+      ['DELETE /mods/:slug', { method: 'DELETE', url: '/api/servers/myserver/mods/lithium' }],
+      ['PATCH exclude', { method: 'PATCH', url: '/api/servers/myserver/mods/installed/sodium-1.0.jar/exclude', payload: { excluded: true } }],
+    ] as const;
+
+    it.each(requests.flatMap(([name, request]) => [
+      [name, 'invalid_spec', 400, request],
+      [name, 'locked', 409, request],
+    ] as const))('%s maps ServerSpecError %s to %i', async (_name, code, status, request) => {
+      mockedServerExists.mockReturnValue(true);
+      const { readdirSync } = await import('fs');
+      vi.mocked(readdirSync).mockReturnValue([
+        { name: 'sodium-1.0.jar', isFile: () => true, isDirectory: () => false },
+      ] as any);
+      vi.mocked(writeServerConfig).mockRejectedValueOnce(new ServerSpecError(code, `spec ${code}`, 'myserver'));
+
+      const response = await app.inject(request as any);
+
+      expect(response.statusCode).toBe(status);
+      expect(response.json().message).toContain(`spec ${code}`);
     });
   });
 

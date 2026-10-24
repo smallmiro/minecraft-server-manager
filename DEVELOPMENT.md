@@ -178,7 +178,7 @@ pnpm --filter @minecraft-docker/mcctl test
 pnpm test:e2e                                # Management Console E2E: mcctl-api + mcctl-console (Playwright)
 cd platform/services/cli && pnpm test:e2e    # CLI E2E (Vitest)
 
-pnpm test:scripts                            # bash script tests (bats, fake docker)
+pnpm test:scripts                            # bash script tests (bats)
 pnpm lint:scripts                            # shellcheck on platform/scripts (needs shellcheck installed)
 ```
 
@@ -186,22 +186,21 @@ Add E2E tests for new REST endpoints in `e2e/tests/api-*.spec.ts`, for console U
 
 ### 5.1 Bash script tests
 
-Tests for `platform/scripts/*.sh` live in `platform/scripts/tests/*.bats` and run on [bats-core](https://github.com/bats-core/bats-core) (npm `bats`, installed by `pnpm install`). No real Docker, sudo or system file is touched.
+Tests for `platform/scripts/lib/common.sh` (the bash mirror of the `ServerName`/`WorldName` rules) live in `platform/scripts/tests/*.bats` and run on [bats-core](https://github.com/bats-core/bats-core) (npm `bats`, installed by `pnpm install`). No real Docker, sudo or system file is touched.
 
 ```bash
 pnpm test:scripts                                         # all bats tests
-pnpm exec bats platform/scripts/tests/delete-server.bats  # one file
-pnpm exec bats -f "delete" platform/scripts/tests         # tests matching a name
+pnpm exec bats platform/scripts/tests/naming-rules.bats   # one file
+pnpm exec bats -f "validate" platform/scripts/tests       # tests matching a name
 ```
 
-- `helpers.bash`: `use_fake_docker`, `fake_cmd <name> <body>` (stub on PATH), `make_platform` (temp `MCCTL_ROOT` with `servers/`, `worlds/`, `.env`, `docker-compose.yml`), `add_server <name>`, and `require_*` skips.
-- `fake-bin/docker`: records every call, one line of arguments, to `$FAKE_DOCKER_LOG`. Scenario knobs: `FAKE_DOCKER_PS` (stdout of `docker ps`), `FAKE_DOCKER_COMPOSE_PS` (stdout of `docker compose ps`), `FAKE_DOCKER_CONFIG_RC` (exit code of `docker compose config`). Everything else exits 0. Example: `FAKE_DOCKER_PS=mc-alpha run bash "$SCRIPTS_DIR/delete-server.sh" alpha --force --keep-avahi`, then `grep '^rm -f mc-alpha$' "$FAKE_DOCKER_LOG"`.
-- Always pass `--keep-avahi` when running `delete-server.sh` in a test; to test the avahi path, stub `sudo` with `fake_cmd` so the real `/etc/avahi/hosts` is never touched.
-- Examples to copy: `create-server.bats`, `delete-server.bats`.
+- `helpers.bash`: `TESTS_DIR` and `SCRIPTS_DIR`. The stubs and temp-platform helpers went with the script tests that used them (#734, #735).
+- Example to copy: `naming-rules.bats`.
+- Server delete (and its avahi `sudo sed -i` step) moved to TypeScript in #735; its tests are vitest tests in `platform/services/shared/tests` with fake `docker`, `sudo` and `systemctl` on `PATH` and a temp hosts file.
 
-Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures. Some scripts are not macOS-portable yet (`sed -i` in `create-server.sh`/`delete-server.sh`); their tests call `require_gnu_sed` and skip with a reason instead of failing. Remove the skip when the script is fixed.
+Write tests so they run on Linux and on macOS (bash 3.2, BSD userland): no GNU-only options (`touch -d`, `date -d`, `sed -i` without a suffix, `readlink -f`) in test code or fixtures.
 
-`pnpm lint:scripts` runs shellcheck at `--severity=error` (config: `.shellcheckrc`, `platform/scripts/tests/lint.sh`). Baseline at shellcheck 0.11.0 over `platform/scripts/*.sh` and `lib/*.sh`: 0 errors, 11 warnings (SC1090 x3, SC2034 x6, SC2155 x2), 14 at info and above, 24 at style and above. The gate is errors only until the warnings are fixed; do not add new findings. See all of them with `shellcheck -x -S style platform/scripts/*.sh platform/scripts/lib/*.sh`.
+`pnpm lint:scripts` runs shellcheck at `--severity=error` (config: `.shellcheckrc`, `platform/scripts/tests/lint.sh`). `platform/scripts/` has no top-level `*.sh` left (#735); over `lib/*.sh` the baseline is 0 findings at every severity (shellcheck 0.10.0). Do not add new findings; check with `shellcheck -x -S style platform/scripts/lib/*.sh`.
 
 ## 6. Documentation
 

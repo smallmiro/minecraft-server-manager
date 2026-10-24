@@ -495,6 +495,9 @@ mcctl create [name] [options]
 | `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
+!!! info "create가 쓰는 파일"
+    `mcctl create`는 `servers/<이름>/server.yaml`을 쓰고, 그 파일에서 `config.env`, `docker-compose.yml`, `servers/compose.yml` 항목을 만듭니다([서버 정의](../configuration/server-yaml.md)). 서버가 만들어지기 전에 실패하면 아무것도 남기지 않으므로 같은 명령을 다시 실행하면 됩니다. 서버는 만들어졌지만 시작하지 못하면 서버는 그대로 두고 원인과 함께 종료 코드 1로 끝납니다. `mcctl start <이름>`으로 시작하세요.
+
 !!! info "월드 하나는 서버 하나"
     다른 서버가 이미 사용 중인 월드는 `--world`(그리고 새 서버의 기본 월드 `<name>`)로 지정할 수 없습니다. [월드 할당 규칙](#world-assignment-rules)을 참고하세요.
 
@@ -615,11 +618,13 @@ mcctl delete [name] [options]
 
 `--delete-world`가 없으면 월드를 확실히 보존할 수 없는 다음 경우에도 아무것도 지우지 않고 중단합니다.
 
-- `config.env`의 `LEVEL` 줄이 `LEVEL=<이름>`(영문자, 숫자, `-`, `_`) 한 줄이 아닌 경우: 주석, 따옴표, `=` 앞뒤 공백, 경로, `LEVEL` 줄이 둘 이상인 경우 등. `LEVEL` 줄이 아예 없으면 월드는 `world`로 봅니다.
+- `config.env`로 서버의 월드를 정할 수 없는 경우. `LEVEL`은 Docker Compose가 파일을 읽는 방식으로 읽습니다(따옴표, 줄 끝 주석, `=` 앞뒤 공백은 괜찮고, `LEVEL` 줄이 여럿이면 마지막 줄을 씁니다). 값이 월드 이름(영문자, 숫자, `-`, `_`)이 아니거나, `$` 보간을 쓰거나, `EXTRA_ARGS`의 `--universe`가 mcctl이 지원하지 않는 위치를 가리키면 중단합니다. [월드 할당 규칙](#world-assignment-rules)과 같은 규칙입니다. `LEVEL` 줄이 아예 없으면 월드는 `world`로 봅니다.
 - `servers/<name>/`나 그 안의 `data/`가 심볼릭 링크이거나, `data/<LEVEL>` 없이 `<LEVEL>_nether`·`<LEVEL>_the_end`만 있는 경우.
 - 다른 월드 폴더(`level.dat`, `level.dat_old`, `region/`, `*.mca` 중 하나가 있는 폴더. 예: 이전 `LEVEL`의 옛 월드)가 함께 지워지게 되거나, 서버 안의 심볼릭 링크가 서버 안을 가리키는 경우. 메시지에 그 경로를 보여 줍니다.
 
 `worlds/`의 실제 경로가 서버 안(예: `servers/<name>/`을 가리키는 심볼릭 링크)이면 `--delete-world`를 줘도 중단합니다. 서버 컨테이너를 정지하지 못하거나 Docker를 조회하지 못하면 삭제를 중단하고 아무것도 지우지 않습니다. 실행 중인 서버의 접속자 수를 RCON으로 읽지 못하면 `mcctl delete <name>`은 `--force` 없이는 삭제를 거부합니다.
+
+삭제 전에 백업은 하지 않습니다. 월드는 `worlds/`에 남습니다(`--delete-world`가 아니면). 한 서버의 삭제는 한 번에 하나만 실행됩니다. 삭제가 도는 동안 같은 서버에 대한 두 번째 `mcctl delete`(또는 API 삭제)는 실패합니다. 삭제는 mcctl이 쓰는 `servers/compose.yml` 항목(`<name>/docker-compose.yml`)만 다룹니다. 그 서버에 대한 include 항목을 손으로 따로 썼다면(객체형, 추가 compose 파일) 아무것도 바꾸지 않고 멈추며, 그 항목을 먼저 지우라고 안내합니다. mDNS 호스트명 `<name>.local`은 서버 파일을 지운 뒤 README의 sudoers `NOPASSWD` 줄이 허용하는 명령인 `sudo sed -i … /etc/avahi/hosts`로 `/etc/avahi/hosts`에서 지웁니다. sudo 비밀번호는 `--sudo-password`, [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password), 프롬프트 중 하나로 받습니다. 지우지 못해도(예: 비밀번호도 `NOPASSWD` 규칙도 없음) 서버는 삭제되고 `mcctl delete`가 경고를 출력합니다. 이때는 `<name>.local` 줄을 직접 지우세요. `servers/compose.yml`에서 빠진 뒤 `servers/<name>/`에서 지우지 못한 파일(예: 컨테이너가 root로 만든 파일)도 경고로 출력합니다. 출력된 `sudo rm -rf` 명령으로 지우세요.
 
 **예제:**
 
@@ -1980,6 +1985,30 @@ mcctl migrate worlds [options]
 !!! info "월드 저장 경로 변경"
     `mcctl create`로 생성된 새 서버는 이미 `/worlds/` 디렉토리 구조를 사용합니다.
     이 마이그레이션 명령어는 이 변경 이전에 생성된 기존 서버를 위한 것입니다.
+
+---
+
+### mcctl migrate spec
+
+서버를 정의 파일 `servers/<이름>/server.yaml`로 가져오고, 그 파일에서 만드는 파일(`config.env`, `docker-compose.yml`, `servers/compose.yml` 항목)을 씁니다. [서버 정의](../configuration/server-yaml.md)를 참고하세요.
+
+```bash
+mcctl migrate spec <서버> [옵션]
+mcctl migrate spec --all [옵션]
+```
+
+**옵션:**
+
+| 옵션 | 설명 |
+|------|------|
+| `--all` | 모든 서버 |
+| `--dry-run` | 가져올 내용만 보고하고 쓰지 않음 |
+| `--force` | 생성 파일의 손수정을 무시하고 `server.yaml`에서 다시 만듦(`.bak` 사본을 남김) |
+| `--json` | 서버별 보고서를 JSON으로 출력 |
+
+다시 실행해도 안전합니다. 동기화된 서버는 `synced`로 보고하고 아무것도 다시 쓰지 않습니다. 월드나 이미지를 정할 수 없는 서버(예: `config.env`의 `${...}` 값)는 `refused`이고 종료 코드는 1입니다. `world.level`을 바꾸면 [월드 할당 규칙](#world-assignment-rules)으로 검사하며 서버가 정지돼 있어야 합니다.
+
+꼭 실행할 필요는 없습니다. `server.yaml`이 없는 서버는 mcctl이 처음 바꿀 때 가져오고, `mcctl upgrade`가 아직 가져오지 않은 서버를 알려 줍니다.
 
 ---
 

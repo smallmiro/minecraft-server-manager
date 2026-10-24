@@ -9,6 +9,8 @@ import {
   WorldRepository,
   ConfigEnvWorldAssignmentAdapter,
   FileServerSpecRepository,
+  AvahiHostnameRegistrarAdapter,
+  resolveHostIps,
   DockerComposeRuntimeAdapter,
   DocsAdapter,
   SqliteAuditLogRepository,
@@ -140,7 +142,8 @@ export class Container {
 
   get worldAssignmentPort(): IWorldAssignmentPort {
     if (!this._worldAssignmentPort) {
-      this._worldAssignmentPort = new ConfigEnvWorldAssignmentAdapter(this.paths);
+      // LEVEL and SEED writes go through the ServerSpec repository (#675), which checks the server is stopped
+      this._worldAssignmentPort = new ConfigEnvWorldAssignmentAdapter(this.paths, this.serverSpecRepository);
     }
     return this._worldAssignmentPort;
   }
@@ -258,7 +261,14 @@ export class Container {
       this.worldRepository,
       this.auditLogPort,
       this.modSourcePort,
-      this.worldAssignmentPort
+      this.worldAssignmentPort,
+      {
+        specRepo: this.serverSpecRepository,
+        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
+        // The first start can pull the image: create-server.sh ran compose up without a timeout.
+        runtime: new DockerComposeRuntimeAdapter({ root: this.paths.root, startTimeoutMs: 30 * 60_000 }),
+        hostIps: () => resolveHostIps(this.paths),
+      }
     );
   }
 
@@ -269,7 +279,11 @@ export class Container {
       this.serverRepository,
       this.auditLogPort,
       this.serverConsolePort,
-      this.containerRuntime
+      this.containerRuntime,
+      {
+        specRepo: this.serverSpecRepository,
+        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: this.sudoPassword }),
+      }
     );
   }
 

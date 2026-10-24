@@ -81,6 +81,28 @@ describe('CreateServerDialog', () => {
     expect(screen.getByText('Create New Server')).toBeInTheDocument();
   });
 
+  it('shows a created-with-warning result as a warning, not as a success (#675)', () => {
+    const warning = "Server 'alpha' was created but did not start: port is already allocated. Start it with: mcctl start alpha";
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} status="completed" message={warning} warning={warning} />
+    );
+
+    expect(screen.queryByText('Server Created Successfully')).not.toBeInTheDocument();
+    expect(screen.getByText('Server Created with a Warning')).toBeInTheDocument();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent(warning);
+    expect(alert.className).toMatch(/Warning/);
+  });
+
+  it('shows a plain success without a warning', () => {
+    renderWithTheme(
+      <CreateServerDialog open={true} onClose={vi.fn()} onSubmit={vi.fn()} status="completed" message="Server created successfully!" />
+    );
+
+    expect(screen.getByText('Server Created Successfully')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('should not render when open is false', () => {
     renderWithTheme(
       <CreateServerDialog open={false} onClose={vi.fn()} onSubmit={vi.fn()} />

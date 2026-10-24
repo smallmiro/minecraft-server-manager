@@ -238,6 +238,17 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
     expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'up', '-d', 'mc-a'], COMPOSE, expect.any(Function));
   });
 
+  it('start takes a longer timeout when given (first start pulls the image, #675)', async () => {
+    execFileCalls({}, {});
+    await new DockerComposeRuntimeAdapter({ root: '/srv/mc', env, startTimeoutMs: 1_800_000 }).start('mc-a');
+    expect(execFile).toHaveBeenLastCalledWith(
+      'docker',
+      ['compose', 'up', '-d', 'mc-a'],
+      { ...COMPOSE, timeout: 1_800_000 },
+      expect.any(Function)
+    );
+  });
+
   it('restart runs compose restart in the root with COMPOSE_FILE', async () => {
     execFileCalls({});
     expect(await runtime.restart('mc-a')).toEqual({ success: true, stdout: '', stderr: '' });
@@ -271,6 +282,77 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
     );
     await defaults.stop('mc-a');
     expect(execFile).toHaveBeenLastCalledWith('docker', ['stop', '--', 'mc-a'], { env: process.env }, expect.any(Function));
+  });
+});
+
+/** #735: what delete-server.sh did to the container, in the same order; only mc-<name>. */
+describe('DockerComposeRuntimeAdapter.remove', () => {
+  const env = () => ({ PATH: '/bin' });
+  const runtime = new DockerComposeRuntimeAdapter({ root: '/srv/mc', env });
+  const COMPOSE = { cwd: '/srv/mc', timeout: 60000, env: { PATH: '/bin', COMPOSE_FILE: 'docker-compose.yml' } };
+  const argv = () => vi.mocked(execFile).mock.calls.map((c) => c[1]);
+  const alpha = ServerName.create('alpha');
+
+  it('asks docker ps -a first and does nothing when the container is absent', async () => {
+    execFileCalls({ stdout: 'mc-router\nmc-beta\n' });
+    expect(await runtime.remove(alpha)).toEqual({ success: true, stdout: 'Container mc-alpha not found' });
+    expect(argv()).toEqual([['ps', '-a', '--format', '{{.Names}}']]);
+    expect(execFile).toHaveBeenCalledWith('docker', ['ps', '-a', '--format', '{{.Names}}'], { env: env() }, expect.any(Function));
+  });
+
+  it('matches the container name exactly (mc-alpha2 is not mc-alpha)', async () => {
+    execFileCalls({ stdout: 'mc-alpha2\n' });
+    expect((await runtime.remove(alpha)).success).toBe(true);
+    expect(argv()).toEqual([['ps', '-a', '--format', '{{.Names}}']]);
+  });
+
+  it('a failed docker ps is not "no container"', async () => {
+    execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { stderr: 'daemon down' }));
+    const result = await runtime.remove(alpha);
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot list Docker containers/);
+    expect(argv()).toHaveLength(1);
+  });
+
+  it('stops and removes a container of the compose project with compose stop and compose rm -f', async () => {
+    execFileCalls({ stdout: 'mc-alpha\n' }, { stdout: 'NAME\nmc-alpha  running\n' }, {}, {});
+    expect(await runtime.remove(alpha)).toEqual({ success: true, stdout: 'Container mc-alpha stopped and removed' });
+    expect(argv()).toEqual([
+      ['ps', '-a', '--format', '{{.Names}}'],
+      ['compose', 'ps', 'mc-alpha'],
+      ['compose', 'stop', 'mc-alpha'],
+      ['compose', 'rm', '-f', 'mc-alpha'],
+    ]);
+    expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'stop', 'mc-alpha'], COMPOSE, expect.any(Function));
+  });
+
+  it('stops there when compose stop fails (the server may still be writing)', async () => {
+    execFileCalls({ stdout: 'mc-alpha\n' }, { stdout: 'mc-alpha\n' }, Object.assign(new Error('stop failed'), { stderr: 'boom' }));
+    const result = await runtime.remove(alpha);
+    expect(result).toMatchObject({ success: false, stderr: 'boom' });
+    expect(result.error).toMatch(/stop container mc-alpha/);
+    expect(argv()).toHaveLength(3);
+  });
+
+  it('reports a failed compose rm', async () => {
+    execFileCalls({ stdout: 'mc-alpha\n' }, { stdout: 'mc-alpha\n' }, {}, new Error('rm failed'));
+    const result = await runtime.remove(alpha);
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/remove container mc-alpha/);
+  });
+
+  it('removes a container outside the compose project with docker rm -f', async () => {
+    execFileCalls({ stdout: 'mc-alpha\n' }, { stdout: 'NAME\n' }, {});
+    expect(await runtime.remove(alpha)).toEqual({ success: true, stdout: 'Container mc-alpha removed' });
+    expect(argv().at(-1)).toEqual(['rm', '-f', '--', 'mc-alpha']);
+    expect(execFile).toHaveBeenLastCalledWith('docker', ['rm', '-f', '--', 'mc-alpha'], { env: env() }, expect.any(Function));
+  });
+
+  it('treats a failed compose ps like "not in the project" and reports a failed docker rm', async () => {
+    execFileCalls({ stdout: 'mc-alpha\n' }, new Error('no project'), new Error('rm failed'));
+    const result = await runtime.remove(alpha);
+    expect(result.success).toBe(false);
+    expect(argv().at(-1)).toEqual(['rm', '-f', '--', 'mc-alpha']);
   });
 });
 

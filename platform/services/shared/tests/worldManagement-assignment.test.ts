@@ -15,6 +15,7 @@ import type {
 } from '../src/application/ports/index.js';
 import type { ContainerStatus } from '../src/types/index.js';
 import { ServerName } from '../src/domain/value-objects/ServerName.js';
+import { ServerSpecError } from '../src/domain/server-spec/ServerSpecDocument.js';
 
 interface Setup {
   /** server -> LEVEL */
@@ -250,6 +251,17 @@ describe('assignWorldByName', () => {
     });
   });
 
+  // The adapter writes LEVEL through the ServerSpec repository (#675)
+  test('a ServerSpec refusal from the port keeps its code', async () => {
+    const { useCase, port } = setup();
+    port.assign.mockRejectedValueOnce(new ServerSpecError('edit_conflict', 'both edited', 'srv'));
+
+    const result = await useCase.assignWorldByName('free', 'srv');
+
+    expect(result).toMatchObject({ success: false, specErrorCode: 'edit_conflict', error: 'both edited' });
+    expect(result.errorCode).toBeUndefined();
+  });
+
   test('deleting the holder server makes the world assignable again (AC 3)', async () => {
     const { useCase, levels } = setup({ levels: { srv: 'srv', other: 'held' } });
     expect((await useCase.assignWorldByName('held', 'srv')).success).toBe(false);
@@ -319,6 +331,13 @@ describe('releaseWorldByName', () => {
     expect(port.release).not.toHaveBeenCalled();
   });
 
+  test('a ServerSpec refusal from the port keeps its code', async () => {
+    const { useCase, port } = setup({ levels: { srv: 'srv', other: 'held' } });
+    port.release.mockRejectedValueOnce(new ServerSpecError('locked', 'servers/compose.yml is locked', 'other'));
+
+    expect(await useCase.releaseWorldByName('held')).toMatchObject({ success: false, specErrorCode: 'locked' });
+  });
+
   test('fails closed without an assignment port', async () => {
     expect(await setup({ noPort: true }).useCase.releaseWorldByName('held')).toMatchObject({
       success: false,
@@ -381,7 +400,8 @@ describe('createWorld with a server', () => {
     expect(shell.setServerConfig).not.toHaveBeenCalled();
   });
 
-  test.each(['x\nMODS=http://evil/x.jar', '"" MODS=x', 'a\u2028b'])(
+  // seed$VAR\ needs quotes, and 'seed$VAR\' never closes for Compose (#675)
+  test.each(['x\nMODS=http://evil/x.jar', '"" MODS=x', 'a\u2028b', 'seed$VAR\\'])(
     'refuses seed %j before creating the directory (#726)',
     async (seed) => {
       const { useCase, port, worldRepo } = setup();

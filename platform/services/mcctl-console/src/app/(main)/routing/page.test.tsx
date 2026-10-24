@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RoutingPage from './page';
 import { useRouterStatus } from '@/hooks/useMcctl';
+import { usePlayitStatus } from '@/hooks/usePlayit';
 
 // Mock the hooks
 vi.mock('@/hooks/useMcctl', () => ({
@@ -39,7 +40,7 @@ const mockRouterStatusData = {
       {
         hostname: 'creative.local',
         target: 'mc-creative:25565',
-        serverStatus: 'stopped' as const,
+        serverStatus: 'exited' as const,
         serverType: 'PAPER',
         serverVersion: '1.21.1',
       },
@@ -84,7 +85,7 @@ describe('RoutingPage', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(screen.getByTestId('page-hero')).toHaveAttribute('data-compact', 'true');
     expect(screen.getByLabelText('Router status')).toHaveTextContent('Checking');
-    expect(screen.getAllByTestId('routing-skeleton-panel')).toHaveLength(5);
+    expect(screen.getAllByTestId('routing-skeleton-panel')).toHaveLength(4);
   });
 
   it('renders an explicit unavailable error state', () => {
@@ -124,22 +125,14 @@ describe('RoutingPage', () => {
     renderComponent();
 
     await waitFor(() => {
-      // Check page title
       expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
       expect(screen.getByLabelText('Router status')).toHaveTextContent('running');
       expect(screen.getByLabelText('Route count')).toHaveTextContent('2 routes');
-
-      // Check router status section
-      expect(screen.getByText('MC-Router Status')).toBeInTheDocument();
-      // "running" appears multiple times (status chip, avahi status), so use getAllByText
-      expect(screen.getAllByText('running').length).toBeGreaterThan(0);
-
-      // Check routes (server names are extracted from targets)
-      expect(screen.getByText('survival')).toBeInTheDocument();
+      expect(screen.getByText('mc-router Gateway')).toBeInTheDocument();
     });
   });
 
-  it('should render platform info section', async () => {
+  it('lists every hostname in the routing table without expanding anything', () => {
     vi.mocked(useRouterStatus).mockReturnValue({
       data: mockRouterStatusData,
       isLoading: false,
@@ -148,12 +141,44 @@ describe('RoutingPage', () => {
 
     renderComponent();
 
-    await waitFor(() => {
-      expect(screen.getByText('Platform Information')).toBeInTheDocument();
-    });
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByText('survival.local')).toBeInTheDocument();
+    expect(screen.getByText('creative.local')).toBeInTheDocument();
+    expect(screen.getByText('Stopped · wakes on connect')).toBeInTheDocument();
   });
 
-  it('should render network settings section', async () => {
+  it('classifies playit domains as WAN using the playit status', () => {
+    vi.mocked(usePlayitStatus).mockReturnValue({
+      data: {
+        enabled: true,
+        agentRunning: true,
+        secretKeyConfigured: true,
+        containerStatus: 'running',
+        servers: [{ serverName: 'survival', playitDomain: 'aa-bb.craft.playit.gg', lanHostname: 'survival.local' }],
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+    vi.mocked(useRouterStatus).mockReturnValue({
+      data: {
+        ...mockRouterStatusData,
+        router: {
+          ...mockRouterStatusData.router,
+          routes: [
+            { hostname: 'aa-bb.craft.playit.gg', target: 'mc-survival:25565', serverStatus: 'running' as const },
+          ],
+        },
+      },
+      isLoading: false,
+      error: null,
+    } as any);
+
+    renderComponent();
+
+    expect(screen.getByText('WAN')).toBeInTheDocument();
+  });
+
+  it('shows port and mode only once (no duplicate platform/network cards)', () => {
     vi.mocked(useRouterStatus).mockReturnValue({
       data: mockRouterStatusData,
       isLoading: false,
@@ -162,9 +187,9 @@ describe('RoutingPage', () => {
 
     renderComponent();
 
-    await waitFor(() => {
-      expect(screen.getByText('Network Settings')).toBeInTheDocument();
-    });
+    expect(screen.getAllByText('25565')).toHaveLength(1);
+    expect(screen.queryByText('Platform Information')).not.toBeInTheDocument();
+    expect(screen.queryByText('Network Settings')).not.toBeInTheDocument();
   });
 
   it('should render avahi status section', async () => {
@@ -191,8 +216,7 @@ describe('RoutingPage', () => {
     renderComponent();
 
     expect(screen.getByRole('region', { name: 'Router routes' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Platform information' })).toBeInTheDocument();
-    expect(screen.getByRole('region', { name: 'Network settings' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'mc-router Gateway' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Avahi status' })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: 'Playit tunnel' })).toBeInTheDocument();
   });

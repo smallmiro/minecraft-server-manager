@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **상태** | system-architect 리뷰 후 수정하여 승인(2026-10-23) |
+| **상태** | system-architect 리뷰 후 수정하여 승인(2026-10-23). PR 1·2(#754), PR 3(`feature/675-provision`)으로 구현 |
 | **이슈** | [#675](https://github.com/smallmiro/minecraft-server-manager/issues/675)(강건화 D5, 마일스톤 M4 #645). #715 S8(`create-server.sh` 교체) 포함 |
 | **바꾸는 ADR** | [ADR-0001](0001-container-runtime-ports.ko.md): `IServerSpecRepository`에 `load`/`write` 추가(v2 메서드 유지), `IHostnameRegistrarPort.register`/`unregister` 추가 |
 | **기반** | [ADR-0002](0002-world-server-assignment.ko.md)(#670, 배정의 원천은 `LEVEL`. PR #750으로 머지됨), PR #749(#656: env 코덱, `atomicWriteFile`, API 생성·삭제 대기열), #651, #649, #654, #751(avahi sudoers 모양) |
@@ -22,7 +22,7 @@
 2. **작은 타입 필드 + `env` 통과값.** mcctl이 판단하거나 렌더러가 변환해야 하는 것(type, version, memory, image, world, routing)만 타입으로 둔다. 나머지 `config.env` 키는 `env`에 그대로 두므로 가져오기에서 손실이 없다.
 3. **v2.x에서 읽는 코드는 바꾸지 않는다.** 저장할 때마다 생성물을 다시 쓰므로 기존 리더는 계속 `config.env`와 compose를 읽는다. 쓰는 코드만 옮긴다.
 4. **손으로 고친 내용은 잃지 않고 흡수한다.** 헤더 해시로 감지한다. `config.env` 수정과 compose의 스펙 소유 필드(`image`, `mc-router.*` 라벨) 수정은 다음 쓰기 전에 스펙에 흡수한다. 그 밖의 compose 차이는 보호하고 조용히 덮어쓰지 않는다.
-5. **새 포트도, 깨지는 export도 없다**(#715, v2.x 규칙). `IServerSpecRepository`와 `ServerSpec`은 v2 모양을 유지한다. 전체 타입은 새 이름 `ServerSpecDocument`이고, 새 동작은 메서드 추가(`load`, `write`)로 얻는다. #670이 `IWorldAssignmentPort`에 쓴 방식과 같다. 렌더링은 저장소 어댑터 안의 인프라 세부 사항이다. `IHostnameRegistrarPort`에 `register`(#735용 `unregister`)를 추가한다.
+5. **새 포트도, 깨지는 export도 없다**(#715, v2.x 규칙). `IServerSpecRepository`와 `ServerSpec`은 v2 모양을 유지한다. 전체 타입은 새 이름 `ServerSpecDocument`이고, 새 동작은 메서드 추가(`load`, `write`)로 얻는다. #670이 `IWorldAssignmentPort`에 쓴 방식과 같다. 렌더링은 저장소 어댑터 안의 인프라 세부 사항이다. `IHostnameRegistrarPort`에 `register`를 추가한다(`unregister`는 #735에서 삭제와 함께 추가).
 6. **잠금 파일 없음.** 생성은 `mkdir`로 디렉터리를 선점하고, 수정은 낙관적 리비전(`server.yaml`의 sha256)으로 충돌을 막는다. #749의 API 내부 대기열은 그대로 둔다.
 7. **가져오기는 지연 또는 명시적으로만, 일괄로 하지 않는다.** `server.yaml`이 없는 서버는 첫 쓰기 때 메모리에서 가져오고, `mcctl migrate spec`으로 요청할 때 가져온다. `mcctl upgrade`는 아직 가져오지 않은 서버를 보고만 한다. 한 번도 가져오지 않은 서버도 지금처럼 동작한다.
 8. **provision이 `create-server.sh`를 대신한다.** `CreateServerUseCase` 안에서 API SSE가 이미 쓰는 이름으로 진행 이벤트를 내고, 실패하면 전부 되돌려 바로 다시 시도할 수 있게 한다.
@@ -48,9 +48,9 @@
 |------|------|--------------------------|
 | `name` | `ServerName`(DNS-1123, 예약어, #649), 디렉터리 이름과 같아야 함 | `EXISTING_SERVER_NAME_PATTERN` |
 | `world.level` | `WORLD_NAME_PATTERN`, `*_nether`/`*_the_end` 금지(ADR-0002) | `EXISTING_WORLD_NAME_PATTERN` |
-| `type`, `version`, `memory` | `ServerType`, `McVersion`, `Memory` | env 값 규칙 |
+| `type`, `version`, `memory` | `ServerType`, `MC_VERSION_INPUT_PATTERN`(정식 버전, `LATEST`, 스냅샷·프리릴리스, API 생성 규칙과 같음), `Memory` | env 값 규칙 |
 | 호스트명, `playitDomain` | 호스트명 규칙(`HostnameService`에서 도메인으로 이동) | 같음 |
-| `env` 키·값 | `ENV_KEY_RE` / `assertEnvFileValue`(#726) | 같음 |
+| `env` 키·값 | `ENV_KEY_RE` / `assertEnvFileValue`(#726), 그리고 `config.env` 작성기가 쓸 수 있는 값(PR 3 리뷰) | `ENV_KEY_RE` / `assertEnvFileValue` |
 
 - 생성은 엄격한 값 객체로, 가져오기는 지금 동작하는 값을 받아들이고 엄격 규칙 위반만 보고한다(C1 #7).
 - **관리 키**(`TYPE`, `VERSION`, `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`)는 `env`에 둘 수 없다. `env.EXTRA_ARGS`에는 `--universe`를 넣을 수 없다(`world.storage`가 맡음).
@@ -63,7 +63,7 @@
 
 ## 2. 저장소, 저장, 동시성
 
-- **포트**(전문은 ADR-0001): v2 메서드 `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, v3.0.0에서 삭제), `save(spec)`(전체 문서인지 검사 후 `write`), `delete`(#735)는 그대로 둔다. #675가 `load(name)` → `{ document, revision, warnings }`와 `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`를 추가한다.
+- **포트**(전문은 ADR-0001): v2 메서드 `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, v3.0.0에서 삭제), `save(spec)`(전체 문서인지 검사 후 `write`), `delete`는 그대로 둔다(#735가 선택 인자 `{ deleteWorld?, dryRun? }`와 결과를 더함, v2 호출은 그대로 컴파일됨). #675가 `load(name)` → `{ document, revision, warnings }`와 `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`를 추가한다.
 - `servers/<n>/server.yaml`, 고정 키 순서, `atomicWriteFile`(#749).
 - **생성**: `mkdir servers/<n>`(재귀 아님)이 선점이다. `EEXIST`는 `already_exists`.
 - **수정**: `load`가 읽은 바이트의 sha256을 `revision`으로 돌려주고, `write`는 시작할 때와 첫 쓰기 직전(호스트 주소, 가져오기, 월드 스냅샷 같은 await 검사가 모두 끝난 뒤)에 비교하고, 계획의 기준이 된 생성 파일도 그 시점에 다시 읽는다. 다르면 `conflict`이고 `updateServerSpec`이 한 번 재시도한다. `ponytail:` 남는 창은 `atomicWriteFile`의 임시 파일 쓰기와 fsync(밀리초)다. 갱신 유실이 실제로 보이면 서버별 잠금을 추가한다.
@@ -72,7 +72,7 @@
 
 ## 3. 렌더링
 
-- **경계**: 인프라 내부 인터페이스 `ServerSpecRenderer { render(doc, ctx) }`. `FileServerSpecRepository`가 생성자로 받는다. 애플리케이션 코드는 렌더러를 부르지 않으므로 포트가 아니다. 지금은 `DockerComposeRenderer`만 구현하고, `KubernetesManifestRenderer`(StatefulSet, Service, PVC)는 #641까지 인터페이스로만 둔다. #641은 렌더러와 함께 스펙 저장·매니페스트 적용에 필요한 k8s 저장소 어댑터를 추가한다. ADR-0001의 `apply(spec)`는 필요 없다. 삭제 시 렌더링할 것(include 항목)은 #735에서 정한다.
+- **경계**: 인프라 내부 인터페이스 `ServerSpecRenderer { render(doc, ctx) }`. `FileServerSpecRepository`가 생성자로 받는다. 애플리케이션 코드는 렌더러를 부르지 않으므로 포트가 아니다. 지금은 `DockerComposeRenderer`만 구현하고, `KubernetesManifestRenderer`(StatefulSet, Service, PVC)는 #641까지 인터페이스로만 둔다. #641은 렌더러와 함께 스펙 저장·매니페스트 적용에 필요한 k8s 저장소 어댑터를 추가한다. ADR-0001의 `apply(spec)`는 필요 없다. 삭제(#735)는 월드를 옮기기 전에 `removeIncludeEntry`로 생성된 include 항목 `<n>/docker-compose.yml`(남은 항목이 없으면 `include:` 자체)을 지우고(그 서버의 손으로 쓴 항목이 있으면 거부), 옮긴 뒤 `servers/<n>`을 지운다. [ADR-0001 S7](0001-container-runtime-ports.ko.md#스크립트-제거-s7-delete-serversh735) 참고.
 
 | 파일 | 방법 | 수정 감지 |
 |------|------|-----------|
@@ -81,12 +81,12 @@
 | `servers/compose.yml` | `js-yaml`로 읽어 같은 항목이 없으면 추가, 다른 항목은 유지. CLI와 API 프로세스가 같은 파일에 서버를 추가하므로 읽기-병합-쓰기 전체를 `servers/.compose.yml.lock`(`acquireFileLock`, 백업 잠금과 같은 구현: link 기반, 이 호스트에서 죽은 것이 확실한 보유자는 인계, 약 10초 대기 뒤 `locked`) 안에서 한다. 잠금 안에서 파일을 새로 읽어 쓰고, 다시 읽어 원래 있던 항목과 새 항목이 모두 있는지 확인하며, 다르면 한 번 재시도. 읽지 못한 파일은 덮어쓰지 않고 아무것도 쓰기 전에 오류로 멈춘다 | 아니오(병합) |
 | `data/`, `logs/`, `servers/global.env` | `mkdir -p`, `global.env`가 없으면 템플릿에서 복사 | — |
 
-- **env 투영**: `TYPE`, `VERSION`(없으면 생략), `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`, `EXTRA_ARGS`, 그다음 `env`. `universe`면 `EXTRA_ARGS` = `--universe /worlds/` + `env.EXTRA_ARGS`, `data`면 `env.EXTRA_ARGS ?? ''`.
+- **env 투영**: `TYPE`, `VERSION`(없으면 생략, `''`이면 `VERSION=`), `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`, `EXTRA_ARGS`, 그다음 `env`. `universe`면 `EXTRA_ARGS` = `--universe /worlds/` + `env.EXTRA_ARGS`, `data`면 `env.EXTRA_ARGS ?? ''`.
 - **라우터 호스트명**: `<n>.local`, `hostIps`마다 `<n>.<ip>.nip.io`, `playitDomain`, `customHostnames`(중복 제거). 이 생성기 하나가 `build_hostnames`, `init.ts`의 `buildHostnames`/`mergeHostnames`, `HostnameService`의 시스템 부분을 대신한다(B4).
 - **호스트 IP**(`resolveHostIps`, shared 인프라, 스크립트와 같은 순서): `.env`의 `HOST_IPS`, 없으면 `HOST_IP`(env 코덱으로 읽음), 없으면 `ip route get 1`의 `src` 주소, 없으면 `hostname -I`의 첫 주소, 없으면(macOS) `os.networkInterfaces()`의 내부가 아닌 첫 IPv4. 모든 단계에서 `docker0`, `br-*`, `veth*` 주소는 건너뛴다. avahi에는 첫 주소를 쓴다.
 - **헤더**(감지 대상 파일 첫 줄): `# Generated by mcctl from server.yaml; edits are detected (ADR-0003). mcctl:sha256=<64 hex> spec=<12 hex>`. 다른 상태 파일은 없다.
 - **멱등**: 두 번 렌더링해도 같은 바이트이고, 스펙이 그대로면 쓰기가 없다.
-- **역할 분담**(PR 2): 렌더러는 파일 본문만 돌려주고 `ctx.read`로 본문만 읽는다. 헤더는 저장소가 붙이고 검사하므로 렌더러는 헤더를 모른다. 리비전, 저장 위치, 수정 감지, 읽지 못한 `servers/compose.yml` 같은 모든 검사는 첫 쓰기 전에 끝난다. `FileServerSpecRepository.loadFile(name)`(포트가 아닌 어댑터 메서드)은 흡수 없이 `server.yaml`만 읽고, `mcctl migrate spec --force`가 이것으로 `server.yaml`에서 다시 렌더링한다. `server.yaml`이 있으면 compose `environment` 항목은 스펙 소유가 아니므로 스펙 밖 수정으로 본다(가져오기는 여전히 옮긴다, §4).
+- **역할 분담**(PR 2): 렌더러는 파일 본문만 돌려주고 `ctx.read`로 본문만 읽는다. 헤더는 저장소가 붙이고 검사하므로 렌더러는 헤더를 모른다. 리비전, 저장 위치, 수정 감지, 읽지 못한 `servers/compose.yml` 같은 모든 검사는 첫 쓰기 전에 끝난다. 쓰기가 중간에 실패하면 이미 바꾼 파일을 원래 내용으로 되돌리고(새로 만든 파일은 지움) 오류를 던진다. 단, 파일에 아직 이 쓰기가 쓴 내용이 있을 때만 되돌린다. 그사이(예: include 잠금 대기 중) 다른 writer가 고친 파일은 그대로 두고 메시지에 적는다. 정의 원천인 `server.yaml`은 생성 파일이 모두 되돌려졌을 때만 되돌리고, 아니면 새 스펙으로 둔다. 그래서 남는 상태는 전부 옛 내용이거나 새 스펙 + 일부 새 생성 파일뿐이고, `mcctl migrate spec`이 새 스펙으로 다시 렌더링한다. 되돌리지 못한 파일은 오류에 실린다(`unrestoredFiles(error)`). `mcctl migrate worlds`는 `mcctl migrate spec`이 렌더링할 스펙(`load()`)이 가리키는 곳에 월드를 두고(새 스펙이면 `worlds/`에 두고, 이전 스펙이면 되돌리고, 그 밖이면 그대로 두고 확인할 것을 안내), 다음 시작 전에 `mcctl migrate spec`을 실행하라고 안내한다. 그 스펙과 `server.yaml`의 저장 위치가 다르면(`mcctl migrate spec`이 거부하는 경우) `server.yaml`을 지우고 `mcctl migrate worlds`를 다시 실행하라고 안내한다(PR 3 리뷰). `FileServerSpecRepository.loadFile(name)`(포트가 아닌 어댑터 메서드)은 흡수 없이 `server.yaml`만 읽고, `mcctl migrate spec --force`가 이것으로 `server.yaml`에서 다시 렌더링한다. `server.yaml`이 있으면 compose `environment` 항목은 스펙 소유가 아니므로 스펙 밖 수정으로 본다(가져오기는 여전히 옮긴다, §4).
 
 **수정 감지**(`load` 시점)
 
@@ -104,33 +104,33 @@
 
 ## 4. 기존 설치본 가져오기
 
-1. **`config.env`**: `TYPE`, `VERSION`, `MEMORY`, `PLAYIT_DOMAIN`은 타입 필드로. `world.level` = `resolveWorldName(env)`(`WORLD_NAME`은 `env`에 남김). 나머지 키는 파일 순서대로 `env`에(알 수 없는 키 보존).
+1. **`config.env`**: `TYPE`, `VERSION`, `MEMORY`, `PLAYIT_DOMAIN`은 타입 필드로. 빈 `VERSION`, `MEMORY`, `PLAYIT_DOMAIN`은 `''`로 남겨, 렌더링한 `KEY=`가 계속 `global.env`보다 우선한다(PR 3 리뷰). `world.level` = `resolveWorldName(env)`(`WORLD_NAME`은 `env`에 남김). 나머지 키는 파일 순서대로 `env`에(알 수 없는 키 보존).
 2. **저장 위치**: ADR-0002의 해석으로 *실제* `EXTRA_ARGS`를 구한다. `--universe /worlds[/]`는 `universe`, 없음·`/data`·`.`는 `data`. `--universe` 토큰을 뺀 나머지는 `env.EXTRA_ARGS`로(`global.env`에서 왔으면 고정하고 보고). 디렉터리는 교차 확인만 한다.
 3. **fail-closed**: 보간되는 관리 키 값(`${...}`)이나 다른 `--universe` 위치는 `undetermined`다. 그 서버는 가져오지 않고 계속 동작하며, 파일을 고칠 때까지 그 서버에 대한 쓰기는 이유와 함께 실패한다.
-4. **compose**: 서비스 `mc-<n>` 하나를 기대한다. `image`와 라우터 라벨은 `routing`으로, 호스트명은 시스템과 사용자 지정으로 나눈다. `EULA`가 아닌 `environment` 항목은 `env`로 옮긴다. Compose에서는 `environment`가 `env_file`보다 우선하므로 키가 겹치면 compose 값을 쓰고 보고한다. 스펙 소유 필드나 옮기는 `environment` 항목에 `${...}`가 있으면 `undetermined`, 그 밖에 있으면 보호한다. §3의 의미 비교는 옮기거나 흡수한 항목을 뺀 compose로 한다.
+4. **compose**: 서비스 `mc-<n>` 하나를 기대한다. `image`와 라우터 라벨은 `routing`으로, 호스트명은 시스템과 사용자 지정으로 나눈다. `EULA`가 아닌 `environment` 항목은 `env`로 옮긴다. Compose에서는 `environment`가 `env_file`보다 우선하므로 키가 겹치면 compose 값을 쓰고 보고한다. 스펙 소유 필드나 옮기는 `environment` 항목에 `${...}`가 있으면 `undetermined`, 그 밖에 있으면 보호한다. `$$`는 Compose의 리터럴 `$`라 `$`로 읽는다. 렌더러는 compose에 넣는 `$`를 모두 `$$`로 쓰고, `config.env` 작성기는 `$`가 든 값을 작은따옴표로 감싸되, `\`로 끝나는 값은 거부한다(Compose는 `\'`를 이스케이프된 따옴표로 읽는다. PR 3 리뷰). §3의 의미 비교는 옮기거나 흡수한 항목을 뺀 compose로 한다.
 5. **보고**: 서버마다 `imported` | `refused`(보호된 compose는 경고)와 경고(고정한 `EXTRA_ARGS`, `environment` 충돌, 다시 만든 옛 nip.io 호스트, 엄격 규칙 위반 값).
 
 **실행 시점**: `load`가 `server.yaml`이 없으면 메모리에서 가져오고 첫 쓰기가 파일을 저장한다(읽기는 쓰지 않는다). `mcctl migrate spec [<name>|--all] [--dry-run] [--force]`는 가져오기·흡수·렌더링을 하고 보고한다(멱등). `mcctl upgrade`는 `server.yaml`이 없는 서버와 `migrate spec --dry-run` 결과를 출력만 하고 아무것도 쓰지 않는다. 한 번도 가져오지 않은 서버는 v2.x에서 지금처럼 동작하고, 손으로 복사해 넣은 서버도 첫 쓰기에서 채택된다.
 
 ## 5. provision(`create-server.sh` 대체)
 
-`CreateServerUseCase`에 선택 인자 `specRepo?`, `hostnames?`, `runtime?`(#670의 `assignments?` 뒤)를 추가하고 `executeWithConfig(config, options?: { onProgress?, onLog? })`로 바꾼다. `specRepo`가 없으면 deprecated 셸 경로를 쓴다. PR 3에서 스크립트를 지운 뒤에는 이 경로와 `ShellAdapter.createServer`가 ENOENT 대신 명확한 오류를 낸다: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`.
+`CreateServerUseCase`에 선택 인자 하나 `provision?: ServerProvisionDeps`(`{ specRepo, hostnames?, runtime?, hostIps? }`, #670의 `assignments?` 뒤. #665와 겹치는 생성자 변경을 줄이려고 객체 하나로 받는다)를 추가하고 `executeWithConfig(config, options?: CreateServerRunOptions)`(`{ onProgress?, onLog? }`)로 바꾼다. 스크립트를 지웠으므로 이것이 없는 경로와 `ShellAdapter.createServer`는 ENOENT 대신 명확한 오류를 낸다: `create-server.sh was removed in #675; pass specRepo / use ServerSpec provision`.
 
 | # | `create-server.sh` | TS provision | 진행 |
 |---|--------------------|--------------|------|
-| 0 | 인자 해석, 이름·월드 옵션 배타·env 값·모드팩 slug 검증 | `buildCreateSpec`(순수) + 검증, #670 `checkAssign(..., { newServer: true })`(배정 스냅샷을 읽음). 통과 전에는 쓰기 없음 | `initializing`(API) |
+| 0 | 인자 해석, 이름·월드 옵션 배타·env 값·모드팩 slug 검증 | `buildCreateSpec`(순수) + 검증(`parseCreateServerConfig`, 순수: 값 객체가 거부한 입력이나, `config.env`에 쓸 수 없는 seed처럼 생성 규칙이 거부한 스펙은 `invalid_spec`. API는 SSE 스트림을 열기 전에 실행하므로 JSON과 SSE 모두 400), #670 `checkAssign(..., { newServer: true })`(배정 스냅샷을 읽음). 통과 전에는 쓰기 없음 | `initializing`(API) |
 | 1–4 | 템플릿 복사, `sed`, include 추가, `docker compose config --quiet`, 실패 시 `.bak` 복원 | 한 번의 `specRepo.write(doc, { create: true })`: `mkdir` 선점, `server.yaml`, 렌더링, include 항목(다시 읽어 확인). `docker compose config`는 뺀다: 파일은 `js-yaml`로 생성하고, 깨진 프로젝트는 `start`가 보고한다 | `creating` |
 | 5 | avahi `<n>.local` → 첫 IP, 최선 노력 | `hostnames.register('<n>.local', hostIps[0])`, 건너뛰면 경고 | `configuring` |
 | 6 | `--no-start`가 아니면 `docker compose up -d`, `sleep 2`, `ps` | `autoStart === false`가 아니면 `runtime.start('mc-<n>')`, sleep 없음 | `starting` |
 
 - **이벤트**: API `server-create` SSE와 콘솔 `CreateServerStatus`가 이미 정의한 상태(`creating`, `configuring`, `starting`)를 쓰고, `onLog`는 `server-create-log`가 된다. `completed`/`error`는 stderr 문자열이 아니라 결과로 정한다(#658). 클라이언트 연결이 끊기면 이벤트만 멈춘다.
-- **시작 실패**(결정 1): CLI는 원인과 `mcctl start <n>` 안내 후 종료 코드 1. API는 `201`/SSE `completed`에 `server.status: 'created'`와 `warning`. PR 3에서 콘솔 `CreateServerStatus` 처리가 이 경고를 어떻게 보여 주는지 확인한다.
+- **시작 실패**(결정 1): CLI는 원인과 `mcctl start <n>` 안내 후 종료 코드 1. API는 `201`/SSE `completed`에 `server.status: 'created'`와 `warning`. PR 3에서 콘솔 `CreateServerStatus` 처리가 이 경고를 어떻게 보여 주는지 확인한다(경고 대화 상자). JSON `POST /api/servers`(`follow` 없음)는 파일을 쓴 뒤 컨테이너 시작을 `createTimeoutMs`(120초)까지만 기다린다. 넘으면 시작이 백그라운드에서 계속된다는 경고와 함께 같은 응답을 주고, 생성·삭제 대기열은 응답과 함께 다음으로 넘어간다. SSE와 CLI는 30분 시작 제한을 그대로 쓴다.
 - **정리(#657)**: `write({ create: true })`는 전부 아니면 전무다. 선점 뒤 실패하면 추가한 include 항목과 만든 디렉터리를 지우고 오류를 던진다. `worlds/`는 건드리지 않는다. 생성 중 프로세스가 죽으면 `servers/<n>`이 남을 수 있고 `mcctl delete <n>`으로 지운다(`ponytail:` 표시 파일 없음).
 - **avahi 어댑터**는 `README.md` sudoers 줄이 허용하는 명령을 셸 없이 argv로 실행한다: `sudo -n tee -a /etc/avahi/hosts`(stdin `<ip> <host>`), `sudo -n systemctl restart avahi-daemon`. sudo 비밀번호는 환경 변수가 아니라 어댑터 옵션으로 받는다. CLI는 `--sudo-password`, `MCCTL_SUDO_PASSWORD`, 또는 `promptSudoPasswordIfNeeded`가 물은 값(sudo가 아니라 mcctl이 묻는다)을, API는 요청의 `sudoPassword`를 넘긴다. 비밀번호가 있으면 `sudo -S -p '' -v`가 stdin으로 먼저 읽고 명령에는 전달되지 않는다(#682). 없으면 `sudo -n`으로 NOPASSWD나 캐시된 자격에 기대고, 실패하면 경고다.
 
-**옵션 동등성**: 영어판 §5 표가 CLI와 API가 넘기는 모든 옵션을 대응시킨다. 요점: `-t`의 위치 인자 형식은 없앤다. 모드팩 타입에 버전이 없으면 `VERSION`을 쓰지 않는다. 메모리를 반영한다(#737). `--modpack`/`--modpack-version`/`--mod-loader`/`--exclude-files`는 `MODRINTH`면 `MODRINTH_MODPACK`/`MODRINTH_VERSION`/`MODRINTH_LOADER`/`MODRINTH_EXCLUDE_FILES`, `AUTO_CURSEFORGE`면 `CF_SLUG`/`CF_VERSION`/`CF_LOADER`/`CF_EXCLUDE_MODS`. 화이트리스트는 `ENABLE_WHITELIST`/`WHITELIST`(`--no-whitelist` 우선). **의도된 차이**: 스크립트는 호스트 IP를 찾았을 때만 `--playit-domain` 값을 라우터 호스트에 넣었지만 TS는 항상 넣는다. `--no-playit-domain`과 `--start`는 아무것도 하지 않는다.
+**옵션 동등성**: 영어판 §5 표가 CLI와 API가 넘기는 모든 옵션을 대응시킨다. 요점: `-t`의 위치 인자 형식은 없앤다. 모드팩 타입에 버전이 없으면 `VERSION`을 쓰지 않는다(명시한 `LATEST`는 쓴다). 메모리를 반영한다(#737). `--modpack`/`--modpack-version`/`--mod-loader`/`--exclude-files`는 `MODRINTH`면 `MODRINTH_MODPACK`/`MODRINTH_VERSION`/`MODRINTH_LOADER`/`MODRINTH_EXCLUDE_FILES`, `AUTO_CURSEFORGE`면 `CF_SLUG`/`CF_VERSION`/`CF_LOADER`/`CF_EXCLUDE_MODS`. 화이트리스트는 `ENABLE_WHITELIST`/`WHITELIST`(`--no-whitelist` 우선). **의도된 차이**: 스크립트는 호스트 IP를 찾았을 때만 `--playit-domain` 값을 라우터 호스트에 넣었지만 TS는 항상 넣는다. `--no-playit-domain`과 `--start`는 아무것도 하지 않는다.
 
-**bats → vitest**: `get_host_ip` 4개 → `resolveHostIps`. `register_avahi_hostname` 5개 → 가짜 `sudo`/`avahi-daemon`으로 avahi 어댑터 시험. 생성 시험 → 임시 루트에서 provision 시험(실패 뒤 재시도 성공 포함). "compose config 실패 시 중단" → "`servers/compose.yml`을 읽지 못하면 아무것도 쓰지 않고 중단". 심링크 `_template` → "렌더러는 `templatesDir`에 쓰지 않는다". 화이트리스트 3개 → 렌더링 시험. `sudo-password.bats`는 #735까지 남는다.
+**bats → vitest**: `get_host_ip` 4개 → `resolveHostIps`. `register_avahi_hostname` 5개 → 가짜 `sudo`/`avahi-daemon`으로 avahi 어댑터 시험. 생성 시험 → 임시 루트에서 provision 시험(실패 뒤 재시도 성공 포함). "compose config 실패 시 중단" → "`servers/compose.yml`을 읽지 못하면 아무것도 쓰지 않고 중단". 심링크 `_template` → "렌더러는 `templatesDir`에 쓰지 않는다". 화이트리스트 3개 → 렌더링 시험. `sudo-password.bats`는 #735까지 남았고, #735가 사례를 avahi 어댑터 시험으로 옮기고 `delete-server.sh`와 함께 지웠다.
 
 ## 6. 쓰기 경로
 
@@ -146,7 +146,7 @@
 | CLI `update` | 이미지 태그, loading-MOTD 라벨 | `doc.image`, 라벨은 템플릿에서 |
 | CLI upgrade `server-env-migration` | `env_file` 경로 | **#736까지 유지**: 가져오지 않은 서버가 남기 때문(결정 4) |
 | `ConfigEnvWorldAssignmentAdapter.assign/release`(#670) | `LEVEL` | 저장소를 거쳐 `world.level` |
-| `WorldManagementUseCase` → `shell.setServerConfig` | `SEED`, `LEVEL` | `setEnvKey` |
+| `WorldManagementUseCase` → `shell.setServerConfig`, #734부터 `assign(world, server, { seed })` | `SEED`, `LEVEL` | `world.level`과 같은 쓰기의 `env.SEED`(바로 위 행) |
 | `mcctl migrate worlds`(#655) | `EXTRA_ARGS`, `LEVEL` | `allowStorageChange`와 함께 `world.storage = 'universe'` |
 | 설정 스냅샷 복원 | `config.env`, compose | 스냅샷에 `server.yaml`이 있으면 복원 후 렌더링(`KNOWN_CONFIG_FILES`에 추가), 옛 스냅샷은 파일을 쓴 뒤 흡수 |
 | `create-server.sh` / `delete-server.sh` | 전부 | provision(§5) / #735의 `repo.delete` |
@@ -164,6 +164,15 @@
 #675의 완료 조건 8개는 PR 3에서 모두 충족되므로 **#675는 PR 3 뒤에 닫는다**. 이전의 4단계("이전 형식 지원 종료")는 쓰기 보호 시험과 문서로 줄여 PR 3에 합쳤다. PR 3부터 `server-env-migration` 말고는 이전 방식으로 쓰는 코드가 없다. `server.yaml`이 없는 서버는 지연 가져오기로 계속 지원한다. **#736(v3.0.0)으로 미루는 것**: 위 `@deprecated` export, `IShellPort`/`ShellAdapter`, `server-env-migration` 삭제. v3.0.0에서 ServerSpec 동작은 바뀌지 않는다.
 
 순서: PR 1–2는 #749(#656) 머지 뒤, PR 3은 #670(PR #750으로 머지됨) 뒤, #735는 PR 3 뒤. PR 1의 `migrate spec`으로 `server.yaml`을 쓴 뒤 v2 쓰기 경로가 `config.env`를 바꾼 서버는 헤더가 없으므로, PR 2가 다음 load에서 그 변경을 흡수한다(§3).
+
+**PR 3 메모**(구현 기준):
+
+- 렌더링한 서버 compose는 모든 문자열을 따옴표로 감싼다. v2 라벨 리더(`parseRouterHosts`, `HostnameService`)가 `mc-router.host: "..."` 형태로 찾기 때문이다.
+- §6의 쓰기 경로는 모두 `updateServerSpec`/`setEnvKeys`를 거친다. 예외는 `setServerPlayitDomain`(deprecated v2 export, mcctl은 더 이상 부르지 않음), `server-env-migration`(#736까지), config 스냅샷 복원이다. 복원은 일관된 묶음을 쓴다: 스냅샷과 `mcctl server-backup`에 이제 `server.yaml`이 들어가고, 그것이 없는 #675 이전 묶음은 다음 load에서 흡수한다. 쓰기 감시 테스트가 예외마다 이유를 적는다.
+- `ConfigEnvWorldAssignmentAdapter`는 생성자로 저장소를 받는다. 런타임이 있는 저장소가 없으면 `LEVEL` 변경을 거부한다(R7). 새 월드의 `SEED`도 같은 쓰기로 들어간다. `WorldManagementUseCase`가 `assign`에 넘긴다(#734).
+- CLI와 API는 테스트가 바꿔 끼울 수 있는 작은 팩토리(`serverSpecRepositories`, `serverProvision`)로 저장소를 만든다. 테스트는 docker, sudo, 실제 플랫폼 루트를 건드리지 않는다.
+- provision은 `docker compose up`에 30분 제한을 둔다(`DockerComposeRuntimeAdapter`의 `startTimeoutMs`). 첫 시작에 이미지를 받을 수 있고, 스크립트는 제한이 없었다.
+- 버전 없는 모드팩 타입은 `VERSION`을 쓰지 않는다(CLI는 `LATEST`를 넘겼다). 명시한 `LATEST`는 쓴다. API가 허용하는 스냅샷·프리릴리스 버전은 그대로 쓴다.
 
 ## 8. 시험(TDD)
 

@@ -89,13 +89,15 @@ export type {
 } from './IServerConsolePort.js';
 export type { IRouterStatusPort } from './IRouterStatusPort.js';
 export type { IPlayitAgentPort } from './IPlayitAgentPort.js';
-export type { IHostnameRegistrarPort, HostnameRegistrarStatus } from './IHostnameRegistrarPort.js';
+export type { IHostnameRegistrarPort, HostnameRegistrarStatus, HostnameChangeResult } from './IHostnameRegistrarPort.js';
 export type { IRuntimeEnvironmentPort, ToolVersion } from './IRuntimeEnvironmentPort.js';
 export type {
   IServerSpecRepository,
   ServerSpec,
   LoadedServerSpec,
   WriteServerSpecOptions,
+  DeleteServerSpecOptions,
+  ServerSpecDeleteResult,
 } from './IServerSpecRepository.js';
 export type { IWorldAssignmentPort, WorldAssignment, WorldAssignmentSnapshot } from './IWorldAssignmentPort.js';
 

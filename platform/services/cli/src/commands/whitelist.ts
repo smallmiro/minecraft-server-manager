@@ -18,6 +18,19 @@ export interface WhitelistCommandOptions {
   json?: boolean;
 }
 
+const CONFIG_WRITE_FAILED = 'config.env could not be written';
+
+/**
+ * A refused config.env write (#675: import refused, locked, invalid spec):
+ * exit 1. writeConfigValue has already printed the cause.
+ */
+function configWriteFailed(options: WhitelistCommandOptions, fields: Record<string, string>): number {
+  if (options.json) {
+    console.log(JSON.stringify({ success: false, error: 'config_write_failed', server: options.serverName, ...fields }));
+  }
+  return 1;
+}
+
 /**
  * Manage server whitelist
  */
@@ -219,9 +232,10 @@ async function addToWhitelist(
   const currentConfigList = config['WHITELIST']
     ? config['WHITELIST'].split(',').map((s) => s.trim()).filter(Boolean)
     : [];
+  let saved = true;
   if (!currentConfigList.some((n) => n.toLowerCase() === playerName.toLowerCase())) {
     const newList = [...currentConfigList, playerName].join(',');
-    shell.writeConfigValue(options.serverName!, 'WHITELIST', newList);
+    saved = await shell.writeConfigValue(options.serverName!, 'WHITELIST', newList);
   }
 
   // Log audit
@@ -231,10 +245,11 @@ async function addToWhitelist(
     actor: 'cli:local',
     targetType: 'player',
     targetName: playerName,
-    status: 'success',
+    status: saved ? 'success' : 'failure',
     details: { server: options.serverName },
-    errorMessage: null,
+    errorMessage: saved ? null : CONFIG_WRITE_FAILED,
   });
+  if (!saved) return configWriteFailed(options, { player: playerName });
 
   if (options.json) {
     console.log(
@@ -291,7 +306,7 @@ async function removeFromWhitelist(
   const newConfigList = currentConfigList.filter(
     (n) => n.toLowerCase() !== playerName.toLowerCase()
   );
-  shell.writeConfigValue(options.serverName!, 'WHITELIST', newConfigList.join(','));
+  const saved = await shell.writeConfigValue(options.serverName!, 'WHITELIST', newConfigList.join(','));
 
   // Log audit
   const container = getContainer({ rootDir: options.root });
@@ -300,10 +315,11 @@ async function removeFromWhitelist(
     actor: 'cli:local',
     targetType: 'player',
     targetName: playerName,
-    status: 'success',
+    status: saved ? 'success' : 'failure',
     details: { server: options.serverName },
-    errorMessage: null,
+    errorMessage: saved ? null : CONFIG_WRITE_FAILED,
   });
+  if (!saved) return configWriteFailed(options, { player: playerName });
 
   if (options.json) {
     console.log(
@@ -349,7 +365,9 @@ async function enableWhitelist(
   }
 
   // Update config.env
-  shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'true');
+  if (!(await shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'true'))) {
+    return configWriteFailed(options, { action: 'enable' });
+  }
 
   if (options.json) {
     console.log(
@@ -392,7 +410,9 @@ async function disableWhitelist(
   }
 
   // Update config.env
-  shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'false');
+  if (!(await shell.writeConfigValue(options.serverName!, 'ENABLE_WHITELIST', 'false'))) {
+    return configWriteFailed(options, { action: 'disable' });
+  }
 
   if (options.json) {
     console.log(

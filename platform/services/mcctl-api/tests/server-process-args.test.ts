@@ -1,17 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
 /**
- * Server create/delete hand user input to scripts (#720). These tests run the
- * real child process against fake scripts that record their argv, so a value
- * that a shell would interpret shows up as a side effect.
+ * User input reaches servers as data, never shell text (#720). Create
+ * provisions in TypeScript (#675): the real use case and ServerSpec
+ * repository write the files under a temp root (no runtime, no avahi), and
+ * the values must land in config.env as given. Delete deprovisions in
+ * TypeScript (#735): the name reaches the use case as given and no process
+ * runs from the route.
  */
 
 const ROOT = mkdtempSync(join(tmpdir(), 'mcctl-api-process-args-'));
-const SCRIPTS = join(ROOT, 'scripts');
 
 process.env.MCCTL_ROOT = ROOT;
 process.env.AUTH_MODE = 'disabled';
@@ -30,26 +32,46 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   stopContainer: vi.fn(),
 }));
 
-// Never fall through to a real (bundled or deployed) create/delete script.
-vi.mock('../src/lib/script-resolver.js', () => ({
-  resolveScriptPath: (scriptName: string) => ({
-    scriptPath: join(SCRIPTS, scriptName),
-    scriptsDir: SCRIPTS,
-  }),
-}));
-
 vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { exec, execFile, spawn } from 'child_process';
-import { serverExists } from '@minecraft-docker/shared';
+import {
+  serverExists,
+  CreateServerUseCase,
+  ApiPromptAdapter,
+  ShellAdapter,
+  ServerRepository,
+  ConfigEnvWorldAssignmentAdapter,
+  FileServerSpecRepository,
+  Paths,
+} from '@minecraft-docker/shared';
+import { parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { serverProvision } from '../src/routes/servers.js';
+import { fakeDelete } from './fake-provision.js';
 
-const ARGV_FILE = join(ROOT, 'argv');
+/** The real provisioning on ROOT, without runtime or avahi. */
+function fileProvision(): void {
+  serverProvision.createUseCase = () => {
+    const paths = new Paths(ROOT);
+    return new CreateServerUseCase(
+      new ApiPromptAdapter({}),
+      new ShellAdapter({ paths }),
+      new ServerRepository(paths),
+      paths,
+      undefined,
+      undefined,
+      undefined,
+      new ConfigEnvWorldAssignmentAdapter(paths),
+      { specRepo: new FileServerSpecRepository(paths, undefined, undefined, () => []) }
+    );
+  };
+}
 
-/** argv the fake script received, one entry per argument. */
-function recordedArgv(): string[] {
-  return readFileSync(ARGV_FILE, 'utf-8').split('\0').slice(0, -1);
+/** The settings the provision wrote to servers/argv-test/config.env. */
+function configEnv(): Map<string, string> {
+  return parseEnvDocument(readFileSync(join(ROOT, 'servers', 'argv-test', 'config.env'), 'utf-8')).values;
 }
 
 const pwned = (tag: string) => existsSync(join(ROOT, `pwned-${tag}`));
@@ -59,12 +81,6 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
 
   beforeAll(async () => {
     mkdirSync(join(ROOT, 'backups', 'meta'), { recursive: true });
-    mkdirSync(SCRIPTS, { recursive: true });
-    for (const name of ['create-server.sh', 'delete-server.sh']) {
-      const script = join(SCRIPTS, name);
-      writeFileSync(script, `#!/bin/bash\nprintf '%s\\0' "$@" > "${ARGV_FILE}"\n`);
-      chmodSync(script, 0o755);
-    }
 
     const { config } = await import('../src/config/index.js');
     (config as any).mcctlRoot = ROOT;
@@ -81,11 +97,13 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
 
   beforeEach(() => {
     vi.clearAllMocks();
-    rmSync(ARGV_FILE, { force: true });
+    rmSync(join(ROOT, 'servers'), { recursive: true, force: true });
+    mkdirSync(join(ROOT, 'servers'), { recursive: true });
+    fileProvision();
   });
 
   describe('POST /api/servers (non-streaming)', () => {
-    it('passes seed and modpack version through untouched', async () => {
+    it('writes seed and modpack version into config.env as given, running no shell', async () => {
       vi.mocked(serverExists).mockReturnValue(false);
       const seed = `-123"; touch "${ROOT}/pwned-seed"; echo "`;
       const modpackVersion = `1.0 $(touch ${ROOT}/pwned-modpack) \`touch ${ROOT}/pwned-tick\``;
@@ -105,40 +123,28 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       });
 
       expect(response.statusCode).toBe(201);
-      expect(recordedArgv()).toEqual([
-        'argv-test',
-        '-t', 'MODRINTH',
-        '-v', '1.21.1',
-        '-s', seed,
-        '--modpack', 'fabric-example',
-        '--modpack-version', modpackVersion,
-        '--no-start',
-      ]);
+      expect(configEnv().get('SEED')).toBe(seed);
+      expect(configEnv().get('MODRINTH_VERSION')).toBe(modpackVersion);
+      expect(configEnv().get('MODRINTH_MODPACK')).toBe('fabric-example');
       expect(pwned('seed')).toBe(false);
       expect(pwned('modpack')).toBe(false);
       expect(pwned('tick')).toBe(false);
       expect(exec).not.toHaveBeenCalled();
-      expect(execFile).not.toHaveBeenCalled();
-      // Own process group, so a timeout can stop what the script started (#656)
-      expect(spawn).toHaveBeenCalledWith(
-        'bash',
-        [join(SCRIPTS, 'create-server.sh'), ...recordedArgv()],
-        expect.objectContaining({ cwd: ROOT, detached: true })
-      );
+      expect(spawn).not.toHaveBeenCalled();
     });
 
-    it('passes a world URL with command substitution untouched', async () => {
+    it('writes a world URL with command substitution as given', async () => {
       vi.mocked(serverExists).mockReturnValue(false);
       const worldUrl = 'http://example.com/w.zip?$(touch$IFS$MCCTL_ROOT/pwned-url)';
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/servers',
-        payload: { name: 'argv-test', worldUrl },
+        payload: { name: 'argv-test', worldUrl, autoStart: false },
       });
 
       expect(response.statusCode).toBe(201);
-      expect(recordedArgv()).toEqual(['argv-test', '-u', worldUrl]);
+      expect(configEnv().get('WORLD')).toBe(worldUrl);
       expect(pwned('url')).toBe(false);
       expect(exec).not.toHaveBeenCalled();
     });
@@ -148,8 +154,8 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
     const create = (payload: Record<string, unknown>) =>
       app.inject({ method: 'POST', url: '/api/servers', payload: { name: 'argv-test', ...payload } });
 
-    // create-server.sh writes these into config.env as KEY=value lines (and
-    // VERSION through sed), so a line break would add another setting.
+    // These become config.env KEY=value lines, so a line break or a leading
+    // quote would add another setting (#726).
     it.each([
       { version: '1.21"; id; "' },
       { version: '1.21\nEULA=FALSE' },
@@ -169,7 +175,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       vi.mocked(serverExists).mockReturnValue(false);
       const response = await create(payload);
       expect(response.statusCode).toBe(400);
-      expect(spawn).not.toHaveBeenCalled();
+      expect(existsSync(join(ROOT, 'servers', 'argv-test'))).toBe(false);
     });
 
     it.each([
@@ -184,38 +190,34 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       { type: 'MODRINTH', modpack: 'pack', modpackVersion: 'Release 5 (beta)' },
     ])('accepts %j', async (payload) => {
       vi.mocked(serverExists).mockReturnValue(false);
-      const response = await create(payload);
-      expect(response.statusCode).toBe(201);
-      expect(recordedArgv()).toEqual(expect.arrayContaining(Object.values(payload)));
+      const response = await create({ ...payload, autoStart: false });
+      expect(response.statusCode, response.body).toBe(201);
+      // The seed is trimmed like every create path (WorldOptions); Compose trimmed it from the script's line too.
+      const expected = Object.values(payload).filter((v) => v !== 'MODRINTH').map((v) => String(v).trim());
+      expect([...configEnv().values()]).toEqual(expect.arrayContaining(expected));
     });
   });
 
   describe('DELETE /api/servers/:name', () => {
-    it('runs delete-server.sh with the name as one argument', async () => {
+    it('hands the name to the deprovision as one value and runs no process (#735)', async () => {
       vi.mocked(serverExists).mockReturnValue(true);
+      const calls = fakeDelete();
 
       const response = await app.inject({ method: 'DELETE', url: '/api/servers/My_Server' });
 
       expect(response.statusCode).toBe(200);
-      expect(recordedArgv()).toEqual(['My_Server', '--force']);
+      expect(calls).toEqual([{ name: 'My_Server', deleteWorld: false, sudoPassword: undefined }]);
       expect(exec).not.toHaveBeenCalled();
-      expect(spawn).toHaveBeenCalledWith(
-        'bash',
-        [join(SCRIPTS, 'delete-server.sh'), 'My_Server', '--force'],
-        expect.objectContaining({ cwd: ROOT, detached: true })
-      );
+      expect(spawn).not.toHaveBeenCalled();
     });
 
-    it('passes --delete-world only when deleteWorld=true (#652)', async () => {
+    it('passes deleteWorld only when deleteWorld=true (#652)', async () => {
       vi.mocked(serverExists).mockReturnValue(true);
+      const calls = fakeDelete();
 
-      const keep = await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=false' });
-      expect(keep.statusCode).toBe(200);
-      expect(recordedArgv()).toEqual(['alpha', '--force']);
-
-      const drop = await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=true' });
-      expect(drop.statusCode).toBe(200);
-      expect(recordedArgv()).toEqual(['alpha', '--force', '--delete-world']);
+      expect((await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=false' })).statusCode).toBe(200);
+      expect((await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=true' })).statusCode).toBe(200);
+      expect(calls.map((c) => c.deleteWorld)).toEqual([false, true]);
     });
   });
 });

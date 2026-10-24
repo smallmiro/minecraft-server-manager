@@ -1,7 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { resolveWorldName } from '@minecraft-docker/shared';
-import { applyEnvChanges, assertEnvFileValue, atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { assertEnvFileValue, parseEnvDocument } from '@minecraft-docker/shared/utils';
+import { writeServerConfig } from '../lib/server-spec.js';
 import type { ServerConfig, UpdateServerConfigRequest } from '../schemas/config.js';
 
 /**
@@ -329,14 +330,14 @@ export class ConfigService {
    * Update server configuration in config.env
    * Returns information about what was changed
    */
-  updateConfig(
+  async updateConfig(
     serverName: string,
     updates: UpdateServerConfigRequest
-  ): {
+  ): Promise<{
     config: ServerConfig;
     changedFields: string[];
     restartRequired: boolean;
-  } {
+  }> {
     const configPath = this.getConfigPath(serverName);
 
     if (!existsSync(configPath)) {
@@ -344,7 +345,6 @@ export class ConfigService {
     }
 
     // Read current configuration
-    const content = readFileSync(configPath, 'utf-8');
     const currentConfig = this.getConfig(serverName);
 
     // Prepare updates
@@ -381,8 +381,8 @@ export class ConfigService {
     if (changedFields.length > 0) {
       // User input: one line, no control character, no leading quote (#726)
       for (const [envKey, value] of envUpdates) assertEnvFileValue(envKey, value);
-      const updatedContent = applyEnvChanges(content, { set: Object.fromEntries(envUpdates) }, { raw: true });
-      atomicWriteFileSync(configPath, updatedContent);
+      // Through the ServerSpec (#675): server.yaml, config.env rendered from it
+      await writeServerConfig(this.mcctlRoot, serverName, { set: Object.fromEntries(envUpdates) });
     }
 
     // Read back the updated configuration

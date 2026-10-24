@@ -10,7 +10,8 @@ import {
   validateServerSpecDocument,
   type ServerSpecDocument,
 } from '../../../domain/server-spec/ServerSpecDocument.js';
-import { isInterpolated, readInheritedExtraArgs, universeLocation } from '../effectiveExtraArgs.js';
+import { isInterpolated, readInheritedExtraArgs } from '../effectiveExtraArgs.js';
+import { universeLocation, withoutUniverse } from '../../../domain/server-spec/extraArgs.js';
 
 export interface ImportContext {
   paths: Paths;
@@ -51,17 +52,6 @@ export function composeMap(value: unknown): Map<string, string | null> {
     for (const [k, v] of Object.entries(value)) out.set(k, v === null || v === undefined ? null : String(v));
   }
   return out;
-}
-
-/** EXTRA_ARGS without its --universe option (ADR-0003: that is world.storage). */
-function withoutUniverse(extraArgs: string): string {
-  const args = extraArgs.trim().split(/\s+/).filter(Boolean);
-  const out: string[] = [];
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--universe') i++;
-    else if (!args[i]!.startsWith('--universe=')) out.push(args[i]!);
-  }
-  return out.join(' ');
 }
 
 async function readOptional(file: string): Promise<string | undefined> {
@@ -120,13 +110,22 @@ function readCompose(name: string, composeText: string): ComposePart {
 
   const image = svc['image'];
   if (typeof image !== 'string' || image.trim() === '') refuse(`servers/${name}/docker-compose.yml has no image`);
-  if ((image as string).includes('$')) composeUndetermined(name, 'image');
 
   const labels = composeMap(svc['labels']);
   for (const [key, value] of labels) {
-    if (key.startsWith('mc-router.') && (value === null || value.includes('$'))) composeUndetermined(name, `label ${key}`);
+    if (key.startsWith('mc-router.')) labels.set(key, composeLiteralValue(name, `label ${key}`, value));
   }
-  return { image: image as string, labels, environment: composeMap(svc['environment']) };
+  return {
+    image: composeLiteralValue(name, 'image', image as string),
+    labels,
+    environment: composeMap(svc['environment']),
+  };
+}
+
+/** A Compose value without interpolation: `$$` read as `$`; a lone `$` or a pass-through (null) is refused. */
+function composeLiteralValue(name: string, what: string, value: string | null): string {
+  if (value === null || value.replace(/\$\$/g, '').includes('$')) composeUndetermined(name, what);
+  return value!.replace(/\$\$/g, '$');
 }
 
 function composeUndetermined(name: string, what: string): never {
@@ -172,15 +171,16 @@ async function readConfigEnv(
     }
   }
 
+  // An empty value is kept: `KEY=` still overrides servers/global.env, like an empty EXTRA_ARGS (ADR-0002).
   const take = (key: string): string | undefined => {
     const value = values.get(key);
     values.delete(key);
-    return value?.trim() ? value : undefined;
+    return value;
   };
   const level = resolveWorldName(Object.fromEntries(values));
   values.delete('LEVEL');
   let type = take('TYPE');
-  if (type === undefined) {
+  if (!type?.trim()) {
     warnings.push('TYPE is not set; the spec uses VANILLA (the itzg default)');
     type = 'VANILLA';
   }
@@ -282,9 +282,9 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
   // Compose gives environment precedence over env_file: move it into env, report clashes.
   const configValues = parseEnvDocument(configText!).values;
   const environment = new Map<string, string>();
-  for (const [key, value] of compose.environment) {
+  for (const [key, raw] of compose.environment) {
     if (key === 'EULA') continue;
-    if (value === null || value.includes('$')) composeUndetermined(name, `environment ${key}`);
+    const value = composeLiteralValue(name, `environment ${key}`, raw);
     const old = configValues.get(key);
     warnings.push(
       old === undefined
@@ -293,7 +293,7 @@ async function build(name: string, { paths, hostIps }: ImportContext, warnings: 
           ? `docker-compose.yml environment ${key} moved into the spec (same as config.env)`
           : `docker-compose.yml environment ${key}=${value} overrides config.env ${key}=${old}; the spec keeps ${value}`
     );
-    environment.set(key, value!);
+    environment.set(key, value);
   }
 
   const { playitDomain, ...config } = await readConfigEnv(name, configText!, paths, warnings, environment);

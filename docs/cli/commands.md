@@ -498,6 +498,9 @@ mcctl create [name] [options]
 !!! info "One world, one server"
     `--world` (and the default world `<name>` of a new server) is refused when another server already uses that world. See [World Assignment Rules](#world-assignment-rules).
 
+!!! info "What create writes"
+    `mcctl create` writes `servers/<name>/server.yaml` and renders `config.env`, `docker-compose.yml` and the `servers/compose.yml` entry from it ([Server Definition](../configuration/server-yaml.md)). If anything fails before the server exists, nothing is left behind, so the same command can be run again. If the server is created but does not start, it stays created and the command exits 1 with the cause; start it with `mcctl start <name>`.
+
 !!! note "Whitelist is off by default"
     Servers created without a whitelist option have the whitelist **disabled**, so anyone with a premium (online-mode) account can join. Use `--whitelist` or `--enable-whitelist` to restrict access, or turn it on later with `mcctl whitelist <server> on`. In interactive mode you are asked "Enable whitelist?" (default No) and only asked for players when you answer Yes. Servers created from the Web Console are also created with the whitelist off.
 
@@ -615,11 +618,13 @@ mcctl delete [name] [options]
 
 Without `--delete-world`, the delete also stops before removing anything when the world cannot be kept with certainty:
 
-- `config.env` has a `LEVEL` line other than one plain `LEVEL=<name>` (letters, digits, `-`, `_`): for example a comment, quotes, spaces around `=`, a path, or two `LEVEL` lines. Without any `LEVEL` line the world is `world`.
+- The server's world cannot be determined from `config.env`. `LEVEL` is read the way Docker Compose reads the file (quotes, a trailing comment and spaces around `=` are fine; the last `LEVEL` line wins), and the delete stops when the value is not a world name (letters, digits, `-`, `_`), uses `$` interpolation, or `EXTRA_ARGS` puts `--universe` somewhere mcctl does not support. These are the rules of [World Assignment Rules](#world-assignment-rules). Without any `LEVEL` line the world is `world`.
 - `servers/<name>/` or its `data/` is a symlink, or only `<LEVEL>_nether`/`<LEVEL>_the_end` exist without `data/<LEVEL>`.
 - Another world folder (one with `level.dat`, `level.dat_old`, `region/` or `*.mca` files, such as an old world from a previous `LEVEL`) would be deleted, or a symlink inside the server points to something inside the server. The message lists them.
 
 If `worlds/` resolves to a folder inside the server (for example a symlink into `servers/<name>/`), the delete stops even with `--delete-world`. If the server's container cannot be stopped, or Docker cannot be queried, the delete stops and nothing is removed. If the server is running and its online players cannot be read over RCON, `mcctl delete <name>` refuses unless you pass `--force`.
+
+No backup runs before the delete: the world is kept in `worlds/` (unless `--delete-world`). Only one delete of a server runs at a time: a second `mcctl delete` (or API delete) of the same server fails while the first one runs. Delete handles only the `servers/compose.yml` entry mcctl writes (`<name>/docker-compose.yml`); if you wrote another include entry for the server by hand (long form, extra compose files), the delete stops before changing anything and asks you to remove that entry first. The mDNS hostname `<name>.local` is removed from `/etc/avahi/hosts` after the server files are gone, with `sudo sed -i … /etc/avahi/hosts`, the command the README's sudoers `NOPASSWD` lines allow. The sudo password comes from `--sudo-password`, [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password) or the prompt. If the removal fails (no password and no `NOPASSWD` rule, for example), the server is still deleted and `mcctl delete` prints a warning; remove the `<name>.local` line by hand. Files `mcctl delete` cannot remove from `servers/<name>/` (files the container wrote as root, for example) are a warning too, after the server is out of `servers/compose.yml`; remove them with the printed `sudo rm -rf` command.
 
 **Examples:**
 
@@ -1980,6 +1985,30 @@ If the resulting `LEVEL` is used by another server, or a server's assignment can
 !!! info "World Storage Change"
     New servers created with `mcctl create` already use the `/worlds/` directory structure.
     This migration command is for existing servers created before this change.
+
+---
+
+### mcctl migrate spec
+
+Import servers into their definition file `servers/<name>/server.yaml` and write the files rendered from it (`config.env`, `docker-compose.yml`, the `servers/compose.yml` entry). See [Server Definition](../configuration/server-yaml.md).
+
+```bash
+mcctl migrate spec <server> [options]
+mcctl migrate spec --all [options]
+```
+
+**Options:**
+
+| Option | Description |
+|--------|-------------|
+| `--all` | Every server |
+| `--dry-run` | Report what would be imported; write nothing |
+| `--force` | Re-render from `server.yaml` over hand edits of the generated files (keeps `.bak` copies) |
+| `--json` | Print the per-server report as JSON |
+
+Running it again is safe: a server that is in sync is reported as `synced` and nothing is rewritten. A server is `refused` (exit 1) when its world or image cannot be determined, for example a `${...}` value in `config.env`. A changed `world.level` is checked against the [World Assignment Rules](#world-assignment-rules) and needs the server to be stopped.
+
+You do not have to run this: a server without `server.yaml` is imported the first time mcctl changes it, and `mcctl upgrade` lists the servers not imported yet.
 
 ---
 

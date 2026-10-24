@@ -258,7 +258,7 @@ async function addOp(
 
   // Update config.env
   const newOps = [...currentOps, playerName].join(',');
-  const configSuccess = shell.writeConfigValue(options.serverName!, 'OPS', newOps);
+  const configSuccess = await shell.writeConfigValue(options.serverName!, 'OPS', newOps);
 
   // Log audit
   const container = getContainer({ rootDir: options.root });
@@ -267,19 +267,19 @@ async function addOp(
     actor: 'cli:local',
     targetType: 'player',
     targetName: playerName,
-    status: 'success',
+    status: configSuccess ? 'success' : 'failure',
     details: {
       server: options.serverName,
       level: opLevel.value,
       role: opLevel.label,
     },
-    errorMessage: null,
+    errorMessage: configSuccess ? null : 'config.env could not be written',
   });
 
   if (options.json) {
     console.log(
       JSON.stringify({
-        success: true,
+        success: configSuccess,
         player: playerName,
         level: opLevel.value,
         role: opLevel.label,
@@ -315,7 +315,7 @@ async function addOp(
     }
   }
 
-  return 0;
+  return configSuccess ? 0 : 1;
 }
 
 /**
@@ -378,8 +378,8 @@ async function removeOp(
   currentOps.splice(opIndex, 1);
   const newOps = currentOps.join(',');
   const configSuccess = newOps
-    ? shell.writeConfigValue(options.serverName!, 'OPS', newOps)
-    : shell.writeConfigValue(options.serverName!, 'OPS', '');
+    ? await shell.writeConfigValue(options.serverName!, 'OPS', newOps)
+    : await shell.writeConfigValue(options.serverName!, 'OPS', '');
 
   // Log audit
   const container = getContainer({ rootDir: options.root });
@@ -388,15 +388,15 @@ async function removeOp(
     actor: 'cli:local',
     targetType: 'player',
     targetName: playerName,
-    status: 'success',
+    status: configSuccess ? 'success' : 'failure',
     details: { server: options.serverName },
-    errorMessage: null,
+    errorMessage: configSuccess ? null : 'config.env could not be written',
   });
 
   if (options.json) {
     console.log(
       JSON.stringify({
-        success: true,
+        success: configSuccess,
         player: playerName,
         server: options.serverName,
         rcon: isRunning ? { success: rconSuccess, message: rconMessage } : null,
@@ -420,7 +420,7 @@ async function removeOp(
     }
   }
 
-  return 0;
+  return configSuccess ? 0 : 1;
 }
 
 /**

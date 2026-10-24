@@ -91,6 +91,32 @@ describe('useCreateServerSSE', () => {
     expect(onSuccess).toHaveBeenCalledWith('test-server');
   });
 
+  it('completes with the start warning when the server was created but did not start (#675)', async () => {
+    const onSuccess = vi.fn();
+    const { result } = renderHook(() => useCreateServerSSE({ onSuccess }), { wrapper });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          success: true,
+          server: { name: 'test-server', container: 'mc-test-server', status: 'created' },
+          warning: "Server 'test-server' was created but did not start: port is already allocated",
+        }),
+    });
+
+    act(() => {
+      result.current.createServer({ name: 'test-server', type: 'PAPER', version: '1.21.1', memory: '4G' });
+    });
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('completed');
+    }, { timeout: ASYNC_TIMEOUT });
+    expect(result.current.warning).toMatch(/port is already allocated/);
+    // The API warning is the whole message; it is not wrapped in another sentence
+    expect(result.current.message).toBe("Server 'test-server' was created but did not start: port is already allocated");
+    expect(onSuccess).toHaveBeenCalledWith('test-server', expect.stringMatching(/port is already allocated/));
+  });
+
   it('should invalidate the servers query on completion so the list refreshes', async () => {
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
     const { result } = renderHook(() => useCreateServerSSE(), { wrapper });

@@ -4,7 +4,7 @@
 |---|---|
 | **상태** | 제안됨 (2026-10-23) |
 | **이슈** | [#654](https://github.com/smallmiro/minecraft-server-manager/issues/654) (Hardening D1), 마일스톤 M2(#643), 에픽 #640 |
-| **이 ADR을 바꾸는 후속 이슈** | #665(D4, [포트 경계 정리](#포트-경계-정리665-d4)), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)), #670(A4: `IWorldAssignmentPort` 확정, [ADR-0002](0002-world-server-assignment.ko.md)) |
+| **이 ADR을 바꾸는 후속 이슈** | #665(D4, [포트 경계 정리](#포트-경계-정리665-d4)), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)), #670(A4: `IWorldAssignmentPort` 확정, [ADR-0002](0002-world-server-assignment.ko.md)), #735(S7, [서버 삭제](#스크립트-제거-s7-delete-serversh735)) |
 | **사용하는 이슈** | #667(D2, API), #668(D3, CLI), #666(E3, 계약 테스트), #715(스크립트 제거) |
 
 이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](0001-container-runtime-ports.md)에 있습니다.
@@ -42,13 +42,14 @@
 | `IContainerRuntimePort` | `getStatus`, `getHealth`, `exists`, `list({running?})`, `getLogs`, `getStats`, `getUptime` (docker/index.ts 리프) | 동기 |
 | | `getStatusAsync(name)` (#665, 요청 경로용 `getStatus`) | 비동기 |
 | | `start`, `stop`, `restart` → `RuntimeActionResult` (API `executeServerAction`, `mcctl.sh`) | 비동기, reject하지 않음 |
+| | `remove(name)`(#735): 워크로드를 정지하고 삭제한다. 없으면 성공, 런타임을 조회할 수 없으면 실패. 서버 데이터는 런타임 담당이 아니다 (`delete-server.sh` 1단계) | 비동기, reject하지 않음 |
 | | `readLogs(name, {since, tail})` (API 세션 수집기), `followLogs(name, onChunk, signal, {tail?, follow?, onExit?})` (API SSE 로그) | 비동기 |
 | `IServerConsolePort` | `listPlayers` (`getOnlinePlayers`), `command(name, args)` (rcon-cli 호출 4곳), `getEndpoint` (CLI `mcctl rcon`) | 비동기 |
 | `IRouterStatusPort` | `getHealth()` (`getRouterHealthViaApi`), `getHostnames(name)` (`getContainerHostname`) | 동기 |
 | `IPlayitAgentPort` | `start()`, `stop()` | 비동기 |
 | `IHostnameRegistrarPort` | `getStatus()` (`getAvahiStatus`) | 동기 |
 | | `register(hostname, ip)`(#675), `unregister(hostname)`(#735) → `HostnameChangeResult { status: 'changed' \| 'unchanged' \| 'skipped'; reason? }`. 정확히 일치하는 이름만 다룬다(#660). `unregister`는 README sudoers 모양(#751)인 `sudo -n sed -i <expr> /etc/avahi/hosts`를 셸 없이 argv로 실행한다. `<expr>`은 검증된 호스트명을 정규식 이스케이프하고 필드 경계로 앵커를 건다. 비밀번호가 있으면 먼저 `sudo -S -p '' -v` | 비동기, reject하지 않음 |
-| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete`(#735). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
+| `IServerSpecRepository`(#675, ADR-0003) | **v2 계약 유지**: `ServerSpec`은 `{ name }` 그대로, `list(): Promise<ServerSpec[]>`, `get`(`@deprecated`, `load` 사용), `save`(전체 문서인지 검사 후 `write`, `{ name }`만 오면 `invalid_spec`), `delete(name, { deleteWorld?, dryRun? })`(#735, [S7](#스크립트-제거-s7-delete-serversh735); v2 호출 `delete(name)`도 컴파일됨). #675가 추가: `load(name)` → `{ document, revision, warnings }`(`server.yaml`이 없으면 메모리에서 가져오기, 쓰지 않음), `write(doc, { expectedRevision?, create?, force?, allowStorageChange? })`. 전체 타입은 `ServerSpecDocument extends ServerSpec`. 오류는 `ServerSpecError`(`invalid_spec` → 400, `not_found` → 404, 나머지 409) | 비동기 |
 | `IRuntimeEnvironmentPort` | `isAvailable()`, `getEngineVersion()`, `getComposeVersion()` | 동기 |
 
 **수명주기 구현**:
@@ -56,8 +57,9 @@
 | 메서드 | Docker 구현 | 지금 같은 동작을 하는 곳 |
 |--------|------------|----------------|
 | `start` | `docker compose up -d <name>`(없으면 생성) | `mcctl.sh start`, API start |
-| `stop` | `docker stop -- <name>` | `mcctl.sh stop`, `stopContainer`, CLI migrate, API 삭제 경로 |
+| `stop` | `docker stop -- <name>` | `mcctl.sh stop`, `stopContainer`, CLI migrate (API 삭제 경로는 #735부터 `remove`) |
 | `restart` | `docker compose restart <name>` | API restart |
+| `remove`(#735) | `docker ps -a`로 정확한 이름 확인(조회 실패는 "없음"이 아니라 실패) → compose 프로젝트 소속이면 `docker compose stop`, `docker compose rm -f`, 아니면 `docker rm -f --`. 정지에 실패하면 거기서 멈춘다 | `delete-server.sh` 1단계(#735에서 삭제) |
 
 새 메서드는 이름 앞에 `--`를 넣는다(#720 규칙). 타임아웃은 지금 값을 유지하고, 통일은 C2에서 한다.
 
@@ -129,7 +131,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 |----------|----------------------|-------------------|
 | `logs.sh`(#731에서 제거) | `getLogs`, `followLogs({ tail, follow })`, `readLogs` | 출력 형식은 CLI 표현 문제다. avahi `journalctl` 보기는 삭제했다(`journalctl -u avahi-daemon`을 직접 실행). `followLogs`에 선택 인자 `tail`(기본 0)과 `follow`(기본 true)를 추가해(기존 호출처 불변) "마지막 N줄 다음 follow"를 한 스트림으로 내고, `follow: false`는 마지막 N줄을 stdout·stderr 모두 출력한 뒤 종료한다. `onExit(code, error?)`는 docker 종료 코드나 spawn 오류를 한 번 알리며 promise는 v2.x 계약대로 항상 resolve된다. 호출자는 이로 `docker logs` 실패를 0이 아닌 종료 코드로 바꾼다 |
 | `mcctl.sh` | `start`, `stop`, `getStatus`. 콘솔은 `getEndpoint`와 기존 TCP 클라이언트로 처리한다 | TTY를 넘기는 `attach()`는 만들지 않는다 |
-| `delete-server.sh` | `stop` | `remove`, `unregister`, `IServerSpecRepository.delete`(시그니처는 #675에서 기록, 구현은 #735) |
+| `delete-server.sh`(#735에서 제거) | `stop` | `remove(name)`(`purgeData` 없음: 데이터는 파일), `unregister`, `IServerSpecRepository.delete(name, { deleteWorld, dryRun })`. [S7](#스크립트-제거-s7-delete-serversh735) 참고 |
 | `create-server.sh` | `start` | `IServerSpecRepository.write(doc, { create: true })`(compose·include 생성), `register`(#675, ADR-0003 §5). `apply(spec)`는 만들지 않는다: k8s에서는 k8s 저장소 어댑터가 저장과 적용을 맡는다(#641) |
 | `backup.sh` | `console.command`로 `save-off`, `save-all flush`, `save-on` | git 저장소는 `IWorldBackupPort`가 맡는다([백업 포트](#백업-포트732-s3)) |
 | `lock.sh` | — | `LEVEL`에서 파생하는 `IWorldAssignmentPort.assign`/`release`로 대체. #670에서 `lock.sh` 삭제([ADR-0002](0002-world-server-assignment.ko.md)) |
@@ -280,10 +282,29 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 |------|------|------|
 | CLI `start`/`stop <server>` | `ShellExecutor.mcctl` → `mcctl.sh` | `ServerName`으로 `IContainerRuntimePort.start`/`stop`(`commands/lifecycle.ts`). 종료 코드는 그대로: 2 = 이미 실행 중(start)/실행 중 아님(stop), 1 = `servers/<name>/docker-compose.yml` 없음 또는 런타임 조회 실패(`not_found`를 `list({ strict: true })`로 확인, `check_docker` 대체) |
 | CLI `console <server>` | `docker exec -i mc-<name> rcon-cli` | `mcctl rcon` 세션: `getStatus` + `IServerConsolePort.getEndpoint` + TCP `rcon-client`. 입력은 순서대로 처리하고, EOF는 마지막 응답 뒤에 닫는다. 클라이언트의 `end`는 세션 종료(0), `error`는 종료 코드 1 |
-| 정지 시 자동 백업 | `mcctl.sh stop` → `mcctl backup push --auto` | shared `autoBackupOnStop(backup, server)`: `status()` → `configured && autoOnStop` → `push({ lockWaitMs: 600000 })`. `allowMissing`은 넘기지 않고 reject하지 않는다. CLI `stop <server>`는 기다리고(실패 시 경고, 종료 코드 0), API 정지 라우트는 백그라운드로 실행하고 결과를 로그에 남기며, 종료 시 `onClose` 훅이 실행 중인 백업을 최대 `AUTO_BACKUP_CLOSE_WAIT_MS`(2분) 기다려(90초가 지나면 `push`의 `signal`로 중단해 어댑터가 다음 save-off나 복사 파일 전에 멈추고 `save-on`을 보낸 뒤 `aborted`로 끝난다. 생성되는 PM2 설정은 mcctl-api에 `kill_timeout` `API_PM2_KILL_TIMEOUT_MS`, 130초를 준다) 어댑터의 `save-on` 복구가 끊기지 않게 한다(B-Q9 종료). start, restart, `stop --all`, 삭제 전 정지는 백업하지 않는다 |
-| `createWorld`의 SEED | `IShellPort.setServerConfig` → `mcctl.sh config` | `IWorldAssignmentPort.assign(world, server, { seed })`: `LEVEL`과 함께 raw 형식으로 한 번에 원자적으로 쓴다. `LEVEL`이 그대로여도 `SEED`는 쓴다. `WorldManagementUseCase`의 `shell` 인자는 쓰지 않는다(`@deprecated`) |
+| 정지 시 자동 백업 | `mcctl.sh stop` → `mcctl backup push --auto` | shared `autoBackupOnStop(backup, server)`: `status()` → `configured && autoOnStop` → `push({ lockWaitMs: 600000 })`. `allowMissing`은 넘기지 않고 reject하지 않는다. CLI `stop <server>`는 기다리고(실패 시 경고, 종료 코드 0), API 정지 라우트는 백그라운드로 실행하고 결과를 로그에 남기며, 종료 시 `onClose` 훅이 실행 중인 백업을 최대 `AUTO_BACKUP_CLOSE_WAIT_MS`(2분) 기다려(90초가 지나면 `push`의 `signal`로 중단해 어댑터가 다음 save-off나 복사 파일 전에 멈추고 `save-on`을 보낸 뒤 `aborted`로 끝난다. 생성되는 PM2 설정은 mcctl-api에 `kill_timeout` `API_PM2_KILL_TIMEOUT_MS`, 130초를 준다) 어댑터의 `save-on` 복구가 끊기지 않게 한다(B-Q9 종료). start, restart, `stop --all`, 서버 삭제(S7)는 백업하지 않는다 |
+| `createWorld`의 SEED | `IShellPort.setServerConfig` → `mcctl.sh config` | `IWorldAssignmentPort.assign(world, server, { seed })`: `LEVEL`과 함께 한 번에 쓴다(#675부터 ServerSpec을 거친다, ADR-0003 §6). `LEVEL`이 그대로여도 `SEED`는 쓴다. `WorldManagementUseCase`의 `shell` 인자는 쓰지 않는다(`@deprecated`) |
 | 정지 확인 | `checkServerStopped`가 `not_found`를 통과시킴 | `list({ strict: true })`가 성공할 때만 `not_found`를 통과시킨다. 런타임에 닿지 않으면 `undetermined`(fail-closed) |
-| 삭제 전 정지 | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: 주어지면 `runtime.stop`(CLI). `delete-server.sh`도 컨테이너를 직접 멈춘다 |
+| 삭제 전 정지 | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: 주어지면 `runtime.stop`(CLI) 뒤 `delete-server.sh`. #735부터는 따로 멈추지 않고 `deprovision`이 `runtime.remove`로 컨테이너를 멈추고 지운다([S7](#스크립트-제거-s7-delete-serversh735)) |
 | API | `lib/world-use-case.ts`의 `new ShellAdapter({ paths })` | 없음. 월드 작업에서 `<root>/scripts`를 찾지 않는다 |
 
 `IShellPort`/`ShellAdapter`의 `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status`는 v2 시그니처를 유지하고, 스크립트를 실행하지 않고 `mcctl.sh was removed (#734); use …`를 돌려준다(#736에서 삭제). API 정지 라우트는 `executeServerAction`(`docker compose stop`)을 그대로 쓴다. 쟁점 2는 바뀌지 않았다.
+
+## 스크립트 제거 S7: `delete-server.sh`(#735)
+
+`mcctl delete`와 `DELETE /api/servers/:name`은 TypeScript로 삭제한다(`DeleteServerUseCase.deprovision(name, { deleteWorld })`). 새 포트는 없고, 기존 포트 세 개에 메서드를 더했다(셋 다 v2.33.0에 배포되지 않아 breaking이 아니다).
+
+1. **계획**: `specRepo.delete(name, { deleteWorld, dryRun: true })`. 안전하지 않으면 컨테이너를 건드리기 전에 거부한다.
+2. **컨테이너**: `IContainerRuntimePort.remove(name)`. 실패하면 "Nothing was deleted"로 거부한다.
+3. **파일**: `specRepo.delete(name, { deleteWorld })`가 다시 계획하고(정지 중에 서버가 폴더를 만들 수 있다), `servers/.compose.yml.lock` 잠금(#675 `acquireFileLock`) 안에서 include 항목을 지우고, 월드를 옮기고(`rename`, `EXDEV`면 `mv`처럼 `worlds/<w>`를 비재귀 `mkdir`로 먼저 차지한 뒤 복사하고 원본 삭제), `servers/<n>`을 지운다. 삭제는 mcctl이 쓰는 항목만 다룬다. 그 서버를 가리키는 항목(`servers/<n>/` 안의 경로, `./alpha/x`는 정규화, `alphabet/x`는 제외)은 문자열 `<n>/docker-compose.yml` 하나뿐이어야 한다. 손으로 쓴 항목(객체형, 여러 경로 묶음, 다른 파일, 사용자 지정 compose 파일, 같은 항목 두 번)이 있으면 삭제 잠금 직후, dry run 포함, 컨테이너를 건드리기 전에 `conflict`로 거부한다. 다른 서버의 항목은 바꾸지 않는다. 스크립트처럼 include 항목을 먼저 지우는 이유: `mcctl start`와 `POST /api/servers/:name/start`는 삭제 큐를 거치지 않으므로, 월드를 복사하는 동안 `docker compose up -d mc-<n>`이 서버를 다시 만들면 안 된다. 이동과 `rm`은 잠금 밖이라 긴 복사 동안 다른 쓰기가 `locked`로 실패하지 않는다. 이동이 실패하면 잠금을 다시 잡고 include 항목을 되돌린다(파일이 그대로면 바꾸기 전 내용, 아니면 항목이 없을 때만 문자열 항목 추가, `servers/<n>/docker-compose.yml`이 없으면 되돌리지 않음). 되돌리기도 실패하면 직접 다시 넣는 방법을 오류에 덧붙인다. 삭제 전체(dry run 포함)는 `servers/.<n>.delete.lock`(`acquireFileLock`, 대기 없음)을 잡으므로, 어느 프로세스(CLI·API)든 같은 서버의 두 번째 삭제는 `locked`로 실패한다. 실패하면 컨테이너는 이미 지워졌다는 것과 이미 옮긴 월드를 알린다. `rm`이 못 지운 파일은 `sudo rm -rf` 안내가 담긴 경고다(삭제는 성공하고 호스트명 단계도 실행한다).
+4. **호스트명**: 파일을 지운 뒤 `IHostnameRegistrarPort.unregister('<name>.local')`. 실패는 경고다.
+
+- **월드 계획**(`serverWorldPlan.ts`, #652): `data/<LEVEL>`, `_nether`, `_the_end`(심링크가 아닌 실제 폴더)를 `worlds/`로 옮긴다. 다음이면 아무것도 바꾸지 않고 거부한다: `worlds/<w>`가 이미 있음(`conflict`), 기본 월드 없이 차원 폴더만 있음, `servers/<n>`이나 `data/`가 심링크, 서버 안의 다른 월드 폴더(`level.dat`, `level.dat_old`, `region/`, `*.mca`), 서버 안을 가리키는 심링크(모두 `undetermined`). `deleteWorld`이면 진행한다. `worlds/`가 서버 안으로 해석되면 `deleteWorld`여도 거부한다. **`LEVEL`은 ADR-0002 스냅샷 리더로 읽는다**(Compose와 같은 해석: 따옴표, 줄 끝 주석, 마지막 정의). 스크립트의 "`LEVEL=` 한 줄만" 규칙이 아니다. 리더가 정할 수 없는 서버(잘못되었거나 보간되는 `LEVEL`, 지원하지 않는 `--universe`)는 `deleteWorld`가 아니면 중단한다. 월드 폴더 검사가 남아 있어 `LEVEL`을 잘못 읽어도 다른 월드가 발견되어 삭제가 멈춘다.
+- **배정 해제**: 호출할 것이 없다. 배정은 서버의 `LEVEL`이므로(ADR-0002 R3, R5) `servers/<n>/config.env`와 함께 사라진다. `IWorldAssignmentPort.release`는 남는 서버용이다.
+- **삭제 전 백업은 하지 않는다.** `remove`는 정지 시 자동 백업(S5) 없이 컨테이너를 멈추므로 `BACKUP_AUTO_ON_STOP` 백업이 돌지 않는다. 월드는 `worlds/`에 보존되고(#652), `--delete-world`는 명시적으로 지우라는 요청이다.
+- **`docker compose config` 검증은 뺐다.** include 수정은 YAML 키 하나를 고치는 것(`removeIncludeEntry`)이라 파일이 유효하게 남는다.
+- **`unregister` 명령 모양**(README sudoers, #751): `sudo -n sed -i '/^[^#]*[[:space:]]<host>\([[:space:]]\|#\|$\)/d' /etc/avahi/hosts`, 이어서 `sudo -n systemctl restart avahi-daemon`. 셸 없이 argv로 실행한다. `<host>`는 검증된 호스트명에서 `[ ] \ . * ^ $ /`를 이스케이프한 것이다(지운 `avahi_remove_host`와 같은 식). 비밀번호(CLI `--sudo-password`·`MCCTL_SUDO_PASSWORD`·프롬프트, API 요청 본문 `sudoPassword`)는 먼저 `sudo -S -p '' -v`의 stdin으로만 가고 `sed`나 환경 변수로 가지 않는다(#682). 빈 비밀번호는 없는 것으로 본다.
+- **API**: `DELETE /api/servers/:name`이 선택 JSON 본문 `{ "sudoPassword": "..." }`를 받는다(생성처럼 write-only, URL은 로그에 남으므로 쿼리가 아님). #735 전에는 스크립트를 비밀번호 없이 실행해 sudo가 비밀번호를 요구하면 avahi 항목이 남았다. 호스트명을 지우지 못하면 200 응답에 선택 필드 `warning`이 붙는다. `force`는 더 이상 동작을 바꾸지 않는다. 생성·삭제 큐(#656)는 그대로다.
+- **deprecated**(#736에서 삭제): `IShellPort.deleteServer`, `ShellAdapter.deleteServer`(스크립트 없이 "delete-server.sh was removed in #735; …"로 거부). `DeleteServerUseCase`에 `runtime?`(#734)과 새 선택 인자 `deprovision?`(`{ specRepo, hostnames? }`)이 없으면 같은 메시지로 거부한다.
+- **지운 것**: `delete-server.sh`, `delete-server.bats`, `sudo-password.bats`(사례는 avahi 어댑터 vitest로 옮김), `tests/fake-bin/docker`, 그리고 `delete-server.sh`·`mcctl.sh`(S5)나 그 테스트만 쓰던 `lib/common.sh`·`tests/helpers.bash`의 헬퍼 전부. `lib/common.sh`에는 `naming-rules.bats`가 검사하는 이름 검증 함수만 남고, `platform/scripts/` 최상위에는 `*.sh`가 없다.
+

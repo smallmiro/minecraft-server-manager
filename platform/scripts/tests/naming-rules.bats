@@ -6,7 +6,6 @@
 load helpers
 
 setup() {
-    unset MCCTL_ROOT
     # shellcheck source=../lib/common.sh
     source "$SCRIPTS_DIR/lib/common.sh"
     LONG32=$(printf '%032d' 0 | tr 0 a)
@@ -59,36 +58,6 @@ setup() {
     [ "$status" -eq 1 ]
     # the caller's locale is restored
     [ "$LC_ALL" = en_US.UTF-8 ]
-}
-
-# create-server.sh validates names right after parsing arguments, before any
-# sed/docker call, so these need no GNU sed. Fakes only guard a regression.
-@test "create-server.sh: rejects invalid server names before creating anything" {
-    use_fake_docker
-    fake_cmd ip 'exit 0'
-    fake_cmd hostname 'exit 0'
-    make_platform
-    for name in router a--b 1abc; do
-        run bash "$SCRIPTS_DIR/create-server.sh" "$name" --no-start
-        [ "$status" -eq 1 ]
-        [[ "$output" == *"Server name"* ]] || return 1
-        [ ! -e "$PLATFORM/servers/$name" ]
-    done
-    run bash "$SCRIPTS_DIR/create-server.sh" router --no-start
-    [[ "$output" == *"reserved"* ]]
-}
-
-@test "create-server.sh: rejects an invalid --world before creating anything" {
-    use_fake_docker
-    fake_cmd ip 'exit 0'
-    fake_cmd hostname 'exit 0'
-    make_platform
-    for world in ../escape my/world; do
-        run bash "$SCRIPTS_DIR/create-server.sh" gamma --no-start -w "$world"
-        [ "$status" -eq 1 ]
-        [[ "$output" == *"World name"* ]] || return 1
-        [ ! -e "$PLATFORM/servers/gamma" ]
-    done
 }
 
 @test "validate_existing_server_name: accepts legacy names of existing servers (#652)" {

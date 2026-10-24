@@ -1,7 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { HostnameInfo, HostnameData } from '../schemas/hostname.js';
-import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { validateHostname } from '@minecraft-docker/shared';
+import { updateServer } from '../lib/server-spec.js';
 
 /**
  * Regex for matching mc-router.host label in docker-compose.yml
@@ -119,26 +120,10 @@ export class HostnameService {
   validateCustomHostname(hostname: string, serverName: string): string | null {
     const trimmed = hostname.trim().toLowerCase();
 
-    // Length check (RFC 1123)
-    if (trimmed.length === 0 || trimmed.length > 253) {
-      return `Hostname must be between 1 and 253 characters: ${hostname}`;
-    }
-
-    // RFC 1123 hostname validation
-    const hostnamePattern = /^[a-z0-9]([a-z0-9\-.]*[a-z0-9])?$/;
-    if (!hostnamePattern.test(trimmed)) {
-      return `Invalid hostname format (RFC 1123): ${hostname}`;
-    }
-
-    // Each label must be <= 63 characters
-    const labels = trimmed.split('.');
-    for (const label of labels) {
-      if (label.length > 63) {
-        return `Hostname label exceeds 63 characters: ${label}`;
-      }
-      if (label.startsWith('-') || label.endsWith('-')) {
-        return `Hostname label cannot start or end with hyphen: ${label}`;
-      }
+    // RFC 1123: the domain hostname rule the ServerSpec validates with (#675)
+    const invalid = validateHostname(trimmed);
+    if (invalid) {
+      return `Invalid hostname format (RFC 1123): ${hostname}: ${invalid}`;
     }
 
     // Block system hostname patterns
@@ -153,63 +138,47 @@ export class HostnameService {
   }
 
   /**
-   * Update custom hostnames for a server
-   * Preserves system hostnames and replaces all custom hostnames
+   * Update custom hostnames for a server through its ServerSpec (#675):
+   * routing.customHostnames and routing.playitDomain change in server.yaml and
+   * the mc-router label is rendered from them (system hosts are re-derived).
+   * `playitDomain`: the PLAYIT_DOMAIN after this edit (resolvePlayitDomain); a
+   * listed playit host is kept as the playit domain, not as a custom host.
    */
-  updateCustomHostnames(
+  async updateCustomHostnames(
     serverName: string,
-    customHostnames: string[]
-  ): HostnameData {
-    const composePath = this.getComposePath(serverName);
-
-    if (!existsSync(composePath)) {
+    customHostnames: string[],
+    playitDomain: string | null
+  ): Promise<HostnameData> {
+    if (!this.composeExists(serverName)) {
       throw new Error(`Server compose file not found: ${serverName}`);
     }
 
-    // Validate all custom hostnames
     const normalized = customHostnames.map((h) => h.trim().toLowerCase());
-
-    // Check for duplicates
     const seen = new Set<string>();
     for (const hostname of normalized) {
       if (seen.has(hostname)) {
         throw new Error(`Duplicate hostname: ${hostname}`);
       }
       seen.add(hostname);
-    }
-
-    // Validate each hostname
-    for (const hostname of normalized) {
       const error = this.validateCustomHostname(hostname, serverName);
       if (error) {
         throw new Error(error);
       }
     }
 
-    // Read current compose file
-    let content = readFileSync(composePath, 'utf-8');
-    const currentHostnames = this.parseHostnames(content);
+    const playit = playitDomain?.toLowerCase();
+    await updateServer(this.mcctlRoot, serverName, (doc) => {
+      const { playitDomain: _previous, ...routing } = doc.routing;
+      return {
+        ...doc,
+        routing: {
+          ...routing,
+          customHostnames: normalized.filter((h) => h !== playit),
+          ...(playitDomain ? { playitDomain } : {}),
+        },
+      };
+    });
 
-    // Get system hostnames from current config
-    const systemHostnames = currentHostnames
-      .map((h) => this.classifyHostname(h, serverName))
-      .filter((h) => h.type === 'system')
-      .map((h) => h.hostname);
-
-    // Build new hostname string: system hostnames + custom hostnames
-    const newHostnames = [...systemHostnames, ...normalized].join(',');
-
-    // Replace in compose file
-    const match = content.match(HOST_LABEL_REGEX);
-    if (match) {
-      content = content.replace(HOST_LABEL_REGEX, `$1${newHostnames}$3`);
-    } else {
-      throw new Error(`mc-router.host label not found in docker-compose.yml for server: ${serverName}`);
-    }
-
-    atomicWriteFileSync(composePath, content);
-
-    // Return updated data
     return this.getHostnames(serverName);
   }
 }

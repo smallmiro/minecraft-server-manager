@@ -662,6 +662,7 @@ export function parseRouterHosts(composeContent: string): string[] {
 
 /**
  * Replace the mc-router.host label value with the given hosts (content unchanged if label absent)
+ * @deprecated A regex edit of a generated file (#675): change routing in the ServerSpec. Removed in v3.0.0 (#736).
  */
 export function replaceRouterHosts(composeContent: string, hosts: string[]): string {
   return composeContent.replace(ROUTER_HOST_LABEL_REGEX, (_m, open: string, _v: string, close: string) => `${open}${hosts.join(',')}${close}`);
@@ -698,6 +699,9 @@ export function resolvePlayitDomain(
 }
 
 /**
+ * @deprecated Writes config.env and the compose directly (#675): use
+ * updateServerSpec with setEnvKeys({ set: { PLAYIT_DOMAIN } }). Removed in v3.0.0 (#736).
+ *
  * Set or remove a server's playit.gg domain in config.env, and keep the
  * mc-router.host label in docker-compose.yml in sync (skipped if file/label absent)
  * @param domain - Domain string to set, or null to remove

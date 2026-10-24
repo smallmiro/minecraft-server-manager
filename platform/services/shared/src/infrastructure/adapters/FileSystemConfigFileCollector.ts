@@ -10,6 +10,8 @@ import { atomicWriteFile } from '../../utils/atomic-write.js';
  * Known config file names that are always collected if present
  */
 const KNOWN_CONFIG_FILES = [
+  // The server definition (#675); config.env and docker-compose.yml are rendered from it
+  'server.yaml',
   'server.properties',
   'config.env',
   'docker-compose.yml',
