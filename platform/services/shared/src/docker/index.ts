@@ -26,7 +26,7 @@ import {
 } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
 import { AvahiHostnameRegistrarAdapter } from '../infrastructure/adapters/AvahiHostnameRegistrarAdapter.js';
 
-export { execCommand, execCommandAsync, execScript, execScriptInteractive } from '../infrastructure/process.js';
+export { execCommand, execCommandAsync } from '../infrastructure/process.js';
 export { parseRconPlayerList } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
 
 // Private default instances behind the legacy functions. Composition roots construct their own.

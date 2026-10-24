@@ -12,9 +12,9 @@ import ts from 'typescript';
 
 const V2_CONSUMER = `
 import type {
-  IContainerRuntimePort, IServerConsolePort, IRouterStatusPort, IRconPort, IShellPort,
+  IContainerRuntimePort, IServerConsolePort, IRouterStatusPort, IRconPort,
   ContainerStatus,
-  PlayerListResult, RuntimeActionResult, ShellResult,
+  PlayerListResult, RuntimeActionResult,
 } from '../src/index.js';
 import {
   ServerName, Server, Paths, ServerRepository, WorldRepository,
@@ -32,15 +32,13 @@ export class V2Rcon implements IRconPort {
 // v2 callers: container-name strings, deprecated getters and members, old constructors
 export async function use(
   runtime: IContainerRuntimePort, console: IServerConsolePort, router: IRouterStatusPort,
-  rcon: IRconPort, shell: IShellPort, server: Server
+  rcon: IRconPort, server: Server
 ): Promise<void> {
   const status: ContainerStatus = runtime.getStatus('mc-a');
   const started: RuntimeActionResult = await runtime.start('mc-a');
   const players: PlayerListResult | null = await console.listPlayers('mc-a');
   const hosts: string = router.getHostnames('mc-a');
   const pos = await rcon.getEntityPosition('mc-a', 'Steve');
-  const ran: ShellResult = await shell.exec('mcctl.sh', ['status']);
-  const code: number = await shell.execInteractive('mcctl.sh');
   const name = ServerName.create('a');
   const names: string[] = [name.containerName, name.hostname, server.containerName, server.hostname];
   const paths = new Paths('/srv/mc');
@@ -49,7 +47,7 @@ export async function use(
   new DockerComposeRuntimeAdapter().getStatus('mc-a');
   await new DockerServerConsoleAdapter().command('mc-a', ['list']);
   await new RconCliAdapter().getEntityPosition('mc-a', 'Steve');
-  void status; void started; void players; void hosts; void pos; void ran; void code; void names;
+  void status; void started; void players; void hosts; void pos; void names;
 }
 `;
 

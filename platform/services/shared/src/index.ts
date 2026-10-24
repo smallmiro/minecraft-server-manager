@@ -47,8 +47,6 @@ export {
   startContainer,
   stopContainer,
   getContainerLogs,
-  execScript,
-  execScriptInteractive,
   // New detailed functions
   getContainerStats,
   getContainerUptime,

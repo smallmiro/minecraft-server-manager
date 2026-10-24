@@ -3,7 +3,6 @@ import {
   Paths,
   Config,
   // Infrastructure adapters from shared
-  ShellAdapter,
   DockerServerConsoleAdapter,
   ServerRepository,
   WorldRepository,
@@ -32,7 +31,6 @@ import {
   ConfigSnapshotScheduleUseCaseImpl,
   // Port types from shared
   type IPromptPort,
-  type IShellPort,
   type IContainerRuntimePort,
   type IServerConsolePort,
   type IWorldBackupPort,
@@ -70,7 +68,6 @@ export class Container {
 
   // Adapters (singleton)
   private _promptPort?: IPromptPort;
-  private _shellPort?: IShellPort;
   private _worldBackupPort?: IWorldBackupPort;
   private _serverRepo?: IServerRepository;
   private _worldRepo?: IWorldRepository;
@@ -109,16 +106,6 @@ export class Container {
       this._promptPort = new ClackPromptAdapter();
     }
     return this._promptPort;
-  }
-
-  get shellPort(): IShellPort {
-    if (!this._shellPort) {
-      this._shellPort = new ShellAdapter({
-        paths: this.paths,
-        sudoPassword: this.sudoPassword,
-      });
-    }
-    return this._shellPort;
   }
 
   /** Same adapter as {@link containerRuntime} (kept for the logs command). */
@@ -333,13 +320,11 @@ export class Container {
    */
   static createWithAdapters(
     promptPort: IPromptPort,
-    shellPort: IShellPort,
     serverRepo: IServerRepository,
     worldRepo: IWorldRepository
   ): Container {
     const container = new Container();
     container._promptPort = promptPort;
-    container._shellPort = shellPort;
     container._serverRepo = serverRepo;
     container._worldRepo = worldRepo;
     return container;

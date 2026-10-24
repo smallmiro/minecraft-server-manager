@@ -8,10 +8,6 @@ export {
   type IBackupUseCase,
   // Ports - Outbound
   type IPromptPort,
-  type IShellPort,
-  type CreateServerOptions,
-  type LogsOptions,
-  type ShellResult,
   type IServerRepository,
   type ServerConfigData,
   type IWorldRepository,

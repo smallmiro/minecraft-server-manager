@@ -177,7 +177,7 @@ describe('BackupUseCase with IWorldBackupPort (#732)', () => {
   });
 });
 
-/** The prompt flows, independent of the backend (moved from the removed IShellPort tests, #736). */
+/** The prompt flows, independent of the backend (#736). */
 describe('BackupUseCase prompt flows', () => {
   const NOT_CONFIGURED = { ok: true as const, value: { configured: false, branch: 'main', autoOnStop: false } };
   let prompt: MockPromptAdapter;
