@@ -77,6 +77,12 @@ mcctl logs myserver
 
 ## Changelog
 
+### v3.0.0 (2026-10-24)
+- **BREAKING**: all Bash scripts are removed (#715); everything runs through `mcctl`. `@minecraft-docker/shared` drops the script-based exports. Upgrade a v2.x host with `curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run`, then without `--dry-run` ([runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-upgrade-script))
+- **feat(cli)**: `server.yaml` (ServerSpec) and `mcctl migrate spec`; `mcctl delete` keeps the world unless `--delete-world`; backups, create and delete run in TypeScript (#675, #652, #732)
+- **feat(console)**: dashboard and server detail on Bento, hostname routing table, live router log and status stream, router restart, server list summary with total player count (#763-#771, #781)
+- **fix(security)**: line breaks in `config.env` values could add arbitrary keys or run commands (#726); shell and path injection in Docker helpers and world routes (#720)
+
 ### v2.33.0 (2026-10-18)
 - **fix(console)**: upgrading to 2.32.0 signed users out when `.env` held older `BETTER_AUTH_*` values; the ecosystem value now wins until `mcctl upgrade` moves it into `.env`, and Platform Settings shows them read-only meanwhile (#699)
 - **fix(cli)**: `mcctl upgrade` moves `BETTER_AUTH_*` from `ecosystem.config.cjs` into `.env`; `mcctl console init` no longer keeps a stale `.env` secret (#699)

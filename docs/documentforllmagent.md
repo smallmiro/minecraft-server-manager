@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 2.33.0
-> **Last Updated**: 2026-10-18
+> **Version**: 3.0.0
+> **Last Updated**: 2026-10-24
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -2873,6 +2873,16 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 ---
 
 ## 16. Version History
+
+### Version 3.0.0 (2026-10-24) - Scripts Removed (BREAKING)
+
+Upgrade: `curl -fsSL https://raw.githubusercontent.com/smallmiro/minecraft-server-manager/main/scripts/upgrade-v3.sh | bash -s -- --dry-run`, then without `--dry-run`; runbook `docs/advanced/upgrade-runbook.md` (v3.0.0 sections).
+
+**Removed:** all Bash scripts (#715); script-based `@minecraft-docker/shared` exports (#736); `MCCTL_SCRIPTS` is ignored; `<root>/scripts` is deleted by `mcctl upgrade` only after `y`.
+
+**Added:** `server.yaml` (ServerSpec) + `mcctl migrate spec`; `mcctl delete --delete-world`, `mcctl backup push --allow-missing`; `GET /api/router/logs/stream`, `GET /api/router/status/stream`, `POST /api/router/restart`, `GET /api/servers?include=summary`, console `GET /api/changelog`.
+
+**Changed:** create/delete/backup in TypeScript; delete keeps the world by default; hosts with `BACKUP_AUTO_ON_STOP=true` add `kill_timeout: 130000` to mcctl-api; console dashboard, server detail and Routing page on Bento (hostname routing table, live router log, routing flow).
 
 ### Version 2.33.0 (2026-10-18) - Console Auth Upgrade Fix
 
