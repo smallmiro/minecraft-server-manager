@@ -67,7 +67,7 @@ import {
 import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
 import { config } from '../config/index.js';
 import { createWorldUseCase, worldFailure } from '../lib/world-use-case.js';
-import { resolveBlueMapDockerDir } from '../lib/script-resolver.js';
+import { resolveBlueMapDockerDir } from '../lib/docker-dir.js';
 import { resolveInside } from '../lib/safe-path.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
 import { existsSync, statSync, createReadStream } from 'node:fs';
