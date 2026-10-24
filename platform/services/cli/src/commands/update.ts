@@ -9,7 +9,7 @@ import {
 import { checkServiceAvailability, PM2_SERVICE_NAMES } from '../lib/pm2-utils.js';
 import { Pm2ServiceManagerAdapter } from '../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import { ShellExecutor } from '../lib/shell.js';
-import { spawnSync } from 'child_process';
+import { runNpm } from '../infrastructure/npm.js';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import * as prompts from '@clack/prompts';
@@ -271,15 +271,12 @@ function printVersionInfo(
 }
 
 /**
- * Execute npm install command using spawnSync (safe, no shell injection)
+ * Execute npm install command (no shell, no injection)
  */
 function runNpmInstall(spinner: ReturnType<typeof prompts.spinner>): boolean {
   spinner.start(`Installing ${PACKAGE_NAME}...`);
 
-  const result = spawnSync('npm', ['install', '-g', PACKAGE_NAME], {
-    stdio: ['pipe', 'pipe', 'pipe'],
-    encoding: 'utf-8',
-  });
+  const result = runNpm(['install', '-g', PACKAGE_NAME]);
 
   if (result.status === 0) {
     spinner.stop(`${PACKAGE_NAME} installed successfully`);
@@ -435,11 +432,7 @@ async function updateLibraryPackage(
   const updateProgressText = progress ? ` (${progress.current}/${progress.total})` : '';
   spinner.start(`Updating ${name}${updateProgressText}...`);
   const installDir = getServiceInstallDir(rootDir);
-  const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
-    cwd: installDir,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  const installResult = runNpm(['install', `${packageName}@latest`], installDir);
 
   if (installResult.status !== 0) {
     spinner.stop(`${name} update failed`);
@@ -576,11 +569,7 @@ export async function updateServices(
     // Install the latest version
     spinner.start(`Updating ${service.name} (${currentItem}/${totalItems})...`);
     const serviceInstallDir = getServiceInstallDir(rootDir);
-    const installResult = spawnSync('npm', ['install', `${packageName}@latest`], {
-      cwd: serviceInstallDir,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const installResult = runNpm(['install', `${packageName}@latest`], serviceInstallDir);
 
     if (installResult.status !== 0) {
       spinner.stop(`${service.name} update failed`);

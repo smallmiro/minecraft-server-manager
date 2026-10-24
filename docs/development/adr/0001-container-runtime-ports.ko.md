@@ -102,11 +102,26 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 | 패키지 | 지금(2026-10-23 측정) | D1 후 | error로 바꾸는 이슈 |
 |--------|------------------|-------|-------------------|
 | shared | 2 | 1 (`PrerequisiteChecker` pm2 점검) | D4 |
-| cli | 12 | 12 | D3 |
+| cli | 12 | 12 | D3 (#668에서 0건, error로 전환) |
 | mcctl-api | 9 (파일 6개) | 9 | D2 |
 | 합계 | 23 | 22 | |
 
 스크립트, git, npm, pm2를 실행하는 곳은 런타임 포트 대상이 아닙니다. 그래도 error로 바꾸기 전에 각 패키지의 `src/infrastructure/` 아래로 옮겨야 합니다.
+
+### CLI 정리(#668, D3)
+
+cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을 **error**로 바꿨습니다. 포트에 메서드를 더하지 않았습니다.
+
+| 호출 지점 | 바뀐 곳 |
+|-----------|---------|
+| `lib/rcon.ts` `isContainerRunning` | `runtime.getStatusAsync`. `paused`, `restarting`도 실행 중으로 본다(`{{.State.Running}}`와 같은 의미) |
+| `lib/rcon.ts` `execRconWithOutput` | `console.command`. 출력은 `stdout \|\| stderr` 그대로, argv에 `--`가 붙는다 |
+| `mcctl exec` (`ShellExecutor.execRcon`) | `console.command`. 출력을 스트리밍하지 않고 명령이 끝난 뒤 stdout, stderr 순으로 출력하며, 다 쓴 뒤에 종료한다. 시그널로 끝난 `docker exec`는 이제 1로 끝난다(예전 0). `execRcon`은 지웠다 |
+| `lib/prompts/server-select.ts` | `runtime.list()`와 서버별 `getStatus`. paused는 계속 실행 중으로 본다. 선택지는 이름순으로 나오고, 정확히 `mc-router`만 뺀다(예전에는 `router2` 같은 서버도 숨겨졌다) |
+| `commands/migrate.ts` `docker stop` | `runtime.stop`. 실패하면 같은 메시지로 throw한다 |
+| `lib/shell.ts`(`ShellExecutor`), `init.ts` 네트워크·라우터 재시작, `upgrade.ts` 라우터 재생성 | 런타임 포트 대상이 아니다. 동작을 바꾸지 않고 `infrastructure/ShellExecutor.ts`(`lib/shell.ts`가 다시 export), `infrastructure/compose-project.ts`로 옮겼다 |
+| `update.ts`, `console/init.ts`의 npm, `pm2-utils.ts`, `console/service.ts`의 pm2 | `infrastructure/npm.ts`, `infrastructure/pm2-cli.ts`로 옮겼다 |
+| `banner.ts` `getGitHash`(git) | ESM 빌드에서 `require()`가 없어 항상 `undefined`를 돌려주던 죽은 코드라 지웠다 |
 
 ## #715(스크립트 제거)와의 정합
 
@@ -195,7 +210,7 @@ v2 멤버인 `getAssignment`(deprecated)와 `listAssignments`는 형태를 유�
 | `GitWorldBackupAdapter` | `list()`가 컨테이너 이름을 돌려주고 그 값을 `console.command`에 다시 넘긴다 | #736 또는 서버 이름을 돌려주는 `list()` |
 | `PlayerManagementUseCase`(`options.container`), `WorldInfoUseCase.getLivePlayerLocations(container)` | API가 `mc-<name>`을 만든다. 공개 시그니처는 그대로 | D2(#667) |
 | 라우터에 대한 `mcctl logs` | `mc-router`는 서버가 아니다 | #641 |
-| CLI `lib/rcon.ts`, `commands/*`의 직접 `docker` 호출 | 포트 호출이 아니다 | D3(#668) |
+| CLI `lib/rcon.ts` 헬퍼, `mcctl exec`, 플레이어 서버 선택 프롬프트, `migrate worlds` | #668부터 포트를 호출한다. 컨테이너 이름 API는 그대로 두고 `serverOfContainer`로 바꾼다. 보통은 `ServerName`을 넘기고, 올바른 서버 컨테이너 이름이 아닐 때만 문자열을 넘긴다 | #736 |
 
 ### #665에서 하지 않은 일
 

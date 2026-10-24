@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { execSync } from 'node:child_process';
+import { recreateRouterService } from '../infrastructure/compose-project.js';
 import { randomUUID } from 'node:crypto';
 import { Paths, Config, log, colors } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
@@ -363,7 +363,7 @@ function lineDiff(a: string[], b: string[]): string[] {
 /** Recreate mc-router so the patched compose takes effect (servers keep running). */
 function recreateRouter(paths: Paths): void {
   try {
-    execSync('docker compose up -d router', { cwd: paths.root, stdio: 'inherit', timeout: 5 * 60_000 });
+    recreateRouterService(paths.root);
     prompts.log.success('mc-router recreated.');
   } catch {
     prompts.log.warn('Could not recreate mc-router. Run: docker compose up -d router');

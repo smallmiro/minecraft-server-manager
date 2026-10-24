@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, copyFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
-import { execSync } from 'node:child_process';
+import { ensureMinecraftNetwork, restartRouterService } from '../infrastructure/compose-project.js';
 import { randomUUID } from 'node:crypto';
 import { Paths, Config, log, colors, checkPlatformPrerequisites } from '@minecraft-docker/shared';
 import type { McctlConfig } from '@minecraft-docker/shared';
@@ -9,7 +9,7 @@ import { multiselect, text, select, confirm, password, isCancel } from '@clack/p
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { randomizeRconPassword } from '../lib/rcon-password.js';
 import { displayPrerequisiteReport } from '../lib/prerequisite-display.js';
-import { printBanner, getGitHash, type UpdateCheckResult } from '../lib/banner.js';
+import { printBanner, type UpdateCheckResult } from '../lib/banner.js';
 import {
   getInstalledVersion,
   fetchLatestVersionForced,
@@ -40,7 +40,6 @@ export async function initCommand(options: {
 
   // Get version info for banner
   const version = getInstalledVersion();
-  const gitHash = getGitHash();
 
   // Check for updates (non-blocking, with timeout)
   let updateInfo: UpdateCheckResult | null = null;
@@ -58,7 +57,7 @@ export async function initCommand(options: {
   }
 
   // Print creeper banner
-  printBanner({ version, gitHash, updateInfo });
+  printBanner({ version, updateInfo });
 
   console.log(`  Data directory: ${colors.cyan(paths.root)}`);
   console.log('');
@@ -339,20 +338,13 @@ export async function initCommand(options: {
   if (!options.skipDocker) {
     console.log(colors.cyan('[6/6] Setting up Docker network...'));
 
-    try {
-      // Check if network exists
-      execSync('docker network inspect minecraft-net', { stdio: 'pipe' });
+    const network = ensureMinecraftNetwork();
+    if (network === 'exists') {
       console.log('  ✓ Network minecraft-net already exists');
-    } catch {
-      // Create network
-      try {
-        execSync('docker network create --driver bridge --subnet 172.28.0.0/16 minecraft-net', {
-          stdio: 'pipe',
-        });
-        console.log('  ✓ Created network: minecraft-net');
-      } catch (err) {
-        log.warn('Failed to create Docker network (may already exist)');
-      }
+    } else if (network === 'created') {
+      console.log('  ✓ Created network: minecraft-net');
+    } else {
+      log.warn('Failed to create Docker network (may already exist)');
     }
     console.log('');
   }
@@ -675,11 +667,7 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
 
     if (!isCancel(restartRouter) && restartRouter) {
       try {
-        // Using execSync with hardcoded command (no user input) - safe from injection
-        execSync('docker compose restart mc-router', {
-          cwd: paths.root,
-          stdio: 'pipe',
-        });
+        restartRouterService(paths.root);
         console.log(`  ${colors.green('✓')} mc-router restarted`);
       } catch {
         log.warn('Failed to restart mc-router (may not be running)');

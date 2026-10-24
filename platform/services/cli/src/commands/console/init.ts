@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { existsSync, mkdirSync, unlinkSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { runNpm } from '../../infrastructure/npm.js';
 import { multiselect, isCancel } from '@clack/prompts';
 import {
   Paths,
@@ -73,22 +73,14 @@ function installMcctlApiIfNeeded(rootDir: string): { installed: boolean; error?:
   // Check if package.json exists, if not create it
   const packageJsonPath = join(installDir, 'package.json');
   if (!existsSync(packageJsonPath)) {
-    const initResult = spawnSync('npm', ['init', '-y'], {
-      cwd: installDir,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const initResult = runNpm(['init', '-y'], installDir);
     if (initResult.status !== 0) {
       return { installed: false, error: 'Failed to initialize package.json' };
     }
   }
 
   // Install mcctl-api
-  const installResult = spawnSync('npm', ['install', '@minecraft-docker/mcctl-api@latest'], {
-    cwd: installDir,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  const installResult = runNpm(['install', '@minecraft-docker/mcctl-api@latest'], installDir);
 
   if (installResult.status !== 0) {
     return {
@@ -132,22 +124,14 @@ function installMcctlConsoleIfNeeded(rootDir: string): { installed: boolean; err
   // Check if package.json exists, if not create it
   const packageJsonPath = join(installDir, 'package.json');
   if (!existsSync(packageJsonPath)) {
-    const initResult = spawnSync('npm', ['init', '-y'], {
-      cwd: installDir,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    const initResult = runNpm(['init', '-y'], installDir);
     if (initResult.status !== 0) {
       return { installed: false, error: 'Failed to initialize package.json' };
     }
   }
 
   // Install mcctl-console
-  const installResult = spawnSync('npm', ['install', '@minecraft-docker/mcctl-console@latest'], {
-    cwd: installDir,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
+  const installResult = runNpm(['install', '@minecraft-docker/mcctl-console@latest'], installDir);
 
   if (installResult.status !== 0) {
     return {
