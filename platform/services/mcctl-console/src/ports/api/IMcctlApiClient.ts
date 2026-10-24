@@ -3,12 +3,26 @@
  * Port interface for the BFF proxy layer
  */
 
+export interface PlayerList {
+  online: number;
+  max: number;
+  players: string[];
+}
+
 export interface ServerSummary {
   name: string;
   container: string;
   status: 'running' | 'stopped' | 'created' | 'exited' | 'not_created' | 'unknown';
   health: 'healthy' | 'unhealthy' | 'starting' | 'none' | 'unknown';
   hostname: string;
+  /** Summary fields: only present with `include=summary`, each optional. */
+  type?: string;
+  version?: string;
+  memory?: string;
+  /** Running servers only; null = RCON failed/timed out; absent when not running. */
+  players?: PlayerList | null;
+  /** Bytes; running servers only, when available. */
+  stats?: { memoryUsage: number; memoryLimit: number };
 }
 
 export interface ServerStats {
@@ -34,9 +48,17 @@ export interface ServerDetail extends ServerSummary {
   worldSize?: string;
 }
 
+export interface ServerListTotals {
+  playersOnline: number;
+  playersMax: number;
+  running: number;
+}
+
 export interface ServerListResponse {
   servers: ServerSummary[];
   total: number;
+  /** Only with `include=summary`. */
+  totals?: ServerListTotals;
 }
 
 export interface ServerDetailResponse {
@@ -1006,7 +1028,7 @@ export interface ToggleConfigSnapshotScheduleRequest {
  */
 export interface IMcctlApiClient {
   // Server operations
-  getServers(): Promise<ServerListResponse>;
+  getServers(options?: { include?: 'summary' }): Promise<ServerListResponse>;
   getServer(name: string): Promise<ServerDetailResponse>;
   createServer(request: CreateServerRequest): Promise<CreateServerResponse>;
   deleteServer(name: string, force?: boolean, deleteWorld?: boolean): Promise<DeleteServerResponse>;

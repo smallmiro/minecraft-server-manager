@@ -32,19 +32,6 @@ import { useCopy } from '@/hooks/useCopy';
 import { useRestartServer, useStartServer, useStopServer } from '@/hooks/useMcctl';
 import { getPrimaryHostname } from '@/utils/hostname';
 
-/**
- * Metrics that the server list endpoint does not provide yet. The row reads them
- * as optional fields so adding them to ServerSummary is all that is needed to
- * make the metrics slot appear.
- */
-interface ServerRowMetrics {
-  type?: string;
-  version?: string;
-  memory?: string;
-  players?: { online: number; max: number } | null;
-  stats?: { memoryUsage: number; memoryLimit: number } | null;
-}
-
 export interface ServerOverviewRowProps {
   server: ServerSummary;
   status: string;
@@ -98,7 +85,7 @@ function formatBytes(bytes: number): string {
 
 const stopPropagation = (event: MouseEvent | KeyboardEvent) => event.stopPropagation();
 
-function MetricsSlot({ server }: { server: ServerSummary & ServerRowMetrics }) {
+function MetricsSlot({ server }: { server: ServerSummary }) {
   const cells: { label: string; value: string }[] = [];
 
   if (server.players) {
@@ -299,7 +286,7 @@ export function ServerOverviewRow({
         )}
       </Box>
 
-      <MetricsSlot server={server as ServerSummary & ServerRowMetrics} />
+      <MetricsSlot server={server} />
 
       <Dialog
         open={confirming !== null}
