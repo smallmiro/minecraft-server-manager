@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
-import { spawn } from 'node:child_process';
+import { spawn, execFile } from 'node:child_process';
 import { Paths, log } from '@minecraft-docker/shared';
 import { assertEnvFileValue, parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { writeServerConfig } from '../lib/server-config.js';
@@ -70,6 +70,18 @@ export class ShellExecutor {
         log.error(`Failed to pull Docker image ${image}: ${err.message}`);
         resolve(1);
       });
+    });
+  }
+
+  /**
+   * The container's ID ('' when the container does not exist). Lets callers
+   * tell whether compose recreated it, without parsing compose output.
+   */
+  containerId(container: string): Promise<string> {
+    return new Promise((resolve) => {
+      execFile('docker', ['inspect', '-f', '{{.Id}}', '--', container], (err, stdout) =>
+        resolve(err ? '' : stdout.trim())
+      );
     });
   }
 
