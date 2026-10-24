@@ -1,7 +1,7 @@
 # =============================================================================
 # Server Include List (managed automatically by create-server.sh)
 # =============================================================================
-# This file is modified by scripts/create-server.sh and scripts/delete-server.sh
+# Golden reference: written by create-server.sh before it was removed (#675, #736).
 # Do NOT modify docker-compose.yml - only this file is updated for server changes
 # =============================================================================
 

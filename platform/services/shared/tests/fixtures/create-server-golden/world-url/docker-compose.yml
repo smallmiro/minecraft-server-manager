@@ -1,8 +1,8 @@
 # =============================================================================
 # eps Server
 # =============================================================================
-# IMPORTANT: Use create-server.sh script to create a new server:
-#   ./scripts/create-server.sh <your-server-name> [PAPER|VANILLA|FORGE|FABRIC]
+# Golden reference: written by create-server.sh before it was removed (#675, #736).
+#   TypeScript provisioning must produce the same settings (provision-golden.test.ts).
 #
 # The server name you provide will be used for:
 #   - Directory name: servers/<server-name>/

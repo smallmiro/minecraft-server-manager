@@ -707,7 +707,7 @@ The port never prompts (#4). `mcctl backup restore <commit>` confirms unless `--
 | 4 | restore waits on stdin | B5, B3 | every git env has `GIT_TERMINAL_PROMPT=0`; API restore resolves |
 | 5 | no lock | B2 | **L**: two child processes, one holding → `locked`; dead pid → taken over; `EPERM`, other host, old `startedAt` with a live pid → `locked`; two contenders on one stale lock (barrier) → exactly one wins; wait then success |
 | 6 | internal worlds missing | B4 layout, B5.4 | repo: `servers/a/data/w` + `w_nether` backed up and restored; internal-only commit restorable; old `worlds/`-only commit leaves them alone; LEVEL change → `restore_conflict`; symlinked `data` → `skipped` |
-| 7 | npm install: commit without sync | B1 | **I**: root without `scripts/` → push commits world content; API and scheduler have no `scripts/backup.sh` lookup |
+| 7 | npm install: commit without sync | B1 | **I**: root without `scripts/` → push commits world content; API and scheduler have no `backup.sh` script lookup |
 | 8 | "no changes" = failure | B4.6 | repo: second push → `changed: false`; route 200; scheduler success; prune after a no-change push works |
 | 9 | unsafe retention rewrite | B7 | **H**: 60+ commits cloned shallow (assert shallow), age-only, count > 50, combined → kept trees match; tip with an old author date is kept; tree invariant holds. **U**: lease conflict, hook reject, timeout after remote applied → converges to new; crash before `update-ref` → fixed next run |
 | 10 | connection test fails; token in argv | B6, B3 | fake `git` on `PATH` records argv/env: no token in argv, header in env, inherited `GIT_DIR`/`GIT_CONFIG_*` stripped, proxy vars kept; exit/stderr mapping; `BackupUseCase` init succeeds |
