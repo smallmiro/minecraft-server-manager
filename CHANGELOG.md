@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 > **Upgrade notes (v3.0.0, BREAKING).** Follow the [upgrade runbook](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts). All Bash scripts are gone (#715, #736).
-> - **`<root>/scripts` is no longer used.** `mcctl upgrade` lists the folder and deletes it only after you answer `y` (default `N`); without a terminal it only prints a notice. If cron jobs or your own scripts called `<root>/scripts/*.sh`, switch them to `mcctl` before deleting the folder: see the [script to mcctl table](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts).
+> - **`<root>/scripts` is no longer used.** `mcctl upgrade` shows the folder and, in a terminal, deletes it only after you answer `y` (default `N`); with `--non-interactive` or without a terminal it only prints `rm -r <path>`. Copy any script you edited first. If cron jobs or your own scripts called `<root>/scripts/*.sh`, switch them to `mcctl`: see the [script to mcctl table](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts).
 > - **`MCCTL_SCRIPTS` is ignored.**
-> - **`@minecraft-docker/shared` API (breaking for code that imports it).** Removed: `IShellPort`, `ShellAdapter`, `execScript`, `execScriptInteractive`, `Paths.scripts` / `resolveScriptsPath`, the symbols deprecated during the script removal, and the shell argument of the use case constructors. The full list is in #736 (PR-A).
+> - **`@minecraft-docker/shared` API (breaking for code that imports it).** The script-based exports are removed (`IShellPort`, `ShellAdapter`, `execScript`, `execScriptInteractive`, `Paths.scripts` and more) and the use case constructors lose their shell argument and gain required `provision`/`runtime`/`deprovisionDeps`. The replacement for each symbol is in [Removed](#removed).
+> - **npm packages.** The CLI and mcctl-api packages no longer contain `scripts/` (`sync-scripts` became `sync-docker`; only `docker/bluemap/Dockerfile` is bundled).
 > - **First write adds `server.yaml`.** The first command that changes an existing server (`mcctl config`, whitelist, ops, mods, playit, the console) writes `servers/<name>/server.yaml` and rewrites that server's `config.env` and `compose.yml` with a header; see [server.yaml](https://minecraft-server-manager.readthedocs.io/en/latest/configuration/server-yaml/). Comments in `servers/compose.yml` are lost on its first rewrite.
 > - **Auto-backup on stop now also runs for API and console stops.** Hosts with `BACKUP_AUTO_ON_STOP=true` should add `kill_timeout: 130000` to the mcctl-api app in `ecosystem.config.cjs` (runbook step 4-2).
 > - Existing installs are not changed otherwise: servers keep their `config.env`, including world location (#651).
@@ -39,6 +40,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - **All Bash scripts** (#715, #729-#735) - `mcctl.sh`, `create-server.sh`, `delete-server.sh`, `backup.sh`, `lock.sh`, `player.sh`, `logs.sh`, `init.sh`, `render-map.sh`, `migrate-nip-io.sh` and `lib/common.sh`. See the [script to mcctl table](https://minecraft-server-manager.readthedocs.io/en/latest/advanced/upgrade-runbook/#v300-scripts).
+- **`@minecraft-docker/shared` exports** (#736) - Breaking for code that imports the package. The replacement for each symbol:
+
+  | Removed | Use instead |
+  |---|---|
+  | `IShellPort`, `ShellResult`, `LogsOptions`, `ShellAdapter`, `ShellAdapterOptions` | The port for the task: `IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository` |
+  | `CreateServerOptions` (type) | `CreateServerConfig` and `executeWithConfig` |
+  | `execScript`, `execScriptInteractive` (package root and `./docker`) | Nothing; use `execCommand` / `execCommandAsync` for ordinary processes |
+  | `Paths.scripts`, `MCCTL_SCRIPTS` | Nothing |
+  | `Paths.locks`, `Paths.lockFile` | Nothing |
+  | `PlayerLookupUseCase`, `IPlayerLookupUseCase`, `PlayerLookupResult`, `PlayerNameHistory`, `PlayerUuidResult` | `mcctl player info <name> [--offline]` |
+  | `ServerStatusUseCase`, `IServerStatusUseCase`, `ServerStatusResult` | `mcctl status`, `IServerRepository` |
+  | `ServerName.containerName` / `hostname`, `Server.containerName` / `hostname` | Pass the `ServerName` to the port, or use `containerNameOf` / `serverHostnameOf` |
+  | `Server.toCreateArgs()`, `WorldOptions.toCliArgs()` | `buildCreateSpec`, `executeWithConfig` |
+  | `setServerPlayitDomain` | `updateServerSpec` with `setEnvKeys({ set: { PLAYIT_DOMAIN } })` |
+  | `replaceRouterHosts` | ServerSpec `routing` |
+  | `IServerSpecRepository.get`, `FileServerSpecRepository.get` | `load(name)` |
+  | `IWorldAssignmentPort.getAssignment`, `IWorldRepository.getLockStatus`, `WorldLockData` | `snapshot()` and `holdersOf` |
+  | `new BlueMapCliRenderer(scriptPath, run?, options?)`, `RenderSpawn`, `RenderSpawnOptions`, `parseResultJson` | `new BlueMapCliRenderer({ worldsDir, mapsDir, dockerDir })` |
+  | `executeWithName(name)`, `executeWithName(name, boolean)` | `executeWithName(name, { force, yes, deleteWorld })` |
+
+  Constructors lose the shell argument, and `provision`, `runtime` and `deprovisionDeps` are required:
+  - `new CreateServerUseCase(prompt, serverRepo, settings: IPlatformSettingsPort, provision, worldRepo?, auditLog?, modSource?, assignments?)`
+  - `new DeleteServerUseCase(prompt, serverRepo, runtime, deprovisionDeps, auditLog?, serverConsole?)`
+  - `new WorldManagementUseCase(prompt, worldRepo, serverRepo, assignments?, runtime?)`
+  - `new BackupUseCase(prompt, port: IWorldBackupPort)`
+
+  The string (container-name) parameter of the runtime ports is not narrowed in v3.0.0 (#667, #641).
 - **`mcctl player lookup` and `mcctl player uuid`** (#730) - Use `mcctl player info <name> [--offline]`. The removed commands print this and exit with 1. `mcctl player info --offline` now matches Minecraft; the old script computed a wrong offline UUID for some names (for example Steve and Alex).
 - **avahi log view in `mcctl logs`** (#731) - Run `journalctl -u avahi-daemon` yourself.
 - **`mcctl backup diff`** (#732) - It had no entry point in the CLI, API or console.
