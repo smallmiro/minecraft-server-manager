@@ -788,7 +788,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const { spawn } = await import('node:child_process');
 
       const output = await new Promise<string>((resolve) => {
-        const child = spawn('docker', ['exec', containerName, 'rcon-cli', command], {
+        // '--': rcon-cli never reads the command as a flag (#728)
+        const child = spawn('docker', ['exec', containerName, 'rcon-cli', '--', command], {
           stdio: ['pipe', 'pipe', 'pipe'],
         });
         let stdout = '';

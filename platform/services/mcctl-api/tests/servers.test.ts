@@ -403,6 +403,23 @@ describe('Server Routes', () => {
       expect(body.success).toBe(true);
     });
 
+    it('passes a command starting with - after --, so rcon-cli never reads it as a flag (#728)', async () => {
+      mockedContainerExists.mockReturnValue(true);
+      vi.mocked(spawn).mockClear();
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers/survival/exec',
+        payload: { command: '--host=evil.example' },
+      });
+
+      expect(vi.mocked(spawn)).toHaveBeenCalledWith(
+        'docker',
+        ['exec', 'mc-survival', 'rcon-cli', '--', '--host=evil.example'],
+        expect.anything()
+      );
+    });
+
     it('should return 404 for non-existent server', async () => {
       mockedContainerExists.mockReturnValue(false);
 
