@@ -16,23 +16,20 @@
 
 ### 1단계: API 키 발급
 
+Java 17+ 이미지는 키가 내장되어 있으므로 이 단계를 건너뜁니다. mcctl로 만든 새 서버는 `java25`를 씁니다. 자체 키는 `java8` 등 Java 17 미만 태그를 쓰거나 직접 발급한 키를 쓸 때만 필요합니다.
+
 1. [CurseForge API 콘솔](https://console.curseforge.com/)로 이동
 2. 로그인하고 API 키 생성
-3. 플랫폼 `.env` 파일에 키 추가:
-
-```bash
-# 전역 환경 파일 편집
-nano ~/minecraft-servers/.env
-
-# 다음 라인 추가
-CF_API_KEY=your_api_key_here
-```
+3. 2단계에서 서버에 키를 설정하거나, [4단계: API 키 설정](#4단계-api-키-설정)처럼 모든 서버에 설정
 
 ### 2단계: 서버 생성 및 모드 추가
 
 ```bash
 # Forge 서버 생성
-mcctl create modded --type FORGE --version 1.20.4
+mcctl create modded -t FORGE -v 1.20.4
+
+# 자체 키를 쓸 때만 (java8 등 Java 17 미만 태그 또는 직접 발급한 키)
+mcctl config modded CF_API_KEY '<your-api-key>'
 
 # CurseForge 모드 추가
 mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade"
@@ -42,7 +39,7 @@ mcctl stop modded && mcctl start modded
 ```
 
 !!! note "API 키 선택 사항"
-    Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 키는 `.env` 파일에 설정합니다.
+    Java 17+ 이미지는 키가 내장되어 있으며, java8/17 미만 태그 또는 자체 키를 사용할 때만 CF_API_KEY를 설정합니다. 서버마다 `mcctl config`로 설정하세요. 플랫폼 `.env`에만 있는 키는 서버에 전달되지 않습니다.
 
 ## API 키 발급
 
@@ -71,18 +68,26 @@ mcctl stop modded && mcctl start modded
 
 ### 4단계: API 키 설정
 
-플랫폼의 `.env` 파일에 API 키를 추가합니다:
+서버 하나에 키를 설정합니다:
 
 ```bash
-# .env 파일 편집
-nano ~/minecraft-servers/.env
-
-# API 키 추가
-CF_API_KEY=your_api_key_here
+mcctl config myserver CF_API_KEY '<your-api-key>'
 ```
 
-!!! tip "API 키의 $ 이스케이프"
-    API 키에 `$`가 포함된 경우 `.env` 파일에서 `$$`로 이스케이프합니다.
+모든 서버에 설정하려면 `~/minecraft-servers/servers/global.env`에 `CF_API_KEY` 줄을 추가하고, 값은 `~/minecraft-servers/.env`에 작은따옴표로 감싸 넣은 뒤 서버를 stop 후 start합니다:
+
+```bash
+# servers/global.env
+CF_API_KEY
+
+# .env
+CF_API_KEY='your_api_key_here'
+```
+
+`.env`에만 있는 키는 서버에 전달되지 않습니다. 서버는 `servers/global.env`에 이름이 있는 `.env` 키만 받습니다.
+
+!!! tip "`$`가 들어 있는 키"
+    `mcctl config`는 값을 작은따옴표로 감싸서 씁니다. `.env`에서도 작은따옴표로 감싸면 그대로 유지됩니다. `$`를 `$$`로 이스케이프하지 마세요. 작은따옴표 안에서는 `$$`가 그대로 남습니다.
 
 ## 지원되는 참조 형식
 
@@ -130,22 +135,32 @@ mcctl config myserver CURSEFORGE_FILES "jei@10.2.1.1005"
 mcctl config myserver CURSEFORGE_FILES "jei,journeymap:4596105,238222"
 ```
 
+### mcctl mod 사용
+
+```bash
+# CURSEFORGE_FILES에 참조 추가 (mcctl은 확인하지 않음)
+mcctl mod add myserver --curseforge jei journeymap jade
+
+# 하나를 다시 제거
+mcctl mod remove myserver jade
+```
+
 ## 설정 레퍼런스
 
 | 설정 키 | 설명 |
 |--------|------|
-| `CURSEFORGE_FILES` | 쉼표/공백/줄바꿈으로 구분된 모드 참조 목록 |
+| `CURSEFORGE_FILES` | 쉼표 또는 공백으로 구분된 모드 참조 목록 |
 
 !!! note "API 키 위치"
-    `CF_API_KEY`는 개별 서버 `config.env` 파일이 아닌 플랫폼 `.env` 파일에 설정합니다.
+    `CF_API_KEY`는 서버마다 `mcctl config`로 설정하거나, `servers/global.env`에 이름을 추가해 `.env`의 값을 모든 서버에 전달합니다. `.env`에만 있는 키는 서버에 전달되지 않습니다.
 
 ## 전체 예제
 
 ### Forge 모드 서버
 
 ```bash
-# 서버 생성
-mcctl create modded --type FORGE --version 1.20.4
+# 시작하지 않고 서버 생성
+mcctl create modded -t FORGE -v 1.20.4 --no-start
 
 # 모드 설정
 mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade,mouse-tweaks,appleskin"
@@ -159,7 +174,7 @@ mcctl start modded
 
 ```bash
 # Fabric 서버 생성
-mcctl create mixed --type FABRIC --version 1.21.1
+mcctl create mixed -t FABRIC -v 1.21.1
 
 # CurseForge 모드 (Java 17+ 이미지에서는 CF_API_KEY 선택 사항)
 mcctl config mixed CURSEFORGE_FILES "jei,journeymap"
@@ -182,13 +197,15 @@ mcctl config myserver CURSEFORGE_FILES "jei:4593548,journeymap:4596105,jade:4587
 
 - 새 버전이 있으면 파일이 자동으로 **업그레이드**됨
 - **제거된** 참조는 자동으로 정리됨
-- 모든 CurseForge 모드를 제거하려면:
+- CurseForge 모드를 제거하려면 참조를 제거합니다:
 
 ```bash
-# 모든 CurseForge 모드 제거
-mcctl config myserver CURSEFORGE_FILES ""
+# CURSEFORGE_FILES에 적힌 그대로 참조 제거
+mcctl mod remove myserver jei journeymap
 mcctl stop myserver && mcctl start myserver
 ```
+
+목록 전체를 없애려면 `servers/myserver/server.yaml`의 `env:`에서 `CURSEFORGE_FILES`를 지우고 `mcctl migrate spec myserver`를 실행한 뒤 서버를 stop 후 start합니다.
 
 ## 의존성
 
@@ -205,7 +222,7 @@ mcctl config myserver CURSEFORGE_FILES "jei,forge-api"
 
 ## 고급 설정 (수동)
 
-복잡한 설정의 경우 `config.env`를 직접 편집합니다:
+복잡한 설정의 경우 `config.env`를 직접 편집합니다. 값은 한 줄에 쓰며, 목록이 길면 목록 파일(아래)을 사용하세요.
 
 ```bash
 nano ~/minecraft-servers/servers/myserver/config.env
@@ -214,13 +231,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 `config.env` 예시:
 
 ```bash
-# CurseForge 모드 (여러 줄 형식)
-CURSEFORGE_FILES=jei
-journeymap
-jade
-mouse-tweaks
-appleskin
-storage-drawers
+# CurseForge 모드 (한 줄, 쉼표 구분)
+CURSEFORGE_FILES=jei,journeymap,jade,mouse-tweaks,appleskin,storage-drawers
 ```
 
 ### 목록 파일 사용
@@ -253,13 +265,15 @@ create:5678901
 CURSEFORGE_FILES=@/data/cf-mods.txt
 ```
 
+컨테이너의 `/data`는 서버의 `servers/myserver/data/` 폴더입니다.
+
 ## 문제 해결
 
 ### 일반적인 문제
 
 | 문제 | 원인 | 해결방법 |
 |------|------|----------|
-| 401 Unauthorized | 유효하지 않거나 누락된 API 키 | `.env`의 `CF_API_KEY` 확인 |
+| 401 Unauthorized | 유효하지 않거나 누락된 API 키 | 서버의 `CF_API_KEY` 확인 (`mcctl config <server> CF_API_KEY`, 또는 `servers/global.env`와 `.env`) |
 | 403 Forbidden | API 키에 권한 없음 | 콘솔에서 API 키 재생성 |
 | 모드를 찾을 수 없음 | 잘못된 slug 또는 ID | CurseForge URL에서 확인 |
 | 버전 불일치 | 모드가 서버 버전을 지원하지 않음 | 호환되는 버전의 특정 파일 ID 사용 |
@@ -268,8 +282,11 @@ CURSEFORGE_FILES=@/data/cf-mods.txt
 ### API 키 설정 확인
 
 ```bash
-# .env 파일 확인 (출력 내용을 공유하지 마세요!)
-cat ~/minecraft-servers/.env | grep CF_API_KEY
+# 서버 하나에 설정한 키 (출력 내용을 공유하지 마세요!)
+mcctl config myserver CF_API_KEY
+
+# 모든 서버에 전달하는 키
+grep CF_API_KEY ~/minecraft-servers/servers/global.env ~/minecraft-servers/.env
 ```
 
 ### 현재 설정 확인

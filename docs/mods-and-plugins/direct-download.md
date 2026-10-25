@@ -15,7 +15,8 @@ Download mods and plugins directly from URLs or use local files.
 | Method | Description | Use Case |
 |--------|-------------|----------|
 | `MODS` / `PLUGINS` | Direct URL list | Simple URL-based downloads |
-| Shared Directories | Local directories | Local or manually downloaded files |
+| Shared plugins directory | `shared/plugins/`, mounted in every server | Manually downloaded plugins |
+| Server data folder | `servers/<name>/data/mods/` | Local mod files for one server |
 
 ## Quick Start with mcctl
 
@@ -23,7 +24,7 @@ Download mods and plugins directly from URLs or use local files.
 
 ```bash
 # Create a Fabric server
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # Add mods from direct URLs
 mcctl config modded MODS "https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar"
@@ -32,18 +33,12 @@ mcctl config modded MODS "https://example.com/custom-mod.jar,https://github.com/
 mcctl stop modded && mcctl start modded
 ```
 
-### Using Shared Directories
+### Using Local Files
 
-mcctl creates shared directories for mods and plugins:
+- Plugins: put JARs in `~/minecraft-servers/shared/plugins/`. Every server mounts it read-only at `/plugins`, and the image copies the JARs into the server's `plugins/` folder when the server starts.
+- Mods: put JARs in the server's own `~/minecraft-servers/servers/<name>/data/mods/`.
 
-```
-~/minecraft-servers/
-  shared/
-    mods/       # Place mod JARs here
-    plugins/    # Place plugin JARs here
-```
-
-Simply place your files in these directories and they are automatically available to all servers.
+`mcctl init` also creates `shared/mods/`, but servers do not mount it.
 
 ## Configuration via mcctl
 
@@ -77,48 +72,63 @@ mcctl config myserver PLUGINS "https://example.com/plugin1.jar,https://example.c
 mcctl stop myserver && mcctl start myserver
 ```
 
+### With mcctl mod
+
+```bash
+# Append a URL: to PLUGINS on Paper, Purpur, Spigot and Bukkit servers, to MODS on the others
+mcctl mod add myserver --url https://example.com/custom-mod.jar
+```
+
 ### Supported Delimiters
 
 URLs can be separated by:
 
 - Commas: `url1,url2,url3`
 - Spaces: `url1 url2 url3`
-- Newlines (in config.env multi-line format)
+- Newlines: only in a file named by `MODS_FILE` or `PLUGINS_FILE` (see [Using File Lists](#using-file-lists))
 
 ## Configuration Reference
 
 | Config Key | Description |
 |------------|-------------|
-| `MODS` | Comma/space/newline separated mod URLs or container paths |
-| `PLUGINS` | Comma/space/newline separated plugin URLs or container paths |
+| `MODS` | Comma- or space-separated mod URLs or container paths |
+| `PLUGINS` | Comma- or space-separated plugin URLs or container paths |
 
 ## Shared Directories
 
 ### Directory Structure
 
-mcctl init creates these shared directories:
+`mcctl init` creates `shared/`. A server's `data/` folder is its `/data` in the container:
 
 ```
 ~/minecraft-servers/
   shared/
-    mods/       # Shared mod files (Forge, Fabric)
-    plugins/    # Shared plugin files (Paper, Spigot)
+    plugins/    # Mounted read-only at /plugins in every server
+    mods/       # Not mounted by servers
+  servers/<name>/data/
+    mods/       # This server's mods (/data/mods)
+    plugins/    # This server's plugins (/data/plugins)
 ```
 
 ### Using Shared Directories
 
-1. Place JAR files in the appropriate directory
-2. Files are automatically mounted to all servers (read-only)
+1. Place plugin JAR files in `shared/plugins/`
+2. Restart the servers; the image copies the JARs into each server's `plugins/` folder
 3. No configuration needed
 
 ```bash
-# Example: Add a custom mod
-cp ~/downloads/custom-mod.jar ~/minecraft-servers/shared/mods/
+# Example: Add a custom plugin
+cp ~/downloads/custom-plugin.jar ~/minecraft-servers/shared/plugins/
 
-# The mod is automatically available to all Forge/Fabric servers
+# Available to all Paper/Spigot servers after their next start
+
+# A mod for one server goes into that server's data folder
+cp ~/downloads/custom-mod.jar ~/minecraft-servers/servers/modded/data/mods/
 ```
 
 ### Benefits
+
+Benefits of `shared/plugins/`:
 
 - **Shared across servers**: One file serves all servers
 - **No configuration needed**: Just drop files in the directory
@@ -131,7 +141,7 @@ cp ~/downloads/custom-mod.jar ~/minecraft-servers/shared/mods/
 
 ```bash
 # Create server
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # Add mods from GitHub releases
 mcctl config modded MODS "https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar"
@@ -144,7 +154,7 @@ mcctl stop modded && mcctl start modded
 
 ```bash
 # Create server
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # Direct URLs for custom mods
 mcctl config modded MODS "https://example.com/custom-mod.jar"
@@ -161,12 +171,12 @@ mcctl stop modded && mcctl start modded
 For mod development with local builds:
 
 1. Build your mod
-2. Copy to shared directory
+2. Copy it to the server's `data/mods/` folder
 3. Restart server
 
 ```bash
-# Copy built mod to shared directory
-cp ~/my-mod/build/libs/my-mod-1.0.jar ~/minecraft-servers/shared/mods/
+# Copy built mod to the server's mods folder
+cp ~/my-mod/build/libs/my-mod-1.0.jar ~/minecraft-servers/servers/modded/data/mods/
 
 # Restart server to load the mod
 mcctl stop modded && mcctl start modded
@@ -177,22 +187,22 @@ mcctl stop modded && mcctl start modded
 All servers share the same plugins from `shared/plugins/`:
 
 ```bash
-# Create multiple servers
-mcctl create lobby --type PAPER --version 1.21.1
-mcctl create survival --type PAPER --version 1.21.1
-mcctl create creative --type PAPER --version 1.21.1
+# Create multiple servers without starting them
+mcctl create lobby -t PAPER -v 1.21.1 --no-start
+mcctl create survival -t PAPER -v 1.21.1 --no-start
+mcctl create creative -t PAPER -v 1.21.1 --no-start
 
 # Place shared plugins
 cp luckperms.jar ~/minecraft-servers/shared/plugins/
 cp vault.jar ~/minecraft-servers/shared/plugins/
 
-# All servers now have these plugins
+# The servers start with these plugins
 mcctl start --all
 ```
 
 ## Advanced Configuration (Manual)
 
-For advanced configurations, edit `config.env` directly:
+For advanced configurations, edit `config.env` directly. Each value stays on one line; for long lists, use a file list (below).
 
 ```bash
 nano ~/minecraft-servers/servers/myserver/config.env
@@ -201,10 +211,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 Example `config.env`:
 
 ```bash
-# Direct mod URLs (multi-line format)
-MODS=https://example.com/mod1.jar
-https://example.com/mod2.jar
-https://github.com/user/repo/releases/download/v1.0/mod3.jar
+# Direct mod URLs (one line, comma-separated)
+MODS=https://example.com/mod1.jar,https://example.com/mod2.jar,https://github.com/user/repo/releases/download/v1.0/mod3.jar
 
 # Auto-cleanup settings
 REMOVE_OLD_MODS=TRUE
@@ -279,7 +287,7 @@ mcctl config myserver REMOVE_OLD_MODS_EXCLUDE "keep-this-mod.jar"
 | Issue | Cause | Solution |
 |-------|-------|----------|
 | Download failed | Invalid URL or network issue | Verify URL is accessible |
-| File not found | Wrong path | Check shared directory location |
+| File not found | Wrong path | Check the file is in `shared/plugins/` or the server's `data/mods/` |
 | Permission denied | File permissions | Ensure files are readable |
 | Mods not loading | Wrong server type | Verify TYPE matches mod loader |
 
@@ -324,8 +332,8 @@ curl -I "https://example.com/mod.jar"
 ### Check Shared Directory
 
 ```bash
-# List shared mods
-ls -la ~/minecraft-servers/shared/mods/
+# List a server's mods
+ls -la ~/minecraft-servers/servers/myserver/data/mods/
 
 # List shared plugins
 ls -la ~/minecraft-servers/shared/plugins/

@@ -29,16 +29,21 @@ routing:
   autoScale:
     up: true
     down: true
+  asleepMotd: "§e§lServer is sleeping§r\n§7Connect to wake up!"   # optional
+  loadingMotd: "§a§lServer is starting...§r\n§7Please wait!"       # optional
 env:                       # every other config.env key, unchanged
-  GAMEMODE: survival
+  MODE: survival
   ENABLE_RCON: "true"
   MOTD: Welcome to survival! Your adventure begins here.
 ```
 
 - `TYPE`, `VERSION`, `MEMORY`, `LEVEL` and `PLAYIT_DOMAIN` are fields of their own; they cannot appear in `env`.
 - `EXTRA_ARGS` is written from `world.storage` (`--universe /worlds/` for `universe`) plus `env.EXTRA_ARGS`. It is always written, so a server no longer inherits it from `.env`.
-- The mc-router hosts are `<name>.local`, `<name>.<ip>.nip.io` for each address in `HOST_IPS` (else `HOST_IP`), the playit domain, then the custom hosts.
+- `image` is the server's container image; new servers get `itzg/minecraft-server:java25`. `mcctl update` changes it to the Java tag `VERSION` needs unless the tag is pinned; see [Java Versions and Image Tags](server-types.md#java-versions-and-image-tags).
+- The mc-router hosts are `<name>.local`, `<name>.<ip>.nip.io` for each address in `HOST_IPS` (else `HOST_IP`, else the detected host address), the playit domain, then the custom hosts.
+- `routing.autoScale` sets whether mc-router starts the server on connect (`up`) and stops it when idle (`down`). `asleepMotd` and `loadingMotd` set the MOTD shown while the server sleeps or starts; without them the template's MOTDs are used.
 - Quote values YAML would read as numbers or booleans (`version: "1.21"`, `ENABLE_RCON: "true"`). mcctl reports the field otherwise.
+- Unknown keys are errors. `env` keys must be shell variable names, and their values one line without control characters, not starting with a quote. `env.EXTRA_ARGS` must not contain `--universe` (set `world.storage` instead). Host names must be valid DNS names.
 
 ## Who writes it
 
@@ -53,7 +58,7 @@ mcctl migrate spec --all --dry-run   # what would be imported
 mcctl migrate spec --all             # import and write the files
 ```
 
-The import keeps every `config.env` key. A `docker-compose.yml` `environment` entry moves into `env` (Compose gave it precedence over `config.env`; a clash is reported). A server whose world or image is set through `${...}` interpolation cannot be imported until the value is literal. An empty value such as `VERSION=` stays empty (`version: ""`), because it still overrides `servers/global.env`. mcctl writes a `$` in a `config.env` value inside single quotes (such a value must not end with `\`) and a `$` in the compose image or router labels as `$$`, so Docker Compose does not interpolate it. `mcctl upgrade` lists the servers that have no `server.yaml` yet.
+Add `--json` for a machine-readable report. The import keeps every `config.env` key. A `docker-compose.yml` `environment` entry moves into `env` (Compose gave it precedence over `config.env`; a clash is reported). A server whose world or image is set through `${...}` interpolation cannot be imported until the value is literal. An empty value such as `VERSION=` stays empty (`version: ""`), because it still overrides `servers/global.env`. mcctl writes a `$` in a `config.env` value inside single quotes (such a value must not end with `\`) and a `$` in the compose image or router labels as `$$`, so Docker Compose does not interpolate it. `mcctl upgrade` lists the servers that have no `server.yaml` yet.
 
 ## Hand edits
 
@@ -66,6 +71,13 @@ The first line of the generated files is a header with a hash, so mcctl can tell
 - **config.env and server.yaml both** edited: `edit_conflict`. Undo one edit, or re-render from `server.yaml` with `mcctl migrate spec <name> --force` (keeps `config.env.bak` / `docker-compose.yml.bak`).
 
 `mcctl start` does not render files; it starts what is on disk.
+
+Other errors a write can stop with:
+
+- `storage_change`: the change would move the world between `worlds/` and the server's `data/` (`world.storage`); mcctl refuses it and points to `mcctl migrate worlds`.
+- `invalid_spec`: a field is invalid; the message names each field.
+- `unsupported_spec_version`: the file was written by a newer mcctl; upgrade mcctl.
+- `locked`: another mcctl process is changing `servers/compose.yml` or deleting the server; retry when it is done.
 
 ## Creating a server
 

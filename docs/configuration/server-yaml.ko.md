@@ -29,16 +29,21 @@ routing:
   autoScale:
     up: true
     down: true
+  asleepMotd: "§e§lServer is sleeping§r\n§7Connect to wake up!"   # 선택
+  loadingMotd: "§a§lServer is starting...§r\n§7Please wait!"       # 선택
 env:                       # 그 밖의 config.env 키를 그대로
-  GAMEMODE: survival
+  MODE: survival
   ENABLE_RCON: "true"
   MOTD: Welcome to survival! Your adventure begins here.
 ```
 
 - `TYPE`, `VERSION`, `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`은 별도 필드이며 `env`에 둘 수 없습니다.
 - `EXTRA_ARGS`는 `world.storage`(`universe`면 `--universe /worlds/`)와 `env.EXTRA_ARGS`로 씁니다. 항상 쓰므로 서버가 더 이상 `.env`에서 상속받지 않습니다.
-- mc-router 호스트는 `<이름>.local`, `HOST_IPS`(없으면 `HOST_IP`)의 주소마다 `<이름>.<ip>.nip.io`, playit 도메인, 사용자 호스트 순입니다.
+- `image`는 서버의 컨테이너 이미지이며, 새 서버는 `itzg/minecraft-server:java25`를 받습니다. `mcctl update`는 고정한 태그가 아니면 `VERSION`에 필요한 Java 태그로 바꿉니다. [Java 버전과 이미지 태그](server-types.ko.md#java-버전과-이미지-태그)를 참고하세요.
+- mc-router 호스트는 `<이름>.local`, `HOST_IPS`(없으면 `HOST_IP`, 그것도 없으면 감지한 호스트 주소)의 주소마다 `<이름>.<ip>.nip.io`, playit 도메인, 사용자 호스트 순입니다.
+- `routing.autoScale`은 접속 시 mc-router가 서버를 시작할지(`up`), 유휴 시 중지할지(`down`)를 정합니다. `asleepMotd`와 `loadingMotd`는 서버가 잠들어 있거나 시작 중일 때 보여 줄 MOTD이며, 없으면 템플릿의 MOTD를 씁니다.
 - YAML이 숫자나 불린으로 읽는 값은 따옴표로 감쌉니다(`version: "1.21"`, `ENABLE_RCON: "true"`). 그렇지 않으면 mcctl이 해당 필드를 알려 줍니다.
+- 알 수 없는 키는 오류입니다. `env` 키는 셸 변수 이름이어야 하고, 값은 제어 문자가 없는 한 줄이며 따옴표로 시작할 수 없습니다. `env.EXTRA_ARGS`에는 `--universe`를 넣을 수 없습니다(`world.storage`를 설정하세요). 호스트명은 올바른 DNS 이름이어야 합니다.
 
 ## 누가 쓰는가
 
@@ -53,7 +58,7 @@ mcctl migrate spec --all --dry-run   # 가져올 내용 미리 보기
 mcctl migrate spec --all             # 가져오고 파일 쓰기
 ```
 
-가져오기는 `config.env` 키를 하나도 잃지 않습니다. `docker-compose.yml`의 `environment` 항목은 `env`로 옮깁니다(Compose가 `config.env`보다 우선했으므로, 충돌은 보고합니다). 월드나 이미지를 `${...}` 보간으로 정한 서버는 값을 리터럴로 바꿀 때까지 가져오지 않습니다. `VERSION=`처럼 빈 값은 비어 있는 채로 남깁니다(`version: ""`). 빈 값도 `servers/global.env`보다 우선하기 때문입니다. mcctl은 `config.env` 값의 `$`는 작은따옴표 안에(이런 값은 `\`로 끝날 수 없습니다), compose 이미지나 라우터 라벨의 `$`는 `$$`로 써서 Docker Compose가 보간하지 않게 합니다. `mcctl upgrade`는 아직 `server.yaml`이 없는 서버를 알려 줍니다.
+`--json`을 붙이면 기계가 읽을 수 있는 보고서를 출력합니다. 가져오기는 `config.env` 키를 하나도 잃지 않습니다. `docker-compose.yml`의 `environment` 항목은 `env`로 옮깁니다(Compose가 `config.env`보다 우선했으므로, 충돌은 보고합니다). 월드나 이미지를 `${...}` 보간으로 정한 서버는 값을 리터럴로 바꿀 때까지 가져오지 않습니다. `VERSION=`처럼 빈 값은 비어 있는 채로 남깁니다(`version: ""`). 빈 값도 `servers/global.env`보다 우선하기 때문입니다. mcctl은 `config.env` 값의 `$`는 작은따옴표 안에(이런 값은 `\`로 끝날 수 없습니다), compose 이미지나 라우터 라벨의 `$`는 `$$`로 써서 Docker Compose가 보간하지 않게 합니다. `mcctl upgrade`는 아직 `server.yaml`이 없는 서버를 알려 줍니다.
 
 ## 손으로 고친 경우
 
@@ -66,6 +71,13 @@ mcctl migrate spec --all             # 가져오고 파일 쓰기
 - **config.env와 server.yaml을 둘 다** 고침: `edit_conflict`. 한쪽 수정을 되돌리거나 `mcctl migrate spec <이름> --force`로 `server.yaml`에서 다시 만듭니다(`config.env.bak` / `docker-compose.yml.bak`을 남김).
 
 `mcctl start`는 파일을 다시 만들지 않고 디스크에 있는 대로 시작합니다.
+
+쓰기가 멈출 수 있는 그 밖의 오류:
+
+- `storage_change`: 변경이 월드를 `worlds/`와 서버의 `data/` 사이로 옮기게 됩니다(`world.storage`). mcctl은 이를 거부하고 `mcctl migrate worlds`를 안내합니다.
+- `invalid_spec`: 필드가 올바르지 않습니다. 메시지에 필드마다 이유가 나옵니다.
+- `unsupported_spec_version`: 더 새로운 mcctl이 쓴 파일입니다. mcctl을 업그레이드하세요.
+- `locked`: 다른 mcctl 프로세스가 `servers/compose.yml`을 바꾸거나 서버를 삭제하는 중입니다. 끝난 뒤 다시 시도하세요.
 
 ## 서버 생성
 

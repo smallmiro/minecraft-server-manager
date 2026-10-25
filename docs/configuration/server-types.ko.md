@@ -22,8 +22,8 @@ mcctl create myserver -t NEOFORGE -v 1.21.1
 # Fabric (경량 모드)
 mcctl create myserver -t FABRIC -v 1.21.1
 
-# Modrinth 모드팩
-mcctl create myserver --modpack
+# Modrinth 모드팩 (이름 없이 `mcctl create`를 실행하면 대화형으로 묻습니다)
+mcctl create myserver -t MODRINTH --modpack <modpack-slug>
 ```
 
 ## 개요
@@ -36,10 +36,16 @@ mcctl create myserver --modpack
 | **NEOFORGE** | 아니오 | 예 | 다양함 | 현대적인 Forge 모드 (1.20.1+) |
 | **FABRIC** | 아니오 | 예 | 매우 좋음 | 성능 모드 |
 | **MODRINTH** | 아니오 | 예 | 다양함 | Modrinth 모드팩 |
+| **AUTO_CURSEFORGE** | 아니오 | 예 | 다양함 | CurseForge 모드팩 |
 | **SPIGOT** | 예 | 아니오 | 좋음 | 레거시 플러그인 호환성 |
 | **BUKKIT** | 예 | 아니오 | 보통 | 매우 오래된 플러그인 |
 | **PURPUR** | 예 | 아니오 | 매우 좋음 | 고급 커스터마이징 |
+| **PUFFERFISH** | 예 | 아니오 | 다양함 | 대규모 서버용 Paper 포크 |
+| **FOLIA** | 예 | 아니오 | 다양함 | 큰 월드용 멀티스레드 Paper 포크 |
+| **LEAF** | 예 | 아니오 | 다양함 | 경량 Paper 포크 |
 | **QUILT** | 아니오 | 예 | 매우 좋음 | 현대적인 Fabric 대안 |
+
+`mcctl create -t`가 받는 타입은 위와 같습니다. 이미지가 지원하는 다른 타입은 [기타 서버 타입](#기타-서버-타입)을 참고하세요.
 
 ---
 
@@ -153,16 +159,16 @@ mcctl stop myserver && mcctl start myserver
 
 ### Java 버전 요구사항
 
-| Minecraft 버전 | 필요한 Java | 이미지 태그 |
-|----------------|-------------|-------------|
-| 1.20.x+ | Java 17 또는 21 | `latest` |
-| 1.17.x - 1.19.x | Java 17 | `java17` |
-| 1.16.x 이하 | Java 8 | `java8` |
+Forge는 해당 Minecraft 버전의 Java가 필요하며([Java 버전과 이미지 태그](#java-버전과-이미지-태그) 참고), Forge 1.16.5 이하는 Java 8에서만 실행됩니다.
 
 !!! warning "Forge 1.16.5 이하"
-    이전 Forge 버전의 경우 서버의 docker-compose.yml을 수정하여 java8 이미지를 사용해야 합니다:
+    새 서버는 `java25`로 시작합니다. `--no-start`로 서버를 만들고, `servers/<name>/server.yaml`에서 이미지를 설정한 뒤 파일을 쓰고 시작하세요:
     ```yaml
     image: itzg/minecraft-server:java8
+    ```
+    ```bash
+    mcctl migrate spec myserver
+    mcctl start myserver
     ```
 
 ### 메모리 권장사항
@@ -227,21 +233,31 @@ Modrinth 모드팩으로 서버를 생성합니다. 모드팩에는 필요한 �
 ### Modrinth 모드팩 서버 생성
 
 ```bash
-# 대화형 모드 (권장) - 모드팩 검색 및 선택
-mcctl create myserver --modpack
+# Modrinth URL의 모드팩 slug로 생성
+mcctl create myserver -t MODRINTH --modpack <modpack-slug>
 
-# 대화형 흐름:
-# 1. Modrinth에서 모드팩 검색
-# 2. 버전 선택
-# 3. 모드 로더 선택 (지원되는 로더만 표시)
-# 4. 메모리 및 기타 설정 구성
+# 선택: 로더, 모드팩 버전, 제외할 모드
+mcctl create myserver -t MODRINTH --modpack <modpack-slug> \
+  --mod-loader fabric --modpack-version <version-id> --exclude-files <file1>,<file2>
+
+# 대화형: 이름 없이 실행하고 "Modrinth Modpack" 선택
+mcctl create
 ```
+
+대화형 흐름은 다음을 묻습니다:
+
+1. 모드팩 slug 또는 URL
+2. 모드 로더: Auto-detect 또는 모드팩이 지원하는 로더 중 하나
+3. 모드팩 버전 (비우면 최신)
+4. 제외할 모드 (쉼표 구분)
+5. 월드
+6. 메모리 (기본값 `6G`)
+7. 화이트리스트
 
 ### 특징
 
-- CLI에서 직접 Modrinth 모드팩 검색
 - 동적 로더 감지: 모드팩이 지원하는 로더만 표시 (Forge, NeoForge, Fabric, Quilt)
-- 버전 목록으로 자동 버전 선택
+- Minecraft 버전은 모드팩이 정합니다. `-v`를 주지 않으면 `VERSION`을 쓰지 않습니다
 - 즉시 플레이를 위한 미리 구성된 모드 세트
 
 ### 설정
@@ -251,8 +267,9 @@ mcctl create myserver --modpack
 ```bash
 TYPE=MODRINTH
 MODRINTH_MODPACK=<modpack-slug>
-MODRINTH_VERSION=<version-id>       # 선택사항
-MODRINTH_LOADER=<loader>            # forge, neoforge, fabric, quilt
+MODRINTH_VERSION=<version-id>       # 선택사항, --modpack-version
+MODRINTH_LOADER=<loader>            # 선택사항, --mod-loader: forge, neoforge, fabric, quilt
+MODRINTH_EXCLUDE_FILES=<files>      # 선택사항, --exclude-files
 ```
 
 ### 메모리 권장사항
@@ -265,7 +282,19 @@ MODRINTH_LOADER=<loader>            # forge, neoforge, fabric, quilt
 
 ### Web Console
 
-Modrinth 모드팩 서버는 Web Console (Management Console)에서도 동일한 모드팩 검색 및 동적 로더 선택으로 생성할 수 있습니다.
+웹 콘솔의 Create Server 대화상자는 Modrinth에서 모드팩을 검색하고, 모드팩에 있는 로더와 Minecraft 버전 조합만 제시하며, 감지한 클라이언트 전용 모드를 **Exclude mods**에 채워 넣습니다. [클라이언트 전용 모드 제외](../mods-and-plugins/modpacks.ko.md#클라이언트-전용-모드-제외)를 참고하세요.
+
+---
+
+## CurseForge 모드팩
+
+CurseForge 모드팩으로 서버를 생성합니다:
+
+```bash
+mcctl create myserver -t AUTO_CURSEFORGE --modpack all-the-mods-8
+```
+
+`--modpack`은 `CF_SLUG`로, `--exclude-files`는 `CF_EXCLUDE_MODS`로 기록됩니다. Java 17+ 이미지에는 CurseForge API 키가 내장되어 있으므로 `CF_API_KEY`는 더 오래된 이미지 태그에서만 필요합니다. `CF_PAGE_URL`, `CF_FILE_ID` 등 다른 설정은 [CurseForge 모드팩](../mods-and-plugins/modpacks.ko.md#curseforge-모드팩)을 참고하세요.
 
 ---
 
@@ -409,6 +438,46 @@ mcctl config myserver USE_AIKAR_FLAGS true
 
 ---
 
+## Pufferfish
+
+플레이어가 많은 서버용 Paper 포크입니다. 플러그인은 [Paper](#플러그인-추가)와 같은 방법으로 추가합니다.
+
+### Pufferfish 서버 생성
+
+```bash
+mcctl create myserver -t PUFFERFISH -v 1.21.1
+```
+
+---
+
+## Folia
+
+월드의 지역을 별도 스레드에서 실행하는 큰 월드용 Paper 포크입니다. 모든 플러그인이 Folia를 지원하지는 않으므로, 추가하기 전에 플러그인마다 확인하세요.
+
+### Folia 서버 생성
+
+```bash
+mcctl create myserver -t FOLIA -v 1.21.1
+```
+
+`FOLIA_CHANNEL`(`default` 또는 `experimental`)로 빌드 채널을 고르고, `FOLIA_DOWNLOAD_URL`로 원하는 URL에서 서버를 내려받습니다.
+
+---
+
+## Leaf
+
+경량 Paper 포크입니다. 플러그인은 [Paper](#플러그인-추가)와 같은 방법으로 추가합니다.
+
+### Leaf 서버 생성
+
+```bash
+mcctl create myserver -t LEAF -v 1.21.1
+```
+
+`LEAF_BUILD`로 특정 빌드를 고릅니다.
+
+---
+
 ## Quilt
 
 개선된 API를 가진 현대적인 Fabric 포크입니다.
@@ -437,6 +506,54 @@ mcctl config myserver MODRINTH_PROJECTS "qsl,fabric-api"
 - Quilt의 모딩 접근 방식을 선호하는 경우
 - Quilt 전용 모드가 필요한 경우
 - 개선된 모드 호환성을 원하는 경우
+
+---
+
+## 기타 서버 타입
+
+이미지는 `mcctl create -t`가 받는 것보다 많은 타입을 지원합니다. 예를 들어 하이브리드 `MOHIST`, `MAGMA_MAINTAINED`, `ARCLIGHT`, `KETTING`(한 서버에서 모드와 Bukkit 플러그인), `FTBA`(Feed The Beast 모드팩), `CUSTOM`(직접 준비한 서버 jar)이 있습니다. `-t`가 받는 타입과 `--no-start`로 서버를 만든 뒤 `mcctl config`로 `TYPE`과 타입별 변수를 설정합니다:
+
+```bash
+mcctl create hybrid -t FORGE -v 1.20.1 --no-start
+mcctl config hybrid TYPE MOHIST
+mcctl start hybrid
+```
+
+| 타입 | 변수 |
+|------|------|
+| `MOHIST` | `VERSION` |
+| `MAGMA_MAINTAINED` | `VERSION`, `FORGE_VERSION` |
+| `ARCLIGHT` | `VERSION`, `ARCLIGHT_TYPE` (`FORGE`, `NEOFORGE`, `FABRIC` 중 하나) |
+| `KETTING` | `VERSION` |
+| `FTBA` | `FTB_MODPACK_ID` ([FTB 모드팩](../mods-and-plugins/modpacks.ko.md#ftb-모드팩) 참고) |
+| `CUSTOM` | `CUSTOM_SERVER`: 서버 jar의 URL 또는 컨테이너 경로 |
+
+Minecraft 버전에 맞는 이미지 태그도 확인하세요([Java 버전과 이미지 태그](#java-버전과-이미지-태그) 참고).
+
+---
+
+## Java 버전과 이미지 태그
+
+각 서버는 `servers/<name>/server.yaml`의 `image:`가 가리키는 이미지로 실행됩니다. 새 서버는 `VERSION`과 관계없이 `itzg/minecraft-server:java25`로 시작합니다. Minecraft 버전별로 맞는 태그는 다음과 같습니다:
+
+| Minecraft 버전 | Java | 이미지 태그 |
+|----------------|------|-------------|
+| 26.x, `LATEST` | 25 | `java25` |
+| 1.20.5 - 1.21.x | 21 | `java21` |
+| 1.17 - 1.20.4 | 17 | `java17` |
+| 1.16.5 이하 | 8 | `java8` |
+
+Forge 1.16.5 이하는 더 새로운 Java에서 실패하므로 `java8`이 필요합니다.
+
+이미지를 바꾸려면 `server.yaml`의 `image:`를 고치고 `mcctl migrate spec <name>`을 실행한 뒤 서버를 stop 후 start합니다. 서버의 `docker-compose.yml`에서 `image:`를 고쳐도 `server.yaml`로 가져옵니다.
+
+`mcctl update`는 각 서버의 태그를 `VERSION`에 맞춰 이 표의 태그로 바꿉니다. 고정하지 않은 `itzg/minecraft-server` 태그는 모두 바꾸므로 `latest`나 `java21-graalvm`도 바뀝니다. `itzg/minecraft-server:2026.10.0-java21`처럼 릴리스 버전으로 시작하는 태그나 다이제스트(`itzg/minecraft-server:java21@sha256:…`)는 고정된 것으로 보고 유지하며, 그 Java가 `VERSION`에 필요한 버전보다 낮으면 경고합니다. `VERSION`이 스냅샷처럼 mcctl이 읽을 수 없는 값이면 태그를 그대로 둡니다. 다른 이미지는 바꾸지 않습니다.
+
+| 오류 | 원인 | 해결 |
+|------|------|------|
+| `class file version 69.0` | Java 25 필요 | `java25` 태그 사용 |
+| `class file version 65.0` | Java 21 필요 | `java21` 태그 사용 |
+| `Unsupported class file major version` | 서버에 비해 Java가 너무 새로움 | 더 낮은 태그 사용(예: Forge 1.16.5 이하는 `java8`) |
 
 ---
 
@@ -471,7 +588,7 @@ flowchart TD
 |-----------|--------|
 | 일반 멀티플레이어 | `mcctl create myserver -t PAPER -v 1.21.1` |
 | 성능 중심 | `mcctl create myserver -t PAPER -v 1.21.1` 또는 `-t FABRIC` |
-| 복잡한 모드팩 | `mcctl create myserver --modpack` |
+| 복잡한 모드팩 | `mcctl create myserver -t MODRINTH --modpack <modpack-slug>` |
 | Forge 모드 (현대) | `mcctl create myserver -t NEOFORGE -v 1.21.1` |
 | Forge 모드 (레거시) | `mcctl create myserver -t FORGE -v 1.20.4` |
 | 가벼운 최적화 모드 | `mcctl create myserver -t FABRIC -v 1.21.1` |
@@ -489,7 +606,7 @@ mcctl create survival -t PAPER -v 1.21.1
 # 설정
 mcctl config survival MOTD "서바이벌 서버 - 행운을 빕니다!"
 mcctl config survival DIFFICULTY hard
-mcctl config survival GAMEMODE survival
+mcctl config survival MODE survival
 mcctl config survival USE_AIKAR_FLAGS true
 
 # 플러그인 추가
@@ -539,14 +656,14 @@ mcctl stop modern && mcctl start modern
 ### 모드팩 서버 (Modrinth)
 
 ```bash
-# 모드팩 서버 생성 (대화형)
-mcctl create modpack-server --modpack
+# 시작하지 않고 모드팩 서버 생성
+mcctl create modpack-server -t MODRINTH --modpack <modpack-slug> --no-start
 
-# CLI가 다음을 안내합니다:
-# 1. Modrinth에서 모드팩 검색
-# 2. 모드팩 버전 선택
-# 3. 모드 로더 선택 (Forge, NeoForge, Fabric, Quilt)
-# 4. 메모리 할당 설정
+# 모드팩 기본값(6G)보다 많은 메모리
+mcctl config modpack-server MEMORY 8G
+
+# 서버 시작
+mcctl start modpack-server
 ```
 
 ### 성능 서버 (Fabric)

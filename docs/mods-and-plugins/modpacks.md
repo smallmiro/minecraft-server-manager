@@ -7,13 +7,13 @@ Install pre-configured modpack collections from various sources.
 | Platform | Config Key | API Key Required | Best For |
 |----------|-----------|------------------|----------|
 | [Packwiz](#packwiz) | `PACKWIZ_URL` | No | Custom/self-hosted modpacks |
-| [CurseForge](#curseforge-modpacks) | `CF_PAGE_URL`, `CF_SLUG` | Yes | Popular modpacks |
+| [CurseForge](#curseforge-modpacks) | `CF_PAGE_URL`, `CF_SLUG` | No (built in for Java 17+ images) | Popular modpacks |
 | [Modrinth](#modrinth-modpacks) | `MODRINTH_MODPACK` | No | Open-source modpacks |
 | [FTB](#ftb-modpacks) | `FTB_MODPACK_ID` | No | Feed the Beast modpacks |
 | [ZIP Archive](#zip-modpacks) | `MODPACK`, `GENERIC_PACKS` | No | Manual/custom archives |
 
 !!! note "Modpacks and Server Types"
-    When installing modpacks, the server TYPE is often set automatically based on the modpack platform. For example, CurseForge modpacks use `TYPE=AUTO_CURSEFORGE` and Modrinth modpacks use `TYPE=MODRINTH`.
+    `mcctl create <name> -t AUTO_CURSEFORGE --modpack <slug>` and `mcctl create <name> -t MODRINTH --modpack <slug>` set `TYPE` and the modpack for you. For the other platforms, create the server with `--no-start`, set `TYPE` and the platform's keys with `mcctl config`, then start it. Without `--no-start`, `mcctl create` starts the server right away and generates its world before the modpack is set.
 
 ---
 
@@ -24,14 +24,14 @@ Install pre-configured modpack collections from various sources.
 ### Quick Start with mcctl
 
 ```bash
-# Create a Fabric server with Packwiz modpack
-mcctl create modded --type FABRIC --version 1.21.1
+# Create a Fabric server for the Packwiz modpack, without starting it
+mcctl create modded -t FABRIC -v 1.21.1 --no-start
 
 # Set Packwiz modpack URL
 mcctl config modded PACKWIZ_URL "https://example.com/modpack/pack.toml"
 
-# Restart to apply
-mcctl stop modded && mcctl start modded
+# Start the server
+mcctl start modded
 ```
 
 ### Configuration Reference
@@ -68,24 +68,17 @@ Install modpacks from [CurseForge](https://www.curseforge.com/minecraft/modpacks
 ### Quick Start with mcctl
 
 ```bash
-# Create server (TYPE is set automatically for CurseForge modpacks)
-mcctl create modded
+# Create the server (writes TYPE=AUTO_CURSEFORGE and CF_SLUG), without starting it
+mcctl create modded -t AUTO_CURSEFORGE --modpack all-the-mods-8 --no-start
 
-# Set server type for CurseForge modpack
-mcctl config modded TYPE "AUTO_CURSEFORGE"
-
-# Set modpack by page URL
-mcctl config modded CF_PAGE_URL "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
-
-# Or by slug (shorter)
-mcctl config modded CF_SLUG "all-the-mods-8"
-
-# Set memory (modpacks typically need more)
+# Set memory (modpack servers start with 6G; large packs need more)
 mcctl config modded MEMORY "8G"
 
-# Restart to apply
-mcctl stop modded && mcctl start modded
+# Start the server
+mcctl start modded
 ```
+
+`--exclude-files` writes `CF_EXCLUDE_MODS`. To pick the modpack by page URL instead of the slug, set `CF_PAGE_URL` with `mcctl config`.
 
 ### Modpack Specification Methods
 
@@ -129,12 +122,10 @@ mcctl config modded CF_PARALLEL_DOWNLOADS "6"
 ### Complete Example
 
 ```bash
-# Create and configure CurseForge modpack server
-mcctl create atm8
+# Create the CurseForge modpack server without starting it
+mcctl create atm8 -t AUTO_CURSEFORGE --modpack all-the-mods-8 --no-start
 
 # Configure modpack
-mcctl config atm8 TYPE "AUTO_CURSEFORGE"
-mcctl config atm8 CF_PAGE_URL "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
 mcctl config atm8 MEMORY "8G"
 mcctl config atm8 CF_EXCLUDE_MODS "optifine,journeymap"
 mcctl config atm8 CF_PARALLEL_DOWNLOADS "6"
@@ -152,21 +143,17 @@ Install modpacks from [Modrinth](https://modrinth.com/modpacks).
 ### Quick Start with mcctl
 
 ```bash
-# Create server
-mcctl create modded
+# Create the server (writes TYPE=MODRINTH and MODRINTH_MODPACK), without starting it
+mcctl create modded -t MODRINTH --modpack cobblemon-modpack --no-start
 
-# Set server type for Modrinth modpack
-mcctl config modded TYPE "MODRINTH"
+# Set memory (modpack servers start with 6G)
+mcctl config modded MEMORY "8G"
 
-# Set modpack by slug
-mcctl config modded MODRINTH_MODPACK "cobblemon-modpack"
-
-# Set memory
-mcctl config modded MEMORY "6G"
-
-# Restart to apply
-mcctl stop modded && mcctl start modded
+# Start the server
+mcctl start modded
 ```
+
+`--mod-loader`, `--modpack-version` and `--exclude-files` write `MODRINTH_LOADER`, `MODRINTH_VERSION` and `MODRINTH_EXCLUDE_FILES`. Run `mcctl create` without a name to be asked for these instead.
 
 ### Modpack Specification Methods
 
@@ -186,7 +173,7 @@ mcctl stop modded && mcctl start modded
 | `VERSION` | - | Set to `LATEST` or `SNAPSHOT` for auto-selection |
 | `MODRINTH_MODPACK_VERSION_TYPE` | - | Narrow to `release`, `beta`, or `alpha` |
 | `MODRINTH_VERSION` | - | Exact modpack version ID |
-| `MODRINTH_LOADER` | auto | Specific loader: `forge`, `fabric`, `quilt` |
+| `MODRINTH_LOADER` | auto | Specific loader: `forge`, `neoforge`, `fabric`, `quilt` |
 
 ### File Management
 
@@ -226,15 +213,22 @@ In the Web Console, use the **Exclude mods** field in the Create Server dialog's
 modpack section. The values are written to `MODRINTH_EXCLUDE_FILES`
 (or `CF_EXCLUDE_MODS` for CurseForge) in the server's `config.env`.
 
+For a Modrinth modpack, the dialog looks up each bundled mod on Modrinth and adds
+the ones marked as unsupported on servers to **Exclude mods**; check the list
+before you create the server. The dialog also offers only the loader and Minecraft
+version pairs the modpack has, and the API refuses other pairs.
+
+After the server has started once, its **Mods** tab lists the jars the modpack
+installed. Switching a jar to **Excluded** adds it to the same exclude list;
+restart the server to apply.
+
 ### Complete Example
 
 ```bash
-# Create and configure Modrinth modpack server
-mcctl create cobblemon
+# Create the Modrinth modpack server without starting it
+mcctl create cobblemon -t MODRINTH --modpack cobblemon-modpack --no-start
 
 # Configure modpack
-mcctl config cobblemon TYPE "MODRINTH"
-mcctl config cobblemon MODRINTH_MODPACK "cobblemon-modpack"
 mcctl config cobblemon MODRINTH_MODPACK_VERSION_TYPE "release"
 mcctl config cobblemon MEMORY "6G"
 mcctl config cobblemon MODRINTH_EXCLUDE_FILES "optifine,shaders"
@@ -252,8 +246,8 @@ Install modpacks from [Feed the Beast](https://www.feed-the-beast.com/modpacks).
 ### Quick Start with mcctl
 
 ```bash
-# Create server
-mcctl create ftb
+# Create the server without starting it (mcctl create -t does not accept FTBA)
+mcctl create ftb --no-start
 
 # Set server type (use FTBA, not FTB)
 mcctl config ftb TYPE "FTBA"
@@ -264,8 +258,8 @@ mcctl config ftb FTB_MODPACK_ID "23"
 # Set memory (FTB packs are large)
 mcctl config ftb MEMORY "8G"
 
-# Restart to apply
-mcctl stop ftb && mcctl start ftb
+# Start the server
+mcctl start ftb
 ```
 
 !!! info "FTBA vs FTB"
@@ -293,8 +287,8 @@ The modpack ID is in the URL:
 ### Complete Example
 
 ```bash
-# Create and configure FTB modpack server
-mcctl create infinity
+# Create the FTB modpack server without starting it
+mcctl create infinity --no-start
 
 # Configure modpack
 mcctl config infinity TYPE "FTBA"
@@ -314,14 +308,14 @@ Install modpacks from ZIP archives.
 ### Quick Start with mcctl
 
 ```bash
-# Create server with appropriate type
-mcctl create modded --type FORGE
+# Create the server with the type and version the pack was built for, without starting it
+mcctl create modded -t FORGE -v 1.20.1 --no-start
 
 # Set modpack URL
 mcctl config modded MODPACK "https://example.com/modpack.zip"
 
-# Restart to apply
-mcctl stop modded && mcctl start modded
+# Start the server
+mcctl start modded
 ```
 
 ### Multiple Packs

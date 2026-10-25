@@ -6,8 +6,8 @@ mcctl CLI를 사용하여 마인크래프트 서버에 모드와 플러그인을
 
 | 유형 | 설명 | 서버 타입 |
 |------|------|----------|
-| **모드(Mods)** | 게임 메커니즘 수정, 클라이언트 설치 필요 | Forge, Fabric, Quilt |
-| **플러그인(Plugins)** | 서버 측만 적용, 클라이언트 변경 불필요 | Paper, Spigot, Bukkit |
+| **모드(Mods)** | 게임 메커니즘 수정, 클라이언트 설치 필요 | Forge, NeoForge, Fabric, Quilt |
+| **플러그인(Plugins)** | 서버 측만 적용, 클라이언트 변경 불필요 | Paper, Purpur, Spigot, Bukkit |
 
 ## mcctl 빠른 시작
 
@@ -17,10 +17,10 @@ mcctl CLI를 사용하여 마인크래프트 서버에 모드와 플러그인을
 
 ```bash
 # 모드용 (Forge/Fabric)
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # 플러그인용 (Paper)
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 ```
 
 ### 모드/플러그인 설정
@@ -44,12 +44,35 @@ mcctl stop modded && mcctl start modded
 !!! tip "재시작 필요"
     모드/플러그인 설정 변경 후 서버를 재시작해야 변경사항이 적용됩니다.
 
+### mcctl mod 사용
+
+`mcctl mod`가 같은 키를 대신 씁니다:
+
+```bash
+# Modrinth 검색
+mcctl mod search sodium
+
+# Modrinth 프로젝트 추가 (mcctl이 Modrinth에서 slug를 확인)
+mcctl mod add modded fabric-api lithium
+
+# 다른 소스
+mcctl mod add modded --curseforge jei journeymap
+mcctl mod add survival --spiget 28140
+mcctl mod add modded --url https://example.com/custom-mod.jar
+
+# 목록 확인과 제거
+mcctl mod list modded
+mcctl mod remove modded lithium
+```
+
+`--curseforge`는 `CURSEFORGE_FILES`, `--spiget`은 `SPIGET_RESOURCES`에 쓰고, `--url`은 Paper, Purpur, Spigot, Bukkit 서버에서는 `PLUGINS`, 나머지에서는 `MODS`에 씁니다. [개요](#개요) 표에 없는 서버 타입에는 `mcctl mod add`가 `--force`를 요구합니다. 추가한 뒤 서버를 재시작하세요.
+
 ## 설치 소스
 
 | 소스 | 적합한 용도 | API 키 필요 | mcctl 설정 키 |
 |------|------------|------------|---------------|
 | [Modrinth](modrinth.ko.md) | 최신 모드/플러그인 | 아니오 | `MODRINTH_PROJECTS` |
-| [CurseForge](curseforge.ko.md) | 대규모 모드 라이브러리 | 예 | `CURSEFORGE_FILES` |
+| [CurseForge](curseforge.ko.md) | 대규모 모드 라이브러리 | 아니오 (Java 17+ 이미지는 내장) | `CURSEFORGE_FILES` |
 | [Spiget](spiget.ko.md) | SpigotMC 플러그인 | 아니오 | `SPIGET_RESOURCES` |
 | [직접 다운로드](direct-download.ko.md) | 커스텀/비공개 파일 | 아니오 | `MODS` / `PLUGINS` |
 | [모드팩](modpacks.ko.md) | 사전 구성된 컬렉션 | 다양함 | 서버 TYPE |
@@ -108,16 +131,17 @@ mcctl stop survival && mcctl start survival
 
 ### 공유 디렉토리 사용
 
-mcctl init은 모드와 플러그인을 위한 공유 디렉토리를 생성합니다:
+`mcctl init`은 `shared/plugins/`를 만들며, 모든 서버가 이를 `/plugins`에 읽기 전용으로 마운트합니다. 이미지는 서버가 시작할 때 이 jar들을 서버의 `plugins/` 폴더로 복사합니다.
 
 ```
 ~/minecraft-servers/
   shared/
-    mods/       # 모드 JAR 파일 배치 (읽기 전용 마운트)
-    plugins/    # 플러그인 JAR 파일 배치 (읽기 전용 마운트)
+    plugins/                 # 모든 서버용 플러그인 JAR (읽기 전용 마운트)
+  servers/<name>/data/
+    mods/                    # 서버 하나용 모드 JAR
 ```
 
-수동으로 다운로드한 파일을 이 디렉토리에 배치하세요. 모든 서버에 자동으로 마운트됩니다.
+수동으로 내려받은 플러그인은 `shared/plugins/`에 넣으세요. 모드 JAR는 해당 서버의 `servers/<name>/data/mods/`에 넣거나, 다운로드 URL을 `MODS`에 나열합니다([직접 다운로드](direct-download.ko.md) 참고). `mcctl init`은 `shared/mods/`도 만들지만 서버는 이를 마운트하지 않습니다.
 
 ## 자동 정리
 
@@ -147,10 +171,10 @@ mcctl config myserver USES_PLUGINS "true"
 
 ## 환경 변수 처리
 
-기본적으로 동기화된 설정 파일의 환경 변수가 처리됩니다. 비활성화하려면:
+기본적으로 동기화로 복사되는 파일의 환경 변수는 처리되지 않습니다. 활성화하려면:
 
 ```bash
-mcctl config myserver REPLACE_ENV_DURING_SYNC "false"
+mcctl config myserver REPLACE_ENV_DURING_SYNC "true"
 ```
 
 ## 고급 설정 (수동)
@@ -165,15 +189,14 @@ nano ~/minecraft-servers/servers/myserver/config.env
 `config.env` 예시:
 
 ```bash
-# Modrinth 모드 (여러 줄 형식)
-MODRINTH_PROJECTS=fabric-api
-lithium
-sodium
-iris
+# Modrinth 모드 (한 줄, 쉼표 구분)
+MODRINTH_PROJECTS=fabric-api,lithium,sodium,iris
 
 # 의존성 설정
 MODRINTH_DOWNLOAD_DEPENDENCIES=required
 ```
+
+값은 한 줄에 써야 합니다. 목록이 길면 목록 파일을 사용하세요([목록 파일 사용](modrinth.ko.md#목록-파일-사용) 참고). 손으로 고친 내용은 다음에 mcctl이 그 서버를 바꿀 때 `server.yaml`로 가져옵니다.
 
 ## 다음 단계
 

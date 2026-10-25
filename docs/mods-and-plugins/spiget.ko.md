@@ -21,7 +21,7 @@
 
 ```bash
 # Paper 서버 생성
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 
 # SpigotMC 플러그인 추가 (숫자 리소스 ID 사용)
 mcctl config survival SPIGET_RESOURCES "28140,34315,6245"
@@ -59,6 +59,9 @@ mcctl stop survival && mcctl start survival
 ```bash
 # 플러그인 추가 (쉼표로 구분된 숫자 ID)
 mcctl config myserver SPIGET_RESOURCES "28140,34315,6245"
+
+# 또는 mcctl mod로 ID 추가 (mcctl은 확인하지 않음)
+mcctl mod add myserver --spiget 28140 34315
 
 # 재시작하여 적용
 mcctl stop myserver && mcctl start myserver
@@ -109,7 +112,7 @@ Spiget API는 다양한 파일 타입을 자동으로 처리합니다:
 # 플러그인을 수동으로 다운로드하고 공유 디렉토리에 배치
 # 위치: ~/minecraft-servers/shared/plugins/
 
-# 파일이 모든 서버에 자동으로 사용 가능
+# 각 서버는 다음 시작 때 이 파일을 자신의 plugins/ 폴더로 복사
 ```
 
 ## 전체 예제
@@ -117,8 +120,8 @@ Spiget API는 다양한 파일 타입을 자동으로 처리합니다:
 ### 여러 플러그인이 있는 Paper 서버
 
 ```bash
-# 서버 생성
-mcctl create survival --type PAPER --version 1.21.1
+# 시작하지 않고 서버 생성
+mcctl create survival -t PAPER -v 1.21.1 --no-start
 
 # 플러그인 설정
 mcctl config survival SPIGET_RESOURCES "28140,34315,6245"
@@ -132,7 +135,7 @@ mcctl start survival
 
 ```bash
 # 서버 생성
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 
 # Spiget 플러그인 (SpigotMC)
 mcctl config survival SPIGET_RESOURCES "28140,34315"
@@ -150,11 +153,11 @@ Spiget 다운로드가 제한된 플러그인의 경우:
 
 1. SpigotMC에서 플러그인을 수동으로 다운로드
 2. JAR 파일을 `~/minecraft-servers/shared/plugins/`에 배치
-3. 플러그인이 모든 서버에서 사용 가능
+3. 서버가 시작할 때 플러그인이 각 서버로 복사됨
 
 ```bash
-# 서버 생성 (수동 플러그인이 자동으로 마운트됨)
-mcctl create survival --type PAPER --version 1.21.1
+# 시작하지 않고 서버 생성 (shared/plugins/는 자동으로 마운트됨)
+mcctl create survival -t PAPER -v 1.21.1 --no-start
 
 # 작동하는 것들은 Spiget 플러그인으로 추가
 mcctl config survival SPIGET_RESOURCES "28140,34315"

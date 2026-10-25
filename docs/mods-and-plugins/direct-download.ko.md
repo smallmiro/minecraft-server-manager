@@ -15,7 +15,8 @@ URL에서 직접 모드와 플러그인을 다운로드하거나 로컬 파일�
 | 방법 | 설명 | 사용 사례 |
 |------|------|----------|
 | `MODS` / `PLUGINS` | 직접 URL 목록 | 간단한 URL 기반 다운로드 |
-| 공유 디렉토리 | 로컬 디렉토리 | 로컬 또는 수동 다운로드 파일 |
+| 공유 플러그인 디렉토리 | 모든 서버가 마운트하는 `shared/plugins/` | 수동으로 다운로드한 플러그인 |
+| 서버 데이터 폴더 | `servers/<name>/data/mods/` | 서버 하나용 로컬 모드 파일 |
 
 ## mcctl 빠른 시작
 
@@ -23,7 +24,7 @@ URL에서 직접 모드와 플러그인을 다운로드하거나 로컬 파일�
 
 ```bash
 # Fabric 서버 생성
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # 직접 URL로 모드 추가
 mcctl config modded MODS "https://example.com/custom-mod.jar,https://github.com/user/repo/releases/download/v1.0/mod.jar"
@@ -32,18 +33,12 @@ mcctl config modded MODS "https://example.com/custom-mod.jar,https://github.com/
 mcctl stop modded && mcctl start modded
 ```
 
-### 공유 디렉토리 사용
+### 로컬 파일 사용
 
-mcctl은 모드와 플러그인을 위한 공유 디렉토리를 생성합니다:
+- 플러그인: JAR를 `~/minecraft-servers/shared/plugins/`에 넣습니다. 모든 서버가 이를 `/plugins`에 읽기 전용으로 마운트하며, 서버가 시작할 때 이미지가 JAR를 서버의 `plugins/` 폴더로 복사합니다.
+- 모드: JAR를 해당 서버의 `~/minecraft-servers/servers/<name>/data/mods/`에 넣습니다.
 
-```
-~/minecraft-servers/
-  shared/
-    mods/       # 모드 JAR 파일 배치
-    plugins/    # 플러그인 JAR 파일 배치
-```
-
-파일을 해당 디렉토리에 배치하면 모든 서버에서 자동으로 사용할 수 있습니다.
+`mcctl init`은 `shared/mods/`도 만들지만 서버는 이를 마운트하지 않습니다.
 
 ## mcctl로 설정하기
 
@@ -77,48 +72,63 @@ mcctl config myserver PLUGINS "https://example.com/plugin1.jar,https://example.c
 mcctl stop myserver && mcctl start myserver
 ```
 
+### mcctl mod 사용
+
+```bash
+# URL 추가: Paper, Purpur, Spigot, Bukkit 서버는 PLUGINS에, 나머지는 MODS에
+mcctl mod add myserver --url https://example.com/custom-mod.jar
+```
+
 ### 지원되는 구분자
 
 URL은 다음으로 구분할 수 있습니다:
 
 - 쉼표: `url1,url2,url3`
 - 공백: `url1 url2 url3`
-- 줄바꿈 (config.env 다중 행 형식)
+- 줄바꿈: `MODS_FILE` 또는 `PLUGINS_FILE`로 지정한 파일 안에서만 ([파일 목록 사용](#파일-목록-사용) 참고)
 
 ## 설정 레퍼런스
 
 | 설정 키 | 설명 |
 |--------|------|
-| `MODS` | 쉼표/공백/줄바꿈으로 구분된 모드 URL 또는 컨테이너 경로 |
-| `PLUGINS` | 쉼표/공백/줄바꿈으로 구분된 플러그인 URL 또는 컨테이너 경로 |
+| `MODS` | 쉼표 또는 공백으로 구분된 모드 URL 또는 컨테이너 경로 |
+| `PLUGINS` | 쉼표 또는 공백으로 구분된 플러그인 URL 또는 컨테이너 경로 |
 
 ## 공유 디렉토리
 
 ### 디렉토리 구조
 
-mcctl init은 다음과 같은 공유 디렉토리를 생성합니다:
+`mcctl init`은 `shared/`를 만듭니다. 서버의 `data/` 폴더는 컨테이너의 `/data`입니다:
 
 ```
 ~/minecraft-servers/
   shared/
-    mods/       # 공유 모드 파일 (Forge, Fabric)
-    plugins/    # 공유 플러그인 파일 (Paper, Spigot)
+    plugins/    # 모든 서버의 /plugins에 읽기 전용으로 마운트
+    mods/       # 서버가 마운트하지 않음
+  servers/<name>/data/
+    mods/       # 이 서버의 모드 (/data/mods)
+    plugins/    # 이 서버의 플러그인 (/data/plugins)
 ```
 
 ### 공유 디렉토리 사용
 
-1. 적절한 디렉토리에 JAR 파일 배치
-2. 파일이 모든 서버에 자동으로 마운트됨 (읽기 전용)
+1. 플러그인 JAR 파일을 `shared/plugins/`에 배치
+2. 서버를 재시작하면 이미지가 JAR를 각 서버의 `plugins/` 폴더로 복사
 3. 설정 불필요
 
 ```bash
-# 예시: 커스텀 모드 추가
-cp ~/downloads/custom-mod.jar ~/minecraft-servers/shared/mods/
+# 예시: 커스텀 플러그인 추가
+cp ~/downloads/custom-plugin.jar ~/minecraft-servers/shared/plugins/
 
-# 모든 Forge/Fabric 서버에서 자동으로 사용 가능
+# 다음 시작부터 모든 Paper/Spigot 서버에서 사용 가능
+
+# 서버 하나용 모드는 그 서버의 데이터 폴더에
+cp ~/downloads/custom-mod.jar ~/minecraft-servers/servers/modded/data/mods/
 ```
 
 ### 장점
+
+`shared/plugins/`의 장점:
 
 - **서버 간 공유**: 하나의 파일로 모든 서버에서 사용
 - **설정 불필요**: 파일만 디렉토리에 배치
@@ -131,7 +141,7 @@ cp ~/downloads/custom-mod.jar ~/minecraft-servers/shared/mods/
 
 ```bash
 # 서버 생성
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # GitHub 릴리스에서 모드 추가
 mcctl config modded MODS "https://github.com/CaffeineMC/sodium-fabric/releases/download/mc1.21-0.6.0/sodium-fabric-0.6.0+mc1.21.jar"
@@ -144,7 +154,7 @@ mcctl stop modded && mcctl start modded
 
 ```bash
 # 서버 생성
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # 커스텀 모드는 직접 URL
 mcctl config modded MODS "https://example.com/custom-mod.jar"
@@ -161,12 +171,12 @@ mcctl stop modded && mcctl start modded
 로컬 빌드를 사용한 모드 개발용:
 
 1. 모드 빌드
-2. 공유 디렉토리에 복사
+2. 서버의 `data/mods/` 폴더에 복사
 3. 서버 재시작
 
 ```bash
-# 빌드된 모드를 공유 디렉토리에 복사
-cp ~/my-mod/build/libs/my-mod-1.0.jar ~/minecraft-servers/shared/mods/
+# 빌드된 모드를 서버의 mods 폴더에 복사
+cp ~/my-mod/build/libs/my-mod-1.0.jar ~/minecraft-servers/servers/modded/data/mods/
 
 # 모드를 로드하기 위해 서버 재시작
 mcctl stop modded && mcctl start modded
@@ -177,22 +187,22 @@ mcctl stop modded && mcctl start modded
 모든 서버가 `shared/plugins/`의 동일한 플러그인을 공유:
 
 ```bash
-# 여러 서버 생성
-mcctl create lobby --type PAPER --version 1.21.1
-mcctl create survival --type PAPER --version 1.21.1
-mcctl create creative --type PAPER --version 1.21.1
+# 시작하지 않고 여러 서버 생성
+mcctl create lobby -t PAPER -v 1.21.1 --no-start
+mcctl create survival -t PAPER -v 1.21.1 --no-start
+mcctl create creative -t PAPER -v 1.21.1 --no-start
 
 # 공유 플러그인 배치
 cp luckperms.jar ~/minecraft-servers/shared/plugins/
 cp vault.jar ~/minecraft-servers/shared/plugins/
 
-# 이제 모든 서버에서 이 플러그인을 사용 가능
+# 서버가 이 플러그인과 함께 시작
 mcctl start --all
 ```
 
 ## 고급 설정 (수동)
 
-복잡한 설정의 경우 `config.env`를 직접 편집:
+복잡한 설정의 경우 `config.env`를 직접 편집합니다. 값은 한 줄에 쓰며, 목록이 길면 파일 목록(아래)을 사용하세요.
 
 ```bash
 nano ~/minecraft-servers/servers/myserver/config.env
@@ -201,10 +211,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 `config.env` 예시:
 
 ```bash
-# 직접 모드 URL (다중 행 형식)
-MODS=https://example.com/mod1.jar
-https://example.com/mod2.jar
-https://github.com/user/repo/releases/download/v1.0/mod3.jar
+# 직접 모드 URL (한 줄, 쉼표 구분)
+MODS=https://example.com/mod1.jar,https://example.com/mod2.jar,https://github.com/user/repo/releases/download/v1.0/mod3.jar
 
 # 자동 정리 설정
 REMOVE_OLD_MODS=TRUE
@@ -279,7 +287,7 @@ mcctl config myserver REMOVE_OLD_MODS_EXCLUDE "keep-this-mod.jar"
 | 문제 | 원인 | 해결책 |
 |------|------|--------|
 | 다운로드 실패 | 유효하지 않은 URL 또는 네트워크 문제 | URL 접근성 확인 |
-| 파일을 찾을 수 없음 | 잘못된 경로 | 공유 디렉토리 위치 확인 |
+| 파일을 찾을 수 없음 | 잘못된 경로 | 파일이 `shared/plugins/` 또는 서버의 `data/mods/`에 있는지 확인 |
 | 권한 거부 | 파일 권한 | 파일이 읽기 가능한지 확인 |
 | 모드가 로드되지 않음 | 잘못된 서버 타입 | TYPE이 모드 로더와 일치하는지 확인 |
 
@@ -324,8 +332,8 @@ curl -I "https://example.com/mod.jar"
 ### 공유 디렉토리 확인
 
 ```bash
-# 공유 모드 목록
-ls -la ~/minecraft-servers/shared/mods/
+# 서버의 모드 목록
+ls -la ~/minecraft-servers/servers/myserver/data/mods/
 
 # 공유 플러그인 목록
 ls -la ~/minecraft-servers/shared/plugins/
