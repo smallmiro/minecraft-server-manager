@@ -24,7 +24,7 @@ services:
   # Example: mc-ghost -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-ghost:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-ghost
     restart: "no"
     tty: true

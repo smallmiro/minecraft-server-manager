@@ -1,7 +1,24 @@
 import type { ServerSpecDocument } from './ServerSpecDocument.js';
+import { McVersion } from '../value-objects/McVersion.js';
 
-/** The compose image of a new server (the bundled template's; a test keeps them equal). */
+/**
+ * The image for the newest Minecraft: LATEST, no VERSION, or a version
+ * McVersion cannot read. The bundled template's (a test keeps them equal).
+ */
 export const DEFAULT_SERVER_IMAGE = 'itzg/minecraft-server:java25';
+
+/**
+ * The image of a new server, by the Java its VERSION needs (#826), as
+ * mcctl update picks it. No VERSION (a modpack decides) and snapshots or
+ * pre-releases (24w14a, 1.20.5-rc1) get the newest Java.
+ */
+function imageFor(version: string | undefined): string {
+  try {
+    return `itzg/minecraft-server:${McVersion.create(version ?? 'LATEST').recommendedImageTag}`;
+  } catch {
+    return DEFAULT_SERVER_IMAGE;
+  }
+}
 
 /** What a create request decides (CLI flags, API body, interactive answers), already validated. */
 export interface CreateSpecInput {
@@ -56,7 +73,7 @@ export function buildCreateSpec(input: CreateSpecInput): ServerSpecDocument {
     type: input.type,
     ...(version !== undefined && { version }),
     memory: input.memory,
-    image: DEFAULT_SERVER_IMAGE,
+    image: imageFor(version),
     world: { level: input.worldName ?? input.name, storage: 'universe' },
     routing: {
       customHostnames: [],

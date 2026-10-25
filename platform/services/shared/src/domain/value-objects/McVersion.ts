@@ -28,6 +28,10 @@ export class McVersion {
     return this._patch;
   }
 
+  private get isLatest(): boolean {
+    return this._value === 'LATEST';
+  }
+
   /** 1.20.5 and later 1.x releases (Java 21). */
   private get isJava21Era(): boolean {
     return this._major === 1 && (this._minor > 20 || (this._minor === 20 && this._patch >= 5));
@@ -37,6 +41,10 @@ export class McVersion {
    * Returns the recommended Java version for this Minecraft version
    */
   get recommendedJavaVersion(): number {
+    // LATEST is the newest release, which needs the newest Java
+    if (this.isLatest) {
+      return 25;
+    }
     // Minecraft 26+ (new versioning scheme) requires Java 25
     if (this._major >= 26) {
       return 25;
@@ -63,6 +71,9 @@ export class McVersion {
    * but MC gameplay requirements differ from available image tags.
    */
   get recommendedImageTag(): string {
+    if (this.isLatest) {
+      return 'java25';
+    }
     // Minecraft 26+ (new versioning scheme) requires Java 25
     if (this._major >= 26) {
       return 'java25';

@@ -127,9 +127,10 @@ describe('McVersion', () => {
       expect(v.value).toBe('LATEST');
     });
 
-    test('LATEST version recommendedJavaVersion is a number', () => {
+    test('LATEST needs the newest Java (#826)', () => {
       const v = McVersion.create('LATEST');
-      expect(typeof v.recommendedJavaVersion).toBe('number');
+      expect(v.recommendedJavaVersion).toBe(25);
+      expect(v.recommendedImageTag).toBe('java25');
     });
   });
 });

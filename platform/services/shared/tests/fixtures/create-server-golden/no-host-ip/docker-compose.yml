@@ -24,7 +24,7 @@ services:
   # Example: mc-nu -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-nu:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-nu
     restart: "no"
     tty: true

@@ -24,7 +24,7 @@ services:
   # Example: mc-kappa -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-kappa:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-kappa
     restart: "no"
     tty: true
