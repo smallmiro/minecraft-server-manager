@@ -612,6 +612,30 @@ async function updateLibraryPackage(
 }
 
 /**
+ * Server image step of `mcctl update`: align the image tags, pull, and offer
+ * to recreate the stopped servers. Returns 1 when a pull failed.
+ */
+async function updateServerImages(rootDir: string, yes?: boolean): Promise<number> {
+  const paths = new Paths(rootDir);
+  // Upgrade image tags first so the pull fetches the correct (updated) image
+  await upgradeServerImageTags(paths.servers);
+  const dockerResult = await updateDockerImages(paths.servers, rootDir);
+  // Pulled images do not reach existing stopped containers by themselves
+  await recreateStoppedServers(
+    paths.servers,
+    new ShellExecutor(paths),
+    yes || !process.stdin.isTTY
+      ? null
+      : async () =>
+          (await prompts.confirm({
+            message: 'Recreate the stopped servers now so they use the new image?',
+            initialValue: false,
+          })) === true
+  );
+  return dockerResult;
+}
+
+/**
  * Update all installed services (npm install + PM2 restart)
  */
 export async function updateServices(
@@ -780,22 +804,7 @@ export async function updateServices(
 
   // Update Docker images (skip in check-only mode)
   if (!options.check) {
-    const paths = new Paths(rootDir);
-    // Upgrade image tags first so the pull fetches the correct (updated) image
-    await upgradeServerImageTags(paths.servers);
-    const dockerResult = await updateDockerImages(paths.servers, rootDir);
-    // Pulled images do not reach existing stopped containers by themselves
-    await recreateStoppedServers(
-      paths.servers,
-      new ShellExecutor(paths),
-      options.yes || !process.stdin.isTTY
-        ? null
-        : async () =>
-            (await prompts.confirm({
-              message: 'Recreate the stopped servers now so they use the new image?',
-              initialValue: false,
-            })) === true
-    );
+    const dockerResult = await updateServerImages(rootDir, options.yes);
     if (dockerResult !== 0) {
       const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(colors.dim(`  Completed in ${elapsed}s`));
