@@ -28,7 +28,7 @@ mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API com
 ### Why BFF Proxy?
 
 1. **Security**: API keys stay server-side, never exposed to the browser
-2. **Session Management**: Better Auth handles user authentication with JWT tokens
+2. **Session Management**: Better Auth keeps sessions in the console database (`data/mcctl.db`) and identifies them with a session cookie
 3. **Type Safety**: Shared TypeScript interfaces between frontend and backend
 4. **Caching**: React Query provides optimistic updates and intelligent caching
 
@@ -38,9 +38,9 @@ mcctl-console uses a Backend-for-Frontend (BFF) proxy pattern for secure API com
 
 ![Login](../images/login.png)
 
-1. Start the Management Console services:
+1. Start the Management Console services. `--console` starts mcctl-api and mcctl-console; without a flag the command asks which services to start when both are installed:
    ```bash
-   mcctl console service start
+   mcctl console service start --console
    ```
 
 2. Open your browser and navigate to `http://localhost:5000`. You are redirected to the **Welcome Back** sign-in page.
@@ -79,35 +79,39 @@ The Dashboard is your command center -- it gives you an at-a-glance overview of 
 
 ### Status Hero
 
-Since v2.28.0, the Dashboard opens with a status hero that summarizes platform health: how many servers are online (for example, "2 of 3 servers online" with a progress bar), how many servers need attention (not running, or `unhealthy`), and a **Live** / **Reconnecting** chip that reflects the real-time (SSE) connection. When server data cannot be loaded, the hero says so instead of showing zero.
+Since v2.28.0, the Dashboard opens with a status hero that summarizes platform health: how many servers are online (for example, "2 of 3 servers online" with a progress bar), how many servers need attention (not running, or `unhealthy`; "All systems operational" when none), and a **Live** / **Reconnecting** chip that reflects the real-time (SSE) connection. When server data cannot be loaded, the hero says so instead of showing zero.
+
+The **Create Server** button in the hero opens the Servers page with the [Create New Server](#creating-a-new-server) dialog already open.
 
 ### Statistics Cards
 
-Below the status hero, four statistics cards provide key metrics:
+Below the status hero, four cards provide key metrics:
 
 | Card | Description |
 |------|-------------|
-| **Total Servers** | The total number of configured Minecraft servers across your platform, with a running / stopped breakdown |
-| **Online Servers** | How many servers are currently in a `running` state (updated in real-time via SSE) |
-| **Total Players** | The aggregate player count across all running servers |
-| **Total Worlds** | The total number of available worlds in your world storage, with an assigned / free breakdown |
+| **Total Servers** | The number of configured servers, with a running / stopped breakdown and a bar for the running share |
+| **Online Players** | Players online on the running servers, shown as `online / max`, with "Across N running servers" (plus "M not responding" when a running server does not answer the player query). Shows `—` and "Player data unavailable" when no player data is available |
+| **Worlds** | The number of worlds in your world storage, with an assigned / free breakdown |
+| **mc-router** | The router's listening port (for example `:25565`) with its container status, health and number of routes. The card is green while the router runs, red while it is down or unhealthy, and amber in other states such as starting or restarting |
 
 ### Servers Panel
 
-The left side of the Dashboard displays a **Servers** panel listing up to five servers with:
+The left side of the Dashboard displays a **Servers** panel with a status filter (**All**, **Running**, **Stopped**, each with a count) and up to five servers. Each row shows:
 
-- **Server name** and hostname (e.g., `botagent.local`)
-- **Status chip** -- color-coded, such as `running`, `exited`, or `stopped`
-- **Health chip** -- an outlined chip such as `healthy`, `unhealthy`, or `starting`, shown when the container reports a health state
+- **Server name**, a **status chip** (such as `running`, `exited`, or `created`) and, when the container reports a health state, an outlined **health chip** (`healthy`, `unhealthy`, or `starting`)
+- The primary hostname (the LAN nip.io address when the server has one) with a copy button; click the `+N` chip to list all hostnames
+- **Players** (`online / max`) and **Memory** (`used / limit`) for a running server, the memory allocation for a stopped one, and **Type** (`TYPE · version`)
+- Action buttons: **Console** (opens the [server console page](#server-console-page)), **Restart** and **Stop** for a running server, and **Start** for a stopped one. **Restart** and **Stop** ask for confirmation first, because connected players are disconnected
 
-Click on any server to navigate directly to its detail page. When you have more than five servers, a **View All (N)** link in the panel header opens the full Servers page.
+Click a row to open the server's detail page. When you have more than five servers, a **View All (N)** link in the panel header opens the full Servers page.
 
 ### External Access Card
 
 On the right side, the **External Access** card shows your playit.gg tunnel status:
 
 - How many servers have external domains configured (e.g., "1 / 3 servers")
-- Current agent status (`Running` or `Stopped`), or a `Not configured` chip when playit.gg is not set up
+- Current agent status (`Running` or `Stopped`) and, while the agent runs, its uptime, or a `Not configured` chip when playit.gg is not set up
+- Up to three servers with their external address and a copy button
 - A **Manage** link to navigate to the Routing page for detailed configuration
 
 ### Recent Activity Feed
@@ -119,11 +123,13 @@ The **Recent Activity** feed displays the latest management actions performed on
 - Configuration modifications
 - Player management actions
 
-Each entry shows the action type (with a color-coded badge), the target server or resource, who performed the action, and how long ago it occurred (hover to see the exact time). Failed actions carry an extra status badge. Click **View All** to navigate to the full Audit Log page.
+Each entry shows a colored dot (red for a failure, blue for backups, purple for configuration changes, config snapshots and Platform Settings, green for other server actions, gray for the rest), the action type (with a color-coded badge), the target server or resource, who performed the action, and how long ago it occurred (hover to see the exact time). Actions done in the web console show `console` as the actor (see [Audit Log](#audit-log)). Failed actions carry an extra status badge. Click **View All** to navigate to the full Audit Log page.
 
 ### Recent Updates Feed
 
-The **Recent Updates** section shows the latest version changelog entries for the mcctl platform itself, so you can quickly see what features have been added or bugs have been fixed in recent releases.
+The **Recent Updates** card shows the latest release from the project's `CHANGELOG.md` on the GitHub `main` branch: its version, date, and **Added**, **Fixed**, and **Changed** items. An **Update available** chip appears when that version is newer than the installed console, and **View all** opens the full changelog on GitHub.
+
+The console server fetches the changelog itself (through `GET /api/changelog`) and caches it for one hour. When GitHub cannot be reached it keeps showing the last copy it fetched; without one, the card says "Unable to load updates".
 
 ---
 
@@ -139,7 +145,7 @@ A summary panel at the top of the page shows a **Live** / **Reconnecting** indic
 
 - **Server name** (e.g., `botagent`, `factory`, `wild-deity`)
 - **Status badge** -- `Running` (green), `Stopped` (red), or `Created` / `Not Created`
-- **Hostname** with the number of additional hostnames (e.g., `botagent.local +2`) -- click the `+2` chip to list all hostnames
+- **Hostname** -- the primary address (the LAN nip.io address when the server has one) with the number of additional hostnames (e.g., `botagent.192.168.1.10.nip.io +2`) -- click the `+2` chip to list all hostnames
 - **Container name** (e.g., `mc-botagent`)
 - **Quick action button** -- Start (play) for stopped servers or Stop for running servers, in the bottom-right corner
 
@@ -159,7 +165,7 @@ A **Search servers...** box on the right allows you to filter servers by name in
 
 Click the **+ Create Server** button in the page header to open the **Create New Server** dialog. The dialog guides you through:
 
-1. **Server Name** -- A unique identifier (lowercase letters, numbers, and hyphens only)
+1. **Server Name** -- A unique identifier: 2-32 characters of lowercase letters, numbers, and hyphens, starting with a letter and not ending with a hyphen, without `--`. `router` is reserved
 2. **Server Type** -- Choose a category with the toggle:
     - **Standard Server** -- Pick a **Server Type** (VANILLA, PAPER, FABRIC, FORGE, or NEOFORGE) and a **Minecraft Version** (e.g., `1.21.1` or `LATEST`). The defaults are VANILLA and `LATEST`. For other types, pin a version such as `1.21.1` if the loader doesn't support the newest Minecraft release yet
     - **Modpack** -- Search Modrinth modpacks by name (or type a slug such as `cobblemon`), then choose a **Mod Loader** and a compatible **Minecraft Version**. Client-only mods that are detected are added to **Exclude mods (optional)** automatically; you can edit that comma-separated list
@@ -168,7 +174,11 @@ Click the **+ Create Server** button in the page header to open the **Create New
 5. **Sudo Password** -- Required for mDNS hostname registration (avahi). If you leave it empty, **Create** asks you to confirm: choose **Continue without password** when sudo on the host doesn't ask for one, or **Enter password** to go back to the field
 6. **Auto-start after creation** -- Start the server as soon as it is created
 
-Click **Create** to start. The dialog switches to a progress view (**Initializing**, **Creating**, **Configuring**, **Starting**) driven by Server-Sent Events, and ends with **Server Created Successfully** or **Creation Failed**.
+Click **Create** to start. The dialog waits for mcctl-api to create the server, then steps through a progress view (**Initializing**, **Creating**, **Configuring**, **Starting**). It ends with one of:
+
+- **Server Created Successfully**
+- **Server Created with a Warning** -- The server exists, but its first start failed or is still running in the background (for example while the image is pulled). The dialog stays open and shows the reason; start or check the server from its detail page
+- **Creation Failed** -- The error is shown on the Servers page
 
 ### Server Detail Page
 
@@ -177,18 +187,20 @@ Click on any server card to open the detailed server management view. The detail
 #### Header Section
 
 - An **All servers** button to go back to the list
-- Server name, `Minecraft <version> · <type>`, hostname, and uptime
-- A status badge showing the current server state, a health badge (e.g., `Healthy`, `Unhealthy`), and a **Reconnecting** badge while the real-time connection is being restored
+- The server name with a **Switch server** button next to it, which lists your servers (a green dot marks running ones) and opens the one you pick
+- Chips for the current state (e.g., `Running`, `Exited`), the health (e.g., `Healthy`, `Unhealthy`, or `Unknown` when the container has no health check), the server type and the Minecraft version, and a **Reconnecting** chip while the real-time connection is being restored
+- The hostname (with a copy button and the number of additional hostnames) and the uptime
 - **Start** for a stopped server, or **Stop** and **Restart** for a running server
-- A **⋮** menu with **Delete Server**. The confirmation dialog requires you to type the server name, and the deletion cannot be undone. The dialog also asks what to do with the world: **Keep the world (move to worlds/)** is the default and moves the server's world to `worlds/` (a world already in `worlds/` is just unassigned); **Delete the world inside the server too** removes the server's own world. Worlds in `worlds/` are never deleted. If the deletion fails (for example `worlds/<name> already exists`), nothing is deleted and the error is shown in the page
+- A **⋮** menu with **Delete Server**. The confirmation dialog requires you to type the server name, and the deletion cannot be undone. A running server is stopped and removed. The dialog also asks what to do with the world: **Keep the world (move to worlds/)** is the default and moves the server's world to `worlds/` (a world already in `worlds/` is just unassigned); **Delete the world inside the server too** removes the server's own world. Worlds in `worlds/` are never deleted. If the deletion fails (for example `worlds/<name> already exists`), nothing is deleted and the error is shown in the page
+- The delete dialog has an optional **Sudo Password** field, used to remove the server's `<name>.local` entry from `/etc/avahi/hosts`. Leave it empty on hosts where sudo needs no password. The password is used only for this request and is cleared when the dialog closes. If the hostname entry or some files could not be removed, the dialog changes to **Server deleted** and shows the warning; **Close** returns to the server list
 
 #### Navigation Tabs
 
-The server detail page is organized into ten tabs:
+The server detail page is organized into ten tabs, each with an icon. The **Players** tab shows the number of online players, and the **Mods** tab shows the number of installed mod files once the Mods tab has loaded them. To open a tab directly, add `?tab=<Tab>` to the URL, for example `/servers/survival?tab=Options`.
 
 | Tab | Description |
 |-----|-------------|
-| **Overview** | Server console with live log output and RCON command input, plus server information, players, and connection details |
+| **Overview** | Server console with live log output and RCON command input, plus settings, online players, and connection details |
 | **Players** | Online + offline player roster with management actions and a per-player detail view (v2.27.0+) |
 | **World** | The assigned world's info, BlueMap web map, ore & block statistics, and player locations |
 | **Activity** | Per-server audit history showing all actions performed on this server |
@@ -201,11 +213,13 @@ The server detail page is organized into ten tabs:
 
 #### Resource Monitoring
 
-Below the tabs, three stat cards display real-time resource usage with linear progress bars:
+Above the tabs, three cards display resource usage:
 
-- **CPU usage** -- Current CPU utilization percentage
-- **Memory usage** -- Current RAM consumption as a percentage of allocated memory
-- **World size** -- The disk space used by the current world
+- **CPU usage** -- Current CPU utilization with one decimal, marked **High** from 70% and **Critical** from 90%
+- **Memory usage** -- RAM in use against the allocated memory (`used / allocated`, in GB), with the percentage and the same **High** / **Critical** marks
+- **World size** -- The disk space used by the current world, with the world name
+
+Without resource statistics (for example while the server is stopped), the CPU and memory cards show `—` and "No data".
 
 ### Overview Tab
 
@@ -217,31 +231,30 @@ The Overview tab is the default view when you open a server's detail page. It se
 
 The centerpiece of the Overview tab is the **Console** panel, which provides direct access to the server's live log output and command interface:
 
-- **Live Log Stream** -- The console displays server log messages in real time, including timestamped entries for server events such as world loading, player connections, and game state changes. Each log line includes the timestamp and log level (e.g., `INFO`) for easy troubleshooting. RCON housekeeping lines are filtered out, and the header shows a **Connected** / **Disconnected** indicator for the log stream.
-- **Command Input** -- At the bottom of the console, the **"Send a command"** input field lets you execute any Minecraft server command directly via RCON. Type a command (e.g., `say Hello!`, `gamemode creative Player1`, `time set day`) and press Enter to send it to the server. The command output appears in the log stream above. The field is disabled while the log stream is disconnected.
-- **Auto-Scroll** -- The console automatically scrolls to show the latest log entries as they arrive. If you scroll up to read older lines, a scroll-to-bottom button appears in the corner.
-- **Expanded Console** -- The expand button in the top-right corner of the console opens a full-screen **Console - `<server>`** dialog with a log level filter (**ALL**, **INFO**, **WARN**, **ERROR**), **Auto-scroll** and **Hide RCON** checkboxes, a clear-logs button, a **Reconnect** button when disconnected, **Quick** command buttons (`say`, `give`, `tp`, `gamemode`), and an **Enter command...** input with a **Send** button.
+- **Live Log Stream** -- The console displays server log messages in real time, including timestamped entries for server events such as world loading, player connections, and game state changes. Each log line includes the timestamp and log level (e.g., `INFO`) for easy troubleshooting. Lines are colored by event: errors red, warnings amber, players joining green, players leaving blue, and the startup "Done" line green. RCON housekeeping lines are filtered out, and the header shows a **Connected** / **Disconnected** indicator for the log stream.
+- **Command Input** -- At the bottom of the console, type a command after the `>` prompt (e.g., `say Hello!`, `gamemode creative Player1`, `time set day`) and press Enter or click **Send** to run it through RCON. The chips below the field (`/list`, `/tps`, `/save-all`, `/say`, `/whitelist list`) put a command into the field. The RCON reply to a command is not shown: the console shows only what the server writes to its log. The field is disabled while the server is not running or the log stream is connecting or reconnecting, and the reason is shown below it. If a request fails, the error is shown below the field.
+- **Toolbar** -- The panel header has **Jump to latest** (shown when you have scrolled up), **Download logs** (saves the lines the console holds as `<server>-console.log`), **Clear console (screen only)**, and **Expand console**.
+- **Auto-Scroll** -- The console follows new log entries while you are at the bottom. Scroll up to read older lines; **Jump to latest** takes you back.
+- **Expanded Console** -- **Expand console** opens a full-screen **Console - `<server>`** dialog with a log level filter (**ALL**, **INFO**, **WARN**, **ERROR**), **Auto-scroll** and **Hide RCON** checkboxes, a clear-logs button, a **Reconnect** button when disconnected, **Quick** command buttons (`say`, `give`, `tp`, `gamemode`), and an **Enter command...** input with a **Send** button. Use the Up and Down arrow keys in the input to repeat commands sent in the dialog. The dialog does not show the RCON reply either.
 
 !!! tip "Console Commands"
     The console supports all standard Minecraft server commands. You do not need to prefix commands with `/` -- simply type the command name and its arguments directly (e.g., `whitelist add Player1`).
 
-#### Server Information
+#### Settings
 
-The **Server Information** card below the console displays essential details about the server configuration and runtime status:
+The **Settings** panel below the console lists what the header does not show:
 
 | Field | Description |
 |-------|-------------|
-| **Name** | The server's display name (e.g., `botagent`) |
 | **Container** | The Docker container name (e.g., `mc-botagent`) |
-| **Hostname** | The primary hostname for client connections (e.g., `botagent.local`) |
-| **Type** | The server platform type (VANILLA, PAPER, FORGE, NEOFORGE, FABRIC, etc.) |
-| **Version** | The Minecraft game version (e.g., `1.21.11`) |
-| **Memory** | The allocated JVM memory (e.g., `2G`) |
-| **Uptime** | How long the server has been running since its last start |
+| **Memory allocation** | The allocated memory (e.g., `4G`) |
+| **World** | The world the server uses |
+
+The server name, type, Minecraft version, hostname, and uptime are in the [header](#header-section).
 
 #### Players
 
-The **Players** card shows the `online / max` player count and the names of the players currently connected to the server. When the player list cannot be read, it displays "Player information unavailable".
+The **Players** panel shows the `online / max` player count and one row per online player, with the player's avatar and **OP** and **Whitelisted** badges. Click a row to open the [player detail modal](#player-detail-modal). When nobody is online, it shows "No players online".
 
 #### Connection
 
@@ -251,6 +264,10 @@ The **Connection** card shows how clients can reach the server:
 - **External Address** -- The playit.gg domain assigned to this server (with a copy button), or `Not configured`. This row appears when playit.gg is enabled
 
 Copy buttons also work when the console is opened over plain HTTP from another machine, and show a message if copying fails.
+
+### Server Console Page
+
+The **Console** button on a running server in the Dashboard opens `/servers/<name>/console`, a full-page console for that server. The header shows the connection state (**Connected**, **Connecting**, or **Disconnected (Retry N)**), a breadcrumb (**Servers** › server name › **Console**), and a back button to the server's detail page. The console itself works like the [expanded console](#console): log level filter, **Auto-scroll**, **Hide RCON**, **Quick** command buttons, and a command input with history. It does not show the RCON reply to a command.
 
 ### Players Tab
 
@@ -504,9 +521,9 @@ The Options tab provides a comprehensive configuration editor for your server.
 At the top of the Options tab, the **Hostnames / Domains** card shows all the hostnames configured for routing connections to this server:
 
 - **System Hostnames (read-only)** -- Automatically generated hostnames (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
-- **Custom Domains** -- User-defined custom domain names, each with a remove button
+- **Custom Domains** -- User-defined custom domain names, each with a remove button. The server's playit.gg domain, if it has one, is listed here with a **playit** chip: removing it clears the server's playit.gg domain, and replacing it with exactly one new domain in the same save makes that domain the playit.gg domain
 - **+ Add Domain** button to enter an additional custom hostname. Domains ending in `.local` or `.nip.io` are reserved for system hostnames
-- A **Save Hostnames** button to store the list. Hostname changes only take effect after the server container is recreated -- run `docker compose up -d` or restart the server from the web console
+- A **Save Hostnames** button to store the list. Hostname changes only take effect after the server container is recreated: stop the server and start it again (**Restart** does not apply them), or run `docker compose up -d`
 
 #### Settings Sections
 
@@ -639,7 +656,7 @@ If an older install has two servers on the same world, or a server's `config.env
 
 Click **+ Create World** in the page header to open the **Create New World** dialog:
 
-1. Enter a **World Name** (lowercase letters, numbers, and hyphens)
+1. Enter a **World Name** (letters, numbers, hyphens, and underscores)
 2. Optionally specify a **Seed** (leave it empty for a random seed)
 3. Click **Create**
 
@@ -683,7 +700,9 @@ The **Backup Status** card shows the current backup configuration:
 
 #### Push Backup
 
-The **Push Backup** button in the page header triggers an immediate manual backup of all worlds to the configured Git repository. A dialog lets you enter an optional **Commit Message**, then click **Push**.
+The **Push Backup** button in the page header triggers an immediate manual backup of all worlds to the configured Git repository. A dialog lets you enter an optional **Commit Message** (prefilled with `Backup <date>`), then click **Push**.
+
+A push stops if a world that was in the last backup no longer exists, so a world deleted by mistake is not dropped from the backup. If you deleted it on purpose, check **Remove worlds I deleted on purpose from the backup** before clicking **Push** (the same as `mcctl backup push --allow-missing`).
 
 #### Backup Schedules
 
@@ -699,7 +718,7 @@ The **Backup Schedules** card manages automated cron-based backup scheduling:
 
 #### Backup History
 
-The **Backup History** card (visible when the backup system is configured) lists past backups with the commit hash, date, message, and author. The restore button on a row opens **Restore Backup**, which warns that all worlds will be restored from the selected backup and that current world data will be overwritten.
+The **Backup History** card (visible when the backup system is configured) lists past backups with the commit hash, date, message, and author. The restore button on a row opens **Restore Backup**, which warns that all worlds will be restored from the selected backup and that current world data will be overwritten. Stop all servers first: a restore is refused while any server is running ("Stop all servers before restoring").
 
 ### Config Snapshots
 
@@ -720,104 +739,52 @@ To work with a single server's snapshot timeline -- compare, restore, delete -- 
 
 ## Audit Log
 
-The Audit Log page provides a comprehensive activity log for all management operations performed across your servers.
+The **Audit** page (`/audit-logs`) lists the management actions recorded by mcctl-api and the CLI. It has a **Live** / **Disconnected** indicator with a "new logs available" banner, four summary cards, filters, a table with expandable rows and a detail drawer, and CSV / JSON export (up to 5,000 rows).
 
 ![Audit Log](../images/audit-log.png)
 
-### Live Monitoring
+In the **Actor** column, actions done in the web console show `console` (recorded as `api:console`); only Platform Settings changes and file operations record the signed-in user's name. CLI commands show `local`.
 
-The Audit Log features a **Live** indicator in the page header showing the real-time SSE connection status:
-
-- **Green dot with "Live"** -- Connected and receiving real-time events
-- **Gray dot with "Disconnected"** -- SSE connection lost (auto-reconnects)
-
-When new audit events arrive while you are viewing the page, a notification banner appears: "X new logs available - Click to refresh."
-
-### Statistics Overview
-
-Four statistics cards at the top provide summary metrics:
-
-| Card | Description |
-|------|-------------|
-| **Total Logs** | Total number of audit log entries |
-| **Success Rate** | Percentage of successful operations |
-| **Failures** | Count of failed operations |
-| **Active Users** | Number of unique actors who performed actions |
-
-### Filters
-
-The **Filters** panel can be collapsed, shows how many filters are active, and has a **Clear All** button. It provides:
-
-- **From** / **To** -- Filter by start and end dates
-- **Action** -- Filter by a specific action type (e.g., `server.start`, `server.stop`, `backup.schedule.create`). The list narrows to server or player actions when a target type is selected
-- **Target type** -- Filter by target category: ALL, SERVER, PLAYER
-- **Status** -- ALL, SUCCESS, FAILURE
-- **Target Name** -- Search by the name of the server, world, or player
-- **Actor** -- Search by the name of the user who performed the action (e.g., `api:admin`)
-- **Export** button -- Export the filtered audit data
-
-### Log Table
-
-The main table displays audit entries with the following columns:
-
-| Column | Description |
-|--------|-------------|
-| **Timestamp** | When the action was performed (relative time like "21m ago"; hover for the exact time) |
-| **Action** | The action type with a color-coded badge |
-| **Actor** | Who performed the action (username) |
-| **Target** | The server or player affected (links to that server or the Players page) |
-| **Status** | Success (green) or Failure (red) indicator |
-
-Use the arrow at the start of a row to expand its details; failed entries start expanded and show the error message. Click on any row to open the **Audit Log Detail** drawer with the entry ID, timestamp, action, status, actor, target, error message, and the action's details, plus **Related Logs** (**Same Target** and **Same Actor**).
-
-### Export
-
-Click the **Export** button to open the **Export Audit Logs** dialog. Choose **CSV** or **JSON**, review the applied filters and the estimated number of rows, then download the file. Exports are limited to 5,000 rows; narrow the filters if you need more.
+See the [Audit Log Web Console Guide](audit-log-ui.md) for the filters, the table, the detail drawer, and export.
 
 ---
 
 ## Routing
 
-The Routing page gives you full visibility and control over your network routing configuration. The header shows the router status and the number of routes.
+The Routing page shows how players reach your servers through mc-router. The header shows the router's container status and how many servers and hostnames are routed (for example "3 servers · 8 hostnames"). Administrators also see a **Restart mc-router** button there (see [Restarting mc-router](#restarting-mc-router)).
 
 ![Routing](../images/routing.png)
 
-### MC-Router Status
+### Routing Table
 
-The wide panel on the left shows the **MC-Router Status** with a live routing table:
+The **Routing Table** panel has one row per server. A collapsed row shows:
 
-- Router status and health chips (e.g., `running`, `healthy`)
-- The **Routing Table** has one row per server. A collapsed row shows:
-    - The server name, its type and Minecraft version, and its status (e.g. **Sleeping · wakes on connect**)
-    - The primary address (nip.io first, then mDNS, WAN, Custom) with a copy button, and how many more hostnames there are
-    - The hostname types (e.g. `nip.io ×2`, `mDNS`, `WAN`) and an **N not routed** warning when mc-router does not know some of them
-    - **Wake/Start**, **Edit hostnames** and **Open server**
-- Click a row (or its arrow) to list all of that server's hostnames, each with a copy button, its type and a **Not routed** warning if needed. Several servers can be open at once; **Expand all** / **Collapse all** opens or closes every server.
-- The search box matches server names and hostnames. When a hostname matches, its server opens and the matching hostname is highlighted.
+- The server name with its type and Minecraft version
+- The primary address with its type badge and a copy button, and `+N` for the server's other hostnames. The primary address is the first routed hostname in the order nip.io, mDNS, WAN, Custom
+- The status (e.g. **Running**, **Sleeping · wakes on connect**) and an **N not routed** warning when mc-router does not know some of the server's hostnames
+- **Wake** (or **Start**) for a stopped server, **Edit hostnames** (opens the server's [Options tab](#options-tab)), and **Open server**
 
-### Platform Information
+Click a row (or its arrow) to list all of that server's hostnames, each with a copy button, its type, and a **Not routed** warning if needed. Several servers can be open at once; **Expand all** / **Collapse all** opens or closes every server. The search box matches server names and hostnames. When a hostname matches, its server opens and the matching hostname is highlighted.
 
-The **Platform Information** card shows details about your mc-router setup:
+### Routing Flow
 
-| Field | Description |
-|-------|-------------|
-| **Router Name** | The mc-router container name |
-| **Port** | The listening port (default: 25565) |
-| **Mode** | Routing mode (e.g., `Auto Discovery`) |
-| **Uptime** | How long the router has been running |
+The **Routing Flow** diagram draws the current routes: the hostname types with their counts (mDNS, nip.io, WAN, Custom), then mc-router with its status and port, then up to eight servers with their status (`+N more` stands for the rest).
 
-### Network Settings
+### Live Router Log
 
-The **Network Settings** card displays:
+The **Live Router Log** panel follows the mc-router log. Each line shows the time, a kind (**CONNECT**, **WAKE**, **ERROR**, or **INFO**), the hostname and target server for connections and wake-ups (the log text for other lines), and the player name when the log line has one. The panel keeps the last 500 lines, has an **Auto-scroll** switch and a **Clear** button, and shows the stream state (**Connecting**, **Live**, **Disconnected**, or **Ended**).
 
-- **Listening Port** -- The port mc-router listens on
-- **Routing Mode** -- How hostnames are resolved (e.g., `Auto Discovery`)
-- **Total Routes** -- Number of routing entries
-- **Active Routes** -- Routes whose server is running, shown as "x / y"
+### mc-router Gateway
 
-### mDNS (Avahi) Status
+The **mc-router Gateway** card shows the router container's status and health, the listening **Port**, **Active routes** (routes whose server is running, as `x / y`), and the **Container** name, **Mode** (e.g., `Auto Discovery`), **Uptime**, and **Image**. When the router's auto-scale settings can be read, it also shows **Auto-scale up**, **Auto-scale down**, **Idle time**, and a preview of the **Asleep MOTD** that a sleeping server shows in the server list.
 
-The **mDNS (Avahi)** card shows whether the Avahi mDNS daemon is active, enabling `.local` hostname resolution for Minecraft clients on the local network.
+### Hostname Resolver
+
+The **Hostname Resolver** card lists the host IPs used for nip.io hostnames (marking the primary one **Primary**), an example nip.io address with a copy button, and the **mDNS (Avahi)** status. Avahi must be running for `.local` hostnames to resolve on the local network.
+
+### Restarting mc-router
+
+**Restart mc-router** in the page header is shown to administrators only. It asks for confirmation first: players connected through mc-router are disconnected and new connections fail until the router is back up; running servers are not stopped. The button is disabled when the router container does not exist.
 
 ### External Access (playit.gg)
 
@@ -828,7 +795,7 @@ The **External Access (playit.gg)** card manages playit.gg tunnel configuration 
 - **Server Domains** table showing which servers have external domains configured (e.g., `possible-tracks.gl.joinmc.link`), each with a copy button
 - A list of servers without external domains
 
-If playit.gg is not set up, the card shows "Not configured" and asks you to set `PLAYIT_SECRET_KEY`.
+If playit.gg is not set up, the card shows "Not configured". Set `PLAYIT_SECRET_KEY` (for example with `mcctl playit setup`) to enable it.
 
 ---
 
@@ -882,8 +849,9 @@ Administrators see an additional **Platform Settings** section on the **Settings
 
 ![Platform Settings](../images/platform-settings.png)
 
-- **Bento cards** -- Settings are grouped into cards: Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg) and Console & Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation
-- **Secrets are write-only** -- Secret fields (`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`) show **Configured** or **Not configured**. The input is never pre-filled; typing a value marks the field changed
+- **Bento cards** -- Settings are grouped into cards: Network & Routing, Server Runtime, RCON, Backup, External Access and Console & Logging. Each field uses a typed control (text, switch, select, number, IP list) with field-level validation
+- **Secrets are write-only** -- Secret fields (`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`, `BETTER_AUTH_SECRET`) show **Configured** or **Not configured**. The input is never pre-filled; typing a value marks the field changed
+- **Console sign-in settings** -- **Console & Logging** holds `BETTER_AUTH_SECRET` (the console session secret; changing it signs everyone out) and `BETTER_AUTH_BASE_URL` (the console's public URL; see [Login Fails](#login-fails))
 - **Runtime (PM2)** -- A read-only card shows `AUTH_MODE` from `ecosystem.config.cjs`, plus `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET` (configured only) while an older ecosystem file still injects them. While the ecosystem defines them they win over `.env` and cannot be changed here; run `mcctl upgrade` to move them to `.env`
 - **Advanced Environment** -- Unknown keys as key/value rows (add, edit, remove). Servers receive one only if its name is listed in `servers/global.env`
 - **Legacy / Unused** -- Legacy keys with warning styling ("Not read by any current code."). Nothing is removed unless you remove it explicitly
@@ -905,6 +873,7 @@ A sticky bar with **Discard** and **Save Changes** appears when any field is cha
 | Router | `mcctl router start` (not `restart`) |
 | playit | Stop, then start the playit agent on the Routing page, or `mcctl playit stop && mcctl playit start` |
 | API | `mcctl console service restart --api`. Settings backed by mcctl-api show a "restart pending" chip until it restarts |
+| Console | `mcctl console service restart --console` (this also restarts mcctl-api). Nobody is signed out unless the session secret changed |
 | Next create | Applies to servers created after this change. Existing server hostnames are unchanged |
 
 If the file changed since you loaded the page (for example via the CLI), saving returns a **409 conflict** and a dialog asks you to reload. Your edits are never overwritten automatically.
@@ -915,7 +884,7 @@ If the file changed since you loaded the page (for example via the CLI), saving 
 |------|-----|
 | Network & Routing | `mcctl init --reconfigure` |
 | Backup | `mcctl backup init` |
-| External Access (playit.gg) | `mcctl playit setup` |
+| External Access | `mcctl playit setup` |
 | Runtime (PM2) | `mcctl console init` |
 
 ---
@@ -946,7 +915,7 @@ mcctl console user reset-password user@example.com
 
 1. **Use Strong Passwords** -- Follow the password requirements during `mcctl console init`
 2. **Limit Access** -- Use the Access tab to grant minimal permissions to each user
-3. **Use HTTPS** -- Configure a reverse proxy with SSL for production deployments
+3. **Use HTTPS** -- Configure a reverse proxy with SSL for production deployments, and set `BETTER_AUTH_BASE_URL` to the proxy's URL (see [Login Fails](#login-fails))
 4. **Review Audit Logs** -- Regularly check the Audit Log for unexpected activity
 
 ### Server Management
@@ -1011,11 +980,13 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
 
 === "Option 2: DO_NOT_TRACK"
 
-    Set `DO_NOT_TRACK=1` in the mcctl-console `env` in PM2's `ecosystem.config.cjs`, then restart the console.
+    Set `DO_NOT_TRACK=1` in the mcctl-console `env` in PM2's `ecosystem.config.cjs`, then recreate the PM2 processes so they read the new `env`. A plain `mcctl console service restart` keeps the environment PM2 already has.
 
     ```bash
-    mcctl console service restart
+    mcctl console service restart --console --force
     ```
+
+    `--force` kills the PM2 daemon, so other apps managed by PM2 stop as well (see [`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart)). `mcctl console init --force` writes a new `ecosystem.config.cjs` without this setting.
 
 ---
 
@@ -1049,6 +1020,12 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
    ```bash
    mcctl console user reset-password <email>
    ```
+
+3. **Check the Address You Sign In From:** The console accepts sign-ins from `localhost`, private LAN addresses (`10.x`, `172.16.x`-`172.31.x`, `192.168.x`), `.local` names, and the URL in `BETTER_AUTH_BASE_URL` (default `http://localhost:<console port>`). From any other address, such as a Tailscale `100.x` address, a domain name, or an HTTPS reverse proxy, sign-in fails until `BETTER_AUTH_BASE_URL` is set to that URL in the platform `.env` (or in [Platform Settings](#platform-settings-admin)). Then restart the console:
+   ```bash
+   mcctl console service restart --console
+   ```
+   On installs whose `ecosystem.config.cjs` still defines `BETTER_AUTH_BASE_URL`, run `mcctl upgrade` first; until then the ecosystem value is used. The console sets secure cookies only when this URL starts with `https://`.
 
 ### Server Status Not Updating
 

@@ -69,6 +69,11 @@ mcctl console init
 
 ```
 $ mcctl console init
+Checking prerequisites...
+  ✓ Node.js            v20.10.0  (>= 18.0.0)
+  ✓ Docker Engine      v24.0.7  (>= 24.0.0)
+  ✓ Docker Compose     v2.24.5  (>= 2.20.0)
+  ✓ PM2                v6.0.14  (>= 6.0.0)
 
 Initialize Console Service
 
@@ -86,9 +91,12 @@ Initialize Console Service
 ? Admin password? ********
 ? API access mode? internal - Local network only (default, most secure)
 
-Creating admin user...  done
-Generating PM2 ecosystem config...  done
-Saving configuration...  done
+Creating admin user...  Admin user created
+Checking mcctl-api installation...  mcctl-api ready
+Checking mcctl-console installation...  mcctl-console ready
+Resolving service script paths...  Using production node_modules paths
+Generating PM2 ecosystem config...  PM2 ecosystem config generated
+Saving configuration...  Configuration saved
 
 Console Service initialized!
 
@@ -105,21 +113,27 @@ Console Service initialized!
   Next steps:
     1. Start the service: mcctl console service start
     2. Access the console in your browser
+
+  Console usage analytics is on (anonymous install ID and page paths, sent to Google Analytics). To turn it off, set "telemetry": false in /home/user/minecraft-servers/.mcctl.json.
 ```
+
+마지막 줄은 사용 통계가 켜져 있을 때만 표시됩니다([사용 통계](web-console.md#사용-통계) 참조).
 
 #### 2단계: 서비스 시작
 
 ```bash
-mcctl console service start
+mcctl console service start --console
 ```
 
-서비스가 시작될 때까지 기다립니다:
+`--console`은 mcctl-api와 mcctl-console을 시작합니다. 플래그 없이 실행하면 두 서비스가 모두 설치된 경우 어느 서비스를 시작할지 묻습니다.
+
+서비스가 시작될 때까지 기다립니다. 명령은 상태를 출력하기 전에 최대 15초 동안 각 서비스를 HTTP로 확인하며, 정상 상태가 아닌 서비스가 있으면 종료 코드 1로 끝납니다:
 
 ```
-Starting console services via PM2...
-  Started mcctl-api
-  Started mcctl-console
-Console services started successfully
+[INFO] Starting console services via PM2...
+[INFO]   Started mcctl-api
+[INFO]   Started mcctl-console
+[INFO] Console services started successfully
 
   Console Service Status (PM2)
 
@@ -160,12 +174,14 @@ mcctl console init --api-port 8001 --console-port 8000
 | 변수 | 설명 | 기본값 |
 |------|------|--------|
 | `MCCTL_ROOT` | 데이터 디렉토리 경로 | `~/minecraft-servers` |
-| `PORT` | API 서버 포트 | `5001` |
+| `PORT` | 각 서비스의 리슨 포트. 서비스별 `env` 블록에서 설정 | `5001` (mcctl-api), `5000` (mcctl-console) |
 | `HOSTNAME` | 콘솔 서버 호스트 이름 | `0.0.0.0` |
 | `MCCTL_API_URL` | 내부 API URL | `http://localhost:5001` |
 | `NODE_ENV` | 실행 환경 모드 | `production` |
 | `LOG_LEVEL` | mcctl-api 로그 레벨: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` | `NODE_ENV=production`이면 `info`, 그 외에는 `debug` |
 | `WORLD_UPLOAD_MAX_SIZE` | 월드 ZIP 업로드 최대 크기 (바이트, `POST /api/worlds/upload`) | `1073741824` (1 GB) |
+| `BETTER_AUTH_SECRET` | 콘솔 세션 시크릿. `mcctl console init`이 `<root>/.env`에 기록합니다. 바꾸면 모든 사용자가 로그아웃됩니다 | 자동 생성 |
+| `BETTER_AUTH_BASE_URL` | 콘솔의 공개 URL로, `<root>/.env`에서 읽습니다. 사용자가 `localhost`, 사설 LAN 주소, `.local` 이름이 아닌 주소로 콘솔을 연다면 설정하세요 ([로그인 불가](#로그인-불가) 참조) | `http://localhost:<console port>` |
 
 ### PM2 에코시스템 구성
 
@@ -184,14 +200,17 @@ module.exports = {
         PORT: 5001,
         HOST: '0.0.0.0',
         MCCTL_ROOT: '/home/user/minecraft-servers',
-        AUTH_MODE: 'internal', // 예시 아래의 참고 사항 확인
-        // 해당 접근 모드에서는 AUTH_API_KEY, AUTH_IP_WHITELIST가 추가됩니다
+        AUTH_MODE: 'ip-whitelist', // "internal" 접근 모드일 때 기록되는 값. 예시 아래의 참고 사항 확인
+        AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',
+        // api-key 계열 접근 모드에서는 AUTH_API_KEY가 추가됩니다
       },
       instances: 1,
       exec_mode: 'fork',
       watch: false,
       autorestart: true,
       max_memory_restart: '500M',
+      // Shutdown waits for a running auto-backup to re-enable auto-save (#734)
+      kill_timeout: 130000,
     },
     {
       name: 'mcctl-console',
@@ -221,9 +240,11 @@ module.exports = {
 
 파일에는 `mcctl console init`에서 선택한 서비스만 포함됩니다. `.services/` 디렉토리가 도입되기 이전에 설치한 환경은 패키지가 `<root>/node_modules/`에 있으며, 패키지가 그 위치에서 발견되면 `mcctl console init`은 계속 해당 위치를 사용합니다.
 
+`kill_timeout: 130000`은 mcctl-api가 종료될 때 진행 중인 자동 백업을 마칠 시간을 줍니다. v3.0.0 이전 버전이 작성한 파일에는 이 설정이 없습니다. [mcctl-api가 자동 백업을 마칠 시간 주기](../advanced/upgrade-runbook.md#pm2-kill-timeout)를 참고하세요.
+
 ### 접근 모드
 
-`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 모드, API 키, IP 화이트리스트는 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에 기록되며, 실행 중인 mcctl-api가 읽는 값이 바로 이것입니다. `mcctl console api` 명령어는 아직 이 값을 바꾸지 않으므로([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조,), 모드를 바꾸거나 API 키 또는 IP 화이트리스트를 변경하려면 현재는 `mcctl console init --force`로 다시 초기화해야 합니다.
+`mcctl console init`은 설정 중에 접근 모드를 묻습니다. 모드, API 키, IP 화이트리스트는 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에 기록되며, 실행 중인 mcctl-api가 읽는 값이 바로 이것입니다. `mcctl console api` 명령어는 아직 이 값을 바꾸지 않으므로([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조), 모드를 바꾸거나 API 키 또는 IP 화이트리스트를 변경하려면 현재는 `mcctl console init --force`로 다시 초기화해야 합니다.
 
 #### internal (프로덕션 권장)
 
@@ -259,6 +280,9 @@ mcctl console init
 ```
 
 허용 IP를 바꾸려면 `mcctl console init --force`로 다시 초기화하고 새 목록을 입력하세요. `mcctl console api whitelist`는 현재 실행 중인 API가 사용하는 화이트리스트를 바꾸지 않습니다.
+
+!!! warning "mcctl-console도 설치한다면 127.0.0.1을 포함하세요"
+    웹 콘솔은 같은 호스트에서 mcctl-api를 호출하므로, `127.0.0.1`이 없는 목록에서는 콘솔의 모든 요청이 HTTP 403으로 실패합니다. 주소로 적어야 합니다. `localhost`라고 입력하면 프롬프트는 받아들이지만 어떤 요청과도 일치하지 않습니다. `api-key-ip`도 마찬가지입니다.
 
 #### api-key-ip
 
@@ -344,7 +368,7 @@ curl http://localhost:5001/health
 예상 응답:
 
 ```json
-{"status":"healthy"}
+{"status":"ok","timestamp":"2026-10-25T12:00:00.000Z"}
 ```
 
 ### 웹 콘솔 접속
@@ -404,6 +428,12 @@ curl http://localhost:5001/health
    cat ~/minecraft-servers/.mcctl-admin.yml
    ```
 
+4. **접속 주소 확인:** 콘솔은 `localhost`, 사설 LAN 주소(`10.x`, `172.16.x`-`172.31.x`, `192.168.x`), `.local` 이름, 그리고 `BETTER_AUTH_BASE_URL`의 URL에서 오는 로그인을 받습니다. Tailscale `100.x` 주소, 도메인 이름, HTTPS 리버스 프록시처럼 그 밖의 주소라면 `~/minecraft-servers/.env`에서 `BETTER_AUTH_BASE_URL`을 그 URL로 설정하고 콘솔을 재시작하세요:
+   ```bash
+   mcctl console service restart --console
+   ```
+   자세한 내용은 [로그인 실패](web-console.md#로그인-실패)를 참고하세요.
+
 ### API에서 401 Unauthorized 반환
 
 1. **접근 모드 확인** (실행 중인 API는 `ecosystem.config.cjs`에서 읽으며, `mcctl console api status`는 대신 `api-config.json`을 보여줍니다):
@@ -415,7 +445,7 @@ curl http://localhost:5001/health
    - 요청에 `X-API-Key` 헤더가 포함되어 있는지 확인
    - 사용 중인 키는 `ecosystem.config.cjs`의 `AUTH_API_KEY`입니다. 새 키가 필요하면 `mcctl console init --force`로 다시 초기화하세요
 
-3. **IP 화이트리스트 확인 (ip-whitelist 모드 사용 시):**
+3. **IP 화이트리스트 확인 (ip-whitelist 모드 사용 시):** 목록에 없는 클라이언트 IP는 HTTP 403을 받습니다
    ```bash
    grep AUTH_IP_WHITELIST ~/minecraft-servers/ecosystem.config.cjs
    ```
@@ -485,10 +515,10 @@ mcctl update
 mcctl console init --force
 
 # 서비스 시작
-mcctl console service start
+mcctl console service start --console
 ```
 
-`--force`는 기존 설정을 보존하지 않습니다. PM2 서비스를 중지하고 `.mcctl-admin.yml`과 `ecosystem.config.cjs`를 삭제하므로, API 접근 모드를 다시 선택해야 하고, `--api-port`와 `--console-port`를 지정하지 않으면 포트는 기본값으로 돌아가며, api-key 계열 모드에서는 새 API 키가 생성됩니다. 콘솔 데이터베이스 `data/mcctl.db`는 유지되므로 다른 사용자는 그대로입니다. 기존 관리자의 이메일을 입력하면 해당 사용자는 (세션 포함) 삭제된 뒤 지금 입력한 비밀번호로 다시 생성됩니다. 다른 이메일을 입력하면 기존 관리자는 그대로 남고 새 관리자가 추가됩니다.
+`--force`는 기존 설정을 보존하지 않습니다. PM2 서비스를 중지하고 `.mcctl-admin.yml`과 `ecosystem.config.cjs`를 삭제하므로, API 접근 모드를 다시 선택해야 하고, `--api-port`와 `--console-port`를 지정하지 않으면 포트는 기본값으로 돌아가며, api-key 계열 모드에서는 새 API 키가 생성됩니다. 콘솔 데이터베이스 `data/mcctl.db`는 유지되므로 다른 사용자는 그대로입니다. `.env`의 세션 시크릿 `BETTER_AUTH_SECRET`도 유지되므로 다른 사용자는 로그인 상태를 유지합니다. 기존 관리자의 이메일을 입력하면 해당 사용자는 (세션 포함) 삭제된 뒤 지금 입력한 비밀번호로 다시 생성됩니다. 다른 이메일을 입력하면 기존 관리자는 그대로 남고 새 관리자가 추가됩니다.
 
 ## 제거
 

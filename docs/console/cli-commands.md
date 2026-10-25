@@ -92,7 +92,8 @@ If the console is already initialized, the command asks whether to reinitialize.
 
 - stops the `mcctl-api` and `mcctl-console` PM2 processes,
 - deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`, so the API access mode is chosen again, a new API key is generated for the api-key modes, and the ports return to the defaults unless you pass `--api-port` and `--console-port`,
-- keeps `data/mcctl.db`, so other users are not touched.
+- keeps `data/mcctl.db`, so other users are not touched,
+- keeps the console session secret `BETTER_AUTH_SECRET` in `.env`, so signed-in users stay signed in.
 
 If the admin email you enter already exists in `data/mcctl.db`, the command fails with `User '<email>' already exists` and suggests `mcctl console init --force`. With `--force`, that user is deleted (including its sessions) and created again with the new name and password.
 
@@ -105,6 +106,7 @@ All paths are relative to the data directory (`MCCTL_ROOT`, default `~/minecraft
 | `.mcctl-admin.yml` | Main Management Console configuration |
 | `data/mcctl.db` | Console user database (created only when `mcctl-console` is selected) |
 | `ecosystem.config.cjs` | PM2 process configuration |
+| `.env` | Gets `BETTER_AUTH_SECRET`, the console session secret, when `mcctl-console` is selected. A secret already in use is kept |
 
 ---
 
@@ -201,6 +203,8 @@ The confirmation prompt still names `users.yaml`, but that file is only deleted 
 ## mcctl console user
 
 Manage admin console users.
+
+These commands work on `data/mcctl.db` in the data directory given by `MCCTL_ROOT` (default `~/minecraft-servers`). They do not take `--root`; for another data directory, set the variable, for example `MCCTL_ROOT=/opt/minecraft mcctl console user list`.
 
 ### Subcommands
 
@@ -415,7 +419,7 @@ mcctl console user reset-password operator@example.com --password "NewSecurePass
 
 Manage API configuration and access control.
 
-These commands read and write `api-config.json` in the data directory (`MCCTL_ROOT`, default `~/minecraft-servers`). It is a separate file from the `.mcctl-admin.yml` written by `mcctl console init`. Until a command saves a change, the defaults are used: mode `internal`, port `5001`, empty IP whitelist.
+These commands read and write `api-config.json` in the data directory (`MCCTL_ROOT`, default `~/minecraft-servers`), a separate file from the `.mcctl-admin.yml` written by `mcctl console init`. Like `mcctl console user`, they do not take `--root`. Until a command saves a change, the defaults are used: mode `internal`, port `5001`, empty IP whitelist.
 
 !!! warning "Changes do not reach the running mcctl-api"
     These commands only change `api-config.json`. The running `mcctl-api` takes its access mode, API key and IP whitelist from the `env` block of `ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), which they do not touch. A change made here therefore has no effect on the API, even after `mcctl console service restart`, and `mcctl console api status` shows the contents of `api-config.json`, not necessarily what the running API uses.
@@ -479,7 +483,7 @@ mcctl console api key regenerate [options]
 mcctl console api key regenerate
 
 ? Are you sure you want to regenerate the API key? All existing clients will need to be updated. Yes
-
+Note: saved to /home/user/minecraft-servers/api-config.json only. mcctl-api reads AUTH_* from ecosystem.config.cjs (written by `mcctl console init`), so this does not change the running API. Re-run `mcctl console init` to apply an access mode.
 API key regenerated successfully.
 
 New API Key: mctk_0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0
@@ -583,6 +587,8 @@ Manage Management Console lifecycle via PM2.
 | `status` | Show service status |
 | `logs` | View service logs |
 
+Without a subcommand, `mcctl console service` shows the status.
+
 ### mcctl console service start
 
 Start Management Console processes (API and Console) via PM2.
@@ -613,13 +619,15 @@ mcctl console service start --api
 mcctl console service start --console
 ```
 
+After starting, the command waits up to 15 seconds for the [health checks](#health-checks-and-exit-codes) to pass, prints the status, and exits with code 1 if a started service is not healthy.
+
 **Output Example:**
 
 ```
-Starting console services via PM2...
-  Started mcctl-api
-  Started mcctl-console
-Console services started successfully
+[INFO] Starting console services via PM2...
+[INFO]   Started mcctl-api
+[INFO]   Started mcctl-console
+[INFO] Console services started successfully
 
   Console Service Status (PM2)
 
@@ -692,6 +700,10 @@ mcctl console service restart [options]
 
 Without `--api` or `--console`, the command asks whether to restart "API only" or "API + Console" when both services are installed.
 
+A restart without `--force` keeps the environment and options PM2 already has. After editing `ecosystem.config.cjs` (for example its `env` block or `max_memory_restart`), use `--force` so the processes are created again from the file. Values that the services read from the platform `.env` at startup only need a plain restart.
+
+Like `start`, the command waits up to 15 seconds for the [health checks](#health-checks-and-exit-codes) and exits with code 1 if a restarted service is not healthy.
+
 **Examples:**
 
 ```bash
@@ -700,6 +712,9 @@ mcctl console service restart
 
 # Restart API only
 mcctl console service restart --api
+
+# Recreate both processes from ecosystem.config.cjs
+mcctl console service restart --console --force
 ```
 
 ### mcctl console service status
@@ -767,6 +782,16 @@ mcctl console service status [options]
   "healthy": true
 }
 ```
+
+A service that is not registered in PM2 is `null` in the JSON output.
+
+#### Health Checks and Exit Codes
+
+For each online service, the command checks over HTTP that it answers: mcctl-api must return a 2xx status for `GET /health`, and mcctl-console a status below 500 for `GET /api/auth/get-session`. A failed check adds a line such as `Health: HTTP 500` or `Health: unreachable` to that service (`"health"` in the JSON output), and the summary changes to `Some services need attention`.
+
+- `status` exits with code 1 when an installed service is not online or fails its check. When neither service is registered in PM2, it prints `Services not running` and exits with 0.
+- `start` and `restart` repeat the checks for up to 15 seconds and exit with code 1 if a service is still not healthy.
+- If the PM2 error log shows a native module built for another Node.js version (`NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`), the command also prints how to recover: run `pm2 kill`, switch to the Node.js version used to install mcctl (for example `nvm use 22`), then run `mcctl console service start`.
 
 ### mcctl console service logs
 
@@ -854,7 +879,11 @@ mcctl console service logs --api
 **Restart After Configuration Change:**
 
 ```bash
-mcctl console service restart
+# After changing the platform .env (for example in Platform Settings)
+mcctl console service restart --console
+
+# After editing ecosystem.config.cjs (a plain restart keeps the old env and options)
+mcctl console service restart --console --force
 ```
 
 **Auto-Start on Boot:**

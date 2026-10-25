@@ -28,7 +28,7 @@ mcctl-console은 안전한 API 통신을 위해 Backend-for-Frontend(BFF) 프록
 ### BFF 프록시를 사용하는 이유
 
 1. **보안**: API 키가 서버 측에 유지되어 브라우저에 노출되지 않습니다
-2. **세션 관리**: Better Auth가 JWT 토큰 기반 사용자 인증을 처리합니다
+2. **세션 관리**: Better Auth가 세션을 콘솔 데이터베이스(`data/mcctl.db`)에 저장하고 세션 쿠키로 식별합니다
 3. **타입 안전성**: 프론트엔드와 백엔드 간 TypeScript 인터페이스를 공유합니다
 4. **캐싱**: React Query가 낙관적 업데이트와 지능적인 캐싱을 제공합니다
 
@@ -38,9 +38,9 @@ mcctl-console은 안전한 API 통신을 위해 Backend-for-Frontend(BFF) 프록
 
 ![로그인](../images/login.png)
 
-1. Management Console 서비스를 시작합니다:
+1. Management Console 서비스를 시작합니다. `--console`은 mcctl-api와 mcctl-console을 시작하며, 플래그 없이 실행하면 두 서비스가 모두 설치된 경우 어느 서비스를 시작할지 묻습니다:
    ```bash
-   mcctl console service start
+   mcctl console service start --console
    ```
 
 2. 브라우저를 열고 `http://localhost:5000`으로 이동합니다. **Welcome Back** 로그인 페이지로 이동합니다.
@@ -79,35 +79,39 @@ mcctl-console은 안전한 API 통신을 위해 Backend-for-Frontend(BFF) 프록
 
 ### 상태 히어로
 
-v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 히어로가 표시됩니다. 온라인 서버 수(예: "2 of 3 servers online"과 진행 막대), 주의가 필요한 서버 수(실행 중이 아니거나 `unhealthy`인 서버), 그리고 실시간(SSE) 연결 상태를 나타내는 **Live** / **Reconnecting** 칩을 보여줍니다. 서버 데이터를 불러오지 못한 경우에는 0으로 표시하지 않고 데이터를 사용할 수 없음을 명시합니다.
+v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 히어로가 표시됩니다. 온라인 서버 수(예: "2 of 3 servers online"과 진행 막대), 주의가 필요한 서버 수(실행 중이 아니거나 `unhealthy`인 서버, 없으면 "All systems operational"), 그리고 실시간(SSE) 연결 상태를 나타내는 **Live** / **Reconnecting** 칩을 보여줍니다. 서버 데이터를 불러오지 못한 경우에는 0으로 표시하지 않고 데이터를 사용할 수 없음을 명시합니다.
+
+히어로의 **Create Server** 버튼은 [Create New Server](#새-서버-만들기) 다이얼로그가 열린 상태로 Servers 페이지를 엽니다.
 
 ### 통계 카드
 
-상태 히어로 아래에 4개의 통계 카드가 주요 지표를 보여줍니다:
+상태 히어로 아래에 4개의 카드가 주요 지표를 보여줍니다:
 
 | 카드 | 설명 |
 |------|------|
-| **Total Servers** | 플랫폼에 구성된 전체 Minecraft 서버 수와 실행 중 / 중지 구분 |
-| **Online Servers** | 현재 `running` 상태인 서버 수 (SSE를 통해 실시간 업데이트) |
-| **Total Players** | 실행 중인 모든 서버의 총 접속 플레이어 수 |
-| **Total Worlds** | 월드 저장소에 있는 사용 가능한 월드 수와 할당됨 / 미할당 구분 |
+| **Total Servers** | 구성된 서버 수와 실행 중 / 중지 구분, 실행 중인 비율을 나타내는 막대 |
+| **Online Players** | 실행 중인 서버에 접속한 플레이어 수를 `online / max`로 표시하고 "Across N running servers"를 함께 보여줍니다 (실행 중인 서버가 플레이어 조회에 응답하지 않으면 "M not responding"이 추가됩니다). 플레이어 데이터가 없으면 `—`와 "Player data unavailable"이 표시됩니다 |
+| **Worlds** | 월드 저장소에 있는 월드 수와 할당됨 / 미할당 구분 |
+| **mc-router** | 라우터의 리슨 포트(예: `:25565`)와 컨테이너 상태, 헬스, 라우트 수. 라우터가 실행 중이면 녹색, 중지되었거나 unhealthy이면 빨간색, 시작 중이거나 재시작 중 같은 그 밖의 상태에서는 황색으로 표시됩니다 |
 
 ### 서버 패널
 
-대시보드 왼쪽에는 **Servers** 패널이 최대 5개의 서버를 목록으로 표시합니다:
+대시보드 왼쪽의 **Servers** 패널에는 상태 필터(**All**, **Running**, **Stopped**, 각각 개수 표시)와 최대 5개의 서버가 표시됩니다. 각 행에는 다음이 표시됩니다:
 
-- **서버 이름**과 호스트명 (예: `botagent.local`)
-- **상태 칩** -- `running`, `exited`, `stopped` 등 색상으로 구분됩니다
-- **헬스 칩** -- 컨테이너가 헬스 상태를 보고하면 `healthy`, `unhealthy`, `starting` 같은 윤곽선 칩이 표시됩니다
+- **서버 이름**, **상태 칩**(`running`, `exited`, `created` 등), 그리고 컨테이너가 헬스 상태를 보고하면 윤곽선 **헬스 칩**(`healthy`, `unhealthy`, `starting`)
+- 대표 호스트명(서버에 LAN nip.io 주소가 있으면 그 주소)과 복사 버튼. `+N` 칩을 클릭하면 모든 호스트명이 표시됩니다
+- 실행 중인 서버는 **Players**(`online / max`)와 **Memory**(`used / limit`), 중지된 서버는 메모리 할당량, 그리고 **Type**(`TYPE · version`)
+- 액션 버튼: 실행 중인 서버는 **Console**([서버 콘솔 페이지](#서버-콘솔-페이지)를 엽니다), **Restart**, **Stop**, 중지된 서버는 **Start**. **Restart**와 **Stop**은 접속 중인 플레이어의 연결이 끊기므로 먼저 확인을 요청합니다
 
-서버를 클릭하면 해당 서버의 상세 페이지로 바로 이동합니다. 서버가 5개를 넘으면 패널 헤더에 **View All (N)** 링크가 나타나 전체 Servers 페이지로 이동합니다.
+행을 클릭하면 해당 서버의 상세 페이지로 이동합니다. 서버가 5개를 넘으면 패널 헤더에 **View All (N)** 링크가 나타나 전체 Servers 페이지로 이동합니다.
 
 ### External Access 카드
 
 오른쪽에 있는 **External Access** 카드는 playit.gg 터널 상태를 보여줍니다:
 
 - 외부 도메인이 구성된 서버 수 (예: "1 / 3 servers")
-- 현재 에이전트 상태 (`Running` 또는 `Stopped`). playit.gg가 설정되지 않았다면 `Not configured` 칩이 표시됩니다
+- 현재 에이전트 상태 (`Running` 또는 `Stopped`)와 에이전트가 실행 중일 때의 업타임. playit.gg가 설정되지 않았다면 `Not configured` 칩이 표시됩니다
+- 최대 3개 서버의 외부 주소와 복사 버튼
 - 상세 설정을 위한 Routing 페이지로의 **Manage** 링크
 
 ### 최근 활동 피드
@@ -119,11 +123,13 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 - 구성 수정
 - 플레이어 관리 작업
 
-각 항목에는 액션 유형(색상별 배지), 대상 서버 또는 리소스, 수행자, 경과 시간이 표시됩니다(마우스를 올리면 정확한 시각이 표시됩니다). 실패한 작업에는 상태 배지가 추가로 표시됩니다. **View All**을 클릭하면 전체 감사 로그 페이지로 이동합니다.
+각 항목에는 색상 점(실패는 빨간색, 백업은 파란색, 설정 변경·설정 스냅샷·Platform Settings는 보라색, 그 밖의 서버 작업은 녹색, 나머지는 회색), 액션 유형(색상별 배지), 대상 서버 또는 리소스, 수행자, 경과 시간이 표시됩니다(마우스를 올리면 정확한 시각이 표시됩니다). 웹 콘솔에서 한 작업은 수행자가 `console`로 표시됩니다([감사 로그](#감사-로그) 참조). 실패한 작업에는 상태 배지가 추가로 표시됩니다. **View All**을 클릭하면 전체 감사 로그 페이지로 이동합니다.
 
 ### 최근 업데이트 피드
 
-**Recent Updates** 섹션은 mcctl 플랫폼 자체의 최신 버전 변경 로그를 보여줍니다. 최근 릴리스에 추가된 기능이나 수정된 버그를 빠르게 확인할 수 있습니다.
+**Recent Updates** 카드는 GitHub `main` 브랜치에 있는 프로젝트 `CHANGELOG.md`의 최신 릴리스를 보여줍니다. 버전, 날짜, **Added**, **Fixed**, **Changed** 항목이 표시됩니다. 그 버전이 설치된 콘솔보다 새로우면 **Update available** 칩이 나타나고, **View all**은 GitHub의 전체 변경 로그를 엽니다.
+
+콘솔 서버가 변경 로그를 직접(`GET /api/changelog`를 통해) 가져와 1시간 동안 캐시합니다. GitHub에 연결할 수 없으면 마지막으로 가져온 내용을 계속 보여주고, 가져온 내용이 없으면 카드에 "Unable to load updates"가 표시됩니다.
 
 ---
 
@@ -139,7 +145,7 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 
 - **서버 이름** (예: `botagent`, `factory`, `wild-deity`)
 - **상태 배지** -- `Running`(녹색), `Stopped`(빨간색), 또는 `Created` / `Not Created`
-- **호스트명**과 추가 호스트명 수 (예: `botagent.local +2`) -- `+2` 칩을 클릭하면 모든 호스트명이 표시됩니다
+- **호스트명** -- 대표 주소(서버에 LAN nip.io 주소가 있으면 그 주소)와 추가 호스트명 수 (예: `botagent.192.168.1.10.nip.io +2`) -- `+2` 칩을 클릭하면 모든 호스트명이 표시됩니다
 - **컨테이너 이름** (예: `mc-botagent`)
 - **빠른 작업 버튼** -- 우측 하단에 중지된 서버는 시작(Play), 실행 중인 서버는 중지(Stop) 버튼
 
@@ -159,7 +165,7 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 
 페이지 헤더의 **+ Create Server** 버튼을 클릭하면 **Create New Server** 다이얼로그가 열립니다. 다이얼로그에서 다음을 설정합니다:
 
-1. **Server Name** -- 서버의 고유 식별자 (소문자, 숫자, 하이픈만 사용 가능)
+1. **Server Name** -- 서버의 고유 식별자. 소문자, 숫자, 하이픈으로 된 2-32자이며, 문자로 시작하고 하이픈으로 끝나지 않으며 `--`를 포함할 수 없습니다. `router`는 예약된 이름입니다
 2. **Server Type** -- 토글로 카테고리를 선택합니다:
     - **Standard Server** -- **Server Type**(VANILLA, PAPER, FABRIC, FORGE, NEOFORGE)과 **Minecraft Version**(예: `1.21.1`, `LATEST`)을 선택합니다. 기본값은 VANILLA와 `LATEST`입니다. 다른 유형은 로더가 최신 Minecraft 릴리스를 아직 지원하지 않을 수 있으니, 그럴 때는 `1.21.1`처럼 버전을 지정하세요
     - **Modpack** -- Modrinth 모드팩을 이름으로 검색하거나(`cobblemon` 같은 slug를 직접 입력해도 됩니다) **Mod Loader**와 호환되는 **Minecraft Version**을 선택합니다. 감지된 클라이언트 전용 모드는 **Exclude mods (optional)**에 자동으로 추가되며, 쉼표로 구분된 이 목록은 직접 수정할 수 있습니다
@@ -168,7 +174,11 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 5. **Sudo Password** -- mDNS 호스트명 등록(avahi)에 필요합니다. 비워 두고 **Create**를 누르면 확인 창이 뜹니다. 호스트의 sudo가 비밀번호를 묻지 않으면 **Continue without password**를, 비밀번호를 입력하려면 **Enter password**를 선택하세요
 6. **Auto-start after creation** -- 생성 직후 서버를 시작합니다
 
-**Create**를 클릭하면 시작됩니다. 다이얼로그가 Server-Sent Events 기반의 진행 화면(**Initializing**, **Creating**, **Configuring**, **Starting**)으로 바뀌고, **Server Created Successfully** 또는 **Creation Failed**로 끝납니다.
+**Create**를 클릭하면 시작됩니다. 다이얼로그는 mcctl-api가 서버를 만들 때까지 기다린 뒤 진행 화면(**Initializing**, **Creating**, **Configuring**, **Starting**)을 차례로 보여줍니다. 결과는 다음 중 하나입니다:
+
+- **Server Created Successfully**
+- **Server Created with a Warning** -- 서버는 만들어졌지만 첫 시작이 실패했거나 아직 백그라운드에서 진행 중입니다(예: 이미지를 받는 중). 다이얼로그가 열린 채로 이유를 보여주므로, 서버 상세 페이지에서 서버를 시작하거나 상태를 확인하세요
+- **Creation Failed** -- 오류가 Servers 페이지에 표시됩니다
 
 ### 서버 상세 페이지
 
@@ -177,18 +187,20 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 #### 헤더 섹션
 
 - 목록으로 돌아가는 **All servers** 버튼
-- 서버 이름, `Minecraft <버전> · <유형>`, 호스트명, 가동 시간(Uptime)
-- 현재 서버 상태를 나타내는 상태 배지, 헬스 배지(예: `Healthy`, `Unhealthy`), 실시간 연결 복구 중에 표시되는 **Reconnecting** 배지
+- 서버 이름과 그 옆의 **Switch server** 버튼. 서버 목록(실행 중인 서버는 녹색 점으로 표시)을 보여주고 고른 서버를 엽니다
+- 현재 상태(예: `Running`, `Exited`), 헬스(예: `Healthy`, `Unhealthy`, 컨테이너에 헬스 체크가 없으면 `Unknown`), 서버 유형, Minecraft 버전을 나타내는 칩과, 실시간 연결 복구 중에 표시되는 **Reconnecting** 칩
+- 호스트명(복사 버튼과 추가 호스트명 수 포함)과 가동 시간(Uptime)
 - 중지된 서버에는 **Start**, 실행 중인 서버에는 **Stop**과 **Restart** 버튼
-- **⋮** 메뉴의 **Delete Server**. 확인 다이얼로그에서 서버 이름을 직접 입력해야 하며, 삭제는 되돌릴 수 없습니다. 다이얼로그에서 월드 처리 방식도 선택합니다. 기본값인 **Keep the world (move to worlds/)** 는 서버 내부 월드를 `worlds/`로 옮기고(이미 `worlds/`에 있는 월드는 할당만 해제), **Delete the world inside the server too** 는 서버 내부 월드까지 삭제합니다. `worlds/`의 월드는 삭제되지 않습니다. 삭제가 실패하면(예: `worlds/<이름> already exists`) 아무것도 삭제되지 않으며 오류가 화면에 표시됩니다
+- **⋮** 메뉴의 **Delete Server**. 확인 다이얼로그에서 서버 이름을 직접 입력해야 하며, 삭제는 되돌릴 수 없습니다. 실행 중인 서버는 중지된 뒤 제거됩니다. 다이얼로그에서 월드 처리 방식도 선택합니다. 기본값인 **Keep the world (move to worlds/)** 는 서버 내부 월드를 `worlds/`로 옮기고(이미 `worlds/`에 있는 월드는 할당만 해제), **Delete the world inside the server too** 는 서버 내부 월드까지 삭제합니다. `worlds/`의 월드는 삭제되지 않습니다. 삭제가 실패하면(예: `worlds/<이름> already exists`) 아무것도 삭제되지 않으며 오류가 화면에 표시됩니다
+- 삭제 다이얼로그에는 선택 입력인 **Sudo Password** 필드가 있으며, `/etc/avahi/hosts`에서 서버의 `<이름>.local` 항목을 지울 때 사용합니다. sudo가 비밀번호를 묻지 않는 호스트에서는 비워 두세요. 비밀번호는 이 요청에만 사용되고 다이얼로그를 닫으면 지워집니다. 호스트명 항목이나 일부 파일을 지우지 못하면 다이얼로그가 **Server deleted**로 바뀌어 경고를 보여주며, **Close**를 누르면 서버 목록으로 돌아갑니다
 
 #### 탐색 탭
 
-서버 상세 페이지는 10개의 탭으로 구성됩니다:
+서버 상세 페이지는 아이콘이 붙은 10개의 탭으로 구성됩니다. **Players** 탭에는 접속 중인 플레이어 수가, **Mods** 탭에는 Mods 탭이 한 번 불러온 뒤부터 설치된 모드 파일 수가 표시됩니다. 탭을 바로 열려면 URL에 `?tab=<Tab>`을 붙이세요. 예: `/servers/survival?tab=Options`
 
 | 탭 | 설명 |
 |----|------|
-| **Overview** | 실시간 로그 출력과 RCON 명령 입력이 가능한 서버 콘솔, 서버 정보, 플레이어, 연결 정보 |
+| **Overview** | 실시간 로그 출력과 RCON 명령 입력이 가능한 서버 콘솔, 설정, 접속 중인 플레이어, 연결 정보 |
 | **Players** | 관리 액션과 플레이어별 상세 보기를 제공하는 온라인 + 오프라인 플레이어 목록 (v2.27.0+) |
 | **World** | 할당된 월드의 정보, BlueMap 웹 지도, 광석 및 블록 통계, 플레이어 위치 |
 | **Activity** | 이 서버에서 수행된 모든 작업의 서버별 감사 기록 |
@@ -201,11 +213,13 @@ v2.28.0부터 대시보드 최상단에 플랫폼 상태를 요약하는 상태 
 
 #### 리소스 모니터링
 
-탭 아래의 3개 통계 카드가 선형 진행 막대와 함께 실시간 리소스 사용량을 표시합니다:
+탭 위의 3개 카드가 리소스 사용량을 표시합니다:
 
-- **CPU usage** -- 현재 CPU 사용률
-- **Memory usage** -- 할당된 메모리 대비 현재 RAM 소비량 백분율
-- **World size** -- 현재 월드가 사용하는 디스크 공간
+- **CPU usage** -- 소수점 한 자리까지 표시한 현재 CPU 사용률. 70%부터 **High**, 90%부터 **Critical**로 표시됩니다
+- **Memory usage** -- 할당된 메모리 대비 사용 중인 RAM(`used / allocated`, GB 단위)과 백분율. 같은 **High** / **Critical** 표시가 붙습니다
+- **World size** -- 현재 월드가 사용하는 디스크 공간과 월드 이름
+
+리소스 통계가 없으면(예: 서버가 중지된 동안) CPU와 메모리 카드에 `—`와 "No data"가 표시됩니다.
 
 ### Overview 탭
 
@@ -217,31 +231,30 @@ Overview 탭은 서버 상세 페이지를 열었을 때 기본으로 표시되�
 
 Overview 탭의 핵심은 **Console** 패널로, 서버의 실시간 로그 출력과 명령어 인터페이스에 직접 접근할 수 있습니다:
 
-- **실시간 로그 스트림** -- 콘솔은 서버 로그 메시지를 실시간으로 표시합니다. 월드 로딩, 플레이어 접속, 게임 상태 변경 등의 서버 이벤트에 대한 타임스탬프가 포함된 항목을 보여줍니다. 각 로그 줄에는 타임스탬프와 로그 레벨(예: `INFO`)이 포함되어 문제 해결에 유용합니다. RCON 관련 로그 줄은 숨겨지며, 헤더에는 로그 스트림의 **Connected** / **Disconnected** 표시가 있습니다.
-- **명령어 입력** -- 콘솔 하단의 **"Send a command"** 입력 필드에서 RCON을 통해 Minecraft 서버 명령어를 직접 실행할 수 있습니다. 명령어(예: `say Hello!`, `gamemode creative Player1`, `time set day`)를 입력하고 Enter를 누르면 서버로 전송됩니다. 명령어 결과는 위의 로그 스트림에 표시됩니다. 로그 스트림 연결이 끊기면 입력 필드가 비활성화됩니다.
-- **자동 스크롤** -- 콘솔은 최신 로그 항목이 도착하면 자동으로 스크롤됩니다. 이전 로그를 읽으려고 위로 스크롤하면 모서리에 맨 아래로 이동하는 버튼이 나타납니다.
-- **확장 콘솔** -- 콘솔 우측 상단의 확장 버튼을 누르면 전체 화면 **Console - `<서버>`** 다이얼로그가 열립니다. 로그 레벨 필터(**ALL**, **INFO**, **WARN**, **ERROR**), **Auto-scroll** 및 **Hide RCON** 체크박스, 로그 지우기 버튼, 연결이 끊겼을 때의 **Reconnect** 버튼, **Quick** 명령 버튼(`say`, `give`, `tp`, `gamemode`), 그리고 **Enter command...** 입력창과 **Send** 버튼이 제공됩니다.
+- **실시간 로그 스트림** -- 콘솔은 서버 로그 메시지를 실시간으로 표시합니다. 월드 로딩, 플레이어 접속, 게임 상태 변경 등의 서버 이벤트에 대한 타임스탬프가 포함된 항목을 보여줍니다. 각 로그 줄에는 타임스탬프와 로그 레벨(예: `INFO`)이 포함되어 문제 해결에 유용합니다. 로그 줄은 이벤트에 따라 색이 다릅니다. 오류는 빨간색, 경고는 황색, 플레이어 입장은 녹색, 퇴장은 파란색, 시작 완료("Done") 줄은 녹색입니다. RCON 관련 로그 줄은 숨겨지며, 헤더에는 로그 스트림의 **Connected** / **Disconnected** 표시가 있습니다.
+- **명령어 입력** -- 콘솔 하단의 `>` 프롬프트 뒤에 명령어(예: `say Hello!`, `gamemode creative Player1`, `time set day`)를 입력하고 Enter를 누르거나 **Send**를 클릭하면 RCON으로 실행됩니다. 입력 필드 아래의 칩(`/list`, `/tps`, `/save-all`, `/say`, `/whitelist list`)을 누르면 해당 명령어가 입력 필드에 들어갑니다. 명령어에 대한 RCON 응답은 표시되지 않으며, 콘솔에는 서버가 로그에 기록한 내용만 보입니다. 서버가 실행 중이 아니거나 로그 스트림이 연결 중 또는 재연결 중이면 입력 필드가 비활성화되고, 그 이유가 아래에 표시됩니다. 요청이 실패하면 오류가 입력 필드 아래에 표시됩니다.
+- **도구 모음** -- 패널 헤더에 **Jump to latest**(위로 스크롤했을 때 표시), **Download logs**(콘솔에 있는 로그 줄을 `<server>-console.log`로 저장), **Clear console (screen only)**, **Expand console**이 있습니다.
+- **자동 스크롤** -- 맨 아래에 있는 동안 콘솔은 새 로그 항목을 따라갑니다. 위로 스크롤하면 이전 로그를 읽을 수 있고, **Jump to latest**로 다시 내려갑니다.
+- **확장 콘솔** -- **Expand console**을 누르면 전체 화면 **Console - `<서버>`** 다이얼로그가 열립니다. 로그 레벨 필터(**ALL**, **INFO**, **WARN**, **ERROR**), **Auto-scroll** 및 **Hide RCON** 체크박스, 로그 지우기 버튼, 연결이 끊겼을 때의 **Reconnect** 버튼, **Quick** 명령 버튼(`say`, `give`, `tp`, `gamemode`), 그리고 **Enter command...** 입력창과 **Send** 버튼이 제공됩니다. 입력창에서 위/아래 화살표 키로 다이얼로그에서 보낸 명령어를 다시 불러올 수 있습니다. 이 다이얼로그도 RCON 응답은 표시하지 않습니다.
 
 !!! tip "콘솔 명령어"
     콘솔은 모든 표준 Minecraft 서버 명령어를 지원합니다. 명령어 앞에 `/`를 붙일 필요 없이, 명령어 이름과 인수를 직접 입력하면 됩니다 (예: `whitelist add Player1`).
 
-#### 서버 정보
+#### 설정
 
-콘솔 아래의 **Server Information** 카드는 서버 구성과 런타임 상태에 대한 핵심 정보를 표시합니다:
+콘솔 아래의 **Settings** 패널은 헤더에 표시되지 않는 정보를 보여줍니다:
 
 | 필드 | 설명 |
 |------|------|
-| **Name** | 서버의 표시 이름 (예: `botagent`) |
 | **Container** | Docker 컨테이너 이름 (예: `mc-botagent`) |
-| **Hostname** | 클라이언트 연결을 위한 주 호스트명 (예: `botagent.local`) |
-| **Type** | 서버 플랫폼 유형 (VANILLA, PAPER, FORGE, NEOFORGE, FABRIC 등) |
-| **Version** | Minecraft 게임 버전 (예: `1.21.11`) |
-| **Memory** | 할당된 JVM 메모리 (예: `2G`) |
-| **Uptime** | 마지막 시작 이후 서버 실행 시간 |
+| **Memory allocation** | 할당된 메모리 (예: `4G`) |
+| **World** | 서버가 사용하는 월드 |
+
+서버 이름, 유형, Minecraft 버전, 호스트명, 가동 시간은 [헤더](#헤더-섹션)에 있습니다.
 
 #### 플레이어
 
-**Players** 카드는 `online / max` 플레이어 수와 현재 서버에 접속 중인 플레이어의 이름을 보여줍니다. 플레이어 목록을 읽을 수 없을 때는 "Player information unavailable"이 표시됩니다.
+**Players** 패널은 `online / max` 플레이어 수와 함께 접속 중인 플레이어를 한 줄씩 보여주며, 각 줄에는 아바타와 **OP**, **Whitelisted** 배지가 붙습니다. 줄을 클릭하면 [플레이어 상세 모달](#플레이어-상세-모달)이 열립니다. 접속한 플레이어가 없으면 "No players online"이 표시됩니다.
 
 #### 연결 정보
 
@@ -251,6 +264,10 @@ Overview 탭의 핵심은 **Console** 패널로, 서버의 실시간 로그 출�
 - **External Address** -- 이 서버에 할당된 playit.gg 도메인(복사 버튼 포함) 또는 `Not configured`. playit.gg가 활성화된 경우에 이 행이 표시됩니다
 
 복사 버튼은 다른 기기에서 일반 HTTP로 콘솔을 열었을 때도 동작하며, 복사에 실패하면 메시지를 표시합니다.
+
+### 서버 콘솔 페이지
+
+대시보드에서 실행 중인 서버의 **Console** 버튼을 누르면 해당 서버의 전체 페이지 콘솔인 `/servers/<name>/console`이 열립니다. 헤더에는 연결 상태(**Connected**, **Connecting**, **Disconnected (Retry N)**), 브레드크럼(**Servers** › 서버 이름 › **Console**), 서버 상세 페이지로 돌아가는 버튼이 있습니다. 콘솔 자체는 [확장 콘솔](#콘솔)과 같이 동작합니다. 로그 레벨 필터, **Auto-scroll**, **Hide RCON**, **Quick** 명령 버튼, 기록을 지원하는 명령어 입력창이 있으며, 명령어에 대한 RCON 응답은 표시하지 않습니다.
 
 ### Players 탭
 
@@ -504,9 +521,9 @@ Options 탭은 서버의 포괄적인 구성 편집기를 제공합니다.
 Options 탭 상단의 **Hostnames / Domains** 카드는 이 서버로의 연결 라우팅에 구성된 모든 호스트명을 보여줍니다:
 
 - **System Hostnames (read-only)** -- 자동 생성된 호스트명 (예: `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
-- **Custom Domains** -- 사용자 정의 커스텀 도메인 이름. 각 도메인에 삭제 버튼이 있습니다
+- **Custom Domains** -- 사용자 정의 커스텀 도메인 이름. 각 도메인에 삭제 버튼이 있습니다. 서버에 playit.gg 도메인이 있으면 여기에 **playit** 칩과 함께 표시됩니다. 이 도메인을 지우면 서버의 playit.gg 도메인이 해제되고, 같은 저장에서 새 도메인 하나로 바꾸면 그 도메인이 playit.gg 도메인이 됩니다
 - 추가 커스텀 호스트명을 입력하는 **+ Add Domain** 버튼. `.local` 또는 `.nip.io`로 끝나는 도메인은 시스템 호스트명 전용이므로 사용할 수 없습니다
-- 목록을 저장하는 **Save Hostnames** 버튼. 호스트명 변경은 서버 컨테이너를 재생성해야 적용됩니다 -- `docker compose up -d`를 실행하거나 웹 콘솔에서 서버를 재시작하세요
+- 목록을 저장하는 **Save Hostnames** 버튼. 호스트명 변경은 서버 컨테이너를 재생성해야 적용됩니다. 서버를 중지한 뒤 다시 시작하거나(**Restart**로는 적용되지 않습니다) `docker compose up -d`를 실행하세요
 
 #### 설정 섹션
 
@@ -639,7 +656,7 @@ Worlds 페이지에서 플랫폼에 저장된 모든 Minecraft 월드를 관리�
 
 페이지 헤더의 **+ Create World**를 클릭하면 **Create New World** 다이얼로그가 열립니다:
 
-1. **World Name** 입력 (소문자, 숫자, 하이픈)
+1. **World Name** 입력 (영문자, 숫자, 하이픈, 밑줄)
 2. 선택적으로 **Seed** 지정 (비워 두면 무작위 시드)
 3. **Create** 클릭
 
@@ -683,7 +700,9 @@ Backups 페이지에서 월드 백업, 자동 백업 스케줄, 서버 구성 �
 
 #### 수동 백업
 
-페이지 헤더의 **Push Backup** 버튼을 클릭하면 모든 월드를 구성된 Git 리포지토리로 즉시 수동 백업합니다. 다이얼로그에서 선택 사항인 **Commit Message**를 입력한 뒤 **Push**를 클릭합니다.
+페이지 헤더의 **Push Backup** 버튼을 클릭하면 모든 월드를 구성된 Git 리포지토리로 즉시 수동 백업합니다. 다이얼로그에서 선택 사항인 **Commit Message**(`Backup <날짜>`로 미리 채워짐)를 입력한 뒤 **Push**를 클릭합니다.
+
+마지막 백업에 있던 월드가 사라졌으면 푸시가 중단되므로, 실수로 지운 월드가 백업에서 빠지지 않습니다. 일부러 지운 월드라면 **Push**를 누르기 전에 **Remove worlds I deleted on purpose from the backup**을 체크하세요(`mcctl backup push --allow-missing`과 같습니다).
 
 #### 백업 스케줄
 
@@ -699,7 +718,7 @@ Backups 페이지에서 월드 백업, 자동 백업 스케줄, 서버 구성 �
 
 #### 백업 이력
 
-**Backup History** 카드(백업 시스템이 구성된 경우 표시)는 과거 백업의 커밋 해시, 날짜, 메시지, 작성자를 보여줍니다. 행의 복원 버튼은 **Restore Backup**을 여는데, 선택한 백업으로 모든 월드가 복원되며 현재 월드 데이터를 덮어쓴다는 경고가 표시됩니다.
+**Backup History** 카드(백업 시스템이 구성된 경우 표시)는 과거 백업의 커밋 해시, 날짜, 메시지, 작성자를 보여줍니다. 행의 복원 버튼은 **Restore Backup**을 여는데, 선택한 백업으로 모든 월드가 복원되며 현재 월드 데이터를 덮어쓴다는 경고가 표시됩니다. 먼저 모든 서버를 중지하세요. 실행 중인 서버가 하나라도 있으면 복원이 거부됩니다("Stop all servers before restoring").
 
 ### Config Snapshots
 
@@ -720,104 +739,52 @@ Backups 페이지에서 월드 백업, 자동 백업 스케줄, 서버 구성 �
 
 ## 감사 로그
 
-Audit Log 페이지는 서버 전체에서 수행된 모든 관리 작업에 대한 포괄적인 활동 로그를 제공합니다.
+**Audit** 페이지(`/audit-logs`)는 mcctl-api와 CLI가 기록한 관리 작업을 보여줍니다. "new logs available" 배너가 있는 **Live** / **Disconnected** 표시, 요약 카드 4개, 필터, 펼칠 수 있는 행과 상세 드로어가 있는 테이블, CSV / JSON 내보내기(최대 5,000행)를 제공합니다.
 
 ![감사 로그](../images/audit-log.png)
 
-### 실시간 모니터링
+**Actor** 컬럼에서 웹 콘솔에서 한 작업은 `console`(`api:console`로 기록)로 표시됩니다. 로그인한 사용자의 이름이 기록되는 것은 Platform Settings 변경과 파일 작업뿐입니다. CLI 명령어는 `local`로 표시됩니다.
 
-감사 로그에는 페이지 헤더에 실시간 SSE 연결 상태를 보여주는 **Live** 인디케이터가 있습니다:
-
-- **녹색 점 + "Live"** -- 연결됨, 실시간 이벤트 수신 중
-- **회색 점 + "Disconnected"** -- SSE 연결 끊김 (자동 재연결)
-
-페이지를 보는 동안 새 감사 이벤트가 도착하면 알림 배너가 나타납니다: "X new logs available - Click to refresh."
-
-### 통계 개요
-
-상단의 4개 통계 카드가 요약 지표를 제공합니다:
-
-| 카드 | 설명 |
-|------|------|
-| **Total Logs** | 전체 감사 로그 항목 수 |
-| **Success Rate** | 성공한 작업의 비율 |
-| **Failures** | 실패한 작업 수 |
-| **Active Users** | 작업을 수행한 고유 사용자 수 |
-
-### 필터
-
-**Filters** 패널은 접을 수 있고, 활성 필터 수를 표시하며, **Clear All** 버튼이 있습니다. 다음 필터를 제공합니다:
-
-- **From** / **To** -- 시작 및 종료 날짜로 필터링
-- **Action** -- 특정 액션 유형으로 필터링 (예: `server.start`, `server.stop`, `backup.schedule.create`). 대상 유형을 선택하면 목록이 서버 또는 플레이어 액션으로 좁혀집니다
-- **대상 유형** -- 대상 카테고리로 필터링: ALL, SERVER, PLAYER
-- **상태** -- ALL, SUCCESS, FAILURE
-- **Target Name** -- 서버, 월드, 플레이어 이름으로 검색
-- **Actor** -- 작업을 수행한 사용자 이름으로 검색 (예: `api:admin`)
-- **Export** 버튼 -- 필터링된 감사 데이터 내보내기
-
-### 로그 테이블
-
-메인 테이블에 다음 컬럼의 감사 항목이 표시됩니다:
-
-| 컬럼 | 설명 |
-|------|------|
-| **Timestamp** | 작업이 수행된 시점 (상대 시간, 예: "21m ago". 마우스를 올리면 정확한 시각 표시) |
-| **Action** | 색상별 배지가 있는 액션 유형 |
-| **Actor** | 작업을 수행한 사용자명 |
-| **Target** | 영향을 받은 서버 또는 플레이어 (해당 서버 또는 Players 페이지로 연결) |
-| **Status** | 성공(녹색) 또는 실패(빨간색) 표시 |
-
-행 앞의 화살표로 상세 내용을 펼칠 수 있으며, 실패한 항목은 펼쳐진 상태로 시작하여 오류 메시지를 보여줍니다. 아무 행이나 클릭하면 **Audit Log Detail** 드로어가 열리며 항목 ID, 타임스탬프, 액션, 상태, 수행자, 대상, 오류 메시지, 액션 세부 정보와 함께 **Related Logs**(**Same Target**, **Same Actor**)가 표시됩니다.
-
-### 내보내기
-
-**Export** 버튼을 클릭하면 **Export Audit Logs** 다이얼로그가 열립니다. **CSV** 또는 **JSON**을 선택하고, 적용된 필터와 예상 행 수를 확인한 뒤 파일을 다운로드합니다. 내보내기는 5,000행으로 제한되므로 더 필요하면 필터를 좁히세요.
+필터, 테이블, 상세 드로어, 내보내기는 [감사 로그 웹 콘솔 가이드](audit-log-ui.md)를 참고하세요.
 
 ---
 
 ## 라우팅
 
-Routing 페이지에서 네트워크 라우팅 구성을 완전히 확인하고 제어할 수 있습니다. 헤더에는 라우터 상태와 라우트 수가 표시됩니다.
+Routing 페이지는 플레이어가 mc-router를 거쳐 서버에 접속하는 경로를 보여줍니다. 헤더에는 라우터 컨테이너 상태와 라우팅되는 서버 및 호스트명 수(예: "3 servers · 8 hostnames")가 표시됩니다. 관리자에게는 **Restart mc-router** 버튼도 표시됩니다([mc-router 재시작](#mc-router-재시작) 참조).
 
 ![라우팅](../images/routing.png)
 
-### MC-Router 상태
+### 라우팅 테이블
 
-왼쪽의 넓은 패널에 라이브 라우팅 테이블과 함께 **MC-Router Status**가 표시됩니다:
+**Routing Table** 패널은 서버마다 한 줄입니다. 접힌 줄에는 다음이 보입니다:
 
-- 라우터 상태와 헬스 칩 (예: `running`, `healthy`)
-- **Routing Table**은 서버마다 한 줄입니다. 접힌 줄에는 다음이 보입니다:
-    - 서버 이름, 서버 유형과 Minecraft 버전, 상태 (예: **Sleeping · wakes on connect**)
-    - 대표 주소(nip.io, mDNS, WAN, Custom 순서로 첫 번째)와 복사 버튼, 나머지 호스트명 수
-    - 호스트명 유형 (예: `nip.io ×2`, `mDNS`, `WAN`). mc-router가 모르는 호스트명이 있으면 **N not routed** 경고
-    - **Wake/Start**, **Edit hostnames**, **Open server**
-- 줄(또는 화살표)을 클릭하면 그 서버의 모든 호스트명이 복사 버튼, 유형, 필요하면 **Not routed** 경고와 함께 펼쳐집니다. 여러 서버를 동시에 펼칠 수 있고, **Expand all** / **Collapse all**로 한 번에 펼치거나 접습니다.
-- 검색창은 서버 이름과 호스트명을 찾습니다. 호스트명이 일치하면 그 서버가 펼쳐지고 일치한 호스트명이 강조됩니다.
+- 서버 이름과 서버 유형, Minecraft 버전
+- 유형 배지와 복사 버튼이 붙은 대표 주소, 그리고 서버의 나머지 호스트명 수를 나타내는 `+N`. 대표 주소는 nip.io, mDNS, WAN, Custom 순서로 라우팅되는 첫 번째 호스트명입니다
+- 상태(예: **Running**, **Sleeping · wakes on connect**)와, mc-router가 서버의 일부 호스트명을 모르면 **N not routed** 경고
+- 중지된 서버의 **Wake**(또는 **Start**), 서버의 [Options 탭](#options-탭)을 여는 **Edit hostnames**, **Open server**
 
-### 플랫폼 정보
+줄(또는 화살표)을 클릭하면 그 서버의 모든 호스트명이 복사 버튼, 유형, 필요하면 **Not routed** 경고와 함께 펼쳐집니다. 여러 서버를 동시에 펼칠 수 있고, **Expand all** / **Collapse all**로 한 번에 펼치거나 접습니다. 검색창은 서버 이름과 호스트명을 찾습니다. 호스트명이 일치하면 그 서버가 펼쳐지고 일치한 호스트명이 강조됩니다.
 
-**Platform Information** 카드에 mc-router 설정에 대한 정보가 표시됩니다:
+### 라우팅 흐름
 
-| 필드 | 설명 |
-|------|------|
-| **Router Name** | mc-router 컨테이너 이름 |
-| **Port** | 수신 포트 (기본값: 25565) |
-| **Mode** | 라우팅 모드 (예: `Auto Discovery`) |
-| **Uptime** | 라우터 실행 시간 |
+**Routing Flow** 다이어그램은 현재 라우트를 그립니다. 호스트명 유형별 개수(mDNS, nip.io, WAN, Custom), 상태와 포트가 표시된 mc-router, 상태가 표시된 서버 최대 8개 순서이며, 나머지 서버는 `+N more`로 표시됩니다.
 
-### 네트워크 설정
+### 실시간 라우터 로그
 
-**Network Settings** 카드에 다음이 표시됩니다:
+**Live Router Log** 패널은 mc-router 로그를 따라갑니다. 각 줄에는 시각, 종류(**CONNECT**, **WAKE**, **ERROR**, **INFO**), 접속과 깨우기는 호스트명과 대상 서버(그 밖의 줄은 로그 내용), 로그 줄에 있으면 플레이어 이름이 표시됩니다. 패널은 최근 500줄을 유지하며, **Auto-scroll** 스위치와 **Clear** 버튼, 스트림 상태(**Connecting**, **Live**, **Disconnected**, **Ended**) 표시가 있습니다.
 
-- **Listening Port** -- mc-router가 수신하는 포트
-- **Routing Mode** -- 호스트명 해석 방법 (예: `Auto Discovery`)
-- **Total Routes** -- 라우팅 항목 수
-- **Active Routes** -- 서버가 실행 중인 라우트 수, "x / y" 형식
+### mc-router Gateway
 
-### mDNS (Avahi) 상태
+**mc-router Gateway** 카드는 라우터 컨테이너의 상태와 헬스, 리슨 **Port**, **Active routes**(서버가 실행 중인 라우트, `x / y` 형식), **Container** 이름, **Mode**(예: `Auto Discovery`), **Uptime**, **Image**를 보여줍니다. 라우터의 auto-scale 설정을 읽을 수 있으면 **Auto-scale up**, **Auto-scale down**, **Idle time**과, 잠든 서버가 서버 목록에 보여주는 **Asleep MOTD** 미리보기도 표시합니다.
 
-**mDNS (Avahi)** 카드는 Avahi mDNS 데몬의 활성 상태를 보여줍니다. 이를 통해 로컬 네트워크의 Minecraft 클라이언트가 `.local` 호스트명을 사용하여 서버에 연결할 수 있습니다.
+### 호스트명 해석
+
+**Hostname Resolver** 카드는 nip.io 호스트명에 쓰이는 호스트 IP 목록(대표 IP에는 **Primary** 표시), 복사 버튼이 붙은 nip.io 주소 예시, **mDNS (Avahi)** 상태를 보여줍니다. 로컬 네트워크에서 `.local` 호스트명이 해석되려면 Avahi가 실행 중이어야 합니다.
+
+### mc-router 재시작
+
+페이지 헤더의 **Restart mc-router**는 관리자에게만 표시됩니다. 먼저 확인을 요청하며, mc-router를 통해 접속한 플레이어의 연결이 끊기고 라우터가 다시 올라올 때까지 새 접속이 실패합니다. 실행 중인 서버는 중지되지 않습니다. 라우터 컨테이너가 없으면 버튼이 비활성화됩니다.
 
 ### 외부 접근 (playit.gg)
 
@@ -828,7 +795,7 @@ Routing 페이지에서 네트워크 라우팅 구성을 완전히 확인하고 
 - 외부 도메인이 구성된 서버를 보여주는 **Server Domains** 테이블 (예: `possible-tracks.gl.joinmc.link`), 각 도메인에 복사 버튼 포함
 - 외부 도메인이 없는 서버 목록
 
-playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되며 `PLAYIT_SECRET_KEY` 설정을 안내합니다.
+playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시됩니다. 사용하려면 `PLAYIT_SECRET_KEY`를 설정하세요(예: `mcctl playit setup`).
 
 ---
 
@@ -882,8 +849,9 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 
 ![Platform Settings](../images/platform-settings.png)
 
-- **Bento 카드** -- 설정은 Network & Routing, Server Runtime, RCON, Backup, External Access (playit.gg), Console & Logging 카드로 그룹화됩니다. 각 필드는 타입별 입력(텍스트, 스위치, 선택, 숫자, IP 목록)과 필드 단위 검증을 제공합니다
-- **시크릿은 쓰기 전용** -- 시크릿 필드(`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`)는 **Configured** 또는 **Not configured**만 표시합니다. 입력란은 미리 채워지지 않으며, 값을 입력하면 변경된 필드로 표시됩니다
+- **Bento 카드** -- 설정은 Network & Routing, Server Runtime, RCON, Backup, External Access, Console & Logging 카드로 그룹화됩니다. 각 필드는 타입별 입력(텍스트, 스위치, 선택, 숫자, IP 목록)과 필드 단위 검증을 제공합니다
+- **시크릿은 쓰기 전용** -- 시크릿 필드(`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`, `BETTER_AUTH_SECRET`)는 **Configured** 또는 **Not configured**만 표시합니다. 입력란은 미리 채워지지 않으며, 값을 입력하면 변경된 필드로 표시됩니다
+- **콘솔 로그인 설정** -- **Console & Logging**에는 `BETTER_AUTH_SECRET`(콘솔 세션 시크릿, 바꾸면 모든 사용자가 로그아웃됨)과 `BETTER_AUTH_BASE_URL`(콘솔의 공개 URL, [로그인 실패](#로그인-실패) 참조)이 있습니다
 - **Runtime (PM2)** -- `ecosystem.config.cjs`의 `AUTH_MODE`와, 이전 버전 ecosystem 파일이 아직 주입하는 경우 `BETTER_AUTH_BASE_URL` / `BETTER_AUTH_SECRET`(configured 여부만)을 읽기 전용 카드로 보여줍니다. ecosystem에 정의돼 있는 동안은 `.env`보다 우선하며 여기서 바꿀 수 없습니다. `mcctl upgrade`를 실행하면 `.env`로 옮겨집니다
 - **Advanced Environment** -- 알 수 없는 키를 key/value 행으로 추가, 편집, 삭제합니다. 이 키는 이름이 `servers/global.env`에 있을 때만 서버에 전달됩니다
 - **Legacy / Unused** -- Legacy 키를 경고 스타일로 표시합니다("Not read by any current code."). 직접 삭제하지 않는 한 아무것도 제거되지 않습니다
@@ -905,6 +873,7 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 | Router | `mcctl router start` (`restart`가 아님) |
 | playit | Routing 페이지에서 playit 에이전트를 stop 후 start하거나 `mcctl playit stop && mcctl playit start` |
 | API | `mcctl console service restart --api`. mcctl-api가 사용하는 설정은 재시작 전까지 "restart pending" 칩이 표시됩니다 |
+| Console | `mcctl console service restart --console` (mcctl-api도 함께 재시작됩니다). 세션 시크릿을 바꾸지 않았다면 아무도 로그아웃되지 않습니다 |
 | Next create | 이 변경 이후 생성하는 서버에 적용됩니다. 기존 서버의 호스트명은 바뀌지 않습니다 |
 
 페이지를 불러온 뒤 파일이 변경된 경우(예: CLI로 수정) 저장 시 **409 충돌**이 반환되고 대화상자가 새로고침을 안내합니다. 편집 내용은 자동으로 덮어써지지 않습니다.
@@ -915,7 +884,7 @@ playit.gg가 설정되지 않았다면 카드에 "Not configured"가 표시되�
 |------|-----|
 | Network & Routing | `mcctl init --reconfigure` |
 | Backup | `mcctl backup init` |
-| External Access (playit.gg) | `mcctl playit setup` |
+| External Access | `mcctl playit setup` |
 | Runtime (PM2) | `mcctl console init` |
 
 ---
@@ -946,7 +915,7 @@ mcctl console user reset-password user@example.com
 
 1. **강력한 비밀번호 사용** -- `mcctl console init` 과정에서 비밀번호 요구사항을 따르세요
 2. **접근 제한** -- Access 탭을 사용하여 각 사용자에게 최소한의 권한만 부여하세요
-3. **HTTPS 사용** -- 프로덕션 배포에서는 SSL이 포함된 리버스 프록시를 구성하세요
+3. **HTTPS 사용** -- 프로덕션 배포에서는 SSL이 포함된 리버스 프록시를 구성하고, `BETTER_AUTH_BASE_URL`을 프록시 URL로 설정하세요([로그인 실패](#로그인-실패) 참조)
 4. **감사 로그 검토** -- 예상치 못한 활동이 있는지 정기적으로 감사 로그를 확인하세요
 
 ### 서버 관리
@@ -1011,11 +980,13 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
 
 === "방법 2: DO_NOT_TRACK"
 
-    PM2 `ecosystem.config.cjs`의 mcctl-console `env`에 `DO_NOT_TRACK=1`을 추가한 뒤 콘솔을 재시작합니다.
+    PM2 `ecosystem.config.cjs`의 mcctl-console `env`에 `DO_NOT_TRACK=1`을 추가한 뒤, 새 `env`를 읽도록 PM2 프로세스를 다시 만듭니다. 일반 `mcctl console service restart`는 PM2가 이미 가진 환경을 그대로 유지합니다.
 
     ```bash
-    mcctl console service restart
+    mcctl console service restart --console --force
     ```
+
+    `--force`는 PM2 데몬을 종료하므로 PM2가 관리하는 다른 앱도 함께 중지됩니다([`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart) 참조). `mcctl console init --force`는 이 설정이 없는 새 `ecosystem.config.cjs`를 작성합니다.
 
 ---
 
@@ -1049,6 +1020,12 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
    ```bash
    mcctl console user reset-password <email>
    ```
+
+3. **접속 주소 확인:** 콘솔은 `localhost`, 사설 LAN 주소(`10.x`, `172.16.x`-`172.31.x`, `192.168.x`), `.local` 이름, 그리고 `BETTER_AUTH_BASE_URL`의 URL(기본값 `http://localhost:<console port>`)에서 오는 로그인을 받습니다. Tailscale `100.x` 주소, 도메인 이름, HTTPS 리버스 프록시처럼 그 밖의 주소에서는 플랫폼 `.env`(또는 [Platform Settings](#플랫폼-설정-관리자))에서 `BETTER_AUTH_BASE_URL`을 그 URL로 설정하기 전까지 로그인이 실패합니다. 설정한 뒤 콘솔을 재시작하세요:
+   ```bash
+   mcctl console service restart --console
+   ```
+   `ecosystem.config.cjs`에 아직 `BETTER_AUTH_BASE_URL`이 정의된 설치에서는 먼저 `mcctl upgrade`를 실행하세요. 그 전까지는 ecosystem 값이 사용됩니다. 콘솔은 이 URL이 `https://`로 시작할 때만 secure 쿠키를 사용합니다.
 
 ### 서버 상태가 업데이트되지 않음
 

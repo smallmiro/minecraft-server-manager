@@ -64,12 +64,13 @@ mcctl automatically checks that all required software is installed and meets ver
 
 ```
 [1/6] Checking prerequisites...
-
-  Prerequisite Check Results:
-  ✓ Docker Engine    24.0.7
-  ✓ Docker Compose   2.24.5
-  ✓ Node.js          20.10.0
+  ✓ Node.js            v20.10.0  (>= 18.0.0)
+  ✓ Docker Engine      v24.0.7  (>= 24.0.0)
+  ✓ Docker Compose     v2.24.5  (>= 2.20.0)
+  ✓ avahi-daemon       running  (>= any)
 ```
+
+avahi-daemon is optional: when it is missing the line shows `⚠` with an install hint, and init continues.
 
 !!! warning "Prerequisite Failures"
     If any check fails, the init process stops and displays instructions on how to install the missing component. Fix the issue and run `mcctl init` again.
@@ -106,9 +107,13 @@ Configuration templates are copied to the data directory:
   Copied: .env
   Copied: .gitignore
   Copied: servers/compose.yml
+  Copied: servers/global.env
   Copied: servers/_template/docker-compose.yml
   Copied: servers/_template/config.env
+  ✓ Set DOCKER_GID from docker socket
 ```
+
+`servers/global.env` lists the platform `.env` keys that are passed to every server container. `DOCKER_GID` is the group of the Docker socket, which mc-router needs to read it.
 
 ### Step 4: Host IP Configuration
 
@@ -211,20 +216,18 @@ Console init verifies additional prerequisites beyond the platform init:
 
 ```
 Checking prerequisites...
-
-  Prerequisite Check Results:
-  ✓ Node.js          20.10.0
-  ✓ Docker Engine    24.0.7
-  ✓ Docker Compose   2.24.5
-  ✓ PM2              5.3.0
+  ✓ Node.js            v20.10.0  (>= 18.0.0)
+  ✓ Docker Engine      v24.0.7  (>= 24.0.0)
+  ✓ Docker Compose     v2.24.5  (>= 2.20.0)
+  ✓ PM2                v6.0.14  (>= 6.0.0)
 ```
 
 !!! warning "PM2 Required"
-    PM2 is required for managing the API and Console processes. If PM2 is not installed, install it globally:
+    `mcctl console init` stops when the `pm2` command is not on your `PATH` or is older than 6.0.0. Install PM2 globally:
     ```bash
     npm install -g pm2
     ```
-    PM2 is also bundled as a dependency of `mcctl` and installed automatically, but a global installation is recommended for direct PM2 commands.
+    mcctl also ships the PM2 library for its own calls (for example `mcctl console service`), but that does not put a `pm2` command on your `PATH`, so it does not satisfy this check.
 
 ### Step 2: Service Selection
 
@@ -234,7 +237,7 @@ You are prompted to select which services to install:
 Initialize Console Service
 
   Node.js: v20.10.0
-  PM2: 5.3.0
+  PM2: 6.0.14
 
 ? Select services to install:
   ✓ mcctl-api       - REST API server for managing Minecraft servers
@@ -322,7 +325,7 @@ Select the authentication mode for the REST API:
 If you selected `api-key` or `api-key-ip` mode, an API key is automatically generated:
 
 ```
-Generating API key...  done
+Generating API key...  API key generated
 ```
 
 The API key is displayed at the end of initialization. **Save it securely** -- it is shown only once.
@@ -335,13 +338,17 @@ If you selected `ip-whitelist` or `api-key-ip` mode, you are prompted for allowe
 ? Allowed IPs (comma-separated)? 127.0.0.1, 192.168.1.0/24
 ```
 
-You can enter individual IP addresses or CIDR ranges, separated by commas.
+You can enter individual IPv4 addresses or CIDR ranges, separated by commas.
+
+!!! warning "Include 127.0.0.1 when you install mcctl-console"
+    The web console calls mcctl-api from the same host, and mcctl-api refuses requests from addresses that are not in the list (HTTP 403). If you also install mcctl-console, include `127.0.0.1`. Write the address: an entry `localhost` is accepted by the prompt but does not match any request.
 
 ### Step 7: Service Installation
 
-mcctl-api and mcctl-console packages are automatically installed from npm:
+When `mcctl-console` is selected, the admin user is created in `data/mcctl.db` first. Then the selected packages (mcctl-api, mcctl-console) are installed from npm if they are not installed yet:
 
 ```
+Creating admin user...  Admin user created
 Checking mcctl-api installation...  mcctl-api ready
 Checking mcctl-console installation...  mcctl-console ready
 ```
@@ -358,6 +365,8 @@ Generating PM2 ecosystem config...  PM2 ecosystem config generated
 ```
 
 This creates `ecosystem.config.cjs` in the data directory (`~/minecraft-servers` by default), which tells PM2 how to run the API and Console processes.
+
+When `mcctl-console` is selected, this step also writes the console session secret `BETTER_AUTH_SECRET` to `.env` in the data directory. The secret already in use is kept, so signed-in users stay signed in.
 
 ### Step 9: Configuration Save
 
@@ -393,8 +402,10 @@ If you chose `api-key` or `api-key-ip` mode, the API key is also displayed:
 
 ```
   API Key (save this, shown only once):
-    mck_a1b2c3d4e5f6g7h8i9j0...
+    mctk_a1B2c3D4e5F6g7H8i9J0...
 ```
+
+For `ip-whitelist` and `api-key-ip`, the summary also lists the allowed IPs. While usage analytics is on, a notice about it is printed at the end (see [Usage Analytics](web-console.md#usage-analytics)).
 
 !!! warning "Save Your API Key"
     The API key is only shown once during initialization. Copy and store it in a secure location. The key the running API uses is `AUTH_API_KEY` in `ecosystem.config.cjs`; to get a new one, reinitialize with `mcctl console init --force`. `mcctl console api key regenerate` currently does not change that key (see the warning in [CLI Commands](cli-commands.md#mcctl-console-api)).
@@ -403,10 +414,10 @@ If you chose `api-key` or `api-key-ip` mode, the API key is also displayed:
 
 ## Phase 3: Starting Services (`mcctl console service start`)
 
-Now that everything is configured, start the services:
+Now that everything is configured, start the services. `--console` starts mcctl-api and mcctl-console; without a flag the command asks which services to start when both are installed:
 
 ```bash
-mcctl console service start
+mcctl console service start --console
 ```
 
 ### Service Startup
@@ -414,15 +425,15 @@ mcctl console service start
 PM2 starts the configured services:
 
 ```
-Starting console services via PM2...
-  Started mcctl-api
-  Started mcctl-console
-Console services started successfully
+[INFO] Starting console services via PM2...
+[INFO]   Started mcctl-api
+[INFO]   Started mcctl-console
+[INFO] Console services started successfully
 ```
 
 ### Status Verification
 
-After starting, a status report is automatically displayed:
+After starting, the command checks each service over HTTP (waiting up to 15 seconds) and displays a status report. If a service does not become healthy, the report shows a `Health:` line for it and the command exits with code 1:
 
 ```
   Console Service Status (PM2)
@@ -458,7 +469,7 @@ curl http://localhost:5001/health
 Expected response:
 
 ```json
-{"status":"healthy"}
+{"status":"ok","timestamp":"2026-10-25T12:00:00.000Z"}
 ```
 
 ### Access the Web Console
@@ -489,7 +500,7 @@ mcctl console init
 # Select services -> Create admin user -> Choose access mode
 
 # Step 5: Start Console services
-mcctl console service start
+mcctl console service start --console
 
 # Step 6: Verify everything is running
 mcctl status                    # Check Minecraft servers
@@ -509,7 +520,7 @@ After completing the full setup, the following files exist in your data director
 | File | Created By | Description |
 |------|-----------|-------------|
 | `.mcctl.json` | `mcctl init` | Platform configuration (version, defaults, features) |
-| `.env` | `mcctl init` | Environment variables (HOST_IP, memory, timezone) |
+| `.env` | `mcctl init` | Environment variables (HOST_IP, timezone, RCON password, and more). `mcctl console init` adds `BETTER_AUTH_SECRET`, the console session secret |
 | `docker-compose.yml` | `mcctl init` | Main Docker orchestration for mc-router |
 | `.mcctl-admin.yml` | `mcctl console init` | Console service configuration (access mode, ports) |
 | `data/mcctl.db` | `mcctl console init` | SQLite database for user accounts (Better Auth) |
@@ -542,11 +553,7 @@ If the default ports (5000, 5001) conflict with other services, specify custom p
 mcctl console init --api-port 8001 --console-port 8000
 ```
 
-Or start services with custom ports:
-
-```bash
-mcctl console service start --api-port 8001 --console-port 8000
-```
+The ports are written to `ecosystem.config.cjs`, and the services always start on them. To change the ports of an existing installation, reinitialize with the new values: `mcctl console init --force --api-port 8001 --console-port 8000`.
 
 ---
 
@@ -579,7 +586,7 @@ The `--force` flag skips the confirmation prompt and cleans up existing configur
 #### `mcctl init` Says "Already Initialized"
 
 ```
-Platform is already initialized
+[WARN] Platform is already initialized
 ```
 
 **Solution**: Use `--reconfigure` to change settings, or delete the data directory to start fresh:
@@ -596,7 +603,7 @@ mcctl init
 #### Docker Network Creation Fails
 
 ```
-Failed to create Docker network
+[WARN] Failed to create Docker network (may already exist)
 ```
 
 **Solution**: The network may already exist. Check with:
@@ -610,7 +617,7 @@ docker network ls | grep minecraft-net
 #### "Platform not initialized" Error
 
 ```
-Platform not initialized. Run: mcctl init
+[ERROR] Platform not initialized. Run: mcctl init
 ```
 
 **Solution**: Run `mcctl init` first before running `mcctl console init`.
@@ -618,9 +625,13 @@ Platform not initialized. Run: mcctl init
 #### PM2 Not Installed
 
 ```
-PM2 is not installed.
-Install PM2 globally with: npm install -g pm2
+  ✗ PM2                not found  (>= 6.0.0)
+    npm install -g pm2
+
+[ERROR] PM2 is not installed
 ```
+
+With a PM2 older than 6.0.0 the line shows its version, and the error is `PM2 version <version> does not meet minimum requirement >= 6.0.0`.
 
 **Solution**:
 
@@ -631,7 +642,8 @@ npm install -g pm2
 #### Package Installation Fails
 
 ```
-Failed to install mcctl-api: ...
+[ERROR] Failed to install mcctl-api: ...
+[INFO] Try installing manually: npm install @minecraft-docker/mcctl-api
 ```
 
 **Solution**: Try installing manually:
@@ -647,8 +659,8 @@ npm install @minecraft-docker/mcctl-console@latest
 #### Ecosystem Config Not Found
 
 ```
-Ecosystem config not found.
-Please run 'mcctl console init' to initialize console services
+[ERROR] Ecosystem config not found.
+[INFO] Please run 'mcctl console init' to initialize console services
 ```
 
 **Solution**: Run `mcctl console init` to generate the ecosystem configuration.
@@ -681,7 +693,7 @@ Common causes:
 
 - Missing dependencies: Run `mcctl console init` again
 - Port conflicts: Use custom ports
-- Insufficient memory: Increase system memory or reduce `max_memory_restart` in ecosystem config
+- Memory limit: PM2 restarts a service that grows past `max_memory_restart` (`500M` in `ecosystem.config.cjs`). Raise the value there, then apply it with `mcctl console service restart --console --force`, because a plain restart keeps the previous PM2 settings
 
 ### Login Issues
 
@@ -702,6 +714,8 @@ Common causes:
    mcctl console service status
    ```
 
+4. If you open the console from an address other than `localhost`, a private LAN address, or a `.local` name (for example a Tailscale `100.x` address, a domain name, or an HTTPS reverse proxy), set `BETTER_AUTH_BASE_URL` to that URL in `.env` and run `mcctl console service restart --console`. See [Login Fails](web-console.md#login-fails).
+
 ---
 
 ## Next Steps
@@ -710,5 +724,5 @@ After completing the setup:
 
 - **[Web Console Guide](web-console.md)** - Learn how to use the web management interface
 - **[CLI Commands](cli-commands.md)** - Complete Console CLI reference
-- **[API Reference](api-reference.md)** - REST API documentation
+- **[API Reference](../api/endpoints.md)** - REST API documentation
 - **[Quick Start](../getting-started/quickstart.md)** - Create and manage Minecraft servers

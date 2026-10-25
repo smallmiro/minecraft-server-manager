@@ -3,7 +3,7 @@
 Management Console provides a web-based management interface and REST API for Docker Minecraft servers. It enables remote server management, monitoring, and administration through a modern web console.
 
 !!! info "Status"
-    Both **mcctl-api** (REST API) and **mcctl-console** (Web UI) are available on npm and production-ready as of v1.13.0. Install with `mcctl console init`.
+    **mcctl-api** (REST API) and **mcctl-console** (Web UI) are published on npm with each mcctl release. Install them with `mcctl console init`.
 
 ## Architecture
 
@@ -27,8 +27,8 @@ Management Console provides a web-based management interface and REST API for Do
            |                   +---------v---------+
            |                   |                   |
            +-------------------+    mcctl-api      |
-            Docker Socket      |  (Fastify REST)   |
-            (read-only)        |                   |
+            docker CLI         |  (Fastify REST)   |
+            (compose)          |                   |
                                +-------------------+
 ```
 
@@ -41,7 +41,7 @@ A Fastify-based REST API server that provides:
 - **Server Management**: List, start, stop, restart Minecraft servers
 - **Server Information**: Health status, players, resource usage
 - **RCON Integration**: Execute console commands remotely
-- **Swagger Documentation**: Auto-generated API docs at `/docs`
+- **Swagger Documentation**: Auto-generated API docs at `/docs` when `NODE_ENV` is not `production` or `SWAGGER_ENABLED=true` is set (off after `mcctl console init`, which runs the API with `NODE_ENV=production`)
 - **Health Checks**: Built-in health endpoint at `/health`
 
 Default port: `5001`
@@ -50,29 +50,36 @@ Default port: `5001`
 
 A Next.js web application that provides:
 
-- **Dashboard**: Overview of all servers with real-time SSE status updates
-- **Server Details**: Detailed server info, console, logs, options, and activity tabs
-- **World Management**: List, create, assign, release, delete, and reset worlds (v1.11+)
-- **Audit Logs**: Activity tracking with filtering, stats, and export (v1.10+)
-- **Routing**: Avahi mDNS monitoring and hostname configuration (v1.13+)
+- **Dashboard**: Servers, players, worlds and mc-router at a glance, with real-time SSE status, quick server actions and recent activity
+- **Servers**: Server list, server creation, and a detail page with console, players, world, activity, mods, files, config history, backups, access and options tabs
+- **Worlds**: List, create or upload, assign, release, and delete worlds; world details with map and block statistics
+- **Players**: Whitelist, operators and bans per server, and the players online on all servers
+- **Audit**: Activity log with filters, statistics, live updates and export
+- **Backups**: World backups to a Git repository, backup schedules, and config snapshots
+- **Routing**: mc-router routing table, router status and restart, live router log, and playit.gg external access
+- **Settings and Users**: Account settings for every user; Platform Settings (the platform `.env`) and a read-only user list for administrators
 - **User Authentication**: Secure login with Better Auth
 - **BFF Proxy**: Backend-for-Frontend pattern for secure API access
 - **React Query Hooks**: Type-safe data fetching with automatic caching
 
 Default port: `5000`
 
-#### BFF Proxy Routes (v1.7.8+)
+#### BFF Proxy Routes
 
-The console proxies all API requests through Next.js server routes:
+The console proxies all API requests through Next.js server routes under `/api/`. Examples:
 
 | Route | Description |
 |-------|-------------|
 | `/api/servers/*` | Server management (list, create, delete, start/stop/restart) |
 | `/api/servers/:name/exec` | Execute RCON commands |
 | `/api/servers/:name/logs` | Fetch server logs |
-| `/api/worlds/*` | World management (list, create, delete, assign/release) |
+| `/api/worlds/*` | World management (list, create, upload, delete, assign/release, map, statistics) |
+| `/api/players/*` | Whitelist, operators, bans and kicks |
+| `/api/backup/*` | World backups, restore and backup schedules |
+| `/api/router/*` | mc-router status and restart |
+| `/api/sse/*` | Real-time streams (server status, logs, router log); requires a signed-in session |
 
-This architecture ensures API keys never reach the browser.
+This architecture ensures API keys never reach the browser. For the mcctl-api endpoints behind these routes, see the [API Reference](../api/endpoints.md).
 
 ## Authentication Modes
 
@@ -104,7 +111,7 @@ Management Console supports multiple authentication modes:
 ### Console Integration
 
 - Execute RCON commands through the web interface
-- View command output in real-time
+- Follow the server log in real time (the RCON reply to a command is not shown)
 - Supports all standard Minecraft commands
 
 ### User Management
@@ -129,13 +136,15 @@ Follow the interactive prompts to configure:
 2. Admin email and name (required if console selected)
 3. Admin password (min 8 characters, requires uppercase, lowercase, number)
 4. API access mode (internal, api-key, ip-whitelist, api-key-ip, open)
-5. IP whitelist (if applicable)
+5. IP whitelist (if applicable; include `127.0.0.1` when you also install mcctl-console)
 
 ### 2. Start Management Consoles
 
 ```bash
-mcctl console service start
+mcctl console service start --console
 ```
+
+`--console` starts mcctl-api and mcctl-console. Without a flag, the command asks which services to start when both are installed.
 
 ### 3. Access Web Console
 
@@ -150,8 +159,9 @@ Log in with the admin credentials created during initialization.
 ## Requirements
 
 - mcctl platform initialized (`mcctl init`)
-- Docker running
-- Ports 5000 and 5001 available (or custom ports in `.env`)
+- Docker running (Docker Engine 24 or later, Docker Compose 2.20 or later)
+- Node.js 18 or later and PM2 6 or later installed globally (`npm install -g pm2`); `mcctl console init` checks both
+- Ports 5000 and 5001 available (or the ports you pass to `mcctl console init --api-port` / `--console-port`)
 
 ## Configuration Files
 
@@ -162,10 +172,11 @@ After initialization, the following files are created:
 | `~/minecraft-servers/.mcctl-admin.yml` | Management Console configuration |
 | `~/minecraft-servers/data/mcctl.db` | Console user database (SQLite, Better Auth; created when `mcctl-console` is selected) |
 | `~/minecraft-servers/ecosystem.config.cjs` | PM2 ecosystem configuration |
+| `~/minecraft-servers/.env` | `mcctl console init` adds `BETTER_AUTH_SECRET`, the console session secret, when `mcctl-console` is selected (an existing secret is kept) |
 
 ## Next Steps
 
 - **[Installation Guide](installation.md)** - Detailed setup instructions
 - **[CLI Commands](cli-commands.md)** - Complete CLI reference
-- **[API Reference](api-reference.md)** - REST API documentation
+- **[API Reference](../api/endpoints.md)** - REST API documentation
 - **[Web Console Guide](web-console.md)** - Using the web interface

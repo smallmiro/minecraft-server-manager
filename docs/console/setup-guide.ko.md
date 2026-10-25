@@ -64,12 +64,13 @@ mcctl이 필요한 소프트웨어의 설치 여부와 버전 요구 사항을 �
 
 ```
 [1/6] Checking prerequisites...
-
-  Prerequisite Check Results:
-  ✓ Docker Engine    24.0.7
-  ✓ Docker Compose   2.24.5
-  ✓ Node.js          20.10.0
+  ✓ Node.js            v20.10.0  (>= 18.0.0)
+  ✓ Docker Engine      v24.0.7  (>= 24.0.0)
+  ✓ Docker Compose     v2.24.5  (>= 2.20.0)
+  ✓ avahi-daemon       running  (>= any)
 ```
+
+avahi-daemon은 선택 사항입니다. 없으면 해당 줄에 `⚠`와 설치 안내가 표시되고 초기화는 계속됩니다.
 
 !!! warning "요구 사항 미충족 시"
     확인이 실패하면 초기화가 중단되고, 누락된 구성 요소의 설치 방법이 안내됩니다. 문제를 해결한 후 `mcctl init`를 다시 실행하세요.
@@ -106,9 +107,13 @@ mcctl이 필요한 소프트웨어의 설치 여부와 버전 요구 사항을 �
   Copied: .env
   Copied: .gitignore
   Copied: servers/compose.yml
+  Copied: servers/global.env
   Copied: servers/_template/docker-compose.yml
   Copied: servers/_template/config.env
+  ✓ Set DOCKER_GID from docker socket
 ```
+
+`servers/global.env`에는 모든 서버 컨테이너에 전달되는 플랫폼 `.env` 키가 나열됩니다. `DOCKER_GID`는 Docker 소켓의 그룹으로, mc-router가 소켓을 읽는 데 필요합니다.
 
 ### Step 4: 호스트 IP 설정
 
@@ -211,20 +216,18 @@ mcctl console init
 
 ```
 Checking prerequisites...
-
-  Prerequisite Check Results:
-  ✓ Node.js          20.10.0
-  ✓ Docker Engine    24.0.7
-  ✓ Docker Compose   2.24.5
-  ✓ PM2              5.3.0
+  ✓ Node.js            v20.10.0  (>= 18.0.0)
+  ✓ Docker Engine      v24.0.7  (>= 24.0.0)
+  ✓ Docker Compose     v2.24.5  (>= 2.20.0)
+  ✓ PM2                v6.0.14  (>= 6.0.0)
 ```
 
 !!! warning "PM2 필수"
-    PM2는 API와 Console 프로세스를 관리하는 데 필요합니다. PM2가 설치되어 있지 않다면 전역으로 설치하세요:
+    `pm2` 명령어가 `PATH`에 없거나 6.0.0보다 오래되었으면 `mcctl console init`이 중단됩니다. PM2를 전역으로 설치하세요:
     ```bash
     npm install -g pm2
     ```
-    PM2는 `mcctl`의 의존성으로 함께 설치되기도 하지만, PM2 명령어를 직접 사용하려면 전역 설치를 권장합니다.
+    mcctl은 자체 호출(예: `mcctl console service`)을 위해 PM2 라이브러리를 함께 제공하지만, 이것으로는 `PATH`에 `pm2` 명령어가 생기지 않으므로 이 확인을 통과하지 못합니다.
 
 ### Step 2: 서비스 선택
 
@@ -234,7 +237,7 @@ Checking prerequisites...
 Initialize Console Service
 
   Node.js: v20.10.0
-  PM2: 5.3.0
+  PM2: 6.0.14
 
 ? Select services to install:
   ✓ mcctl-api       - REST API server for managing Minecraft servers
@@ -322,7 +325,7 @@ REST API의 인증 모드를 선택합니다:
 `api-key` 또는 `api-key-ip` 모드를 선택한 경우, API 키가 자동으로 생성됩니다:
 
 ```
-Generating API key...  done
+Generating API key...  API key generated
 ```
 
 API 키는 초기화 완료 시 표시됩니다. **안전한 곳에 저장하세요** -- 한 번만 표시됩니다.
@@ -335,13 +338,17 @@ API 키는 초기화 완료 시 표시됩니다. **안전한 곳에 저장하세
 ? Allowed IPs (comma-separated)? 127.0.0.1, 192.168.1.0/24
 ```
 
-개별 IP 주소 또는 CIDR 범위를 쉼표로 구분하여 입력할 수 있습니다.
+개별 IPv4 주소 또는 CIDR 범위를 쉼표로 구분하여 입력할 수 있습니다.
+
+!!! warning "mcctl-console도 설치한다면 127.0.0.1을 포함하세요"
+    웹 콘솔은 같은 호스트에서 mcctl-api를 호출하며, mcctl-api는 목록에 없는 주소의 요청을 거부합니다(HTTP 403). mcctl-console도 설치한다면 `127.0.0.1`을 포함하세요. 주소로 적어야 합니다. `localhost`라고 입력하면 프롬프트는 받아들이지만 어떤 요청과도 일치하지 않습니다.
 
 ### Step 7: 서비스 패키지 설치
 
-mcctl-api와 mcctl-console 패키지가 npm에서 자동으로 설치됩니다:
+`mcctl-console`을 선택했다면 먼저 `data/mcctl.db`에 관리자 계정이 생성됩니다. 이어서 선택한 패키지(mcctl-api, mcctl-console)가 아직 없으면 npm에서 설치됩니다:
 
 ```
+Creating admin user...  Admin user created
 Checking mcctl-api installation...  mcctl-api ready
 Checking mcctl-console installation...  mcctl-console ready
 ```
@@ -358,6 +365,8 @@ Generating PM2 ecosystem config...  PM2 ecosystem config generated
 ```
 
 이 과정에서 데이터 디렉토리(기본값 `~/minecraft-servers`)에 `ecosystem.config.cjs`가 생성되며, PM2가 API와 Console 프로세스를 실행하는 방법을 정의합니다.
+
+`mcctl-console`을 선택했다면 이 단계에서 콘솔 세션 시크릿 `BETTER_AUTH_SECRET`도 데이터 디렉토리의 `.env`에 기록됩니다. 이미 사용 중인 시크릿은 유지되므로 로그인한 사용자는 로그인 상태를 유지합니다.
 
 ### Step 9: 구성 저장
 
@@ -393,8 +402,10 @@ Console Service initialized!
 
 ```
   API Key (save this, shown only once):
-    mck_a1b2c3d4e5f6g7h8i9j0...
+    mctk_a1B2c3D4e5F6g7H8i9J0...
 ```
+
+`ip-whitelist`와 `api-key-ip`에서는 요약에 허용 IP 목록도 표시됩니다. 사용 통계가 켜져 있으면 마지막에 이에 대한 안내가 출력됩니다([사용 통계](web-console.md#사용-통계) 참조).
 
 !!! warning "API 키를 안전하게 보관하세요"
     API 키는 초기화 시 한 번만 표시됩니다. 복사하여 안전한 곳에 저장하세요. 실행 중인 API가 사용하는 키는 `ecosystem.config.cjs`의 `AUTH_API_KEY`이며, 새 키가 필요하면 `mcctl console init --force`로 다시 초기화하세요. `mcctl console api key regenerate`는 현재 이 키를 바꾸지 않습니다 ([CLI 명령어](cli-commands.ko.md#mcctl-console-api)의 경고 참조).
@@ -403,10 +414,10 @@ Console Service initialized!
 
 ## 3단계: 서비스 시작 (`mcctl console service start`)
 
-모든 설정이 완료되었으니 서비스를 시작합니다:
+모든 설정이 완료되었으니 서비스를 시작합니다. `--console`은 mcctl-api와 mcctl-console을 시작하며, 플래그 없이 실행하면 두 서비스가 모두 설치된 경우 어느 서비스를 시작할지 묻습니다:
 
 ```bash
-mcctl console service start
+mcctl console service start --console
 ```
 
 ### 서비스 시작
@@ -414,15 +425,15 @@ mcctl console service start
 PM2가 구성된 서비스를 시작합니다:
 
 ```
-Starting console services via PM2...
-  Started mcctl-api
-  Started mcctl-console
-Console services started successfully
+[INFO] Starting console services via PM2...
+[INFO]   Started mcctl-api
+[INFO]   Started mcctl-console
+[INFO] Console services started successfully
 ```
 
 ### 상태 확인
 
-시작 후 상태 보고서가 자동으로 표시됩니다:
+시작 후 명령은 각 서비스를 HTTP로 확인하고(최대 15초 대기) 상태 보고서를 표시합니다. 서비스가 정상 상태가 되지 않으면 보고서에 해당 서비스의 `Health:` 줄이 표시되고 명령은 종료 코드 1로 끝납니다:
 
 ```
   Console Service Status (PM2)
@@ -458,7 +469,7 @@ curl http://localhost:5001/health
 예상 응답:
 
 ```json
-{"status":"healthy"}
+{"status":"ok","timestamp":"2026-10-25T12:00:00.000Z"}
 ```
 
 ### 웹 콘솔 접속
@@ -489,7 +500,7 @@ mcctl console init
 # 서비스 선택 -> 관리자 계정 생성 -> 접근 모드 선택
 
 # 5단계: Console 서비스 시작
-mcctl console service start
+mcctl console service start --console
 
 # 6단계: 모든 것이 실행 중인지 확인
 mcctl status                    # 마인크래프트 서버 확인
@@ -509,7 +520,7 @@ curl http://localhost:5001/health  # API 상태 확인
 | 파일 | 생성 주체 | 설명 |
 |------|----------|------|
 | `.mcctl.json` | `mcctl init` | 플랫폼 구성 (버전, 기본값, 기능) |
-| `.env` | `mcctl init` | 환경 변수 (HOST_IP, 메모리, 시간대) |
+| `.env` | `mcctl init` | 환경 변수 (HOST_IP, 시간대, RCON 비밀번호 등). `mcctl console init`이 콘솔 세션 시크릿 `BETTER_AUTH_SECRET`을 추가합니다 |
 | `docker-compose.yml` | `mcctl init` | mc-router용 메인 Docker 오케스트레이션 |
 | `.mcctl-admin.yml` | `mcctl console init` | Console 서비스 구성 (접근 모드, 포트) |
 | `data/mcctl.db` | `mcctl console init` | 사용자 계정용 SQLite 데이터베이스 (Better Auth) |
@@ -542,11 +553,7 @@ pm2 save
 mcctl console init --api-port 8001 --console-port 8000
 ```
 
-서비스 시작 시에도 커스텀 포트를 지정할 수 있습니다:
-
-```bash
-mcctl console service start --api-port 8001 --console-port 8000
-```
+포트는 `ecosystem.config.cjs`에 기록되며, 서비스는 항상 이 포트로 시작됩니다. 기존 설치의 포트를 바꾸려면 새 값으로 다시 초기화하세요: `mcctl console init --force --api-port 8001 --console-port 8000`
 
 ---
 
@@ -579,7 +586,7 @@ mcctl console init --force
 #### `mcctl init`이 "이미 초기화됨"으로 표시
 
 ```
-Platform is already initialized
+[WARN] Platform is already initialized
 ```
 
 **해결 방법**: `--reconfigure`를 사용하여 설정을 변경하거나, 데이터 디렉토리를 삭제하여 새로 시작하세요:
@@ -596,7 +603,7 @@ mcctl init
 #### Docker 네트워크 생성 실패
 
 ```
-Failed to create Docker network
+[WARN] Failed to create Docker network (may already exist)
 ```
 
 **해결 방법**: 네트워크가 이미 존재할 수 있습니다. 다음으로 확인하세요:
@@ -610,7 +617,7 @@ docker network ls | grep minecraft-net
 #### "Platform not initialized" 오류
 
 ```
-Platform not initialized. Run: mcctl init
+[ERROR] Platform not initialized. Run: mcctl init
 ```
 
 **해결 방법**: `mcctl console init` 전에 먼저 `mcctl init`을 실행하세요.
@@ -618,9 +625,13 @@ Platform not initialized. Run: mcctl init
 #### PM2 미설치
 
 ```
-PM2 is not installed.
-Install PM2 globally with: npm install -g pm2
+  ✗ PM2                not found  (>= 6.0.0)
+    npm install -g pm2
+
+[ERROR] PM2 is not installed
 ```
+
+PM2가 6.0.0보다 오래되었으면 해당 줄에 그 버전이 표시되고, 오류는 `PM2 version <version> does not meet minimum requirement >= 6.0.0`입니다.
 
 **해결 방법**:
 
@@ -631,7 +642,8 @@ npm install -g pm2
 #### 패키지 설치 실패
 
 ```
-Failed to install mcctl-api: ...
+[ERROR] Failed to install mcctl-api: ...
+[INFO] Try installing manually: npm install @minecraft-docker/mcctl-api
 ```
 
 **해결 방법**: 수동으로 설치해 보세요:
@@ -647,8 +659,8 @@ npm install @minecraft-docker/mcctl-console@latest
 #### Ecosystem 설정 파일 없음
 
 ```
-Ecosystem config not found.
-Please run 'mcctl console init' to initialize console services
+[ERROR] Ecosystem config not found.
+[INFO] Please run 'mcctl console init' to initialize console services
 ```
 
 **해결 방법**: `mcctl console init`을 실행하여 ecosystem 구성을 생성하세요.
@@ -681,7 +693,7 @@ pm2 logs mcctl-console --lines 100
 
 - 의존성 누락: `mcctl console init`을 다시 실행하세요
 - 포트 충돌: 커스텀 포트를 사용하세요
-- 메모리 부족: 시스템 메모리를 늘리거나 ecosystem 설정에서 `max_memory_restart`를 줄이세요
+- 메모리 제한: PM2는 `max_memory_restart`(`ecosystem.config.cjs`의 `500M`)를 넘은 서비스를 재시작합니다. 이 값을 늘린 뒤 `mcctl console service restart --console --force`로 적용하세요. 일반 재시작은 이전 PM2 설정을 그대로 유지합니다
 
 ### 로그인 문제
 
@@ -702,6 +714,8 @@ pm2 logs mcctl-console --lines 100
    mcctl console service status
    ```
 
+4. `localhost`, 사설 LAN 주소, `.local` 이름이 아닌 주소(예: Tailscale `100.x` 주소, 도메인 이름, HTTPS 리버스 프록시)로 콘솔을 연다면 `.env`에서 `BETTER_AUTH_BASE_URL`을 그 URL로 설정하고 `mcctl console service restart --console`을 실행하세요. [로그인 실패](web-console.md#로그인-실패)를 참고하세요.
+
 ---
 
 ## 다음 단계
@@ -710,5 +724,5 @@ pm2 logs mcctl-console --lines 100
 
 - **[웹 콘솔 가이드](web-console.ko.md)** - 웹 관리 인터페이스 사용법
 - **[CLI 명령어 참조](cli-commands.ko.md)** - Console CLI 전체 참조
-- **[API 참조](api-reference.ko.md)** - REST API 문서
+- **[API 참조](../api/endpoints.md)** - REST API 문서
 - **[빠른 시작 가이드](../getting-started/quickstart.ko.md)** - 마인크래프트 서버 생성 및 관리
