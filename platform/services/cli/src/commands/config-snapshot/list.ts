@@ -64,7 +64,7 @@ export async function configSnapshotListCommand(
     for (const snapshot of snapshots) {
       const date = snapshot.createdAt.toLocaleString();
       const server = colors.cyan(snapshot.serverName.value.padEnd(15));
-      const id = colors.dim(snapshot.id.substring(0, 8) + '...');
+      const id = colors.dim(snapshot.id);
       const fileCount = colors.yellow(`${snapshot.files.length} files`);
       const desc = snapshot.description
         ? colors.dim(`  "${snapshot.description}"`)
