@@ -98,7 +98,7 @@ Contributor mode is on with `--contributor`, or automatically when
 1. **Load context**: `gh issue view <N> --json number,title,body,labels,milestone`. Note dependencies ("depends on #N", "blocked by #N") and resolve them first. Write the state file.
 2. **Prepare**: `git checkout develop && git pull origin develop && git checkout -b feature/<N>-<description>` (`bugfix/` for bug fixes). Initialize `task.md` with the issue context.
 3. **Route**: the main session acts as orchestrator. Pick the owner agent from the issue's `Files to Modify` and a tier from the tables in [Agent Routing](#agent-routing). T0 means do it yourself (add one line to the PR body: `직접 처리: <reason>`); otherwise delegate.
-4. **Implement with TDD** (Red → Green → Refactor), by the assigned agent or by you for T0. At each checkpoint: commit as `<type>: <description> (#<N>)`, append to `task.md`, mark the item in `plan.md` if it tracks this issue.
+4. **Implement with TDD** (Red → Green → Refactor), by the assigned agent or by you for T0. At each checkpoint: commit as `<type>: <description> (#<N>)`, append to `task.md`.
 5. **Issue checkboxes**: check items off as they are completed. Edit the body as a file instead of with `sed`, which breaks on special characters:
    ```bash
    f=$(mktemp); gh issue view <N> --json body -q .body > "$f"

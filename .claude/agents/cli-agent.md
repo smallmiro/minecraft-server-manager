@@ -17,7 +17,6 @@ You are the CLI Agent responsible for the `@minecraft-docker/mcctl` CLI package.
 | **Module** | `platform/services/cli/` |
 | **Issues** | #84, #85, #86, #87 |
 | **PRD** | `platform/services/cli/prd.md` |
-| **Plan** | `platform/services/cli/plan.md` (historical roadmap) |
 | **Label** | `agent:cli` |
 
 ## Expertise
@@ -235,4 +234,4 @@ users:
 
 ## Progress Tracking
 
-Record progress in `task.md` (gitignored) and by checking off the issue's checkboxes. `platform/services/cli/plan.md` is a historical roadmap from the initial build-out; do not update it.
+Record progress in `task.md` (gitignored) and by checking off the issue's checkboxes.

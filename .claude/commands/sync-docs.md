@@ -11,7 +11,6 @@ This command analyzes the codebase and updates project documentation to reflect 
 - `CLAUDE.md` - Project guide and development reference
 - `README.md` - Main documentation and quick start guide
 - `prd.md` - Product Requirements Document (if exists)
-- `plan.md` - Implementation roadmap (if exists)
 - `docs/documentforllmagent.md` - **LLM Knowledge Base** (auto-generated from docs/)
 
 ## Protected Files (DO NOT EDIT)
@@ -172,12 +171,6 @@ done
      - Add new entry when updating PRD
      - Format: `| x.x.x | YYYY-MM-DD | - | Description |`
 
-6. **Update plan.md** (if exists):
-   - Update phase status (In Progress → Completed)
-   - Mark implementation tasks as done
-   - Add new files to file checklist
-   - Update architecture diagrams if structure changed
-
 ## Analysis Checklist
 
 - [ ] Read docker-compose.yml for current configuration
@@ -310,5 +303,5 @@ When this command is executed:
 1. Analyze the codebase thoroughly
 2. Compare with current documentation
 3. **Generate docs/documentforllmagent.md** from source docs
-4. Update target files (CLAUDE.md, README.md, prd.md, plan.md)
+4. Update target files (CLAUDE.md, README.md, prd.md)
 5. Report what changes were made

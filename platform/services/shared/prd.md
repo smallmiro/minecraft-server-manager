@@ -127,7 +127,6 @@ Core package providing shared domain logic, use cases, and adapters for CLI, API
 ```
 platform/services/shared/
 ├── prd.md                      # This document
-├── plan.md                     # Implementation plan
 ├── README.md                   # npm package description
 ├── package.json                # @minecraft-docker/shared
 ├── tsconfig.json
