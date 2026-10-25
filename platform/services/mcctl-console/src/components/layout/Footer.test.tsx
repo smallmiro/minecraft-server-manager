@@ -78,6 +78,33 @@ describe('Footer', () => {
     expect(screen.getByText('Docker Hub')).toBeInTheDocument();
   });
 
+  it('should render website link to the official mcctl site', () => {
+    renderWithTheme(<Footer />);
+
+    const websiteLink = screen.getByText('Website').closest('a');
+    expect(websiteLink).toHaveAttribute('href', 'https://mcctl.mirolab.dev/');
+    expect(websiteLink).toHaveAttribute('target', '_blank');
+    expect(websiteLink).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('should link API Reference to the REST API docs', () => {
+    renderWithTheme(<Footer />);
+
+    expect(screen.getByText('API Reference').closest('a')).toHaveAttribute(
+      'href',
+      'https://minecraft-server-manager.readthedocs.io/en/latest/api/'
+    );
+  });
+
+  it('should link itzg Reference to the official itzg docs', () => {
+    renderWithTheme(<Footer />);
+
+    expect(screen.getByText('itzg Reference').closest('a')).toHaveAttribute(
+      'href',
+      'https://docker-minecraft-server.readthedocs.io/'
+    );
+  });
+
   it('should render copyright with current year', () => {
     renderWithTheme(<Footer />);
 
