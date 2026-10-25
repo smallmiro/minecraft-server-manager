@@ -10,9 +10,13 @@
 | **Docker Engine** | >= 24.0.0 | 최신 | 컨테이너 런타임 |
 | **Docker Compose** | >= 2.20.0 | 최신 | `include` 기능 필요 |
 | **OS** | Linux, macOS | Ubuntu 22.04+ | Windows는 WSL2 사용 |
+| **git** | >= 2.31 | 최신 | GitHub 월드 백업에만 필요 |
+| **PM2** | >= 6.0.0 | 최신 | 웹 콘솔에만 필요: `mcctl console init`은 `PATH`에 `pm2`가 있어야 함 (`npm install -g pm2`) |
 
 !!! warning "Docker Compose 버전"
     Docker Compose **v2.20.0 이상**이 필요합니다. mcctl이 사용하는 `include` 지시어는 이 버전에서 도입되었습니다. `docker compose version`으로 버전을 확인하세요.
+
+    `mcctl init`은 Node.js, Docker Engine, Docker Compose를 확인하고, 하나라도 없거나 버전이 낮으면 중단합니다.
 
 ## 사전 요구사항
 
@@ -120,11 +124,13 @@ npm install -g @minecraft-docker/mcctl
 pnpm add -g @minecraft-docker/mcctl
 ```
 
+`mcctl update`는 `npm install -g`로 CLI를 다시 설치하므로 pnpm 전역 설치는 업데이트하지 않습니다. npm 사용을 권장합니다.
+
 설치를 확인합니다:
 
 ```bash
 mcctl --version
-# mcctl version 1.6.9
+# mcctl version 3.0.2 (또는 그 이상)
 ```
 
 ### npx 사용 (설치 없이)
@@ -147,23 +153,40 @@ mcctl init
 
 ```text
 ~/minecraft-servers/
-├── docker-compose.yml     # 메인 오케스트레이션
-├── .env                   # 환경 설정
+├── docker-compose.yml     # 메인 오케스트레이션 (mc-router, 서버 include)
+├── .env                   # 플랫폼 설정 (HOST_IP, RCON_PASSWORD 등)
+├── .mcctl.json            # mcctl 설정 (템플릿 버전, playit, 설치 ID)
+├── .gitignore             # .env, servers, worlds, backups를 git에서 제외
 ├── servers/               # 서버 설정
 │   ├── compose.yml        # 서버 포함 목록
+│   ├── global.env         # 모든 서버에 전달하는 .env 키
 │   └── _template/         # 서버 템플릿
 ├── worlds/                # 공유 월드 저장소
-├── shared/                # 공유 플러그인/모드
-│   ├── plugins/
-│   └── mods/
+├── shared/
+│   ├── plugins/           # 모든 서버에 읽기 전용으로 마운트 (/plugins)
+│   └── mods/              # 생성되지만 서버 템플릿은 마운트하지 않음
 └── backups/               # 백업 저장소
 ```
+
+`mcctl init`은 nip.io 호스트네임에 쓸 호스트 IP 주소와 playit.gg 사용 여부도 묻고, Docker 네트워크 `minecraft-net`을 만듭니다.
 
 !!! tip "사용자 지정 데이터 디렉토리"
     `--root` 옵션으로 사용자 지정 위치를 지정할 수 있습니다:
     ```bash
     mcctl --root /path/to/data init
     ```
+
+    이후 모든 명령에도 `--root`를 붙이거나 `MCCTL_ROOT`를 설정하세요(예: 셸 프로필에 `export MCCTL_ROOT=/path/to/data`). 그렇지 않으면 mcctl은 `~/minecraft-servers`를 사용합니다.
+
+## mc-router 시작
+
+`mcctl init`은 25565 포트로 접속을 받는 라우터인 mc-router를 시작하지 않습니다. 한 번 시작합니다:
+
+```bash
+mcctl router start
+```
+
+mc-router에는 `restart: unless-stopped`가 설정되어 있어, 직접 중지(`mcctl router stop`)하기 전까지 재부팅 후에도 Docker가 다시 시작합니다. 서버를 생성하거나 시작하면 그 서버만 시작됩니다. `mcctl up`은 mc-router와 모든 서버를 시작합니다.
 
 ## 선택사항: mDNS 설정
 
@@ -183,6 +206,9 @@ mcctl init
 
 === "macOS"
     macOS는 Bonjour가 내장되어 있어 추가 설치가 필요 없습니다.
+
+!!! note "`.local` 이름 등록과 sudo"
+    `mcctl create`는 sudo로 `/etc/avahi/hosts`에 `<server>.local`을 등록합니다. 이 파일이 있으면 sudo 비밀번호를 묻고(`--sudo-password`나 `MCCTL_SUDO_PASSWORD`로도 전달 가능), Enter를 누르면 비밀번호 없이 sudo를 시도합니다(sudoers `NOPASSWD`). [호스트네임 등록](../advanced/networking.ko.md#호스트네임-등록)을 참조하세요.
 
 !!! note "nip.io 권장"
     nip.io magic DNS는 클라이언트 설정 없이 작동하므로 mDNS보다 권장됩니다.
@@ -214,24 +240,30 @@ RCON_PASSWORD=<mcctl init이 생성한 무작위 값>
 
 ## 설치 확인
 
-status 명령으로 모든 것이 작동하는지 확인합니다:
+`mcctl router start` 후 status 명령으로 모든 것이 작동하는지 확인합니다:
 
 ```bash
 mcctl status
 ```
 
-예상 출력:
+예상 출력(아직 서버가 없을 때):
 
 ```
-Platform Status
-===============
+=== Server Status (mc-router Managed) ===
 
-Router: mc-router (running)
-Servers: 0
+INFRASTRUCTURE
+SERVICE              STATUS       HEALTH     PORT/INFO
+-------              ------       ------     ---------
+mc-router            running      healthy    :25565 (hostname routing)
+avahi-daemon         running      (system)   mDNS broadcast
 
-No servers configured. Create one with:
-  mcctl create <name>
+MINECRAFT SERVERS
+SERVER               STATUS       HEALTH     HOSTNAME
+------               ------       ------     --------
+  No Minecraft servers configured
 ```
+
+avahi-daemon이 없으면 그 줄에 `not installed`가 표시됩니다.
 
 ## 문제 해결
 

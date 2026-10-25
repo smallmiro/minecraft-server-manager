@@ -13,6 +13,8 @@
 - **World Management**: Assign worlds to servers (one world, one server) and release them
 - **Player Management**: Operators, whitelist, bans, and kicks via CLI
 - **GitHub Backup**: Automatic world backup to private repositories
+- **Web Console and REST API**: Manage servers, worlds, players and backups in a browser (`mcctl console init`)
+- **External Access**: Let players join from the internet through playit.gg, without port forwarding
 
 ## System Requirements
 
@@ -30,6 +32,9 @@ npm install -g @minecraft-docker/mcctl
 
 # Initialize platform
 mcctl init
+
+# Start mc-router once (it restarts with Docker until you stop it)
+mcctl router start
 
 # Create a server (interactive mode)
 mcctl create
@@ -49,6 +54,7 @@ mcctl status
 
 | Command | Description |
 |---------|-------------|
+| `mcctl router start` | Start mc-router (hostname routing on port 25565) |
 | `mcctl create` | Create a new server (interactive) |
 | `mcctl start <name>` | Start a server |
 | `mcctl stop <name>` | Stop a server |
@@ -79,6 +85,8 @@ flowchart TB
 - [Quick Start](getting-started/quickstart.md) - Create your first server
 - [CLI Commands](cli/commands.md) - Full command reference
 - [Configuration](configuration/index.md) - Server configuration with mcctl
+- [Management Console](console/index.md) - Web console and REST API
+- [External Access](advanced/external-access.md) - Internet access with playit.gg
 
 ## Need Help?
 

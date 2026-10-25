@@ -78,7 +78,8 @@ mcctl playit start
 
 # 5. Register the playit domain with your server
 mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg
-# Or for an existing server, edit the docker-compose.yml labels
+# Or for an existing server (then stop and start it):
+# mcctl playit domain myserver xx-xx.craft.playit.gg
 
 # 6. Share your domain with friends!
 #    They connect to: xx-xx.craft.playit.gg
@@ -109,6 +110,9 @@ You can configure playit.gg during initial platform setup or afterwards.
     mcctl init
     # When asked "Enable playit.gg tunneling?", select Yes
     # Enter your SECRET_KEY when prompted
+
+    # Then add the playit-agent service (enter the SECRET_KEY again)
+    mcctl playit setup
     ```
 
 === "After Platform Setup"
@@ -124,7 +128,7 @@ You can configure playit.gg during initial platform setup or afterwards.
     mcctl init --no-playit
     ```
 
-This saves the `PLAYIT_SECRET_KEY` to your `.env` file and enables the playit profile.
+`mcctl playit setup` saves `PLAYIT_SECRET_KEY` to your `.env` file, sets `playitEnabled` in `.mcctl.json`, and adds the `playit` service (Compose profile `playit`) to `docker-compose.yml`, which `mcctl playit start` needs. After `mcctl init --playit-key`, run `mcctl playit setup` once as well.
 
 ### Step 3: Start the playit-agent
 
@@ -144,7 +148,7 @@ Expected output:
 === playit.gg Agent Status ===
 
   Agent:      running
-  SECRET_KEY: configured
+  SECRET_KEY: configured ✓
 
 REGISTERED SERVERS
 
@@ -176,21 +180,19 @@ REGISTERED SERVERS
     ```
 
 === "Existing Server"
-    Add the playit domain to the mc-router.host label in your server's `docker-compose.yml`:
-
-    ```yaml
-    # ~/minecraft-servers/servers/myserver/docker-compose.yml
-    services:
-      mc-myserver:
-        labels:
-          mc-router.host: "myserver.192.168.1.100.nip.io,xx-xx.craft.playit.gg"
-    ```
-
-    Then restart the server:
+    Register the domain with `mcctl playit domain`. It sets `PLAYIT_DOMAIN` for the server and adds the domain to its `mc-router.host` label:
 
     ```bash
-    mcctl stop myserver && mcctl start myserver
+    mcctl playit domain myserver xx-xx.craft.playit.gg
     ```
+
+    Then recreate the container (a restart does not apply hostnames):
+
+    ```bash
+    mcctl stop myserver && mcctl start myserver   # or `mcctl start myserver` if it is stopped
+    ```
+
+    Run `mcctl playit domain` without arguments to pick the server and type the domain, or `mcctl playit domain myserver --remove` to remove it. A domain added to the label by hand counts as a custom hostname, so `mcctl playit status` and the web console do not show it as the external address.
 
 ### Step 6: Connect and Share
 
@@ -261,23 +263,28 @@ You have two options for DNS records:
 
 ### Update mc-router Label
 
-After configuring your custom domain, update the server's mc-router.host label:
+After configuring your custom domain, register it as the server's playit domain, then recreate the container:
 
-```yaml
-labels:
-  mc-router.host: "myserver.192.168.1.100.nip.io,minecraft.example.com"
+```bash
+mcctl playit domain myserver minecraft.example.com
+mcctl stop myserver && mcctl start myserver
 ```
+
+To keep the `xx-xx.craft.playit.gg` domain as well, add the custom domain as a custom hostname instead: web console > server > **Options** > **Hostnames / Domains** > **Custom Domains**, or `routing.customHostnames` in `servers/myserver/server.yaml` followed by `mcctl migrate spec myserver`.
 
 ## Managing playit-agent
 
 ### CLI Commands
+
+Command reference: [`mcctl playit`](../cli/commands.md#mcctl-playit).
 
 | Command | Description |
 |---------|-------------|
 | `mcctl playit start` | Start the playit-agent container |
 | `mcctl playit stop` | Stop the playit-agent container |
 | `mcctl playit status` | Show agent status and registered servers |
-| `mcctl playit setup` | Configure or reconfigure SECRET_KEY |
+| `mcctl playit setup` | Configure or reconfigure SECRET_KEY and add the `playit` service |
+| `mcctl playit domain <server> [domain]` | Set a server's playit.gg domain (`--remove` removes it; no arguments: prompts) |
 
 ### Checking Status
 
@@ -291,7 +298,7 @@ Output with registered servers:
 === playit.gg Agent Status ===
 
   Agent:      running
-  SECRET_KEY: configured
+  SECRET_KEY: configured ✓
   Uptime:     2d 5h 30m
 
 REGISTERED SERVERS
@@ -386,9 +393,9 @@ The Management Console API provides these playit.gg endpoints:
    docker logs playit-agent
    ```
 
-4. **Reconfigure if needed:**
+4. **Reconfigure if needed** (also when `mcctl playit start` reports `no such service: playit`):
    ```bash
-   mcctl playit setup
+   mcctl playit setup   # adds the playit service to docker-compose.yml if it is missing
    ```
 
 ### External Players Can't Connect
@@ -417,7 +424,7 @@ The Management Console API provides these playit.gg endpoints:
 
 5. **Check mc-router logs:**
    ```bash
-   docker logs router 2>&1 | grep playit
+   mcctl logs router -n 200 | grep playit
    ```
 
 ### Connection Timeout
@@ -444,7 +451,7 @@ The Management Console API provides these playit.gg endpoints:
 
 ### Enable Whitelist
 
-Restrict who can join your server:
+New servers have the whitelist off unless it was turned on at creation (for example `mcctl create --enable-whitelist`), so anyone with the domain can join until you turn it on. Restrict who can join your server:
 
 ```bash
 mcctl whitelist myserver on
@@ -465,6 +472,8 @@ mcctl config myserver ONLINE_MODE true
 
 ### Change Default RCON Password
 
+`mcctl init` generates a random RCON password. Installs created before 2.32.0 may still use `changeme`; replace it, then recreate each server's container (see [RCON Password](index.md#rcon-password)):
+
 ```bash
 # In ~/minecraft-servers/.env
 RCON_PASSWORD=a-very-secure-random-password
@@ -480,7 +489,7 @@ mcctl player online myserver
 mcctl logs myserver -f
 
 # Review audit logs
-mcctl audit list --recent
+mcctl audit list --limit 20
 ```
 
 ### Protect Your SECRET_KEY
@@ -524,7 +533,7 @@ mcctl audit list --recent
 
 ## Docker Configuration Reference
 
-The playit-agent is defined in your platform's `docker-compose.yml` with a Docker Compose profile:
+`mcctl playit setup` adds the playit-agent to your platform's `docker-compose.yml` with a Docker Compose profile:
 
 ```yaml
 services:
@@ -550,6 +559,7 @@ Key points:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `PLAYIT_SECRET_KEY` | Yes (if enabled) | Agent authentication key from playit.gg |
+| `PLAYIT_DOMAIN` | No | Per server, in `servers/<name>/config.env` (set by `--playit-domain` or `mcctl playit domain`): the playit.gg domain added to the server's router hostnames |
 
 ## See Also
 

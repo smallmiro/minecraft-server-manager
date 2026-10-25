@@ -4,13 +4,14 @@ nip.io, mDNS, mc-router를 사용하여 Minecraft 서버의 호스트네임 기�
 
 ## 개요
 
-플랫폼은 세 가지 접속 방법을 지원합니다:
+플랫폼은 다음 호스트네임 방식을 지원합니다:
 
-| 방법 | URL 예제 | 클라이언트 설정 | 원격 접속 |
+| 방법 | URL 예제 | 클라이언트 설정 | 접속 가능한 곳 |
 |------|----------|----------------|----------|
-| **nip.io** (권장) | `myserver.192.168.1.100.nip.io:25565` | 없음 | 가능 |
+| **nip.io** (권장) | `myserver.192.168.1.100.nip.io:25565` | 없음 | 이름에 든 IP에 접근할 수 있는 네트워크 (LAN, VPN) |
 | **mDNS** | `myserver.local:25565` | avahi/Bonjour | LAN만 |
-| **직접 IP** | `192.168.1.100:25565` | 없음 | 가능 |
+
+mc-router는 클라이언트가 보낸 호스트네임으로 서버를 고르므로 `192.168.1.100:25565` 같은 IP만으로는 서버에 접속할 수 없습니다. 인터넷에서 접속하려면 [외부 접속](external-access.ko.md)을 참조하세요.
 
 ## nip.io Magic DNS
 
@@ -43,19 +44,17 @@ modded.192.168.1.100.nip.io   → 192.168.1.100
 HOST_IP=192.168.1.100
 ```
 
-서버를 생성할 때 mcctl이 자동으로 nip.io와 mDNS 호스트네임을 모두 설정합니다:
+서버를 생성하면 mcctl이 두 호스트네임을 모두 서버의 `mc-router.host` 라벨에 넣습니다:
 
-```bash
-mcctl create myserver
-# 호스트네임:
-#   - myserver.192.168.1.100.nip.io:25565 (nip.io)
-#   - myserver.local:25565 (mDNS)
-```
+- `myserver.192.168.1.100.nip.io:25565` (nip.io, `HOST_IPS`의 주소마다 하나, 없으면 `HOST_IP`)
+- `myserver.local:25565` (mDNS)
+
+`mcctl status`의 HOSTNAME 열에서 확인할 수 있습니다.
 
 ### 장점
 
 - **클라이언트 설정 불필요** - 즉시 작동
-- **원격 접속 가능** - 인터넷이 있는 모든 네트워크에서 접근 가능
+- **여러 네트워크에서 작동** - 이름에 든 IP에 접근할 수 있는 모든 네트워크(LAN, `HOST_IPS`의 VPN 주소 등)에서 접속 가능
 - **간단한 설정** - .env에 HOST_IP만 설정
 - **다중 서버** - 각 서버가 고유한 호스트네임을 가짐
 
@@ -101,12 +100,19 @@ mDNS는 `.local` 호스트네임이 로컬 네트워크에서 작동하게 합�
 
 #### 호스트네임 등록
 
-mcctl이 서버 생성 시 자동으로 호스트네임을 등록합니다:
+avahi-daemon이 설치되어 있으면 `mcctl create`가 `<name>.local`을 등록합니다. 첫 번째 호스트 주소(`HOST_IPS`, 없으면 `HOST_IP`; IPv4만)로 `/etc/avahi/hosts`에 `<ip> <name>.local`을 추가하고 sudo로 avahi-daemon을 재시작합니다:
 
-```bash
-mcctl create myserver
-# avahi-daemon에 myserver.local 등록
-```
+- `/etc/avahi/hosts`가 있으면 sudo 비밀번호를 묻습니다. 스크립트에서는 `--sudo-password`를 넘기거나 `MCCTL_SUDO_PASSWORD`를 설정하세요. Enter를 누르면 비밀번호 없이 sudo를 시도합니다.
+- 비밀번호 없이 쓰려면 mcctl이 실행하는 명령을 허용하세요. 예를 들어 `/etc/sudoers.d/mcctl`에:
+
+    ```
+    %docker ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/avahi/hosts
+    %docker ALL=(ALL) NOPASSWD: /usr/bin/sed -i * /etc/avahi/hosts
+    %docker ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart avahi-daemon
+    ```
+
+- sudo가 실패해도 서버는 생성되고 mcctl이 경고를 출력합니다. 이때는 아래처럼 직접 추가하세요.
+- `mcctl delete`는 같은 방식으로 `<name>.local` 줄을 지웁니다.
 
 수동 등록:
 
@@ -180,10 +186,10 @@ mc-router는 호스트네임 기반 라우팅과 자동 스케일링을 처리�
 # 라우터 상태 확인
 mcctl status router
 
-# 라우터 시작
+# 라우터 시작 (docker-compose.yml을 바꾼 뒤에는 컨테이너도 다시 만듦)
 mcctl router start
 
-# 라우터 재시작 (설정 변경 후)
+# 실행 중인 컨테이너 재시작 (현재 설정 유지)
 mcctl router restart
 
 # 라우터 중지
@@ -204,20 +210,28 @@ services:
 
 ### 자동 스케일링 설정
 
-`~/minecraft-servers/.env`에서 설정합니다:
+mc-router 설정은 `.env`가 아니라 `~/minecraft-servers/docker-compose.yml`의 `router` 서비스에 있습니다:
 
-```bash
-# 자동 스케일링 설정
-AUTO_SCALE_UP=true       # 접속 시 서버 시작
-AUTO_SCALE_DOWN=false    # 유휴 서버 중지 (참고 사항 확인)
-DOCKER_TIMEOUT=120s      # 서버 시작 대기 시간 (Go time.Duration: 120s, 2m)
+```yaml
+services:
+  router:
+    environment:
+      IN_DOCKER: "true"
+      AUTO_SCALE_UP: "true"          # 접속 시 서버 시작
+      AUTO_SCALE_DOWN: "true"        # 유휴 서버 중지 (참고 사항 확인)
+      AUTO_SCALE_DOWN_AFTER: "10m"   # 서버를 중지하기 전 유휴 시간
+      DOCKER_TIMEOUT: "120s"         # 서버 시작 대기 시간 (Go time.Duration: 120s, 2m; 정수만 쓰면 실패)
 ```
 
-그런 다음 라우터를 재시작합니다:
+수정한 뒤 라우터를 다시 만듭니다(`mcctl router restart`는 예전 설정을 유지합니다):
 
 ```bash
-mcctl router restart
+mcctl router start
 ```
+
+`mcctl upgrade`는 라우터의 `image`와 `group_add`만 바꾸므로 직접 수정한 내용은 유지됩니다.
+
+서버 하나만 자동 스케일링을 끄려면 `servers/<name>/server.yaml`에서 `routing.autoScale.up` 또는 `routing.autoScale.down`을 `false`로 바꾸고 `mcctl migrate spec <name>`을 실행한 뒤 컨테이너를 다시 만드세요. 실행 중이면 `mcctl stop <name> && mcctl start <name>`, 중지 상태면 `mcctl start <name>`입니다. 이 값은 서버의 `mc-router.auto-scale-up` / `mc-router.auto-scale-down` 라벨이 됩니다.
 
 !!! info "AUTO_SCALE_DOWN"
     mc-router v1.39.1 이후 자동 스케일 다운이 완전히 지원됩니다.
@@ -295,12 +309,21 @@ HOST_IPS=192.168.1.100,100.64.0.5
 #### 4. 서버 재생성 또는 라벨 업데이트
 
 ```bash
-# 새 서버는 자동으로 다중 호스트네임 설정
+# 새 서버는 IP마다 호스트네임을 자동으로 받음
 mcctl create myserver
 
-# 기존 서버는 새 IP로 호스트네임 갱신
+# 기존 서버: "Host IP(s)"를 고르고 모든 주소를 선택한 뒤
+# "Update existing servers with new IP hostnames?"에 yes로 답함
 mcctl init --reconfigure
+
+# mc-router가 실행 중인지 확인
+mcctl router start
+
+# 실행 중인 서버마다 컨테이너를 다시 만들어 새 호스트네임 적용
+mcctl stop myserver && mcctl start myserver
 ```
+
+컨테이너는 생성될 때의 호스트네임을 유지하며, 재시작으로는 새 호스트네임이 적용되지 않습니다. 중지된 서버는 `mcctl start <name>`이 컨테이너를 다시 만들고 시작합니다. 다시 만들되 중지된 상태로 두려면 `~/minecraft-servers`에서 `docker compose up --no-start --no-deps mc-<name>`을 실행하세요.
 
 #### 5. 클라이언트 접속
 
@@ -374,25 +397,28 @@ sudo zerotier-cli listnetworks
 docker inspect mc-myserver | grep mc-router.host
 
 # mc-router 로그에서 호스트네임 확인
-docker logs router 2>&1 | grep myserver
+mcctl logs router -n 200 | grep myserver
 ```
 
 !!! warning "VPN IP 변경 시"
-    VPN IP가 변경되면 `mcctl init --reconfigure`를 실행해 새 IP를 입력하고, 기존 서버 갱신을 승인하세요.
+    VPN IP가 바뀌면 `mcctl init --reconfigure`를 실행해 새 IP를 선택하고 기존 서버 갱신을 승인한 뒤, 4단계처럼 서버마다 컨테이너를 다시 만드세요. 첫 번째 주소가 바뀌었다면 `/etc/avahi/hosts`의 `<name>.local` 줄도 고치세요. mcctl은 이 줄을 다시 쓰지 않습니다.
 
 ### 디버그 모드
 
-`.env`에서 mc-router 디버그 출력 활성화:
+`~/minecraft-servers/docker-compose.yml`의 `router` 서비스 `environment:`에 `DEBUG: "true"`를 추가합니다:
 
-```bash
-# ~/minecraft-servers/.env
-DEBUG=true
+```yaml
+services:
+  router:
+    environment:
+      DEBUG: "true"
 ```
 
-그런 다음 재시작:
+그런 다음 라우터를 다시 만들고 로그를 확인합니다:
 
 ```bash
-mcctl router restart
+mcctl router start
+mcctl logs router -f
 ```
 
 ---
@@ -401,18 +427,17 @@ mcctl router restart
 
 ### Docker 네트워크
 
-모든 Minecraft 컨테이너는 공유 Docker 네트워크에서 실행됩니다:
+모든 Minecraft 컨테이너는 공유 Docker 네트워크에서 실행됩니다. `mcctl init`이 서브넷 `172.28.0.0/16`의 브리지 네트워크 `minecraft-net`을 만들고, compose 파일은 이를 외부 네트워크로 사용합니다:
 
 ```yaml
 # docker-compose.yml
 networks:
   minecraft-net:
+    external: true
     name: ${MINECRAFT_NETWORK:-minecraft-net}
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${MINECRAFT_SUBNET:-172.28.0.0/16}
 ```
+
+`.env`의 `MINECRAFT_SUBNET`은 사용되지 않습니다.
 
 ### 포트 매핑
 
@@ -422,7 +447,8 @@ mc-router만 포트 25565를 노출합니다:
 services:
   router:
     ports:
-      - "25565:25565"  # 공개 포트
+      - "25565:25565"            # 공개 포트
+      - "127.0.0.1:25580:8080"   # mc-router 관리 API (localhost 전용)
 ```
 
 개별 Minecraft 서버는 포트를 노출하지 않습니다 - mc-router를 통해 접근합니다.
@@ -453,12 +479,12 @@ creative.minecraft.example.com  A  192.168.1.100
 
 ### 서버 설정
 
-mc-router.host 라벨을 업데이트합니다:
+도메인을 서버의 커스텀 호스트네임으로 추가합니다:
 
-```yaml
-labels:
-  mc-router.host: "survival.minecraft.example.com"
-```
+- 웹 콘솔: 서버 상세 > **Options** > **Hostnames / Domains** > **Custom Domains**에서 추가한 뒤 **Save**
+- 또는 `servers/survival/server.yaml`의 `routing.customHostnames`에 추가하고 `mcctl migrate spec survival` 실행
+
+mcctl은 `mc-router.host` 라벨에 도메인과 함께 `survival.local`과 nip.io 호스트네임을 유지합니다. 재시작으로는 호스트네임이 적용되지 않으므로 컨테이너를 다시 만드세요. 실행 중이면 `mcctl stop survival && mcctl start survival`, 중지 상태면 `mcctl start survival`입니다.
 
 ### HTTPS/TLS
 
@@ -499,6 +525,7 @@ sudo firewall-cmd --reload
 1. mc-router가 실행 중인지 확인:
    ```bash
    mcctl status router
+   mcctl router start   # 실행 중이 아니면
    ```
 
 2. 호스트네임이 설정되었는지 확인:
@@ -513,10 +540,10 @@ sudo firewall-cmd --reload
 
 ### 서버가 시작되지 않음
 
-1. `.env`에서 Docker 타임아웃 확인:
-   ```bash
-   # ~/minecraft-servers/.env
-   DOCKER_TIMEOUT=180s # 서버 시작이 오래 걸리면 증가
+1. `docker-compose.yml`의 `router` 서비스에서 `DOCKER_TIMEOUT`을 확인하고, `mcctl router start`로 라우터를 다시 만듭니다:
+   ```yaml
+   # ~/minecraft-servers/docker-compose.yml (router environment)
+   DOCKER_TIMEOUT: "180s"   # 서버 시작이 오래 걸리면 증가
    ```
 
 2. 서버 로그 확인:

@@ -43,7 +43,9 @@ The backup system provides:
 
 ### Step 3: Configure Backup
 
-Edit `~/minecraft-servers/.env`:
+Run `mcctl backup init`. It asks for the token, the repository, the branch and whether to back up when a server stops, and writes them to `.env` (if backup is already configured it asks before overwriting; `--force` skips that question).
+
+Or edit `~/minecraft-servers/.env` yourself:
 
 ```bash
 # GitHub Backup Configuration
@@ -172,7 +174,11 @@ BACKUP_AUTO_ON_STOP=true
 
 ### Scheduled Backups
 
-Use `mcctl backup schedule add` (or the web console) for scheduled backups with a retention policy. A plain cron job also works:
+Use `mcctl backup schedule add` (or the web console) for scheduled backups with a retention policy, for example `mcctl backup schedule add --cron daily --name nightly --max-count 7`. Commands: [`mcctl backup schedule`](../cli/commands.md#mcctl-backup-schedule).
+
+The schedules run inside mcctl-api, so the web console services must be set up (`mcctl console init`) and running. mcctl-api loads the schedules when it starts: after you add, remove, enable or disable a schedule with the CLI, run `mcctl console service restart --api`. Changes made in the web console apply at once.
+
+Without mcctl-api, use a plain cron job:
 
 ```cron
 # Daily backup at 4 AM (--auto: no prompt, waits for a running backup)
@@ -362,6 +368,8 @@ tar -czvf backup-$(date +%Y%m%d).tar.gz ~/minecraft-servers/worlds/
 rsync -av ~/minecraft-servers/worlds/ /backup/minecraft/worlds/
 ```
 
+Worlds are a host directory bind-mounted into the servers, not a Docker volume. Stop the servers before copying, so no world is written during the copy.
+
 ### Cloud Storage
 
 ```bash
@@ -370,16 +378,6 @@ aws s3 sync ~/minecraft-servers/worlds/ s3://my-bucket/minecraft/
 
 # Backblaze B2
 b2 sync ~/minecraft-servers/worlds/ b2://my-bucket/minecraft/
-```
-
-### Docker Volume Backup
-
-```bash
-# Backup Docker volume
-docker run --rm \
-  -v minecraft-worlds:/data \
-  -v $(pwd):/backup \
-  alpine tar -czvf /backup/worlds.tar.gz /data
 ```
 
 ---

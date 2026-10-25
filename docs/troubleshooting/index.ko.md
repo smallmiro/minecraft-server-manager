@@ -38,9 +38,9 @@ mcctl logs <server-name> -n 100
 
 | 원인 | 로그 메시지 | 해결책 |
 |------|-------------|--------|
-| 잘못된 Java 버전 | `UnsupportedClassVersionError` | 이미지 태그 변경 (java8, java17, java21) |
+| 잘못된 Java 버전 | `UnsupportedClassVersionError` | 이미지 태그 변경 (`java8`, `java17`, `java21`, `java25`), 아래 참조 |
 | 메모리 부족 | `OutOfMemoryError` | config.env에서 `MEMORY` 증가 |
-| EULA 미동의 | `EULA must be accepted` | .env에서 `EULA=TRUE` 설정 |
+| EULA 미동의 | `EULA must be accepted` | mcctl은 서버마다 `docker-compose.yml`에 `EULA: "TRUE"`를 설정합니다. 파일을 손으로 고쳤다면 이 줄을 되살리세요 |
 | 포트 충돌 | `Address already in use` | 해당 포트를 사용하는 다른 서비스 확인 |
 | 월드 손상 | `java.io.IOException` | 백업에서 복원 |
 
@@ -48,9 +48,12 @@ mcctl logs <server-name> -n 100
 
 | Minecraft 버전 | 필요한 Java |
 |----------------|-------------|
-| 1.21+ | Java 21 |
-| 1.18 - 1.20.4 | Java 17 또는 21 |
-| Forge 1.16.5 이하 | Java 8 |
+| 26.x와 `LATEST` | Java 25 |
+| 1.20.5–1.21.x | Java 21 |
+| 1.17–1.20.4 | Java 17 |
+| 1.16.5 이하 | Java 8 |
+
+태그를 바꾸려면 `servers/<name>/docker-compose.yml`의 `image`를 고치고(mcctl이 이 변경을 `server.yaml`에 반영합니다) 서버를 중지했다가 시작합니다. `mcctl update`는 고정한 태그, 즉 릴리스 버전으로 시작하는 태그(예: `2026.10.0-java21`)나 다이제스트는 유지합니다.
 
 ### 서버에 연결할 수 없음
 
@@ -77,7 +80,7 @@ mcctl console <server-name>
 | 서버 미실행 | `mcctl start <server-name>` |
 | 잘못된 호스트네임 | 올바른 형식 사용: `<server>.<ip>.nip.io:25565` |
 | 방화벽 차단 | 포트 25565 개방 |
-| DNS 해석 실패 | IP 주소 직접 사용 또는 nip.io 확인 |
+| DNS 해석 실패 | nip.io 확인(`nslookup <server>.<ip>.nip.io`) 또는 LAN에서 `<server>.local` 사용. IP만으로는 mc-router가 라우팅하지 않음 |
 
 ### 느린 성능
 
@@ -144,6 +147,7 @@ mcctl logs <server-name> | grep -i error
 
 - 다른 서버가 이미 그 월드를 사용 중이거나(월드와 `<world>_nether` / `<world>_the_end` 폴더는 하나의 월드로 봅니다), 삭제하려는 월드를 서버가 사용 중인 경우(`--force`로도 우회할 수 없음)
 - 서버가 running, paused, restarting, created 상태인 경우(서버를 대신 중지하지 않습니다)
+- 서버가 월드를 `servers/<name>/data` 안에 두는 경우: `mcctl migrate worlds`로 월드를 `worlds/`로 옮기기 전까지 다른 월드를 할당받을 수 없고, 그 월드를 해제할 수도 없습니다
 - 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없는 경우(경로 구분자, `.`/`..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}`, 지원하지 않는 `--universe` 위치). 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다
 
 **진단:**
@@ -161,6 +165,8 @@ grep -E '^(LEVEL|WORLD_NAME)=' servers/*/config.env
 1. 서버를 중지합니다(`mcctl stop <server-name>`).
 2. 다른 서버가 쓰는 월드를 비우려면, 그 서버를 중지한 뒤 `mcctl world release <world-name>`을 실행합니다. 그 서버는 자신의 기본 월드 `<server>`로 돌아갑니다.
 3. `config.env`를 읽을 수 없다고 보고되면 `LEVEL` 줄을 `LEVEL=<name>` 형태로 고친 뒤 명령을 다시 실행합니다.
+4. 서버가 월드를 `servers/<name>/data` 안에 둔다는 오류가 나오면 서버를 중지하고 먼저 `mcctl migrate worlds --server <server-name>`을 실행합니다.
+5. `created` 상태의 서버(예: `mcctl update`가 다시 만든 서버)는 `mcctl stop`으로 중지되지 않습니다. 한 번 시작한 뒤 중지하세요: `mcctl start <server-name> && mcctl stop <server-name>`.
 
 !!! note "이전 설치의 중복 할당"
     이전 버전에서는 두 서버가 같은 월드를 쓸 수 있었습니다. 이런 경우는 고치지 않고 알려 줍니다. `mcctl world list`가 경고와 함께 `assigned: a, b`로 표시하고, `GET /api/worlds`는 `assignmentWarnings`에 담아 반환하며, 웹 콘솔은 경고 알림을 보여 줍니다. 한 서버만 남기고 나머지 서버에는 다른 월드를 할당하세요.
@@ -212,6 +218,37 @@ grep -nvE '^[[:space:]]*(#|$)|^[0-9.]+[[:space:]]+[^[:space:]]+\.local[[:space:]
 
 2. 비밀번호 줄이 있었다면 `passwd`로 해당 계정의 비밀번호를 바꿉니다.
 3. IP가 여러 개인 항목은 `.env`의 `HOST_IP`를 IPv4 주소 하나로 설정하고(여러 IP는 `HOST_IPS` 사용) 항목을 다시 추가합니다: `echo '192.168.1.10 myserver.local' | sudo tee -a /etc/avahi/hosts`.
+
+### mc-router가 Docker 소켓을 읽지 못함
+
+**증상:** `mcctl logs router`에 `/var/run/docker.sock`에 대한 `permission denied`가 보이고, 어떤 서버도 라우팅되거나 접속 시 시작되지 않습니다.
+
+**원인:** mc-router 1.46+는 non-root 사용자로 실행되며 `docker-compose.yml`의 `group_add: ["${DOCKER_GID:-999}"]`로 소켓을 읽습니다. `.env`의 `DOCKER_GID`가 소켓의 그룹과 같아야 합니다.
+
+**조치:**
+
+```bash
+stat -c %g /var/run/docker.sock                  # 소켓 그룹 ID (Linux)
+grep '^DOCKER_GID=' ~/minecraft-servers/.env     # 같아야 함
+mcctl upgrade                                    # 소켓에서 DOCKER_GID를 읽어 설정하고 router 서비스를 고침
+mcctl router start                               # 새 그룹으로 mc-router를 다시 만듦
+```
+
+### Node.js를 바꾼 뒤 웹 콘솔이 500을 반환함
+
+**증상:** 콘솔 페이지가 HTTP 500을 반환하고, `pm2 logs mcctl-console`에 `NODE_MODULE_VERSION` 또는 `ERR_DLOPEN_FAILED`가 보입니다.
+
+**원인:** 네이티브 모듈 `better-sqlite3`가 PM2 데몬이 실행하는 것과 다른 Node.js 버전으로 빌드되었습니다.
+
+**조치:** `mcctl console service status`가 절차를 출력합니다. `pm2 kill`, mcctl을 설치할 때 쓴 Node.js 버전으로 전환(예: `nvm use 22`), 그다음 `mcctl console service start`를 실행합니다. [업그레이드 런북 4단계](../advanced/upgrade-runbook.ko.md#4-api--console-재시작-필요-시)도 참조하세요.
+
+### `mcctl console`이 접속하지 못함
+
+**증상:** `mcctl console <server-name>`(또는 `mcctl rcon <server-name>`)이 `Failed to connect to RCON`을 출력합니다.
+
+**원인:** `mcctl console`은 Docker 네트워크의 컨테이너 IP 주소로 TCP 접속합니다. 서버가 완전히 시작되어 있어야 하고, 호스트가 그 IP에 접근할 수 있어야 합니다. macOS의 Docker Desktop은 이 IP를 노출하지 않을 수 있습니다.
+
+**조치:** `mcctl logs <server-name>`에 `Done`이 보일 때까지 기다리거나, 컨테이너 안에서 `rcon-cli`를 실행하는 `mcctl exec <server-name> <command>`를 사용하세요.
 
 ---
 

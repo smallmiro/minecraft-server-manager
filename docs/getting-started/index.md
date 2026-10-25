@@ -9,7 +9,7 @@ Welcome to Docker Minecraft Server Management Platform. This guide will help you
 - **Easy server creation** - Create Paper, Forge, Fabric, or Vanilla servers with a single command
 - **Multi-server routing** - Run multiple servers on a single machine with hostname-based routing
 - **Auto-scaling** - Servers automatically start when players connect and stop when idle
-- **World management** - Share and manage worlds across servers with locking support
+- **World management** - Assign worlds to servers (one world, one server) and release them
 - **GitHub backup** - Automatic backup of world data to a private GitHub repository
 
 ## Architecture Overview
@@ -71,6 +71,9 @@ mcctl provides both interactive and CLI modes:
 ### Complete Server Lifecycle
 
 ```bash
+# Start mc-router (once, after mcctl init)
+mcctl router start
+
 # Create a server
 mcctl create myserver -t PAPER -v 1.21.1
 
@@ -137,9 +140,9 @@ mcctl backup restore
 |-------------|---------|-------------|
 | OS | Linux, macOS | Linux (Ubuntu 22.04+) |
 | Node.js | 18.0.0+ | 20.0.0+ |
-| Docker | 20.10+ | 24.0+ |
-| Docker Compose | v2.0+ | v2.20+ |
-| RAM | 4GB + 2GB per server | 8GB+ |
+| Docker | 24.0+ | Latest |
+| Docker Compose | v2.20+ | Latest |
+| RAM | 4GB + `MEMORY` of each running server (default 4G) | 8GB+ |
 | Storage | 10GB | 50GB+ SSD |
 
 !!! note "Windows Support"

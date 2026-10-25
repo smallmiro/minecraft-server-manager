@@ -43,7 +43,9 @@
 
 ### 3단계: 백업 설정
 
-`~/minecraft-servers/.env`를 편집합니다:
+`mcctl backup init`을 실행합니다. 토큰, 저장소, 브랜치, 서버 정지 시 백업 여부를 묻고 `.env`에 씁니다(이미 설정되어 있으면 덮어쓸지 먼저 묻고, `--force`는 이 질문을 건너뜁니다).
+
+또는 `~/minecraft-servers/.env`를 직접 편집합니다:
 
 ```bash
 # GitHub 백업 설정
@@ -168,11 +170,15 @@ mcctl backup restore abc1234 --force  # 묻지 않습니다(스크립트용)
 BACKUP_AUTO_ON_STOP=true
 ```
 
-`mcctl stop <server>`와 웹 콘솔·API의 정지는 서버가 멈춘 뒤 `mcctl backup push --auto`처럼 백업합니다. 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다. 백업이 실패하면 CLI는 경고를 출력하고 API는 로그에 남기며, 정지는 실패하지 않습니다. API는 백업을 백그라운드에서 실행하므로 정지 요청이 먼저 응답하고, mcctl-api는 종료할 때 실행 중인 백업을 기다리고, 90초가 지나도 끝나지 않으면 백업을 중단해 자동 저장(`save-on`)을 되돌린 뒤 종료합니다(전체 최대 2분). 이 릴리스 전에 `mcctl console init`으로 설치했다면 이 대기를 위해 `ecosystem.config.cjs`에 `kill_timeout`이 필요합니다([업그레이드 런북 4-2단계](upgrade-runbook.md#pm2-kill-timeout)). `mcctl stop --all`은 백업하지 않습니다.
+`mcctl stop <server>`와 웹 콘솔·API의 정지는 서버가 멈춘 뒤 `mcctl backup push --auto`처럼 백업합니다. 입력을 묻지 않고, 다른 백업이 실행 중이면 최대 10분 기다립니다. 백업이 실패하면 CLI는 경고를 출력하고 API는 로그에 남기며, 정지는 실패하지 않습니다. API는 백업을 백그라운드에서 실행하므로 정지 요청이 먼저 응답하고, mcctl-api는 종료할 때 실행 중인 백업을 기다리고, 90초가 지나도 끝나지 않으면 백업을 중단해 자동 저장(`save-on`)을 되돌린 뒤 종료합니다(전체 최대 2분). 이 릴리스 전에 `mcctl console init`으로 설치했다면 이 대기를 위해 `ecosystem.config.cjs`에 `kill_timeout`이 필요합니다([업그레이드 런북 4-2단계](upgrade-runbook.ko.md#pm2-kill-timeout)). `mcctl stop --all`은 백업하지 않습니다.
 
 ### 예약 백업
 
-보존 정책이 있는 예약 백업은 `mcctl backup schedule add`(또는 웹 콘솔)를 쓰세요. 일반 cron 작업도 됩니다:
+보존 정책이 있는 예약 백업은 `mcctl backup schedule add`(또는 웹 콘솔)를 쓰세요. 예: `mcctl backup schedule add --cron daily --name nightly --max-count 7`. 명령: [`mcctl backup schedule`](../cli/commands.ko.md#mcctl-backup-schedule).
+
+예약은 mcctl-api 안에서 실행되므로 웹 콘솔 서비스가 설정(`mcctl console init`)되어 실행 중이어야 합니다. mcctl-api는 시작할 때 예약을 읽으므로, CLI로 예약을 추가·삭제·활성화·비활성화한 뒤에는 `mcctl console service restart --api`를 실행하세요. 웹 콘솔에서 바꾼 내용은 바로 적용됩니다.
+
+mcctl-api 없이 쓰려면 일반 cron 작업을 사용합니다:
 
 ```cron
 # 매일 오전 4시 백업(--auto: 묻지 않고, 실행 중인 백업을 기다림)
@@ -362,6 +368,8 @@ tar -czvf backup-$(date +%Y%m%d).tar.gz ~/minecraft-servers/worlds/
 rsync -av ~/minecraft-servers/worlds/ /backup/minecraft/worlds/
 ```
 
+월드는 Docker 볼륨이 아니라 서버에 바인드 마운트되는 호스트 디렉터리입니다. 복사하는 동안 월드가 기록되지 않도록 먼저 서버를 중지하세요.
+
 ### 클라우드 스토리지
 
 ```bash
@@ -370,16 +378,6 @@ aws s3 sync ~/minecraft-servers/worlds/ s3://my-bucket/minecraft/
 
 # Backblaze B2
 b2 sync ~/minecraft-servers/worlds/ b2://my-bucket/minecraft/
-```
-
-### Docker 볼륨 백업
-
-```bash
-# Docker 볼륨 백업
-docker run --rm \
-  -v minecraft-worlds:/data \
-  -v $(pwd):/backup \
-  alpine tar -czvf /backup/worlds.tar.gz /data
 ```
 
 ---

@@ -155,53 +155,39 @@ broadcast-rcon-to-ops=false
 ### Docker 설정 (이 프로젝트)
 
 ```bash
-# platform/servers/<server>/config.env
-ENABLE_RCON=true
-RCON_PASSWORD=your_secure_password
+# ~/minecraft-servers/.env (servers/global.env를 통해 모든 서버에 전달)
+RCON_PASSWORD=<mcctl init이 생성한 무작위 값>
 RCON_PORT=25575
+
+# ~/minecraft-servers/servers/<server>/config.env
+ENABLE_RCON=true
 ```
+
+서버의 `config.env`에 `RCON_PASSWORD`나 `RCON_PORT` 줄이 있으면 그 서버에서는 플랫폼 값보다 우선합니다. 바뀐 값은 서버 컨테이너를 다시 만들 때 적용됩니다([RCON 비밀번호](index.ko.md#rcon-비밀번호) 참조).
 
 `itzg/minecraft-server` 이미지에는 내장 RCON 클라이언트인 `rcon-cli`가 포함되어 있습니다.
 
 ## 주요 RCON 명령어
 
-| 명령어 | 설명 | 응답 예시 |
-|--------|------|-----------|
-| `list` | 온라인 플레이어 | `There are 2 of a max 20 players online: Steve, Alex` |
-| `say <message>` | 메시지 브로드캐스트 | (빈 응답) |
-| `tell <player> <msg>` | 귓속말 | (빈 응답) |
-| `kick <player> [reason]` | 플레이어 추방 | `Kicked Steve: reason` |
-| `ban <player> [reason]` | 플레이어 밴 | `Banned player Steve` |
-| `pardon <player>` | 밴 해제 | `Unbanned player Steve` |
-| `op <player>` | 운영자 권한 부여 | `Made Steve a server operator` |
-| `deop <player>` | 운영자 권한 해제 | `Made Steve no longer a server operator` |
-| `whitelist list` | 화이트리스트 목록 | `There are 3 whitelisted players: ...` |
-| `whitelist add <player>` | 화이트리스트 추가 | `Added Steve to the whitelist` |
-| `whitelist remove <player>` | 화이트리스트 제거 | `Removed Steve from the whitelist` |
-| `save-all` | 월드 저장 | `Saving the game (this may take a moment!)` |
-| `stop` | 서버 종료 | 서버 종료됨 |
-| `time set <value>` | 월드 시간 설정 | `Set the time to <value>` |
-| `weather <type>` | 날씨 설정 | `Set the weather to <type>` |
-| `gamemode <mode> <player>` | 게임 모드 변경 | `Set Steve's game mode to Creative Mode` |
-| `give <player> <item> [count]` | 아이템 지급 | `Gave 64 [Diamond] to Steve` |
+RCON에는 앞의 `/`를 뺀 Minecraft 서버 명령을 보냅니다. 보낼 수 있는 명령(플레이어, 시간, 날씨, 게임 규칙 등)은 [RCON 명령어](../cli/rcon-commands.ko.md)를 참조하세요.
 
 ## 이 프로젝트에서의 사용
 
 ### mcctl CLI 사용
 
 ```bash
-# 단일 명령 실행
+# 단일 명령 실행 (docker exec <container> rcon-cli)
 mcctl exec myserver list
 mcctl exec myserver say "5분 후 서버가 재시작됩니다!"
 
-# 대화형 RCON 콘솔
+# 대화형 RCON 콘솔 (컨테이너 IP로 TCP 접속, mcctl rcon과 같음)
 mcctl console myserver
 
-# 플레이어 관리 (내부적으로 RCON 사용)
+# 플레이어 관리 (서버가 실행 중이면 RCON 사용)
 mcctl whitelist myserver add Steve
 mcctl op myserver add Steve
 mcctl kick myserver Steve "장시간 자리 비움"
-mcctl ban myserver Griefer "그리핑"
+mcctl ban myserver add Griefer "그리핑"
 ```
 
 ### Docker 직접 사용
@@ -269,11 +255,10 @@ sudo iptables -A INPUT -p tcp --dport 25575 -j DROP
 
 ### Docker 보안
 
-Docker 환경에서 RCON은 `docker exec`를 통해 접근하며, 이는:
+어떤 서버도 RCON 포트를 호스트에 노출하지 않습니다. mcctl은 두 가지 방법으로 RCON에 접근합니다:
 
-- 네트워크 노출이 필요 없음
-- Docker의 인증 사용
-- Docker 소켓을 통해 작동
+- `mcctl exec`는 `docker exec`로 컨테이너 안에서 `rcon-cli`를 실행하므로 Docker 소켓 접근만 있으면 됩니다.
+- `mcctl console`(`mcctl rcon`과 같음)은 컨테이너의 `RCON_PASSWORD`로 `minecraft-net` 네트워크의 컨테이너 IP 주소에 TCP 접속합니다. Linux 호스트에서는 작동하지만 Docker Desktop(macOS)은 컨테이너 IP를 노출하지 않을 수 있으므로 그때는 `mcctl exec`를 사용하세요.
 
 ```yaml
 # 포트 노출 불필요
@@ -287,10 +272,10 @@ services:
 
 인터넷을 통한 원격 관리의 경우:
 
-1. **SSH 터널**: SSH를 통해 RCON 접근
+1. **SSH**: 호스트에 로그인해서 `mcctl`을 실행
    ```bash
-   ssh -L 25575:localhost:25575 user@server
-   rcon-cli --host localhost --port 25575
+   ssh user@server
+   mcctl exec myserver list
    ```
 
 2. **VPN**: VPN을 통해 서버 네트워크 접근
@@ -312,8 +297,11 @@ docker ps | grep mc-myserver
 ### 인증 실패
 
 ```bash
-# 설정에서 비밀번호 확인
-cat platform/servers/myserver/config.env | grep RCON_PASSWORD
+# 서버가 쓰는 비밀번호 (컨테이너에서 확인)
+docker exec mc-myserver printenv RCON_PASSWORD
+
+# 플랫폼 값 (servers/global.env를 통해 서버에 전달)
+grep RCON_PASSWORD ~/minecraft-servers/.env
 
 # server.properties 확인
 docker exec mc-myserver cat /data/server.properties | grep rcon.password

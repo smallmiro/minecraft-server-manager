@@ -141,7 +141,7 @@ sequenceDiagram
 mcctl world list
 
 # Assign a world to a stopped server (sets its LEVEL)
-mcctl world assign survival mc-myserver
+mcctl world assign survival myserver
 
 # Switch the server using the world back to its own default world
 mcctl world release survival
@@ -149,6 +149,7 @@ mcctl world release survival
 
 - There is no lock file. `worlds/.locks` is no longer read, written or created; an existing directory is harmless and `rm -rf worlds/.locks` is safe.
 - Assign and release need a stopped server. Nothing is stopped automatically.
+- A server that keeps its world inside `servers/<name>/data` cannot get another world until `mcctl migrate worlds` moves it to `worlds/`.
 - Deleting a server frees its world for reuse. `mcctl world delete` refuses a world a server uses, even with `--force`.
 - If a server's `config.env` cannot be read or its `LEVEL` cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Duplicate assignments from older installs are reported by `mcctl world list`, not fixed.
 
@@ -205,21 +206,27 @@ Then restart:
 mcctl stop myserver && mcctl start myserver
 ```
 
+!!! warning "Hand-edited compose files"
+    `servers/<name>/docker-compose.yml` is generated from `servers/<name>/server.yaml`. After a hand edit like this, a later change that rewrites the file (for example an image retag by `mcctl update`, `mcctl playit domain`, hostname edits or `mcctl init --reconfigure`) fails with `compose_edited`. `mcctl migrate spec <name> --force` renders the file again and drops your edit, keeping a copy in `docker-compose.yml.bak`. See [server.yaml hand edits](../configuration/server-yaml.md#hand-edits).
+
 ## Security Considerations
 
 ### RCON Password
 
-Change the default RCON password in `.env`:
+`mcctl init` writes a random 24-character `RCON_PASSWORD` to `.env`. Installs created before 2.32.0 may still have `changeme`; replace it:
 
 ```bash
 RCON_PASSWORD=your-very-secure-password-here
 ```
 
-Then restart all services:
+Servers get it through `servers/global.env` when their container is created, so recreate each server's container:
 
 ```bash
-mcctl down && mcctl up
+mcctl stop myserver && mcctl start myserver                          # a running server
+cd ~/minecraft-servers && docker compose up --no-start --no-deps mc-otherserver   # a stopped server, left stopped
 ```
+
+`mcctl down && mcctl up` also applies it, but `mcctl up` starts every server.
 
 ### Whitelist
 

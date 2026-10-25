@@ -3,7 +3,7 @@
 The same procedure for every release: upgrade the whole system (CLI, API, Console, platform config, router, servers, maps) in a fixed order. It is version-independent; only the `NEW` variable changes. Read the release's [CHANGELOG](https://github.com/smallmiro/minecraft-server-manager/blob/main/CHANGELOG.md) and release notes first for release-specific notes.
 
 !!! warning "Read first"
-    - `mcctl update` upgrades packages only (CLI/API/Console/shared). **It does not run `mcctl upgrade`** (`.env`, `servers/_template`, root compose router). Run `mcctl upgrade` separately.
+    - `mcctl update` upgrades the packages (CLI/API/Console/shared) and pulls the server images (step 5). **It does not run `mcctl upgrade`** (`.env`, `servers/_template`, root compose router). Run `mcctl upgrade` separately.
     - Run every command in a shell using **the same Node version PM2 uses** (step 0). If they differ, the native `better-sqlite3` module can hit an ABI mismatch and the Console returns 500.
 
 ## v3.0.0 upgrade script {#v300-upgrade-script}
@@ -75,7 +75,7 @@ Test hook: `MCCTL_UPGRADE_TTY` replaces `/dev/tty` (a readable file gives the an
 ```bash
 # Variables: current version / target version / platform root
 export OLD=$(mcctl --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')   # for rollback
-export NEW=2.29.1
+export NEW=3.0.2
 export ROOT=~/minecraft-servers          # directory with docker-compose.yml, .env, .mcctl.json
 
 # Check PM2's Node version, then switch the shell to the same one (e.g. 22)
@@ -100,7 +100,8 @@ cp .env $B/.env
 cp .mcctl.json $B/.mcctl.json
 cp -r servers/_template $B/_template
 mcctl status                                  # record current state
-mcctl server-backup <server> -m "Before v$NEW"   # worlds/config, whichever you use
+mcctl server-backup <server> -m "Before v$NEW"   # server config files (server.yaml, config.env, compose)
+mcctl backup push -m "Before v$NEW"              # worlds, if GitHub backup is set up
 ```
 
 **Gate:** `$B` contains `docker-compose.yml`, `.env`, `.mcctl.json` and `_template`.
@@ -117,7 +118,7 @@ hash -r && mcctl --version    # = $NEW
 ```
 
 - If you see `Updated (restart manually)`, do step 4.
-- If `mcctl update` retags a server's compose image, note the `⚠ <server>: A → B` output. mc-router auto-scale only starts existing containers and never recreates them, so a stopped server keeps its old image until its container is recreated. When the CLI that starts it is v3.0.1 or later, `mcctl update` offers to recreate the stopped servers (default No; `--yes` skips it, see step 5).
+- If `mcctl update` retags a server's compose image, note the `⚠ <server>: A → B` output. A pinned tag is kept: a tag that starts with a release version (for example `2026.10.0-java21`) or a digest (`java21@sha256:…`) prints `- <server>: <tag> - pinned tag, keeping`, or `⚠ <server>: <tag> is pinned, but VERSION=<version> needs <tag> - keeping` when its Java is older than `VERSION` needs. mc-router auto-scale only starts existing containers and never recreates them, so a stopped server keeps its old image until its container is recreated. When the CLI that starts it is v3.0.1 or later, `mcctl update` offers to recreate the stopped servers (default No; `--yes` skips it, see step 5).
 
 **Rollback point:** `npm install -g @minecraft-docker/mcctl@<previous>` then `mcctl console service restart --console --force`.
 
@@ -162,7 +163,7 @@ v3.0.0 removes every Bash script (#715). `mcctl` no longer reads `<root>/scripts
 | `logs.sh` | `mcctl logs` |
 | `init.sh` | `mcctl init` |
 | `render-map.sh` | No CLI command. Use **Render map** in the web console, or the API (BlueMap) |
-| `migrate-nip-io.sh` | No dedicated command. After the host IP changes, run `mcctl init --reconfigure` and answer yes to "Update existing servers with new IP hostnames?"; it renders every server again and the nip.io router hosts follow the new `HOST_IPS` (custom hosts stay) |
+| `migrate-nip-io.sh` | No dedicated command. After the host IP changes, run `mcctl init --reconfigure` and answer yes to "Update existing servers with new IP hostnames?"; it renders every server again and the nip.io router hosts follow the new `HOST_IPS` (custom hosts stay). Then recreate each server's container (`mcctl stop <server> && mcctl start <server>`, or `mcctl start <server>` when it is stopped); until then it keeps its old hostnames |
 | `lib/common.sh` | None. It was the scripts' own helper library; the name rules are in TypeScript |
 
 - Servers keep working. The first command that changes a server writes `servers/<name>/server.yaml` and rewrites `config.env` and the server's `compose.yml`; see [server.yaml](../configuration/server-yaml.md).
@@ -175,7 +176,8 @@ v3.0.0 removes every Bash script (#715). `mcctl` no longer reads `<root>/scripts
 mcctl console service restart
 # if the new build does not come up or you see an ABI error (NODE_MODULE_VERSION)
 mcctl console service restart --console --force
-cd $ROOT && npm rebuild better-sqlite3 && mcctl console service restart --console --force
+cd $ROOT/.services 2>/dev/null || cd $ROOT     # where mcctl-api and mcctl-console are installed
+npm rebuild better-sqlite3 && mcctl console service restart --console --force
 ```
 
 ### 4-1. Upgrading to v2.32.0 or later: check the console access mode (#633)
@@ -231,7 +233,7 @@ Instead of editing the file, you can re-run `mcctl console init --force`, which 
 
 ## 5. Apply server images
 
-Stopped servers are not updated by starting them: auto-scale only runs `docker start` on the existing container, so it wakes up on the old image. From v3.0.1, `mcctl update` lists the stopped servers and, in a terminal, asks whether to recreate their containers (without starting them). The default is No, because a new image can be a regression; `--yes` or no terminal never recreates, it only prints the commands. On yes it reports `recreated` (with the previous image ID), `up to date` or the failure per server, and prints how to roll back: `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`. The whole update runs in the CLI process that started it, so if that CLI was older than v3.0.1 (this includes v3.0.0 → v3.0.1), the new step did not run: run `mcctl update` once more in a terminal and answer yes, or run this in the platform directory for each stopped server:
+Stopped servers are not updated by starting them: auto-scale only runs `docker start` on the existing container, so it wakes up on the old image. After pulling, `mcctl update` checks each stopped server: one whose container already uses the pulled local image is reported as `up to date`; the others are listed as still using their old image, and in a terminal it asks whether to recreate their containers (without starting them). The default is No, because a new image can be a regression; `--yes` or no terminal never recreates, it only prints the commands. On yes it reports `recreated` (with the previous image ID), `up to date` or the failure per server, and prints how to roll back: `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`. A recreated server shows as `created` until it starts. The whole update runs in the CLI process that started it, so if that CLI was older than v3.0.1 (this includes v3.0.0 → v3.0.1), this step did not run: run `mcctl update` once more in a terminal and answer yes, or run this in the platform directory for each stopped server that still uses its old image:
 
 ```bash
 docker compose up --no-start --no-deps mc-<server>
