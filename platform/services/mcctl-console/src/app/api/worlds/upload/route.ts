@@ -9,13 +9,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth, AuthError } from '@/lib/auth-utils';
 import { headers } from 'next/headers';
 import { WORLD_NAME_PATTERN } from '@minecraft-docker/shared/naming';
+import { platformEnvValue } from '@/lib/platform-env';
 
 export const dynamic = 'force-dynamic';
 
 // Mirror the API's WORLD_UPLOAD_MAX_SIZE (default 1 GB) + multipart overhead margin,
-// so raising the env var lifts the limit at both layers.
+// so raising it in the platform .env lifts the limit at both layers (#826).
 const WORLD_UPLOAD_MAX_SIZE =
-  Number(process.env.WORLD_UPLOAD_MAX_SIZE) || 1024 * 1024 * 1024;
+  Number(platformEnvValue('WORLD_UPLOAD_MAX_SIZE')) || 1024 * 1024 * 1024;
 const MAX_REQUEST_SIZE = Math.floor(WORLD_UPLOAD_MAX_SIZE * 1.1) + 1024 * 1024;
 
 export async function POST(request: NextRequest) {

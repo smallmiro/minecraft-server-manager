@@ -45,3 +45,12 @@ export function applyPlatformAuthEnv(env: Record<string, string | undefined> = p
     }
   }
 }
+
+/**
+ * A platform setting the console reads like mcctl-api does (#826): the
+ * process env when set, else <MCCTL_ROOT>/.env.
+ */
+export function platformEnvValue(key: string, env: Record<string, string | undefined> = process.env): string | undefined {
+  if (env[key]) return env[key];
+  return env.MCCTL_ROOT ? readPlatformEnv(env.MCCTL_ROOT)?.get(key) : undefined;
+}
