@@ -116,5 +116,12 @@ class RealSite(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(self.out, n)), n)
         self.assertTrue(os.path.exists(os.path.join(self.out, ".assetsignore")))
 
+    def test_mcctl_keyword(self):
+        for rel in ("index.html", "ko/index.html", "ja/index.html"):
+            p = self.read(rel)
+            self.assertRegex(p, r"<title>mcctl ", rel)
+            self.assertRegex(p, r'<meta name="description" content="[^"]*mcctl', rel)
+            self.assertIn('<meta property="og:title" content="mcctl — Minecraft Server Manager">', p, rel)
+
 if __name__ == "__main__":
     unittest.main()
