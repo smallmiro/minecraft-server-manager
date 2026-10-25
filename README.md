@@ -7,8 +7,6 @@
 [![License](https://img.shields.io/github/license/smallmiro/minecraft-server-manager)](https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE)
 [![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/smallmiro)
 
-# mcctl
-
 > **Official Website:** [https://mcctl.mirolab.dev](https://mcctl.mirolab.dev/)  
 > **Documentation:** [ReadTheDocs](https://minecraft-server-manager.readthedocs.io/en/latest/)
 
