@@ -99,11 +99,9 @@ export class ModpackOptions {
     } else if (this.source === 'CURSEFORGE') {
       envVars.TYPE = 'AUTO_CURSEFORGE';
       envVars.CF_SLUG = this.slug;
+      // No loader variable: the modpack's manifest decides it (#826)
       if (this.version) {
-        envVars.CF_VERSION = this.version;
-      }
-      if (this.loader) {
-        envVars.CF_LOADER = this.loader;
+        envVars.CF_FILENAME_MATCHER = this.version;
       }
       if (this.excludeFiles && this.excludeFiles.length > 0) {
         envVars.CF_EXCLUDE_MODS = this.excludeFiles.join(',');

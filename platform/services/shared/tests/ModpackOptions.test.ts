@@ -91,13 +91,14 @@ describe('ModpackOptions', () => {
     });
 
     test('should convert CurseForge options to env vars', () => {
-      const options = ModpackOptions.curseforge('forge-example', { version: '2.0.0' });
+      const options = ModpackOptions.curseforge('forge-example', { version: '2.0.0', loader: 'forge' });
       const envVars = options.toEnvVars();
 
+      // itzg reads CF_FILENAME_MATCHER, has no CF_VERSION/CF_LOADER (#826)
       expect(envVars).toEqual({
         TYPE: 'AUTO_CURSEFORGE',
         CF_SLUG: 'forge-example',
-        CF_VERSION: '2.0.0',
+        CF_FILENAME_MATCHER: '2.0.0',
       });
     });
 

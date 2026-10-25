@@ -343,8 +343,8 @@ ${colors.cyan('Create Options:')}
   --enable-whitelist         Enable whitelist without initial players
   --no-whitelist             Disable whitelist (default)
   --modpack SLUG             Modrinth modpack slug (required for MODRINTH type)
-  --modpack-version VERSION  Modpack version (optional, default: latest)
-  --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto)
+  --modpack-version VERSION  Modpack version (optional, default: latest; CurseForge: part of the file name)
+  --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto; Modrinth only)
   --exclude-files LIST       Mods to exclude from modpack, comma-separated (e.g. client-only mods)
   --playit-domain DOMAIN     Register playit.gg external domain (e.g., aa.example.com)
   --no-playit-domain         Skip playit domain registration (explicit)

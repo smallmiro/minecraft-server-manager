@@ -52,7 +52,9 @@ describe('buildCreateSpec', () => {
 
   it.each([
     ['MODRINTH', { MODRINTH_MODPACK: 'pack', MODRINTH_VERSION: '1.0', MODRINTH_LOADER: 'fabric', MODRINTH_EXCLUDE_FILES: 'a.jar,b.jar' }],
-    ['AUTO_CURSEFORGE', { CF_SLUG: 'pack', CF_VERSION: '1.0', CF_LOADER: 'fabric', CF_EXCLUDE_MODS: 'a.jar,b.jar' }],
+    // itzg has no CF_VERSION/CF_LOADER (#826): the version selects the file by
+    // name (CF_FILENAME_MATCHER) and the modpack's manifest decides the loader
+    ['AUTO_CURSEFORGE', { CF_SLUG: 'pack', CF_FILENAME_MATCHER: '1.0', CF_EXCLUDE_MODS: 'a.jar,b.jar' }],
   ])('maps the %s modpack options', (type, env) => {
     const doc = buildCreateSpec({
       ...base,
@@ -62,7 +64,7 @@ describe('buildCreateSpec', () => {
       modLoader: 'fabric',
       modpackExcludeFiles: ['a.jar', 'b.jar'],
     });
-    expect(doc.env).toMatchObject(env);
+    expect(doc.env).toEqual({ MOTD: 'Welcome to alpha! Your adventure begins here.', ...env });
   });
 
   it('leaves VERSION to the modpack when none is given, LATEST for other types', () => {

@@ -174,6 +174,11 @@ function validateModpackOptions(options: CreateCommandOptions): number | undefin
     return 1;
   }
 
+  // itzg has no CurseForge loader variable: the modpack's manifest decides it (#826)
+  if (normalizedType === 'AUTO_CURSEFORGE' && options.modLoader) {
+    log.warn("--mod-loader is ignored for AUTO_CURSEFORGE: the modpack's manifest decides the loader.");
+  }
+
   // Warn if modpack option used with non-modpack type
   if (options.modpack && !MODPACK_TYPES.includes(normalizedType as typeof MODPACK_TYPES[number])) {
     log.warn(`--modpack option is only used for modpack server types (${MODPACK_TYPES.join(', ')}).`);
