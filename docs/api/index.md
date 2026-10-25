@@ -3,7 +3,7 @@
 mcctl-api is the REST API behind the Web Console. It manages servers, worlds, players, backups and mc-router with the same code as the `mcctl` CLI, and you can call it directly from scripts and other tools.
 
 - **Endpoints:** [API Endpoints](endpoints.md) documents every route.
-- **Base URL:** `http://<host>:5001`. mcctl-api listens on `HOST` (default `0.0.0.0`) and `PORT` (default `5001`).
+- **Base URL:** `http://<host>:5001`. mcctl-api listens on `HOST` and `PORT` (default `5001`). `mcctl console init` writes `HOST: '127.0.0.1'` for the `internal` access mode, which allows only clients on the host, and `0.0.0.0` for the other modes; without `HOST` the API listens on `0.0.0.0`.
 
 ## Architecture { #architecture }
 
@@ -117,7 +117,7 @@ mcctl-api checks every request except the paths in `AUTH_EXCLUDE_PATHS` (default
 |------|-------------|----------------|
 | `disabled` | None (development only) | - |
 | `api-key` | `AUTH_API_KEY` | `X-API-Key: <key>` |
-| `ip-whitelist` | The client address is in `AUTH_IP_WHITELIST` | - |
+| `ip-whitelist` | The source address of the connection is in `AUTH_IP_WHITELIST` (behind a reverse proxy, that is the proxy's address) | - |
 | `basic` | A user in `AUTH_USERS` | `Authorization: Basic <base64 of user:password>` |
 | `combined` | API key and IP whitelist, both checked | `X-API-Key: <key>` |
 

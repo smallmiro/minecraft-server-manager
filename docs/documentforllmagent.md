@@ -1455,7 +1455,7 @@ Defaults in these tables are the itzg image's. `mcctl create` writes `TYPE=PAPER
 
 ## 8. REST API Reference
 
-mcctl-api is the Fastify REST API behind the Web Console: port `5001` (`PORT`), listening on `HOST` (default `0.0.0.0`), run on the host by PM2 as `mcctl-api` (not in Docker). Full reference: `docs/api/index.md` (authentication, errors, SSE, Swagger) and `docs/api/endpoints.md` (every route with bodies, responses and status codes). Paths below are complete; only the legacy `/servers/:id/console/exec` lacks `/api`. `:name` and body fields `serverName` take the server name without `mc-` (`survival`, not `mc-survival`).
+mcctl-api is the Fastify REST API behind the Web Console: port `5001` (`PORT`), listening on `HOST` (`mcctl console init` writes `127.0.0.1` for the `internal` access mode, `0.0.0.0` for the others; unset → `0.0.0.0`), run on the host by PM2 as `mcctl-api` (not in Docker). Full reference: `docs/api/index.md` (authentication, errors, SSE, Swagger) and `docs/api/endpoints.md` (every route with bodies, responses and status codes). Paths below are complete; only the legacy `/servers/:id/console/exec` lacks `/api`. `:name` and body fields `serverName` take the server name without `mc-` (`survival`, not `mc-survival`).
 
 ### Authentication
 
@@ -2053,7 +2053,7 @@ useRecentActivity(limit)        // Dashboard Recent Activity
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCCTL_API_URL` | mcctl-api URL used by the BFF | `http://localhost:<api port>` (written by `mcctl console init`) |
+| `MCCTL_API_URL` | mcctl-api URL used by the BFF | `http://127.0.0.1:<api port>` (written by `mcctl console init`) |
 | `MCCTL_API_KEY` | Sent to mcctl-api as `X-API-Key` | Written by `mcctl console init` for the `api-key` and `api-key-ip` modes only |
 | `BETTER_AUTH_SECRET` | Session secret, read from `<MCCTL_ROOT>/.env` at startup; while `ecosystem.config.cjs` still defines it, the ecosystem value wins (`mcctl upgrade` moves it to `.env`) | Written to `.env` by `mcctl console init` |
 | `BETTER_AUTH_BASE_URL` | Console URL: a trusted sign-in origin, and secure cookies when it starts with `https://`; same source rules as the secret | `http://localhost:<PORT>` |

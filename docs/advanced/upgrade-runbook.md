@@ -231,6 +231,27 @@ Instead of editing the file, you can re-run `mcctl console init --force`, which 
 
 **Gate:** `pm2 describe mcctl-api` shows `kill timeout` 130000 (or `grep kill_timeout ecosystem.config.cjs` shows it before the restart).
 
+### 4-3. Bind mcctl-api to loopback in the `internal` access mode (#833) {#api-loopback-bind}
+
+Do this once on hosts where `mcctl console init` was run before this release with the `internal` access mode (`AUTH_MODE: 'ip-whitelist'` with only loopback addresses in `AUTH_IP_WHITELIST`). Recommended.
+
+`internal` allows only clients on the host itself, so mcctl-api does not need to listen on other interfaces. `mcctl console init` now writes `HOST: '127.0.0.1'` for mcctl-api in that mode (other modes keep `0.0.0.0`) and points the console at `MCCTL_API_URL: 'http://127.0.0.1:<api port>'`. `mcctl update` and `mcctl upgrade` do not rewrite `ecosystem.config.cjs`.
+
+```bash
+cd $ROOT
+grep -nE "AUTH_MODE|AUTH_IP_WHITELIST|HOST:|MCCTL_API_URL" ecosystem.config.cjs
+cp ecosystem.config.cjs $B/ecosystem.config.cjs     # for rollback (step 8)
+sed -i \
+  -e "s/^\( *\)HOST: '0.0.0.0',/\1HOST: '127.0.0.1',/" \
+  -e "s#MCCTL_API_URL: 'http://localhost:#MCCTL_API_URL: 'http://127.0.0.1:#" \
+  ecosystem.config.cjs
+mcctl console service restart --console --force     # re-registers the apps from the file
+```
+
+Run the `sed` only when the access mode is `internal`: other modes allow clients on other hosts, which need `0.0.0.0`. Instead of editing the file, you can re-run `mcctl console init --force`, which rewrites the whole file and asks every setup question again.
+
+**Gate:** `ss -ltnp | grep 5001` shows `127.0.0.1:5001`; API `/health` returns 200 on the host and the Console can list servers (step 7-6).
+
 ## 5. Apply server images
 
 Stopped servers are not updated by starting them: auto-scale only runs `docker start` on the existing container, so it wakes up on the old image. After pulling, `mcctl update` checks each stopped server: one whose container already uses the pulled local image is reported as `up to date`; the others are listed as still using their old image, and in a terminal it asks whether to recreate their containers (without starting them). The default is No, because a new image can be a regression; `--yes` or no terminal never recreates, it only prints the commands. On yes it reports `recreated` (with the previous image ID), `up to date` or the failure per server, and prints how to roll back: `docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`. A recreated server shows as `created` until it starts. The whole update runs in the CLI process that started it, so if that CLI was older than v3.0.1 (this includes v3.0.0 → v3.0.1), this step did not run: run `mcctl update` once more in a terminal and answer yes, or run this in the platform directory for each stopped server that still uses its old image:

@@ -231,6 +231,27 @@ mcctl console service restart --console --force     # 파일에서 앱을 다시
 
 **확인:** `pm2 describe mcctl-api`에 `kill timeout` 130000이 보임(재시작 전에는 `grep kill_timeout ecosystem.config.cjs`로 확인).
 
+### 4-3. `internal` 접근 모드에서 mcctl-api를 루프백에만 바인딩 (#833) {#api-loopback-bind}
+
+이 릴리스 전에 `internal` 접근 모드(`AUTH_MODE: 'ip-whitelist'`, `AUTH_IP_WHITELIST`에 루프백 주소만)로 `mcctl console init`을 실행한 호스트에서 한 번만 합니다. 권장합니다.
+
+`internal`은 호스트 자신의 클라이언트만 허용하므로 mcctl-api가 다른 인터페이스에서 대기할 필요가 없습니다. 이제 `mcctl console init`은 이 모드에서 mcctl-api에 `HOST: '127.0.0.1'`을 쓰고(다른 모드는 `0.0.0.0` 유지), 콘솔에는 `MCCTL_API_URL: 'http://127.0.0.1:<API 포트>'`를 씁니다. `mcctl update`와 `mcctl upgrade`는 `ecosystem.config.cjs`를 다시 쓰지 않습니다.
+
+```bash
+cd $ROOT
+grep -nE "AUTH_MODE|AUTH_IP_WHITELIST|HOST:|MCCTL_API_URL" ecosystem.config.cjs
+cp ecosystem.config.cjs $B/ecosystem.config.cjs     # 롤백용 (8단계)
+sed -i \
+  -e "s/^\( *\)HOST: '0.0.0.0',/\1HOST: '127.0.0.1',/" \
+  -e "s#MCCTL_API_URL: 'http://localhost:#MCCTL_API_URL: 'http://127.0.0.1:#" \
+  ecosystem.config.cjs
+mcctl console service restart --console --force     # 파일에서 앱을 다시 등록
+```
+
+`sed`는 접근 모드가 `internal`일 때만 실행합니다. 다른 모드는 다른 호스트의 클라이언트를 허용하므로 `0.0.0.0`이 필요합니다. 파일을 고치는 대신 `mcctl console init --force`를 다시 실행해도 되지만, 이 경우 파일 전체를 다시 쓰고 설정 질문을 모두 다시 묻습니다.
+
+**확인:** `ss -ltnp | grep 5001`에 `127.0.0.1:5001`이 보이고, 호스트에서 API `/health`가 200을 반환하며 콘솔이 서버 목록을 보여 줌(7-6단계).
+
 ## 5. 서버 이미지 반영
 
 중지된 서버는 기동만으로는 새 이미지가 적용되지 않습니다. auto-scale은 기존 컨테이너를 `docker start`만 하므로 옛 이미지로 뜹니다. 이미지를 받은 뒤 `mcctl update`는 중지된 서버를 하나씩 확인합니다. 컨테이너가 이미 받은 로컬 이미지를 쓰는 서버는 `up to date`로 보고하고, 나머지는 아직 옛 이미지를 쓰는 서버로 나열한 뒤 터미널에서는 컨테이너를 (기동하지 않고) 다시 만들지 묻습니다. 새 이미지가 회귀일 수 있어 기본값은 No이고, `--yes`이거나 터미널이 없으면 다시 만들지 않고 명령만 출력합니다. Yes이면 서버별로 `recreated`(이전 이미지 ID 포함), `up to date`, 실패 사유를 보고하고 되돌리는 명령 `docker tag <이전 이미지 ID> <이미지> && docker compose up --no-start --no-deps mc-<server>`를 출력합니다. 다시 만든 서버는 시작하기 전까지 `created`로 표시됩니다. 업데이트 전체는 `mcctl update`를 시작한 CLI 프로세스에서 실행되므로, 그 CLI가 v3.0.1보다 낮았다면(v3.0.0 → v3.0.1 포함) 이 단계는 실행되지 않았습니다. 터미널에서 `mcctl update`를 한 번 더 실행해 Yes로 답하거나, 플랫폼 디렉터리에서 아직 옛 이미지를 쓰는 중지된 서버마다 직접 실행합니다.
