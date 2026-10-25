@@ -123,5 +123,10 @@ class RealSite(unittest.TestCase):
             self.assertRegex(p, r'<meta name="description" content="[^"]*mcctl', rel)
             self.assertIn('<meta property="og:title" content="mcctl — Minecraft Server Manager">', p, rel)
 
+    def test_figure_has_no_role(self):
+        # a captioned <figure> allows no ARIA role but figure (Lighthouse aria-allowed-role)
+        for rel in ("index.html", "ko/index.html", "ja/index.html"):
+            self.assertNotRegex(self.read(rel), r"<figure\b[^>]*\srole=", rel)
+
 if __name__ == "__main__":
     unittest.main()
