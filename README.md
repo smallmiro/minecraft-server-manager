@@ -1090,6 +1090,16 @@ cat /etc/avahi/hosts
 
 ## Changelog
 
+### [3.1.0] - 2026-10-25
+
+**Upgrade:** after updating, bind an existing `internal` install of mcctl-api to loopback (upgrade runbook 4-3). Game Mode saved in the console now goes to `MODE`, so it first takes effect at the next start. `mcctl world delete <world>` needs `--force` or `-y` without a terminal.
+
+**Security:** IP allow-list checks of mcctl-api (including the default `internal` access mode) could be bypassed by a remote client (#833). Update to 3.1.0; until then block port 5001 from other hosts.
+
+**Added:** console server delete dialog takes an optional sudo password (#761).
+
+**Fixed:** CLI argument parsing (#824), `mcctl update`/`init` on CLI-only hosts (#825), pinned image tags kept (#798), new servers get the Java image their version needs (#826), `mcctl world delete` asks first (#823), minor CLI follow-ups (#828). See [CHANGELOG.md](CHANGELOG.md).
+
 ### [3.0.2] - 2026-10-24
 
 **Upgrade:** from v3.0.x run `mcctl update`; from v2.x use `upgrade-v3.sh`.

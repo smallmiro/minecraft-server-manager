@@ -1,6 +1,6 @@
 # mcctl - Docker Minecraft Server Management CLI
 
-> **Version**: 3.0.2
+> **Version**: 3.1.0
 > **Last Updated**: 2026-10-25
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
@@ -3184,6 +3184,14 @@ A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl
 
 ## 16. Version History
 
+### Version 3.1.0 (2026-10-25) - Security Update
+
+Upgrade: bind an existing `internal` install of mcctl-api to loopback (upgrade runbook 4-3); Game Mode saved in the console moves to `MODE`; `mcctl world delete` needs `--force`/`-y` without a terminal.
+
+**Security:** IP allow-list checks of mcctl-api (including the default `internal` mode) could be bypassed by a remote client (#833). Update to 3.1.0.
+
+**Added:** sudo password field in the console server delete dialog (#761). **Fixed:** CLI argument parsing (#824), CLI-only hosts (#825), Java image per VERSION and `MODE` (#826), pinned image tags (#798), `mcctl world delete` confirmation (#823).
+
 ### Version 3.0.2 (2026-10-24) - Recreate Only Changed Images
 
 Upgrade: from v3.0.x `mcctl update`; from v2.x `upgrade-v3.sh`.
@@ -3703,4 +3711,4 @@ No product behavior changes; documentation and contributor workflow only.
 
 ---
 
-*This document was generated as a comprehensive knowledge base for LLM agent consumption. Version 3.0.2, last updated 2026-10-25.*
+*This document was generated as a comprehensive knowledge base for LLM agent consumption. Version 3.1.0, last updated 2026-10-25.*
