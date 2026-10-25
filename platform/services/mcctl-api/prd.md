@@ -102,7 +102,6 @@ Internal REST API service for Minecraft server management. Provides the same fun
 ```
 platform/services/mcctl-api/
 ├── prd.md                      # This document
-├── plan.md                     # Implementation plan
 ├── package.json                # @minecraft-docker/mcctl-api
 ├── tsconfig.json
 ├── src/

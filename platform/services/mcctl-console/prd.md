@@ -40,9 +40,6 @@ Web-based management console for Minecraft server infrastructure. Provides real-
 - Direct Docker/RCON access (handled by mcctl-api)
 - CLI functionality (handled by mcctl CLI)
 
-### 1.4 Related Documents
-- [Implementation Plan](./plan.md)
-
 ## 2. Tech Stack
 
 | Component | Technology | Version |
@@ -542,7 +539,6 @@ export async function requireAuth() {
 ```
 platform/services/mcctl-console/
 ├── prd.md                      # This document
-├── plan.md                     # Implementation plan
 ├── package.json                # @minecraft-docker/mcctl-console
 ├── tsconfig.json
 ├── tailwind.config.js

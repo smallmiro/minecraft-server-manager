@@ -97,7 +97,6 @@ Command-line interface (CLI) tool for Minecraft server management. Supports both
 ```
 platform/services/cli/
 ├── prd.md                      # This document
-├── plan.md                     # Implementation plan
 ├── README.md                   # npm package description
 ├── package.json                # @minecraft-docker/mcctl
 ├── tsconfig.json

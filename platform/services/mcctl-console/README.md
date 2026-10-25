@@ -69,4 +69,4 @@ src/
 - [Website](https://mcctl.mirolab.dev/)
 - [Full Documentation](https://minecraft-server-manager.readthedocs.io/)
 
-See [prd.md](./prd.md) for detailed product requirements and [plan.md](./plan.md) for implementation plan.
+See [prd.md](./prd.md) for detailed product requirements.

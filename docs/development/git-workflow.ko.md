@@ -99,7 +99,7 @@ git commit -m "feat: add validation with new helper function (#7)"
 - lock file format: <server>:<timestamp>:<pid>
 ```
 
-계획은 GitHub에서 관리합니다. 요구사항과 Acceptance Criteria는 이슈 본문에 두고, 큰 작업의 계획은 `/plan-work`로 만듭니다. 루트와 각 패키지의 `plan.md`는 초기 구축 당시의 로드맵 기록입니다.
+계획은 GitHub에서 관리합니다. 요구사항과 Acceptance Criteria는 이슈 본문에 두고, 큰 작업의 계획은 `/plan-work`로 만듭니다.
 
 ## Semantic Versioning {#semantic-versioning}
 

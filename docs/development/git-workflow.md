@@ -99,7 +99,7 @@ git commit -m "feat: add validation with new helper function (#7)"
 - lock file format: <server>:<timestamp>:<pid>
 ```
 
-Planning happens on GitHub: issue bodies hold the requirements and acceptance criteria, and `/plan-work` produces the plan for larger work. The root `plan.md` and the per-package `plan.md` files are historical roadmaps from the initial build-out.
+Planning happens on GitHub: issue bodies hold the requirements and acceptance criteria, and `/plan-work` produces the plan for larger work.
 
 ## Semantic Versioning
 

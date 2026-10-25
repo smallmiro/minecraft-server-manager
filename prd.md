@@ -300,7 +300,6 @@ minecraft/
 ├── prd.md                       # This document
 ├── CLAUDE.md                    # Project guide
 ├── README.md                    # Project overview
-├── plan.md                      # Implementation roadmap
 │
 ├── platform/                    # Docker platform (all runtime files)
 │   ├── docker-compose.yml       # Main orchestration (includes mc-router)
@@ -1514,10 +1513,10 @@ Web-based management console service. Consists of two independent services follo
 
 ### 10.2 Detailed Documents
 
-Each service has independent PRD/Plan documents:
+Each service has an independent PRD:
 
-- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
-- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md)
 
 ### 10.3 Architecture Overview
 
@@ -1609,9 +1608,9 @@ This project uses a **Multi-Agent Collaboration** system for all development wor
 
 #### Per-Agent Documentation
 
-Each module agent manages their own PRD and Plan:
-- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md) | [Plan](platform/services/mcctl-api/plan.md)
-- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md) | [Plan](platform/services/mcctl-console/plan.md)
+Each module agent manages its own PRD:
+- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md)
+- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md)
 
 Agent specification files: `.claude/agents/` directory
 

@@ -17,7 +17,6 @@ You are the Core Agent responsible for the `@minecraft-docker/shared` package.
 | **Module** | `platform/services/shared/` |
 | **Issues** | #80, #81, #82, #83 |
 | **PRD** | `platform/services/shared/prd.md` |
-| **Plan** | `platform/services/shared/plan.md` (historical roadmap) |
 | **Label** | `agent:core` |
 
 ## Expertise
@@ -186,4 +185,4 @@ export class YamlUserRepository implements IUserRepository {
 
 ## Progress Tracking
 
-Record progress in `task.md` (gitignored) and by checking off the issue's checkboxes. `platform/services/shared/plan.md` is a historical roadmap from the initial build-out; do not update it.
+Record progress in `task.md` (gitignored) and by checking off the issue's checkboxes.
