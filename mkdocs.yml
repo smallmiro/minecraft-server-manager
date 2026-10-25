@@ -140,6 +140,7 @@ nav:
           - Connecting to Servers: advanced/networking.md
           - External Access (playit.gg): advanced/external-access.md
       - Operations:
+          - Overview: advanced/index.md
           - Backup: advanced/backup.md
           - Upgrade Runbook: advanced/upgrade-runbook.md
       - Troubleshooting: troubleshooting/index.md
