@@ -7,7 +7,7 @@
 | **바꾸는 문서** | [ADR-0001](0001-container-runtime-ports.ko.md): `IWorldAssignmentPort` 확정 |
 | **관련** | #652 / PR #741(삭제 시 월드 보존), #655(A5, 서버 내부 월드 이전), #656(env 파서 통합), #669(A7), #732(S3, 백업 어댑터·엄격한 런타임 조회), #734(S5, `mcctl.sh` 제거), #736(S9, v3.0.0) |
 
-이 문서는 영어판의 요약입니다. 포트 코드, 검사 순서, 테스트 목록 전체는 [영어판](0002-world-server-assignment.md)에 있습니다.
+이 문서는 영어판의 요약입니다. 포트 코드, 검사 순서, 테스트 목록 전체는 [영어판](https://minecraft-server-manager.readthedocs.io/en/latest/development/adr/0002-world-server-assignment/)에 있습니다.
 
 ## 배경
 

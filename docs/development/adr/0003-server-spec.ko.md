@@ -8,7 +8,7 @@
 | **기반** | [ADR-0002](0002-world-server-assignment.ko.md)(#670, 배정의 원천은 `LEVEL`. PR #750으로 머지됨), PR #749(#656: env 코덱, `atomicWriteFile`, API 생성·삭제 대기열), #651, #649, #654, #751(avahi sudoers 모양) |
 | **관련** | #735(S7 삭제), #657, #658, #736(S9, v3.0.0), #641(k8s), #655, #737, #726 |
 
-영어판([0003-server-spec.md](0003-server-spec.md))이 원본이다. 이 문서는 결정과 표를 줄여 옮겼다.
+[영어판](https://minecraft-server-manager.readthedocs.io/en/latest/development/adr/0003-server-spec/)이 원본이다. 이 문서는 결정과 표를 줄여 옮겼다.
 
 ## 배경
 
