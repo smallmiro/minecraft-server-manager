@@ -1,7 +1,7 @@
 {
   "name": "@minecraft-docker/mcctl",
   "version": "3.0.2",
-  "description": "CLI tool for managing Docker Minecraft servers with mc-router",
+  "description": "mcctl - Docker Minecraft server manager CLI and web console",
   "type": "module",
   "bin": {
     "mcctl": "dist/index.js"
@@ -35,7 +35,9 @@
     "check:templates": "node tools/check-templates.mjs"
   },
   "keywords": [
+    "mcctl",
     "minecraft",
+    "minecraft-server",
     "docker",
     "cli",
     "mc-router",
