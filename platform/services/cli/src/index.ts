@@ -186,7 +186,7 @@ ${colors.cyan('World Management:')}
   ${colors.bold('world new')} [name] [options] Create new world with seed
   ${colors.bold('world assign')} <world> <srv> Lock world to server
   ${colors.bold('world release')} <world>      Release world lock
-  ${colors.bold('world delete')} <world> [-f]  Delete world permanently
+  ${colors.bold('world delete')} <world> [--force|-y]  Delete world permanently
 
 ${colors.cyan('Mod Management:')}
   ${colors.bold('mod search')} <query>         Search mods on Modrinth
@@ -658,6 +658,7 @@ async function main(): Promise<void> {
           autoStart: flags['no-start'] === true ? false : undefined,
           json: flags['json'] === true,
           force: flags['force'] === true,
+          yes: flags['yes'] === true,
         });
         break;
       }
