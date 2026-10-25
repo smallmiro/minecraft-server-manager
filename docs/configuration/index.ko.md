@@ -89,7 +89,7 @@ mcctl config myserver VERSION 1.21.1
 mcctl stop myserver && mcctl start myserver
 ```
 
-`VERSION`을 바꿔도 서버의 Java 이미지는 바뀌지 않습니다. 새 서버는 `itzg/minecraft-server:java25`로 실행되며, 더 낮은 Java가 필요한 버전은 [Java 버전과 이미지 태그](server-types.ko.md#java-버전과-이미지-태그)를 참고하세요.
+`VERSION`을 바꿔도 서버의 Java 이미지는 바뀌지 않습니다. 새 서버는 `VERSION`에 필요한 태그를 받습니다. `VERSION`을 바꾼 뒤에는 `mcctl update`를 실행하거나 [Java 버전과 이미지 태그](server-types.ko.md#java-버전과-이미지-태그)를 참고하세요.
 
 ### 모드/플러그인 활성화
 

@@ -18,7 +18,7 @@ name: survival
 type: PAPER
 version: "1.21.1"
 memory: 4G
-image: itzg/minecraft-server:java25
+image: itzg/minecraft-server:java21
 world:
   level: survival
   storage: universe        # worlds/<level>, "data"는 servers/<이름>/data/<level>
@@ -39,7 +39,7 @@ env:                       # 그 밖의 config.env 키를 그대로
 
 - `TYPE`, `VERSION`, `MEMORY`, `LEVEL`, `PLAYIT_DOMAIN`은 별도 필드이며 `env`에 둘 수 없습니다.
 - `EXTRA_ARGS`는 `world.storage`(`universe`면 `--universe /worlds/`)와 `env.EXTRA_ARGS`로 씁니다. 항상 쓰므로 서버가 더 이상 `.env`에서 상속받지 않습니다.
-- `image`는 서버의 컨테이너 이미지이며, 새 서버는 `itzg/minecraft-server:java25`를 받습니다. `mcctl update`는 고정한 태그가 아니면 `VERSION`에 필요한 Java 태그로 바꿉니다. [Java 버전과 이미지 태그](server-types.ko.md#java-버전과-이미지-태그)를 참고하세요.
+- `image`는 서버의 컨테이너 이미지이며, 새 서버는 `VERSION`에 필요한 `itzg/minecraft-server` 태그를 받습니다(`LATEST`는 `java25`). `mcctl update`는 고정한 태그가 아니면 `VERSION`에 필요한 Java 태그로 바꿉니다. [Java 버전과 이미지 태그](server-types.ko.md#java-버전과-이미지-태그)를 참고하세요.
 - mc-router 호스트는 `<이름>.local`, `HOST_IPS`(없으면 `HOST_IP`, 그것도 없으면 감지한 호스트 주소)의 주소마다 `<이름>.<ip>.nip.io`, playit 도메인, 사용자 호스트 순입니다.
 - `routing.autoScale`은 접속 시 mc-router가 서버를 시작할지(`up`), 유휴 시 중지할지(`down`)를 정합니다. `asleepMotd`와 `loadingMotd`는 서버가 잠들어 있거나 시작 중일 때 보여 줄 MOTD이며, 없으면 템플릿의 MOTD를 씁니다.
 - YAML이 숫자나 불린으로 읽는 값은 따옴표로 감쌉니다(`version: "1.21"`, `ENABLE_RCON: "true"`). 그렇지 않으면 mcctl이 해당 필드를 알려 줍니다.

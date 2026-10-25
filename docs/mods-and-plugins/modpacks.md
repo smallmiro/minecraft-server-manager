@@ -78,7 +78,7 @@ mcctl config modded MEMORY "8G"
 mcctl start modded
 ```
 
-`--exclude-files` writes `CF_EXCLUDE_MODS`. To pick the modpack by page URL instead of the slug, set `CF_PAGE_URL` with `mcctl config`.
+`--modpack-version` writes `CF_FILENAME_MATCHER`, which picks the modpack file whose name contains it, and `--exclude-files` writes `CF_EXCLUDE_MODS`. `--mod-loader` is ignored with a warning: the modpack's manifest decides the loader. To pick the modpack by page URL instead of the slug, set `CF_PAGE_URL` with `mcctl config`.
 
 ### Modpack Specification Methods
 

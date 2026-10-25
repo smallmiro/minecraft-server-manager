@@ -89,7 +89,7 @@ These variables are set in `~/minecraft-servers/.env`. Only the keys listed in `
 
 ### mcctl-api Limits
 
-mcctl-api reads these keys from `.env` at startup; apply a change with `mcctl console service restart --api`. Platform Settings lists them under **Unknown**.
+mcctl-api reads these keys from `.env` at startup; apply a change with `mcctl console service restart --api`. The console's world upload route also reads `WORLD_UPLOAD_MAX_SIZE` from `.env`, so after changing it run `mcctl console service restart --console` too. Platform Settings lists them under **Unknown**.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -129,7 +129,7 @@ Every key in `.env` has exactly one status, decided by which code actually reads
 | `BACKUP_AUTO_ON_STOP` | `mcctl stop <server>`, API/console stop | `none`: next stop |
 | `PLAYIT_SECRET_KEY` (secret) | compose `playit` service (`SECRET_KEY`) | `playit`: stop, then start playit |
 | `LOG_LEVEL` | **mcctl-api only** (dotenv, cwd = MCCTL_ROOT) | `api` |
-| `BETTER_AUTH_SECRET` (secret, cannot be removed), `BETTER_AUTH_BASE_URL` | mcctl-console reads only these two from `.env` at startup, and a non-empty value is used only when `ecosystem.config.cjs` no longer defines that key (while it does, the ecosystem value wins and a warning is logged if `.env` differs). `mcctl upgrade` moves them into `.env`. Changing the secret signs everyone out. Unset base URL = `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |
+| `BETTER_AUTH_SECRET` (secret, cannot be removed), `BETTER_AUTH_BASE_URL` | mcctl-console reads these two auth keys from `.env` at startup, and a non-empty value is used only when `ecosystem.config.cjs` no longer defines that key (while it does, the ecosystem value wins and a warning is logged if `.env` differs). `mcctl upgrade` moves them into `.env`. Changing the secret signs everyone out. Unset base URL = `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |
 
 **Read-only keys:** `MINECRAFT_NETWORK` (mcctl only creates `minecraft-net`; to rename it, run `mcctl down`, `docker network create <name>`, edit `.env`, then `mcctl up`), `MINECRAFT_SUBNET` (not read by mcctl; the network keeps the subnet it was created with) and `COMPOSE_PROJECT_NAME` (changing it orphans existing containers and networks; CLI only).
 

@@ -176,7 +176,7 @@ BACKUP_AUTO_ON_STOP=true
 
 Use `mcctl backup schedule add` (or the web console) for scheduled backups with a retention policy, for example `mcctl backup schedule add --cron daily --name nightly --max-count 7`. Commands: [`mcctl backup schedule`](../cli/commands.md#mcctl-backup-schedule).
 
-The schedules run inside mcctl-api, so the web console services must be set up (`mcctl console init`) and running. mcctl-api loads the schedules when it starts: after you add, remove, enable or disable a schedule with the CLI, run `mcctl console service restart --api`. Changes made in the web console apply at once.
+The schedules run inside mcctl-api, so the web console services must be set up (`mcctl console init`) and running. Changes made in the web console apply at once; mcctl-api checks the schedules every minute, so a change made with the CLI applies within a minute.
 
 Without mcctl-api, use a plain cron job:
 

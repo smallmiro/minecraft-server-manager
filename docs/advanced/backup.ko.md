@@ -176,7 +176,7 @@ BACKUP_AUTO_ON_STOP=true
 
 보존 정책이 있는 예약 백업은 `mcctl backup schedule add`(또는 웹 콘솔)를 쓰세요. 예: `mcctl backup schedule add --cron daily --name nightly --max-count 7`. 명령: [`mcctl backup schedule`](../cli/commands.ko.md#mcctl-backup-schedule).
 
-예약은 mcctl-api 안에서 실행되므로 웹 콘솔 서비스가 설정(`mcctl console init`)되어 실행 중이어야 합니다. mcctl-api는 시작할 때 예약을 읽으므로, CLI로 예약을 추가·삭제·활성화·비활성화한 뒤에는 `mcctl console service restart --api`를 실행하세요. 웹 콘솔에서 바꾼 내용은 바로 적용됩니다.
+예약은 mcctl-api 안에서 실행되므로 웹 콘솔 서비스가 설정(`mcctl console init`)되어 실행 중이어야 합니다. 웹 콘솔에서 바꾼 내용은 바로 적용되고, mcctl-api가 1분마다 예약을 확인하므로 CLI로 바꾼 내용은 1분 안에 적용됩니다.
 
 mcctl-api 없이 쓰려면 일반 cron 작업을 사용합니다:
 

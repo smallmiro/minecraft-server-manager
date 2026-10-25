@@ -18,7 +18,7 @@ name: survival
 type: PAPER
 version: "1.21.1"
 memory: 4G
-image: itzg/minecraft-server:java25
+image: itzg/minecraft-server:java21
 world:
   level: survival
   storage: universe        # worlds/<level>; "data" = servers/<name>/data/<level>
@@ -39,7 +39,7 @@ env:                       # every other config.env key, unchanged
 
 - `TYPE`, `VERSION`, `MEMORY`, `LEVEL` and `PLAYIT_DOMAIN` are fields of their own; they cannot appear in `env`.
 - `EXTRA_ARGS` is written from `world.storage` (`--universe /worlds/` for `universe`) plus `env.EXTRA_ARGS`. It is always written, so a server no longer inherits it from `.env`.
-- `image` is the server's container image; new servers get `itzg/minecraft-server:java25`. `mcctl update` changes it to the Java tag `VERSION` needs unless the tag is pinned; see [Java Versions and Image Tags](server-types.md#java-versions-and-image-tags).
+- `image` is the server's container image; a new server gets the `itzg/minecraft-server` tag its `VERSION` needs (`java25` for `LATEST`). `mcctl update` changes it to the Java tag `VERSION` needs unless the tag is pinned; see [Java Versions and Image Tags](server-types.md#java-versions-and-image-tags).
 - The mc-router hosts are `<name>.local`, `<name>.<ip>.nip.io` for each address in `HOST_IPS` (else `HOST_IP`, else the detected host address), the playit domain, then the custom hosts.
 - `routing.autoScale` sets whether mc-router starts the server on connect (`up`) and stops it when idle (`down`). `asleepMotd` and `loadingMotd` set the MOTD shown while the server sleeps or starts; without them the template's MOTDs are used.
 - Quote values YAML would read as numbers or booleans (`version: "1.21"`, `ENABLE_RCON: "true"`). mcctl reports the field otherwise.

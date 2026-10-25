@@ -36,9 +36,7 @@ mcctl stop modded && mcctl start modded
 ### 로컬 파일 사용
 
 - 플러그인: JAR를 `~/minecraft-servers/shared/plugins/`에 넣습니다. 모든 서버가 이를 `/plugins`에 읽기 전용으로 마운트하며, 서버가 시작할 때 이미지가 JAR를 서버의 `plugins/` 폴더로 복사합니다.
-- 모드: JAR를 해당 서버의 `~/minecraft-servers/servers/<name>/data/mods/`에 넣습니다.
-
-`mcctl init`은 `shared/mods/`도 만들지만 서버는 이를 마운트하지 않습니다.
+- 모드: JAR를 해당 서버의 `~/minecraft-servers/servers/<name>/data/mods/`에 넣습니다. 공유 모드 폴더는 없습니다.
 
 ## mcctl로 설정하기
 
@@ -75,7 +73,7 @@ mcctl stop myserver && mcctl start myserver
 ### mcctl mod 사용
 
 ```bash
-# URL 추가: Paper, Purpur, Spigot, Bukkit 서버는 PLUGINS에, 나머지는 MODS에
+# URL 추가: 플러그인 서버(Paper와 그 포크, Spigot, Bukkit)는 PLUGINS에, 나머지는 MODS에
 mcctl mod add myserver --url https://example.com/custom-mod.jar
 ```
 

@@ -16,7 +16,7 @@ Download mods and plugins from [CurseForge](https://www.curseforge.com/minecraft
 
 ### Step 1: Get API Key
 
-Skip this step on Java 17+ images, which include a key; new mcctl servers use `java25`. You need your own key only for `java8` and other pre-Java 17 tags, or to use your own.
+Skip this step on Java 17+ images, which include a key. mcctl gives a new server the tag its `VERSION` needs, so a modpack server created with `-v 1.16.5` or older runs on `java8` and needs a key. You need your own key only for `java8` and other pre-Java 17 tags, or to use your own.
 
 1. Go to [CurseForge API Console](https://console.curseforge.com/)
 2. Sign in and create an API key

@@ -78,7 +78,7 @@ mcctl config modded MEMORY "8G"
 mcctl start modded
 ```
 
-`--exclude-files`는 `CF_EXCLUDE_MODS`로 기록됩니다. slug 대신 페이지 URL로 모드팩을 지정하려면 `mcctl config`로 `CF_PAGE_URL`을 설정하세요.
+`--modpack-version`은 이름에 그 값이 들어간 모드팩 파일을 고르는 `CF_FILENAME_MATCHER`로, `--exclude-files`는 `CF_EXCLUDE_MODS`로 기록됩니다. 로더는 모드팩 매니페스트가 정하므로 `--mod-loader`는 경고와 함께 무시됩니다. slug 대신 페이지 URL로 모드팩을 지정하려면 `mcctl config`로 `CF_PAGE_URL`을 설정하세요.
 
 ### 모드팩 지정 방법
 
