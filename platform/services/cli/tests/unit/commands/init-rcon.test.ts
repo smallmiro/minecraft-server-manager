@@ -54,6 +54,12 @@ describe('init command - RCON password', () => {
     expect(readFileSync(join(testRoot, 'servers', '_template', 'docker-compose.yml'), 'utf-8')).toContain('- ../global.env');
   });
 
+  it('creates shared/plugins, which servers mount, and no shared/mods, which none does (#826)', async () => {
+    expect(await run()).toBe(0);
+    expect(existsSync(join(testRoot, 'shared', 'plugins'))).toBe(true);
+    expect(existsSync(join(testRoot, 'shared', 'mods'))).toBe(false);
+  });
+
   it('writes a random RCON_PASSWORD (>=16 chars, not changeme)', async () => {
     expect(await run()).toBe(0);
     const pw = rcon();
