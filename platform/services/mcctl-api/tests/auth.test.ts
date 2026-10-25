@@ -271,6 +271,64 @@ describe('Authentication Plugin', () => {
     });
   });
 
+  describe('IP allow list without a trusted proxy (the default mcctl-api setup, #833)', () => {
+    const API_KEY = 'connection-api-key';
+    const LOOPBACK = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+    let ipApp: FastifyInstance;
+    let combinedApp: FastifyInstance;
+
+    async function build(config: AuthConfig): Promise<FastifyInstance> {
+      const app = Fastify({ logger: false });
+      await app.register(authPlugin, { config });
+      app.get('/test', async () => ({ message: 'success' }));
+      await app.ready();
+      return app;
+    }
+
+    beforeAll(async () => {
+      ipApp = await build({ mode: 'ip-whitelist', ipWhitelist: LOOPBACK });
+      combinedApp = await build({ mode: 'combined', apiKey: API_KEY, ipWhitelist: LOOPBACK });
+    });
+
+    afterAll(async () => {
+      await ipApp.close();
+      await combinedApp.close();
+    });
+
+    it('accepts a loopback connection', async () => {
+      const response = await ipApp.inject({ method: 'GET', url: '/test', remoteAddress: '127.0.0.1' });
+      expect(response.statusCode).toBe(200);
+    });
+
+    it.each(['x-forwarded-for', 'x-real-ip'])('checks the connection address, not %s', async (header) => {
+      const response = await ipApp.inject({
+        method: 'GET',
+        url: '/test',
+        remoteAddress: '203.0.113.50',
+        headers: { [header]: '127.0.0.1' },
+      });
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('checks the connection address in combined mode too', async () => {
+      const remote = await combinedApp.inject({
+        method: 'GET',
+        url: '/test',
+        remoteAddress: '203.0.113.50',
+        headers: { 'x-api-key': API_KEY, 'x-forwarded-for': '127.0.0.1' },
+      });
+      const local = await combinedApp.inject({
+        method: 'GET',
+        url: '/test',
+        remoteAddress: '127.0.0.1',
+        headers: { 'x-api-key': API_KEY },
+      });
+
+      expect(remote.statusCode).toBe(403);
+      expect(local.statusCode).toBe(200);
+    });
+  });
+
   describe('combined mode', () => {
     let app: FastifyInstance;
     const API_KEY = 'combined-api-key';

@@ -262,7 +262,8 @@ export function generateEcosystemConfig(
     const apiEnvVars = [
       `        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',`,
       `        PORT: ${apiPort},`,
-      `        HOST: '0.0.0.0',`,
+      // internal allows only local clients, so the API need not listen beyond loopback (#833)
+      `        HOST: '${authConfig.accessMode === 'internal' ? '127.0.0.1' : '0.0.0.0'}',`,
       `        MCCTL_ROOT: '${rootDir}',`,
     ];
 
@@ -297,7 +298,8 @@ ${apiEnvVars.join('\n')}
       `        NODE_ENV: '${isDevelopment ? 'development' : 'production'}',`,
       `        PORT: ${consolePort},`,
       `        HOSTNAME: '0.0.0.0',`,
-      `        MCCTL_API_URL: 'http://localhost:${apiPort}',`,
+      // IPv4 loopback: the API may listen on 127.0.0.1 only, and localhost can resolve to ::1
+      `        MCCTL_API_URL: 'http://127.0.0.1:${apiPort}',`,
       `        MCCTL_ROOT: '${rootDir}',`,
     ];
 

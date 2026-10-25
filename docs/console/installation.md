@@ -175,8 +175,9 @@ mcctl console init --api-port 8001 --console-port 8000
 |----------|-------------|---------|
 | `MCCTL_ROOT` | Data directory path | `~/minecraft-servers` |
 | `PORT` | Listening port of each service, set in its `env` block | `5001` (mcctl-api), `5000` (mcctl-console) |
+| `HOST` | mcctl-api listening address | `127.0.0.1` for the `internal` access mode, `0.0.0.0` for the others |
 | `HOSTNAME` | Console server hostname | `0.0.0.0` |
-| `MCCTL_API_URL` | Internal API URL | `http://localhost:5001` |
+| `MCCTL_API_URL` | Internal API URL | `http://127.0.0.1:5001` |
 | `NODE_ENV` | Environment mode | `production` |
 | `LOG_LEVEL` | mcctl-api log level: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` | `info` when `NODE_ENV=production`, otherwise `debug` |
 | `WORLD_UPLOAD_MAX_SIZE` | Max world ZIP size in bytes for `POST /api/worlds/upload` | `1073741824` (1 GB) |
@@ -198,7 +199,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 5001,
-        HOST: '0.0.0.0',
+        HOST: '127.0.0.1', // internal access mode; 0.0.0.0 for the other modes
         MCCTL_ROOT: '/home/user/minecraft-servers',
         AUTH_MODE: 'ip-whitelist', // written for the "internal" access mode, see the note below the example
         AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',
@@ -220,7 +221,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 5000,
         HOSTNAME: '0.0.0.0',
-        MCCTL_API_URL: 'http://localhost:5001',
+        MCCTL_API_URL: 'http://127.0.0.1:5001',
         MCCTL_ROOT: '/home/user/minecraft-servers',
         // MCCTL_API_KEY is added for the api-key access modes
         // BETTER_AUTH_SECRET is written to .env, not here

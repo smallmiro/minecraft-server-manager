@@ -198,12 +198,13 @@ function toServiceInfo(process: ProcessInfo, port?: number): ServiceInfo {
 /**
  * HTTP health probe. Returns null when healthy, otherwise a short reason.
  * API: /health must be 2xx. Console: /api/auth/get-session must not be 5xx.
+ * IPv4 loopback, which both services listen on (mcctl-api may only listen there, #833).
  */
 async function probeHealth(name: string, port: number, timeoutMs: number): Promise<string | null> {
   const isApi = name === PM2_SERVICE_NAMES.API;
   const path = isApi ? '/health' : '/api/auth/get-session';
   try {
-    const res = await fetch(`http://localhost:${port}${path}`, {
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
       signal: AbortSignal.timeout(timeoutMs),
     });
     const ok = isApi ? res.ok : res.status < 500;

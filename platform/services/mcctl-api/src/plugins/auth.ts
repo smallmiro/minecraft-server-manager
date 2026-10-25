@@ -204,25 +204,11 @@ async function authenticateCombined(
 // Utilities
 // ============================================================
 
+/**
+ * The client address: the connection's, as Fastify reports it (#833).
+ * Request headers are not read: mcctl-api runs without a trusted proxy.
+ */
 function getClientIp(request: FastifyRequest): string {
-  // Check for forwarded headers (reverse proxy scenarios)
-  const xForwardedFor = request.headers['x-forwarded-for'];
-  if (xForwardedFor) {
-    const ips = Array.isArray(xForwardedFor) ? xForwardedFor[0] : xForwardedFor.split(',')[0];
-    if (ips) {
-      return ips.trim();
-    }
-  }
-
-  const xRealIp = request.headers['x-real-ip'];
-  if (xRealIp) {
-    const ip = Array.isArray(xRealIp) ? xRealIp[0] : xRealIp;
-    if (ip) {
-      return ip;
-    }
-  }
-
-  // Fallback to socket IP
   return request.ip;
 }
 

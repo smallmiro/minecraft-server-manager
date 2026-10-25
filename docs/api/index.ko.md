@@ -3,7 +3,7 @@
 mcctl-api는 웹 콘솔이 사용하는 REST API입니다. `mcctl` CLI와 같은 코드로 서버, 월드, 플레이어, 백업, mc-router를 관리하며, 스크립트나 다른 도구에서 직접 호출할 수도 있습니다.
 
 - **엔드포인트:** [API 엔드포인트](endpoints.ko.md)에 모든 라우트가 정리되어 있습니다.
-- **기본 URL:** `http://<host>:5001`. mcctl-api는 `HOST`(기본값 `0.0.0.0`)와 `PORT`(기본값 `5001`)에서 대기합니다.
+- **기본 URL:** `http://<host>:5001`. mcctl-api는 `HOST`와 `PORT`(기본값 `5001`)에서 대기합니다. `mcctl console init`은 호스트의 클라이언트만 허용하는 `internal` 접근 모드에서 `HOST: '127.0.0.1'`을, 다른 모드에서 `0.0.0.0`을 씁니다. `HOST`가 없으면 `0.0.0.0`에서 대기합니다.
 
 ## 아키텍처 { #architecture }
 
@@ -117,7 +117,7 @@ mcctl-api는 `AUTH_EXCLUDE_PATHS`(기본값 `/health`)에 있는 경로를 제�
 |------|------|-----------|
 | `disabled` | 없음 (개발용) | - |
 | `api-key` | `AUTH_API_KEY` | `X-API-Key: <key>` |
-| `ip-whitelist` | 클라이언트 주소가 `AUTH_IP_WHITELIST`에 있음 | - |
+| `ip-whitelist` | 연결의 출발지 주소가 `AUTH_IP_WHITELIST`에 있음(리버스 프록시 뒤에서는 프록시의 주소) | - |
 | `basic` | `AUTH_USERS`에 있는 사용자 | `Authorization: Basic <user:password의 base64>` |
 | `combined` | API 키와 IP 화이트리스트를 모두 확인 | `X-API-Key: <key>` |
 

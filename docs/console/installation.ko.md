@@ -175,8 +175,9 @@ mcctl console init --api-port 8001 --console-port 8000
 |------|------|--------|
 | `MCCTL_ROOT` | 데이터 디렉토리 경로 | `~/minecraft-servers` |
 | `PORT` | 각 서비스의 리슨 포트. 서비스별 `env` 블록에서 설정 | `5001` (mcctl-api), `5000` (mcctl-console) |
+| `HOST` | mcctl-api 대기 주소 | `internal` 접근 모드는 `127.0.0.1`, 다른 모드는 `0.0.0.0` |
 | `HOSTNAME` | 콘솔 서버 호스트 이름 | `0.0.0.0` |
-| `MCCTL_API_URL` | 내부 API URL | `http://localhost:5001` |
+| `MCCTL_API_URL` | 내부 API URL | `http://127.0.0.1:5001` |
 | `NODE_ENV` | 실행 환경 모드 | `production` |
 | `LOG_LEVEL` | mcctl-api 로그 레벨: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` | `NODE_ENV=production`이면 `info`, 그 외에는 `debug` |
 | `WORLD_UPLOAD_MAX_SIZE` | 월드 ZIP 업로드 최대 크기 (바이트, `POST /api/worlds/upload`) | `1073741824` (1 GB) |
@@ -198,7 +199,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 5001,
-        HOST: '0.0.0.0',
+        HOST: '127.0.0.1', // internal 접근 모드; 다른 모드는 0.0.0.0
         MCCTL_ROOT: '/home/user/minecraft-servers',
         AUTH_MODE: 'ip-whitelist', // "internal" 접근 모드일 때 기록되는 값. 예시 아래의 참고 사항 확인
         AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',
@@ -220,7 +221,7 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 5000,
         HOSTNAME: '0.0.0.0',
-        MCCTL_API_URL: 'http://localhost:5001',
+        MCCTL_API_URL: 'http://127.0.0.1:5001',
         MCCTL_ROOT: '/home/user/minecraft-servers',
         // api-key 계열 접근 모드에서는 MCCTL_API_KEY가 추가됩니다
         // BETTER_AUTH_SECRET은 여기가 아니라 .env에 기록됩니다
