@@ -277,6 +277,23 @@ function formatEnvValue(key: keyof ServerConfig, value: ServerConfig[keyof Serve
 }
 
 /**
+ * The API view of config.env settings
+ */
+function configFromEnv(envMap: Map<string, string>): ServerConfig {
+  const config: ServerConfig = {};
+
+  for (const [apiKey, envKey] of Object.entries(CONFIG_FIELD_MAP)) {
+    const value = envMap.get(envKey);
+    const parsedValue = parseEnvValue(apiKey as keyof ServerConfig, value);
+    if (parsedValue !== undefined) {
+      (config as Record<string, unknown>)[apiKey] = parsedValue;
+    }
+  }
+
+  return config;
+}
+
+/**
  * ConfigService - Manages server configuration files
  */
 export class ConfigService {
@@ -310,20 +327,12 @@ export class ConfigService {
       throw new Error(`Server configuration not found: ${serverName}`);
     }
 
-    const content = readFileSync(configPath, 'utf-8');
-    const envMap = parseEnvDocument(content).values;
+    return configFromEnv(this.readEnv(serverName));
+  }
 
-    const config: ServerConfig = {};
-
-    for (const [apiKey, envKey] of Object.entries(CONFIG_FIELD_MAP)) {
-      const value = envMap.get(envKey);
-      const parsedValue = parseEnvValue(apiKey as keyof ServerConfig, value);
-      if (parsedValue !== undefined) {
-        (config as Record<string, unknown>)[apiKey] = parsedValue;
-      }
-    }
-
-    return config;
+  /** The settings of a server's config.env. */
+  private readEnv(serverName: string): Map<string, string> {
+    return parseEnvDocument(readFileSync(this.getConfigPath(serverName), 'utf-8')).values;
   }
 
   /**
