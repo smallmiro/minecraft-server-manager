@@ -37,6 +37,9 @@ export interface ISchedulerLogger {
   error(error: unknown, msg: string): void;
 }
 
+/** How often schedules changed outside the API (mcctl config-snapshot schedule) are picked up (#826). */
+const SCHEDULE_SYNC_INTERVAL_MS = 60_000;
+
 /**
  * ConfigSnapshotSchedulerService
  * Manages cron-based config snapshot scheduling using node-cron.
@@ -45,6 +48,7 @@ export interface ISchedulerLogger {
 export class ConfigSnapshotSchedulerService {
   private tasks: Map<string, CronTask> = new Map();
   private jobInfo: Map<string, CronJobInfo> = new Map();
+  private syncTimer: ReturnType<typeof setInterval> | undefined;
   private cronSchedule: CronSchedule | null = null;
   private cronValidate: CronValidate | null = null;
 
@@ -76,6 +80,32 @@ export class ConfigSnapshotSchedulerService {
     }
 
     await this.loadEnabledSchedules();
+    this.syncTimer = setInterval(() => void this.sync(), SCHEDULE_SYNC_INTERVAL_MS);
+    this.syncTimer.unref();
+  }
+
+  /**
+   * Match the tasks to the schedule DB, which the mcctl CLI also writes
+   * (#826): register new or changed enabled schedules, drop the rest. An
+   * unchanged task is left running.
+   */
+  async sync(): Promise<void> {
+    if (!this.cronSchedule) return;
+
+    try {
+      const enabled = (await this.scheduleUseCase.findAll()).filter((s) => s.enabled);
+      const ids = new Set(enabled.map((s) => s.id));
+      for (const id of [...this.tasks.keys()]) {
+        if (!ids.has(id)) this.unregisterTask(id);
+      }
+      for (const schedule of enabled) {
+        if (this.jobInfo.get(schedule.id)?.cronExpression !== schedule.cronExpression.expression) {
+          this.registerTask(schedule);
+        }
+      }
+    } catch (error) {
+      this.logger.error(error, 'Failed to sync config snapshot schedules');
+    }
   }
 
   /**
@@ -284,6 +314,7 @@ export class ConfigSnapshotSchedulerService {
    * Stop all scheduled tasks (graceful shutdown)
    */
   shutdown(): void {
+    clearInterval(this.syncTimer);
     for (const [, task] of this.tasks) {
       task.stop();
     }

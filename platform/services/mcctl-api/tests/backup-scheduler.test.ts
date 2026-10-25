@@ -254,4 +254,54 @@ describe('BackupSchedulerService', () => {
       expect(mockLogger.info).toHaveBeenCalledWith('Backup scheduler stopped');
     });
   });
+
+  // mcctl backup-schedule writes the same DB; the API picks it up (#826)
+  describe('sync with schedules changed outside the API', () => {
+    const at = (cron: string, enabled = true) =>
+      createTestSchedule({ cron, enabled });
+
+    it('registers a new schedule, re-registers a changed one and drops a removed one', async () => {
+      const kept = at('0 3 * * *');
+      const changed = at('0 4 * * *');
+      const removed = at('0 5 * * *');
+      vi.mocked(mockUseCase.findAll).mockResolvedValue([kept, changed, removed]);
+      await service.initialize();
+      const nodeCron = await import('node-cron');
+      vi.mocked(nodeCron.schedule).mockClear();
+      mockCronTask.stop.mockClear();
+
+      const added = at('0 6 * * *');
+      const rescheduled = BackupSchedule.create({ id: changed.id, name: changed.name, cronExpression: '30 4 * * *' });
+      vi.mocked(mockUseCase.findAll).mockResolvedValue([kept, rescheduled, added]);
+      await service.sync();
+
+      expect(vi.mocked(nodeCron.schedule).mock.calls.map((c) => c[0]).sort()).toEqual(['0 6 * * *', '30 4 * * *']);
+      expect(mockCronTask.stop).toHaveBeenCalledTimes(2); // the old task of the changed one, the removed one
+      expect(service.activeTaskCount).toBe(3);
+    });
+
+    it('drops a schedule disabled outside the API', async () => {
+      const schedule = at('0 3 * * *');
+      vi.mocked(mockUseCase.findAll).mockResolvedValue([schedule]);
+      await service.initialize();
+      vi.mocked(mockUseCase.findAll).mockResolvedValue([BackupSchedule.create({ id: schedule.id, name: schedule.name, cronExpression: '0 3 * * *', enabled: false })]);
+      await service.sync();
+      expect(service.activeTaskCount).toBe(0);
+    });
+
+    it('syncs every minute after initialize, until shutdown', async () => {
+      vi.useFakeTimers();
+      try {
+        await service.initialize();
+        vi.mocked(mockUseCase.findAll).mockClear();
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(mockUseCase.findAll).toHaveBeenCalledTimes(1);
+        service.shutdown();
+        await vi.advanceTimersByTimeAsync(60_000);
+        expect(mockUseCase.findAll).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });

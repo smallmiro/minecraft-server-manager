@@ -162,6 +162,39 @@ describe('ConfigSnapshotSchedulerService', () => {
     });
   });
 
+  // mcctl config-snapshot schedule writes the same DB; the API picks it up (#826)
+  describe('sync with schedules changed outside the API', () => {
+    // node-cron is mcctl-api's dependency, not this package's: stand in for it
+    const task = { stop: vi.fn(), start: vi.fn() };
+    const cron = vi.fn(() => task);
+    beforeEach(() => {
+      task.stop.mockClear();
+      cron.mockClear();
+      (service as unknown as { cronSchedule: unknown }).cronSchedule = cron;
+    });
+
+    test('registers a new schedule, re-registers a changed one and drops a removed or disabled one', async () => {
+      const kept = createTestSchedule({ id: 'kept', cron: '0 3 * * *' });
+      const changed = createTestSchedule({ id: 'changed', cron: '0 4 * * *' });
+      const removed = createTestSchedule({ id: 'removed', cron: '0 5 * * *' });
+      const disabled = createTestSchedule({ id: 'disabled', cron: '0 6 * * *' });
+      for (const s of [kept, changed, removed, disabled]) service.addSchedule(s);
+      cron.mockClear();
+
+      vi.mocked(mockScheduleUseCase.findAll).mockResolvedValue([
+        kept,
+        createTestSchedule({ id: 'changed', cron: '30 4 * * *' }),
+        createTestSchedule({ id: 'disabled', cron: '0 6 * * *', enabled: false }),
+        createTestSchedule({ id: 'added', cron: '0 7 * * *' }),
+      ]);
+      await service.sync();
+
+      expect(cron.mock.calls.map((c) => (c as unknown[])[0]).sort()).toEqual(['0 7 * * *', '30 4 * * *']);
+      expect(task.stop).toHaveBeenCalledTimes(3);
+      expect([...service.getRunningJobs().keys()].sort()).toEqual(['added', 'changed', 'kept']);
+    });
+  });
+
   describe('domain entity integration', () => {
     test('should support ConfigSnapshotSchedule.recordRun', () => {
       const schedule = createTestSchedule();
