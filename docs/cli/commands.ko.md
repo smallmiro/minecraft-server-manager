@@ -492,7 +492,7 @@ mcctl create [name] [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--type` | `-t` | 서버 타입 (기본값 `PAPER`): PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
-| `--version` | `-v` | 마인크래프트 버전: `-v 1.21.1` 또는 `=`를 쓴 긴 형식 `--version=1.21.1` (기본값 `LATEST`, 모드팩 타입은 모드팩의 버전 사용) |
+| `--version` | `-v` | 마인크래프트 버전: `-v 1.21.1`, `--version 1.21.1` 또는 `--version=1.21.1` (기본값 `LATEST`, 모드팩 타입은 모드팩의 버전 사용) |
 | `--seed` | `-s` | 월드 생성 시드. 음수 시드도 됩니다(`-s -123`). `--seed=<값>`은 어떤 값이든 받습니다 |
 | `--world-url` | `-u` | ZIP URL에서 월드 다운로드 |
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
@@ -897,7 +897,7 @@ mcctl config <server> [key] [value] [options]
 |----------|-------------|
 | `server` | 서버 이름 |
 | `key` | 설정 키 (선택사항) |
-| `value` | 새 값 (선택사항) |
+| `value` | 새 값 (선택사항). 빈 값(`""`)은 키를 삭제하며 이미지 기본값이 다시 적용됩니다 |
 
 **단축 옵션:**
 
@@ -960,6 +960,9 @@ mcctl config <server> [key] [value] [options]
 
 !!! note "재시작 필요"
     일부 설정 변경은 적용을 위해 서버 재시작이 필요합니다.
+
+!!! note "키 삭제"
+    `mcctl config <server> MOTD ""`는 서버 설정에서 `MOTD`를 삭제하고 알려 줍니다. 설정되지 않은 키는 그렇다고 알리고 아무것도 바꾸지 않습니다. `LEVEL`과 `WORLD_NAME`은 이렇게 삭제할 수 없으니 월드 이름을 지정하세요.
 
 !!! warning "`LEVEL` 변경"
     `LEVEL`은 서버가 사용하는 월드입니다([월드 할당 규칙](#world-assignment-rules) 참고). 서버가 실행 중이거나 다른 서버가 `<world>`를 사용 중이면 `mcctl config <server> LEVEL <world>`는 거부됩니다. 새 `EXTRA_ARGS` 값이 월드 위치를 `worlds/`와 `servers/<server>/data` 사이에서 바꾸는 경우(`--universe`)에도 같습니다.
@@ -1573,7 +1576,10 @@ mcctl world delete [world] [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--force` | | 확인 건너뛰기 (서버가 사용 중인 월드는 삭제하지 않음) |
-| `--json` | | JSON 형식으로 출력 |
+| `--yes` | `-y` | 확인 건너뛰기 (`--force`와 동일) |
+| `--json` | | JSON 형식으로 출력 (삭제하려면 `--force` 또는 `-y`도 필요) |
+
+`-f`는 `--follow`이며 `--force`가 아닙니다.
 
 !!! danger "영구 삭제"
     이 명령어는 다음을 포함한 모든 월드 데이터를 영구적으로 삭제합니다:
@@ -1595,19 +1601,20 @@ mcctl world delete [world] [options]
 
 === "CLI 모드"
     ```bash
-    # 확인 프롬프트와 함께 삭제
+    # 확인 프롬프트와 함께 삭제 (기본값 No, 터미널 필요)
     mcctl world delete old-world
 
-    # 확인 없이 강제 삭제
+    # 확인 없이 삭제 (스크립트, CI)
     mcctl world delete old-world --force
+    mcctl world delete old-world -y
     ```
 
 **안전 기능:**
 
 - **할당 확인**: 서버가 사용 중인 월드는 실행 여부와 관계없이 삭제할 수 없으며 `--force`로도 우회할 수 없음. 먼저 서버에 다른 월드를 할당하세요. 월드를 `servers/<name>/data` 안에 두는 서버(`EXTRA_ARGS=--universe /worlds/` 없음)는 `worlds/<world>` 삭제를 막지 않음
 - **안전 우선(fail-closed)**: 어떤 서버의 `config.env`를 읽거나 해석할 수 없으면 거부됨([월드 할당 규칙](#world-assignment-rules) 참고)
-- **확인 프롬프트**: `--force`가 없으면 삭제 전에 확인(yes/no)을 묻습니다
-- **크기**: 대화형 모드는 확인 전에 월드 크기를 보여 주고, 삭제 후에는 확보된 크기를 출력합니다
+- **확인 프롬프트**: `--force`나 `-y`가 없으면 삭제 전에 확인(yes/no, 기본값 No)을 묻습니다. 터미널이 없고(스크립트, 파이프) `--force`/`-y`도 없으면 거부하고 exit 1로 끝나며, `--json`만으로도 삭제하지 않습니다. REST API `DELETE /api/worlds/:name`은 영향이 없습니다
+- **크기**: 확인 시 월드 이름과 크기를 보여 주고, 삭제 후에는 확보된 크기를 출력합니다
 
 ---
 

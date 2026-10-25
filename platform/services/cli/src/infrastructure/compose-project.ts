@@ -22,9 +22,9 @@ export function ensureMinecraftNetwork(): 'exists' | 'created' | 'failed' {
   }
 }
 
-/** `docker compose restart mc-router` in the platform root. Throws on failure. */
+/** `docker compose restart router` (the compose service; mc-router is the container name). Throws on failure. */
 export function restartRouterService(root: string): void {
-  execSync('docker compose restart mc-router', { cwd: root, stdio: 'pipe' });
+  execSync('docker compose restart router', { cwd: root, stdio: 'pipe' });
 }
 
 /** Recreate the router from the compose file (`docker compose up -d router`). Throws on failure. */

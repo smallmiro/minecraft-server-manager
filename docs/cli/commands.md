@@ -492,7 +492,7 @@ mcctl create [name] [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--type` | `-t` | Server type (default `PAPER`): PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
-| `--version` | `-v` | Minecraft version: `-v 1.21.1`, or the long form with `=`: `--version=1.21.1` (default `LATEST`; modpack types use the modpack's version) |
+| `--version` | `-v` | Minecraft version: `-v 1.21.1`, `--version 1.21.1` or `--version=1.21.1` (default `LATEST`; modpack types use the modpack's version) |
 | `--seed` | `-s` | World seed for generation. A negative seed works (`-s -123`); `--seed=<value>` takes any value |
 | `--world-url` | `-u` | Download world from ZIP URL |
 | `--world` | `-w` | Use existing world from worlds/ directory |
@@ -897,7 +897,7 @@ mcctl config <server> [key] [value] [options]
 |----------|-------------|
 | `server` | Server name |
 | `key` | Configuration key (optional) |
-| `value` | New value (optional) |
+| `value` | New value (optional). An empty value (`""`) removes the key, so the image default applies again |
 
 **Shortcut Options:**
 
@@ -960,6 +960,9 @@ mcctl config <server> [key] [value] [options]
 
 !!! note "Restart Required"
     Some configuration changes require a server restart to take effect.
+
+!!! note "Removing a key"
+    `mcctl config <server> MOTD ""` removes `MOTD` from the server's config and says so; a key that is not set is reported and nothing changes. `LEVEL` and `WORLD_NAME` cannot be removed this way: set a world name instead.
 
 !!! warning "Changing `LEVEL`"
     `LEVEL` is the world the server uses (see [World Assignment Rules](#world-assignment-rules)). `mcctl config <server> LEVEL <world>` is refused while the server is running and when another server uses `<world>`. The same applies to `EXTRA_ARGS` when the new value moves the world between `worlds/` and `servers/<server>/data` (`--universe`).
@@ -1573,7 +1576,10 @@ mcctl world delete [world] [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--force` | | Skip the confirmation (does not delete a world a server uses) |
-| `--json` | | Output in JSON format |
+| `--yes` | `-y` | Same as `--force` for the confirmation |
+| `--json` | | Output in JSON format (still needs `--force` or `-y` to delete) |
+
+`-f` is `--follow`, not `--force`.
 
 !!! danger "Permanent Deletion"
     This command permanently deletes all world data including:
@@ -1595,19 +1601,20 @@ mcctl world delete [world] [options]
 
 === "CLI Mode"
     ```bash
-    # Delete with confirmation prompt
+    # Delete with confirmation prompt (default No; needs a terminal)
     mcctl world delete old-world
 
-    # Force delete without confirmation
+    # Delete without confirmation (scripts, CI)
     mcctl world delete old-world --force
+    mcctl world delete old-world -y
     ```
 
 **Safety Features:**
 
 - **Assignment Check**: Cannot delete a world that any server uses, running or not; `--force` does not override this. Assign another world to the server first. Servers that keep their world inside `servers/<name>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<world>`
 - **Fail-closed**: Refused while any server's `config.env` cannot be read or interpreted (see [World Assignment Rules](#world-assignment-rules))
-- **Confirmation Prompt**: Asks for confirmation (yes/no) before deleting, unless `--force`
-- **Size**: The interactive mode shows the world size before you confirm; after deleting, the freed size is printed
+- **Confirmation Prompt**: Asks for confirmation (yes/no, default No) before deleting, unless `--force` or `-y`. Without a terminal (a script, a pipe) and without `--force`/`-y`, the command refuses and exits 1; `--json` alone does not delete either. The REST API `DELETE /api/worlds/:name` is not affected
+- **Size**: The confirmation shows the world name and size; after deleting, the freed size is printed
 
 ---
 

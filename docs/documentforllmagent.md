@@ -235,7 +235,7 @@ After running `mcctl init`, the following directory structure is created:
 ├── .env                              # Global environment variables
 ├── .mcctl.json                       # mcctl settings (templateVersion, playitEnabled, installId)
 ├── .gitignore
-├── docker-compose.yml                # Main orchestration (mc-router; playit service after `mcctl playit setup`)
+├── docker-compose.yml                # Main orchestration (mc-router; playit service after `mcctl init` with playit or `mcctl playit setup`)
 ├── .mcctl-admin.yml                  # Management Console config (after console init)
 ├── api-config.json                   # Written by `mcctl console api ...` (not read by the running mcctl-api)
 ├── ecosystem.config.cjs              # PM2 process config (after console init)
@@ -332,7 +332,7 @@ External Players → playit.gg cloud → playit-agent (host) → localhost:25565
 **Setup:**
 
 1. Create agent at https://playit.gg/account/agents/new-docker → get SECRET_KEY
-2. `mcctl playit setup` → enter SECRET_KEY (also needed once after `mcctl init --playit-key` or answering Yes in `mcctl init`, which only save the key: the `playit` service is added by `mcctl playit setup`)
+2. `mcctl playit setup` → enter SECRET_KEY (not needed after `mcctl init --playit-key` or answering Yes in `mcctl init`: init saves the key and adds the `playit` service)
 3. `mcctl playit start` → start agent
 4. Create tunnel at https://playit.gg/account/tunnels → Minecraft Java → localhost:25565
 5. `mcctl create myserver --playit-domain xx-xx.craft.playit.gg`, or for an existing server `mcctl playit domain myserver xx-xx.craft.playit.gg` then `mcctl stop myserver && mcctl start myserver`
@@ -392,8 +392,8 @@ playit.gg enables external players to connect to your Minecraft servers without 
 mcctl playit setup
 # Enter your SECRET_KEY when prompted
 
-# Or during initial setup (`mcctl init`, answer Yes, or `mcctl init --playit-key <key>`),
-# then run `mcctl playit setup` once: init saves the key but does not add the playit service
+# Or during initial setup (`mcctl init`, answer Yes, or `mcctl init --playit-key <key>`):
+# init saves the key and adds the playit service
 ```
 
 **Step 3: Start the playit agent**
@@ -504,7 +504,7 @@ Key points:
 
 **Environment Variables**: `MCCTL_ROOT` (data directory), `MCCTL_SUDO_PASSWORD` (alternative to `--sudo-password`).
 
-**Argument parsing**: an option that needs a value takes it from the next word (`--seed 123`) or after `=` (`--seed=123`); a negative number is a value (`-s -123`). Switches such as `--force`, `--json` and `--yes` also accept `=true`/`=false`. Everything after `--` is passed through unchanged (`mcctl exec myserver -- say -h`). Short flags: `-t` type, `-v` version, `-s` seed, `-u` world-url, `-w` world, `-f` follow, `-n` lines, `-m` message, `-y` yes, `-a` all, `-d` detail, `-W` watch, `-h` help. Write the Minecraft version as `-v 1.21.1` or `--version=1.21.1`.
+**Argument parsing**: an option that needs a value takes it from the next word (`--seed 123`) or after `=` (`--seed=123`); a negative number is a value (`-s -123`). Switches such as `--force`, `--json` and `--yes` also accept `=true`/`=false`. Everything after `--` is passed through unchanged (`mcctl exec myserver -- say -h`). Short flags: `-t` type, `-v` version, `-s` seed, `-u` world-url, `-w` world, `-f` follow, `-n` lines, `-m` message, `-y` yes, `-a` all, `-d` detail, `-W` watch, `-h` help. Write the Minecraft version as `-v 1.21.1`, `--version 1.21.1` or `--version=1.21.1` (`--version` alone before a command prints the mcctl version).
 
 **Exit codes**: `0` success, `1` error, `2` for `mcctl start`/`mcctl stop` when the server is already running/stopped. `mcctl update --check` exits 1 when a newer CLI exists; `mcctl exec` returns the RCON command's exit code.
 
@@ -515,7 +515,7 @@ Key points:
 ```bash
 mcctl init                       # Initialize platform (asks for host IPs and playit.gg)
 mcctl init --reconfigure         # Change host IPs, timezone, RCON password, ... of an initialized platform
-mcctl init --playit-key <key>    # Enable playit.gg without asking (run `mcctl playit setup` once afterwards)
+mcctl init --playit-key <key>    # Enable playit.gg without asking
 mcctl init --no-playit           # Do not enable playit.gg, without asking
 mcctl init --skip-validation     # Skip the prerequisite checks
 mcctl init --skip-docker         # Do not create the minecraft-net network
@@ -594,7 +594,7 @@ mcctl create [name] [options]
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
 | `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE | PAPER |
-| `--version` | `-v` | Minecraft version: `-v 1.21.1` or `--version=1.21.1` (modpack types use the modpack's version) | LATEST |
+| `--version` | `-v` | Minecraft version: `-v 1.21.1`, `--version 1.21.1` or `--version=1.21.1` (modpack types use the modpack's version) | LATEST |
 | `--seed` | `-s` | World seed (negative works: `-s -123`) | Random |
 | `--world-url` | `-u` | Download world from ZIP URL | - |
 | `--world` | `-w` | Use existing world from worlds/ (sets `LEVEL`; refused if another server uses it) | - |
@@ -716,6 +716,7 @@ Scripts: the `list` reply is `There are N of a max of M players online: ...`; te
 mcctl config <server>                    # View all config
 mcctl config <server> MOTD               # View specific key
 mcctl config <server> MOTD "Welcome!"    # Set value
+mcctl config <server> MOTD ""            # Remove the key (image default applies; LEVEL/WORLD_NAME refused)
 mcctl config <server> --cheats           # Enable cheats (ALLOW_CHEATS=true)
 mcctl config <server> --no-cheats        # Disable cheats
 mcctl config <server> --pvp              # Enable PvP
@@ -804,8 +805,8 @@ mcctl world new <name> --server <srv>         # Create and assign to a stopped s
 mcctl world assign [world] [server]           # Assign world to a stopped server (sets LEVEL), e.g. `mcctl world assign survival myserver`
 mcctl world release [world]                   # Switch the world's server back to its own default world
 mcctl world release [world] --force           # --force is accepted and ignored
-mcctl world delete [world]                    # Delete world (with confirmation)
-mcctl world delete [world] --force            # Skip the prompt (does not delete a world a server uses); --json supported
+mcctl world delete [world]                    # Delete world (asks, default No; refuses with exit 1 without a terminal)
+mcctl world delete [world] --force|-y         # Skip the prompt (does not delete a world a server uses); --json also needs --force|-y
 ```
 
 Servers are named by their directory under `servers/` (`myserver`), not the container name (`mc-myserver`): `mcctl world assign survival mc-myserver` fails with `Server 'mc-myserver' not found`. `mcctl world list` prints `assigned: myserver`; its JSON has `name`, `path`, `isLocked`, `lockedBy`, `size`, `lastModified`, `servers` and `dimensions`. `mcctl world new` needs at least one server (`No servers available. Create a server first.`); in interactive mode it asks for a server (must be stopped) and whether to start it (`--no-start` skips that question); with a world name it never starts the server. A server whose world is inside `servers/<name>/data` is refused for assign/release until `mcctl migrate worlds` moves it; a container in the `created` state counts as not stopped (start it once, then stop it).
@@ -817,7 +818,7 @@ Servers are named by their directory under `servers/` (`myserver`), not the cont
 - **Stopped server only.** assign, release, `world new --server`, config `LEVEL` and PATCH `level` are refused when the container is running, paused, restarting or created. Nothing is stopped automatically (`world new --server` used to try to stop the server; it now refuses).
 - **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely (path separators, `.`/`..`, quotes, control characters, Compose interpolation like `${VAR}` outside single quotes, or an unsupported `--universe` location), every assignment change and world delete/reset is refused until it is fixed. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-`, `_`.
 - **Release** switches the server using the world back to its own default world `<server>` (adopting an existing free `worlds/<server>`, otherwise created on next start). `--force` is accepted and ignored. Releasing a server from its own default world, a duplicated world, or a server whose world is inside `servers/<n>/data` is refused.
-- **Delete.** `mcctl world delete <w> --force` only skips the prompt; it never deletes a world a server uses. Servers keeping their world inside `servers/<n>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<w>`. `POST /api/servers/:name/world/reset` is refused for such servers and when another server uses the same world.
+- **Delete.** `mcctl world delete <w> --force` (or `-y`) only skips the prompt, which a terminal-less shell cannot answer (it refuses, exit 1; `-f` is `--follow`); it never deletes a world a server uses. Servers keeping their world inside `servers/<n>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<w>`. `POST /api/servers/:name/world/reset` is refused for such servers and when another server uses the same world.
 - **Duplicate assignments** from older installs are reported, not fixed: `mcctl world list` shows `assigned: a, b` and prints warnings; `GET /api/worlds` adds `assignmentWarnings: string[]`; the console worlds page shows a warning alert and the card shows "Assigned to N servers". `isLocked`/`lockedBy` remain in the API as aliases for "assigned".
 - **API status codes** for world assign/release/delete/create and config `level`: invalid world name 400, unknown server or world 404, everything else refused by these rules 409 (conflict, server running, undetermined config). Config snapshot restore answers 409 when the restored `config.env` would assign a world another server uses, or change the world of a running server (even with force), or when the restored `docker-compose.yml` sets world keys in `environment` or changes the `/worlds`/`/data` mapping. `mcctl config <srv> EXTRA_ARGS` that moves the world is checked the same way. `mcctl migrate worlds` refuses the same way before moving data.
 
@@ -3144,7 +3145,7 @@ A: mcctl configures none, so a client that sends a hostname without a route (or 
 A: A free tunneling service that lets external players connect to your server without port forwarding or a static IP.
 
 **Q: How do I set up playit.gg?**
-A: Run `mcctl playit setup` with your SECRET_KEY (also after `mcctl init --playit-key`, since only `setup` adds the `playit` service), then `mcctl playit start`, create a tunnel at playit.gg, register it with `mcctl playit domain <server> <domain>`, and recreate the server (`mcctl stop <s> && mcctl start <s>`). Turn on the whitelist before sharing the domain.
+A: Run `mcctl playit setup` with your SECRET_KEY (skip it if you enabled playit in `mcctl init`), then `mcctl playit start`, create a tunnel at playit.gg, register it with `mcctl playit domain <server> <domain>`, and recreate the server (`mcctl stop <s> && mcctl start <s>`). Turn on the whitelist before sharing the domain.
 
 **Q: Can multiple servers use playit.gg?**
 A: Yes. Each server needs its own tunnel domain. mc-router routes connections to the correct server based on hostname.

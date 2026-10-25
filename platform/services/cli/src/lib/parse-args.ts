@@ -6,7 +6,28 @@ const isValue = (arg: string | undefined): arg is string =>
   !!arg && (!arg.startsWith('-') || /^-\d/.test(arg));
 
 /** Boolean-only flags (never take a value) */
-const BOOLEAN_ONLY_FLAGS = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade'];
+const BOOLEAN_ONLY_FLAGS = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade', 'modrinth', 'curseforge', 'spiget', 'url'];
+
+/** `--version` is a boolean only before the command (`mcctl --version`); after it, it carries a value. */
+const isBooleanOnly = (key: string, hasCommand: boolean): boolean =>
+  BOOLEAN_ONLY_FLAGS.includes(key) && !(key === 'version' && hasCommand);
+
+/** A flag value as an integer: undefined when absent, an error naming the flag when it is not one. */
+export function intFlag(name: string, value: string | boolean | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string' || !/^-?\d+$/.test(value)) throw new Error(`--${name} must be an integer`);
+  return parseInt(value, 10);
+}
+
+/** Drop `--root <path>` / `--root=<path>`, for sub-parsers (Commander) that do not know it. */
+export function stripRootFlag(args: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--root') i++;
+    else if (!args[i]!.startsWith('--root=')) out.push(args[i]!);
+  }
+  return out;
+}
 
 /**
  * Parse command line arguments
@@ -47,7 +68,7 @@ export function parseArgs(args: string[]): {
       const key = arg.slice(2);
       const nextArg = args[i + 1];
 
-      if (BOOLEAN_ONLY_FLAGS.includes(key)) {
+      if (isBooleanOnly(key, !!result.command)) {
         result.flags[key] = true;
         i++;
       } else if (isValue(nextArg)) {
@@ -96,7 +117,7 @@ export function parseArgs(args: string[]): {
     } else {
       if (!result.command) {
         result.command = arg;
-      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin', 'playit', 'config-snapshot'].includes(result.command)) {
+      } else if (!result.subCommand && ['world', 'player', 'backup', 'op', 'whitelist', 'ban', 'router', 'migrate', 'mod', 'console', 'admin', 'playit', 'config-snapshot', 'audit'].includes(result.command)) {
         result.subCommand = arg;
         result.subCommandArgs = args.slice(i + 1);
       } else {

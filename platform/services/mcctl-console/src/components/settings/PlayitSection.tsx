@@ -91,7 +91,7 @@ export function PlayitSection() {
               Not configured
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              playit.gg agent is not set up. Configure PLAYIT_SECRET to enable external access.
+              playit.gg agent is not set up. Configure PLAYIT_SECRET_KEY to enable external access.
             </Typography>
           </Alert>
         </CardContent>
