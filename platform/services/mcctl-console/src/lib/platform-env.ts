@@ -9,6 +9,15 @@ function ecosystemDefines(text: string, key: string): boolean {
   return new RegExp(`^\\s*${key}\\s*:\\s*(?:'(?:[^'\\\\\\n]|\\\\.)*'|"(?:[^"\\\\\\n]|\\\\.)*")`, 'm').test(text);
 }
 
+/** The settings of <root>/.env; undefined when it cannot be read. */
+function readPlatformEnv(root: string): Map<string, string> | undefined {
+  try {
+    return parseEnvDocument(readFileSync(join(root, '.env'), 'utf8')).values;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Single source for console auth settings (#686, #699): a non-empty value in
  * <MCCTL_ROOT>/.env wins over the process env ONLY when ecosystem.config.cjs does
@@ -18,19 +27,14 @@ function ecosystemDefines(text: string, key: string): boolean {
 export function applyPlatformAuthEnv(env: Record<string, string | undefined> = process.env): void {
   const root = env.MCCTL_ROOT;
   if (!root) return;
-  let content: string;
-  try {
-    content = readFileSync(join(root, '.env'), 'utf8');
-  } catch {
-    return;
-  }
+  const values = readPlatformEnv(root);
+  if (!values) return;
   let eco = '';
   try {
     eco = readFileSync(join(root, 'ecosystem.config.cjs'), 'utf8');
   } catch {
     // missing/unreadable = not defined
   }
-  const { values } = parseEnvDocument(content);
   for (const key of KEYS) {
     const value = values.get(key);
     if (!value) continue;
