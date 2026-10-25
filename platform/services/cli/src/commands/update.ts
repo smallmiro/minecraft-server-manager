@@ -658,7 +658,8 @@ export async function updateServices(
     console.log('');
     console.log(colors.dim('  No services installed. Use "mcctl console init" to set up services.'));
     console.log('');
-    return 0;
+    // A CLI-only host still has Minecraft servers whose images need updating (#825)
+    return options.check ? 0 : updateServerImages(rootDir, options.yes);
   }
 
   console.log(colors.bold('Updating services...'));
