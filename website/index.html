@@ -891,30 +891,42 @@ modded               <span class="g">running</span>      healthy    modded.local
             <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="url">localhost:5000</span>
           </div>
-          <figure class="shot" role="tabpanel" id="s-dashboard" aria-labelledby="g-dashboard" style="margin:0">
+          <div role="tabpanel" id="s-dashboard" aria-labelledby="g-dashboard">
+          <figure class="shot" style="margin:0">
             <a href="/assets/dashboard.webp" target="_blank" rel="noopener"><img src="/assets/dashboard.webp" width="2160" height="1350" alt="mcctl console dashboard with server, player and world counts"></a>
             <figcaption><span class="en">Servers, players, worlds, external access, and recent activity at a glance.</span><span class="ko">서버·플레이어·월드·외부 접속·최근 활동을 한 화면에서.</span><span class="ja">サーバー、プレイヤー、ワールド、外部アクセス、最近のアクティビティをひと目で。</span></figcaption>
           </figure>
-          <figure class="shot" role="tabpanel" id="s-server" aria-labelledby="g-server" style="margin:0" hidden>
+          </div>
+          <div role="tabpanel" id="s-server" aria-labelledby="g-server" hidden>
+          <figure class="shot" style="margin:0">
             <a href="/assets/server.webp" target="_blank" rel="noopener"><img src="/assets/server.webp" width="2160" height="1350" loading="lazy" alt="Server detail page with CPU, memory, world size and a live console"></a>
             <figcaption><span class="en">Start, stop, and restart; CPU, memory, and world size; a live console that takes commands.</span><span class="ko">시작·중지·재시작, CPU·메모리·월드 크기, 명령을 보낼 수 있는 실시간 콘솔.</span><span class="ja">起動・停止・再起動、CPU・メモリ・ワールドサイズ、コマンドを送れるライブコンソール。</span></figcaption>
           </figure>
-          <figure class="shot" role="tabpanel" id="s-world" aria-labelledby="g-world" style="margin:0" hidden>
+          </div>
+          <div role="tabpanel" id="s-world" aria-labelledby="g-world" hidden>
+          <figure class="shot" style="margin:0">
             <a href="/assets/world.webp" target="_blank" rel="noopener"><img src="/assets/world.webp" width="2160" height="1350" loading="lazy" alt="World info cards and a BlueMap web map of the world"></a>
             <figcaption><span class="en">World details read from level.dat, and a BlueMap web map rendered from the world files.</span><span class="ko">level.dat에서 읽은 월드 정보와, 월드 파일로 렌더링한 BlueMap 웹 지도.</span><span class="ja">level.dat から読み取ったワールド情報と、ワールドファイルからレンダリングした BlueMap の Web マップ。</span></figcaption>
           </figure>
-          <figure class="shot" role="tabpanel" id="s-stats" aria-labelledby="g-stats" style="margin:0" hidden>
+          </div>
+          <div role="tabpanel" id="s-stats" aria-labelledby="g-stats" hidden>
+          <figure class="shot" style="margin:0">
             <a href="/assets/stats.webp" target="_blank" rel="noopener"><img src="/assets/stats.webp" width="2160" height="1350" loading="lazy" alt="Ore and block statistics with last known player positions"></a>
             <figcaption><span class="en">Ore and block counts across dimensions, plus where each player last stood.</span><span class="ko">차원별 광물·블록 통계와 플레이어별 마지막 위치.</span><span class="ja">ディメンションごとの鉱石・ブロック統計と、各プレイヤーの最終位置。</span></figcaption>
           </figure>
-          <figure class="shot" role="tabpanel" id="s-worlds" aria-labelledby="g-worlds" style="margin:0" hidden>
+          </div>
+          <div role="tabpanel" id="s-worlds" aria-labelledby="g-worlds" hidden>
+          <figure class="shot" style="margin:0">
             <a href="/assets/worlds.webp" target="_blank" rel="noopener"><img src="/assets/worlds.webp" width="2160" height="1350" loading="lazy" alt="World library with assignment status for each world"></a>
             <figcaption><span class="en">One world library: assign, release, and create worlds — including from a ZIP upload.</span><span class="ko">월드 라이브러리 한곳에서 할당·해제·생성(ZIP 업로드 포함).</span><span class="ja">ひとつのワールドライブラリで割り当て・解除・作成(ZIP アップロードにも対応)。</span></figcaption>
           </figure>
-          <figure class="shot" role="tabpanel" id="s-routing" aria-labelledby="g-routing" style="margin:0" hidden>
+          </div>
+          <div role="tabpanel" id="s-routing" aria-labelledby="g-routing" hidden>
+          <figure class="shot" style="margin:0">
             <a href="/assets/routing.webp" target="_blank" rel="noopener"><img src="/assets/routing.webp" width="2160" height="1350" loading="lazy" alt="Routing page listing mc-router hostnames per server"></a>
             <figcaption><span class="en">Every hostname mc-router knows, and where it points.</span><span class="ko">mc-router에 등록된 호스트명과 연결 대상.</span><span class="ja">mc-router が知っているすべてのホスト名と、その転送先。</span></figcaption>
           </figure>
+          </div>
         </div>
       </div>
     </div>
@@ -1247,7 +1259,8 @@ modded               <span class="g">running</span>      healthy    modded.local
           <div class="sign"><a href="https://github.com/smallmiro"><svg class="i" aria-hidden="true"><use href="#i-gh"/></svg>@smallmiro</a></div>
         </div>
         <div>
-          <figure class="about-fig carousel" role="region" aria-roledescription="carousel" aria-label="World renders">
+          <div role="region" aria-roledescription="carousel" aria-label="World renders">
+          <figure class="about-fig carousel">
             <div class="car-view">
               <div class="slides" tabindex="0">
                 <div class="slide" role="group" aria-roledescription="slide" aria-label="1 / 10">
@@ -1297,6 +1310,7 @@ modded               <span class="g">running</span>      healthy    modded.local
             <div class="car-dots"><button type="button" aria-label="Show image 1"></button><button type="button" aria-label="Show image 2"></button><button type="button" aria-label="Show image 3"></button><button type="button" aria-label="Show image 4"></button><button type="button" aria-label="Show image 5"></button><button type="button" aria-label="Show image 6"></button><button type="button" aria-label="Show image 7"></button><button type="button" aria-label="Show image 8"></button><button type="button" aria-label="Show image 9"></button><button type="button" aria-label="Show image 10"></button></div>
             <figcaption><span class="en">One of the worlds the brothers play on — rendered with BlueMap.</span><span class="ko">형제가 함께 노는 월드 중 하나 — BlueMap 렌더.</span><span class="ja">兄弟が一緒に遊ぶワールドのひとつ — BlueMap でレンダリング。</span></figcaption>
           </figure>
+          </div>
           <ol class="timeline">
             <li><time>2020</time><span class="t"><span class="en"><b>COVID.</b> A Bedrock server on the GCP free tier for my younger son and his friends, run for a year.</span><span class="ko"><b>코로나.</b> 둘째와 친구들을 위해 GCP 무료 플랜에 베드락 서버를 올려 1년간 운영.</span><span class="ja"><b>コロナ。</b>下の息子と友だちのために GCP の無料枠に Bedrock サーバーを立て、1 年間運用。</span></span></li>
             <li><time class="soft"><span class="en">Before 2025</span><span class="ko">2025 이전</span><span class="ja">2025 年以前</span></time><span class="t"><span class="en"><b>Paid hosting.</b> Expensive, and the features and speed fell short.</span><span class="ko"><b>유료 호스팅.</b> 비싸고 기능·속도가 아쉬웠음.</span><span class="ja"><b>有料ホスティング。</b>高く、機能も速度も物足りなかった。</span></span></li>
