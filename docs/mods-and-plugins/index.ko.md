@@ -7,7 +7,7 @@ mcctl CLI를 사용하여 마인크래프트 서버에 모드와 플러그인을
 | 유형 | 설명 | 서버 타입 |
 |------|------|----------|
 | **모드(Mods)** | 게임 메커니즘 수정, 클라이언트 설치 필요 | Forge, NeoForge, Fabric, Quilt |
-| **플러그인(Plugins)** | 서버 측만 적용, 클라이언트 변경 불필요 | Paper, Purpur, Spigot, Bukkit |
+| **플러그인(Plugins)** | 서버 측만 적용, 클라이언트 변경 불필요 | Paper, Purpur, Spigot, Bukkit, Leaf, Folia, Pufferfish |
 
 ## mcctl 빠른 시작
 
@@ -65,7 +65,7 @@ mcctl mod list modded
 mcctl mod remove modded lithium
 ```
 
-`--curseforge`는 `CURSEFORGE_FILES`, `--spiget`은 `SPIGET_RESOURCES`에 쓰고, `--url`은 Paper, Purpur, Spigot, Bukkit 서버에서는 `PLUGINS`, 나머지에서는 `MODS`에 씁니다. [개요](#개요) 표에 없는 서버 타입에는 `mcctl mod add`가 `--force`를 요구합니다. 추가한 뒤 서버를 재시작하세요.
+`--curseforge`는 `CURSEFORGE_FILES`, `--spiget`은 `SPIGET_RESOURCES`에 쓰고, `--url`은 플러그인 서버에서는 `PLUGINS`, 나머지에서는 `MODS`에 씁니다. 모드팩 타입을 포함해 [개요](#개요) 표에 없는 서버 타입에는 `mcctl mod add`가 `--force`를 요구합니다. 추가한 뒤 서버를 재시작하세요.
 
 ## 설치 소스
 
@@ -141,7 +141,7 @@ mcctl stop survival && mcctl start survival
     mods/                    # 서버 하나용 모드 JAR
 ```
 
-수동으로 내려받은 플러그인은 `shared/plugins/`에 넣으세요. 모드 JAR는 해당 서버의 `servers/<name>/data/mods/`에 넣거나, 다운로드 URL을 `MODS`에 나열합니다([직접 다운로드](direct-download.ko.md) 참고). `mcctl init`은 `shared/mods/`도 만들지만 서버는 이를 마운트하지 않습니다.
+수동으로 내려받은 플러그인은 `shared/plugins/`에 넣으세요. 모드 JAR는 해당 서버의 `servers/<name>/data/mods/`에 넣거나, 다운로드 URL을 `MODS`에 나열합니다([직접 다운로드](direct-download.ko.md) 참고).
 
 ## 자동 정리
 

@@ -542,6 +542,8 @@ Below the hostnames, the settings are grouped into cards. Each card shows its es
 
 Advanced fields include, for example, Hardcore, Allow Flight, and Spawn Protection in Gameplay; Simulation Distance, Initial Heap, Max Heap, and JVM -XX Options in Performance & JVM; Enable Auto-stop in Auto-pause / Auto-stop; and RCON Password, RCON Port, UID, and GID in System.
 
+Game Mode is stored as `MODE`, the variable the server image reads. Servers created by earlier versions have `GAMEMODE`, which the image ignores: the field shows that value, and saving the settings moves it to `MODE`, so the game mode applies from the next start.
+
 #### Save and Restart
 
 When you modify settings:

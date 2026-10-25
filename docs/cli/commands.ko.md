@@ -508,7 +508,7 @@ mcctl create [name] [options]
 | `--no-playit-domain` | | playit.gg 도메인을 설정하지 않음 (`--playit-domain`이 없을 때의 기본 동작과 같음) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
-새 서버는 메모리 4G(모드팩 타입은 6G)와 이미지 `itzg/minecraft-server:java25`로 만들어집니다. 대화형 `mcctl create`는 메모리를 묻고, 생성 후에는 `mcctl config <name> MEMORY <size>`로 바꿉니다. 모드팩에 대한 자세한 내용은 [모드팩](../mods-and-plugins/modpacks.ko.md)에 있습니다.
+새 서버는 메모리 4G(모드팩 타입은 6G)와 `VERSION`에 맞는 `itzg/minecraft-server` 태그로 만들어집니다. 예를 들어 1.16.5는 `java8`, 1.21.1은 `java21`이고, `LATEST`, `-v` 없는 모드팩, 스냅샷은 `java25`입니다([Java 버전과 이미지 태그](../configuration/server-types.ko.md#java-버전과-이미지-태그) 참고). 대화형 `mcctl create`는 메모리를 묻고, 생성 후에는 `mcctl config <name> MEMORY <size>`로 바꿉니다. 모드팩에 대한 자세한 내용은 [모드팩](../mods-and-plugins/modpacks.ko.md)에 있습니다.
 
 !!! info "create가 쓰는 파일"
     `mcctl create`는 `servers/<이름>/server.yaml`을 쓰고, 그 파일에서 `config.env`, `docker-compose.yml`, `servers/compose.yml` 항목을 만듭니다([서버 정의](../configuration/server-yaml.md)). 서버가 만들어지기 전에 실패하면 아무것도 남기지 않으므로 같은 명령을 다시 실행하면 됩니다. 서버는 만들어졌지만 시작하지 못하면 서버는 그대로 두고 원인과 함께 종료 코드 1로 끝납니다. `mcctl start <이름>`으로 시작하세요.
@@ -926,7 +926,7 @@ mcctl config <server> [key] [value] [options]
       TYPE=PAPER
       VERSION=1.21.1
       MEMORY=4G
-      GAMEMODE=survival
+      MODE=survival
       DIFFICULTY=normal
       MAX_PLAYERS=20
       VIEW_DISTANCE=10
@@ -1079,7 +1079,7 @@ mcctl config-snapshot restore <id>
 
 ### mcctl config-snapshot schedule
 
-일정에 따라 스냅샷을 만듭니다. 일정은 mcctl-api가 실행하며, mcctl-api는 시작할 때 일정을 읽습니다. 여기서 일정을 추가, 삭제, 활성화, 비활성화한 뒤에는 `mcctl console service restart --api`로 mcctl-api를 재시작합니다.
+일정에 따라 스냅샷을 만듭니다. 일정은 mcctl-api가 실행하며, mcctl-api는 1분마다 일정을 확인합니다. 여기서 바꾼 내용은 1분 안에 적용됩니다.
 
 | 명령 | 설명 |
 |------|------|
@@ -1800,7 +1800,7 @@ mcctl backup restore [commit] [--force]
 
 ### mcctl backup schedule
 
-일정에 따라 월드를 백업합니다. 일정은 mcctl-api가 실행하며, mcctl-api는 시작할 때 일정을 읽습니다. 여기서 일정을 추가, 삭제, 활성화, 비활성화한 뒤에는 `mcctl console service restart --api`로 mcctl-api를 재시작합니다.
+일정에 따라 월드를 백업합니다. 일정은 mcctl-api가 실행하며, mcctl-api는 1분마다 일정을 확인합니다. 여기서 바꾼 내용은 1분 안에 적용됩니다.
 
 | 명령 | 설명 |
 |------|------|

@@ -89,7 +89,7 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 
 ### mcctl-api 제한
 
-mcctl-api는 시작할 때 `.env`에서 이 키들을 읽습니다. 변경은 `mcctl console service restart --api`로 적용합니다. Platform Settings에는 **Unknown**으로 표시됩니다.
+mcctl-api는 시작할 때 `.env`에서 이 키들을 읽습니다. 변경은 `mcctl console service restart --api`로 적용합니다. 콘솔의 월드 업로드 라우트도 `.env`에서 `WORLD_UPLOAD_MAX_SIZE`를 읽으므로, 이 값을 바꾼 뒤에는 `mcctl console service restart --console`도 실행하세요. Platform Settings에는 **Unknown**으로 표시됩니다.
 
 | 변수 | 설명 | 기본값 |
 |------|------|--------|
@@ -129,7 +129,7 @@ mcctl-api는 시작할 때 `.env`에서 이 키들을 읽습니다. 변경은 `m
 | `BACKUP_AUTO_ON_STOP` | `mcctl stop <server>`, API·콘솔 정지 | `none`: 다음 정지 |
 | `PLAYIT_SECRET_KEY` (시크릿) | compose `playit` 서비스 (`SECRET_KEY`) | `playit`: playit를 stop 후 start |
 | `LOG_LEVEL` | **mcctl-api 전용** (dotenv, cwd = MCCTL_ROOT) | `api` |
-| `BETTER_AUTH_SECRET` (시크릿, 삭제 불가), `BETTER_AUTH_BASE_URL` | mcctl-console은 시작 시 `.env`에서 이 두 키만 읽으며, 비어 있지 않은 값은 `ecosystem.config.cjs`에 해당 키가 더 이상 없을 때만 사용됩니다(ecosystem에 있는 동안은 ecosystem 값이 우선하고, `.env`와 다르면 경고를 로그에 남깁니다). `mcctl upgrade`가 이 키들을 `.env`로 옮깁니다. 시크릿을 바꾸면 모든 사용자가 로그아웃됩니다. base URL 미설정 시 `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |
+| `BETTER_AUTH_SECRET` (시크릿, 삭제 불가), `BETTER_AUTH_BASE_URL` | mcctl-console은 시작 시 `.env`에서 이 두 인증 키를 읽으며, 비어 있지 않은 값은 `ecosystem.config.cjs`에 해당 키가 더 이상 없을 때만 사용됩니다(ecosystem에 있는 동안은 ecosystem 값이 우선하고, `.env`와 다르면 경고를 로그에 남깁니다). `mcctl upgrade`가 이 키들을 `.env`로 옮깁니다. 시크릿을 바꾸면 모든 사용자가 로그아웃됩니다. base URL 미설정 시 `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |
 
 **읽기 전용 키:** `MINECRAFT_NETWORK` (mcctl은 `minecraft-net`만 만듭니다. 이름을 바꾸려면 `mcctl down`, `docker network create <name>`, `.env` 수정, `mcctl up` 순서로 진행), `MINECRAFT_SUBNET` (mcctl이 읽지 않으며, 네트워크는 만들 때의 서브넷을 유지), `COMPOSE_PROJECT_NAME` (변경하면 기존 컨테이너와 네트워크가 고아가 되므로 CLI 전용).
 

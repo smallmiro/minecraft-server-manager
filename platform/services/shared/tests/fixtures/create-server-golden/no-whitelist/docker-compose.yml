@@ -24,7 +24,7 @@ services:
   # Example: mc-lambda -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-lambda:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-lambda
     restart: "no"
     tty: true

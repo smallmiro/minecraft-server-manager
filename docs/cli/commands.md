@@ -508,7 +508,7 @@ mcctl create [name] [options]
 | `--no-playit-domain` | | Do not set a playit.gg domain (also the default without `--playit-domain`) |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
-New servers get 4G of memory (6G for modpack types) and the image `itzg/minecraft-server:java25`. Interactive `mcctl create` asks for the memory; afterwards change it with `mcctl config <name> MEMORY <size>`. For modpack details see [Modpacks](../mods-and-plugins/modpacks.md).
+New servers get 4G of memory (6G for modpack types) and the `itzg/minecraft-server` tag their `VERSION` needs, for example `java8` for 1.16.5 and `java21` for 1.21.1 (`java25` for `LATEST`, a modpack without `-v` and snapshots; see [Java Versions and Image Tags](../configuration/server-types.md#java-versions-and-image-tags)). Interactive `mcctl create` asks for the memory; afterwards change it with `mcctl config <name> MEMORY <size>`. For modpack details see [Modpacks](../mods-and-plugins/modpacks.md).
 
 !!! info "One world, one server"
     `--world` (and the default world `<name>` of a new server) is refused when another server already uses that world. See [World Assignment Rules](#world-assignment-rules).
@@ -926,7 +926,7 @@ mcctl config <server> [key] [value] [options]
       TYPE=PAPER
       VERSION=1.21.1
       MEMORY=4G
-      GAMEMODE=survival
+      MODE=survival
       DIFFICULTY=normal
       MAX_PLAYERS=20
       VIEW_DISTANCE=10
@@ -1079,7 +1079,7 @@ mcctl config-snapshot restore <id>
 
 ### mcctl config-snapshot schedule
 
-Create snapshots on a schedule. The schedules are run by mcctl-api, which reads them when it starts: after adding, removing, enabling or disabling a schedule here, restart it with `mcctl console service restart --api`.
+Create snapshots on a schedule. The schedules are run by mcctl-api, which checks them every minute: a change made here applies within a minute.
 
 | Command | Description |
 |---------|-------------|
@@ -1800,7 +1800,7 @@ Every server must be stopped. The result is exactly the commit, `worlds/.locks` 
 
 ### mcctl backup schedule
 
-Back up the worlds on a schedule. The schedules are run by mcctl-api, which reads them when it starts: after adding, removing, enabling or disabling a schedule here, restart it with `mcctl console service restart --api`.
+Back up the worlds on a schedule. The schedules are run by mcctl-api, which checks them every minute: a change made here applies within a minute.
 
 | Command | Description |
 |---------|-------------|

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createCommand, type CreateCommandOptions } from '../../../src/commands/create.js';
-import { Paths, Server, ServerName, ServerStartError, ServerType, McVersion, Memory, WorldOptions } from '@minecraft-docker/shared';
+import { Paths, Server, ServerName, ServerStartError, ServerType, McVersion, Memory, WorldOptions, log } from '@minecraft-docker/shared';
 import * as container from '../../../src/infrastructure/di/container.js';
 
 /**
@@ -221,6 +221,25 @@ describe('create command - MODRINTH modpack support', () => {
           type: 'PAPER',
           modpackSlug: 'cobblemon', // Passed but should be validated by use case
         }), expect.anything());
+    });
+  });
+
+  describe('AUTO_CURSEFORGE options (#826)', () => {
+    it('warns that --mod-loader is ignored and still creates the server', async () => {
+      const warn = vi.spyOn(log, 'warn').mockImplementation(() => {});
+      mockCreateServerUseCase.executeWithConfig.mockResolvedValue({
+        name: { value: 'cf' },
+        containerName: 'mc-cf',
+        type: { label: 'CurseForge Modpack', isModpack: false },
+        version: { value: 'LATEST' },
+        memory: { value: '6G' },
+      });
+
+      const exitCode = await createCommand({ name: 'cf', type: 'AUTO_CURSEFORGE', modpack: 'atm9', modLoader: 'forge' });
+
+      expect(exitCode).toBe(0);
+      expect(warn.mock.calls.flat().join('\n')).toContain('--mod-loader is ignored for AUTO_CURSEFORGE');
+      warn.mockRestore();
     });
   });
 

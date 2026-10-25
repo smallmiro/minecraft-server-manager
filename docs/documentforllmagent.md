@@ -599,8 +599,8 @@ mcctl create [name] [options]
 | `--world-url` | `-u` | Download world from ZIP URL | - |
 | `--world` | `-w` | Use existing world from worlds/ (sets `LEVEL`; refused if another server uses it) | - |
 | `--modpack <slug>` | | Modpack slug; required with `-t MODRINTH` or `-t AUTO_CURSEFORGE` | - |
-| `--modpack-version <v>` | | Modpack version | latest |
-| `--mod-loader <loader>` | | `fabric`, `forge`, `neoforge`, `quilt` (omit to detect from the modpack) | - |
+| `--modpack-version <v>` | | Modpack version (`MODRINTH_VERSION`; for AUTO_CURSEFORGE `CF_FILENAME_MATCHER`, part of the file name) | latest |
+| `--mod-loader <loader>` | | `fabric`, `forge`, `neoforge`, `quilt` (omit to detect from the modpack). MODRINTH only: AUTO_CURSEFORGE has no loader variable, so the CLI warns and ignores it | - |
 | `--exclude-files <list>` | | Comma-separated files to leave out of the modpack (e.g. client-only mods) | - |
 | `--whitelist <a,b>` | | Turn on the whitelist with these players | off |
 | `--enable-whitelist` | | Turn on the whitelist, empty | off |
@@ -610,7 +610,7 @@ mcctl create [name] [options]
 | `--no-start` | | Create without starting (no container is created) | - |
 | `--sudo-password <pwd>` | | Sudo password for registering `<name>.local` | - |
 
-New servers get `MEMORY=4G` (6G for modpack types) and the image `itzg/minecraft-server:java25`; change memory later with `mcctl config <name> MEMORY 6G`. Modpack example: `mcctl create cobblemon -t MODRINTH --modpack cobblemon`.
+New servers get `MEMORY=4G` (6G for modpack types) and the image tag their `VERSION` needs (`McVersion.recommendedImageTag`: `java8` up to 1.16.5, `java17` for 1.17-1.20.4, `java21` for 1.20.5-1.21.x, `java25` for 26.x, `LATEST`, no `VERSION` and versions McVersion cannot read); change memory later with `mcctl config <name> MEMORY 6G`. Modpack example: `mcctl create cobblemon -t MODRINTH --modpack cobblemon`.
 
 **Interactive mode**: Run `mcctl create` without a name. Prompts: server name, server type (grouped: Standard Servers / Modpack Platforms), Minecraft version (select, default `LATEST`; skipped for modpacks), world setup (new / new with seed / existing from `worlds/` / download ZIP URL), memory (default 4G, 6G for modpacks), `Enable whitelist?` (default No; then players), and `Register external domain for playit.gg?` when playit is enabled. When `/etc/avahi/hosts` exists, it first asks for the sudo password (Enter tries sudo without a password).
 
@@ -619,7 +619,7 @@ New servers get `MEMORY=4G` (6G for modpack types) and the image `itzg/minecraft
 1. **Server name** - lowercase letters, digits, hyphens
 2. **Server type** - choose "Modrinth Modpack" or "CurseForge Modpack"
 3. **Modpack slug** - text prompt `Modrinth modpack slug or URL:` (e.g., `cobblemon`); there is no search
-4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched)
+4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched); a CurseForge modpack's answer is not written
 5. **Modpack version** - leave empty for latest
 6. **Exclude mods** - comma-separated files to leave out (e.g. client-only mods)
 7. **World setup**, **memory** (default 6G), **whitelist**, then creation (there is no separate confirmation step)
@@ -839,7 +839,7 @@ mcctl mod remove <server> <mod>          # Remove mod
 mcctl mod sources                        # Show mod sources
 ```
 
-`mod add` validates names on Modrinth (default source), writes the source's key in `config.env` (`MODRINTH_PROJECTS`, `CURSEFORGE_FILES`, `SPIGET_RESOURCES`, or `MODS`/`PLUGINS` for URLs) and needs a restart (`mcctl stop <s> && mcctl start <s>`). Server types without mod or plugin support (e.g. VANILLA) are refused unless `--force`, which also adds names that were not found. `--json` is supported.
+`mod add` validates names on Modrinth (default source), writes the source's key in `config.env` (`MODRINTH_PROJECTS`, `CURSEFORGE_FILES`, `SPIGET_RESOURCES`, or for URLs `PLUGINS` on plugin servers (ServerType `supportsPlugins`: PAPER, SPIGOT, BUKKIT, PURPUR, LEAF, FOLIA, PUFFERFISH) and `MODS` on the others) and needs a restart (`mcctl stop <s> && mcctl start <s>`). Server types without mod or plugin support (e.g. VANILLA), modpack types and TYPEs mcctl does not know are refused unless `--force`, which also adds names that were not found. `--json` is supported.
 
 **Automatic Dependency Download** (via `MODRINTH_DOWNLOAD_DEPENDENCIES` in config.env):
 
@@ -890,7 +890,7 @@ mcctl config-snapshot schedule remove|enable|disable <id>
 ```
 
 - **World backup** commits `worlds/` (and server-internal worlds in `servers/<name>/data/<LEVEL>`) to the repository. Running servers are flushed first (`save-off`, `save-all flush`, `save-on`); "no changes" is a success. Restore puts the replaced data in `backups/restore-previous/<timestamp>/`.
-- **Backup schedules** and **config snapshot schedules** are executed by mcctl-api (`mcctl console init`), which loads them when it starts: after changing them with the CLI, run `mcctl console service restart --api`. Schedule retention: `--max-count`/`--max-age-days` prune old backups from the repository history (the latest is always kept); `--retention` keeps the newest snapshots of a snapshot schedule.
+- **Backup schedules** and **config snapshot schedules** are executed by mcctl-api (`mcctl console init`), which compares its cron tasks with the schedule DBs every minute: a schedule changed with the CLI applies within a minute, without a restart. Schedule retention: `--max-count`/`--max-age-days` prune old backups from the repository history (the latest is always kept); `--retention` keeps the newest snapshots of a snapshot schedule.
 - **`server-backup`** archives `config.env`, `docker-compose.yml` and, when present, `server.yaml`, `data/ops.json`, `data/whitelist.json`, `data/banned-players.json`, `data/banned-ips.json`, `data/server.properties` to `backups/servers/<server>/<id>.tar.gz` (ID = creation time, e.g. `20260120-203357`). `server-restore` copies the current files to `backups/servers/<server>/.pre-restore/` first. No world data.
 - **Config snapshots** hold the files in `servers/<server>/` itself (not `data/`): `server.yaml`, `config.env`, `docker-compose.yml` and other `.yml`/`.yaml`/`.json`/`.properties` files up to 1 MB, stored in `backups/meta/config-snapshots.db` and `backups/meta/config-snapshot-storage/`. `list` shows 8-character IDs; the other subcommands need the full ID (from `create` or `list --json`). A restore that changes the world follows the world assignment rules.
 
@@ -1125,7 +1125,7 @@ Before every other command (except `--help`/`--version`), mcctl checks npm for a
 
 | Platform | Environment Variable | Description |
 |----------|---------------------|-------------|
-| `AUTO_CURSEFORGE` | `CF_SLUG` (or `CF_PAGE_URL`), `CF_EXCLUDE_MODS` | CurseForge modpack: `mcctl create <name> -t AUTO_CURSEFORGE --modpack <slug>` writes `CF_SLUG` (`--exclude-files` → `CF_EXCLUDE_MODS`) |
+| `AUTO_CURSEFORGE` | `CF_SLUG` (or `CF_PAGE_URL`), `CF_EXCLUDE_MODS` | CurseForge modpack: `mcctl create <name> -t AUTO_CURSEFORGE --modpack <slug>` writes `CF_SLUG` (`--modpack-version` → `CF_FILENAME_MATCHER`, `--exclude-files` → `CF_EXCLUDE_MODS`; `--mod-loader` is ignored) |
 | `MODRINTH` | `MODRINTH_MODPACK`, `MODRINTH_VERSION`, `MODRINTH_LOADER`, `MODRINTH_EXCLUDE_FILES` | Modrinth modpack: `mcctl create <name> -t MODRINTH --modpack <slug> [--mod-loader <loader>] [--modpack-version <id>] [--exclude-files <a,b>]` |
 | `FTBA` | `FTB_MODPACK_ID` | Feed The Beast modpacks (set with `mcctl config`, see above) |
 | `CUSTOM` | `CUSTOM_SERVER` | Custom server JAR URL or path (set with `mcctl config`) |
@@ -1180,6 +1180,7 @@ The Web Console's Create Server dialog searches Modrinth, offers only the loader
 | `CF_API_KEY` | No | CurseForge API key (built in for Java 17+ images; for java8/pre-17 tags or your own key, set it per server: `mcctl config <server> CF_API_KEY '<key>'`) |
 | `CF_PAGE_URL` / `CF_SLUG` | Yes (one) | Modpack URL or slug |
 | `CF_FILE_ID` | No | Specific file/version ID |
+| `CF_FILENAME_MATCHER` | No | Substring (or `/regex/`) of the modpack file name; `--modpack-version` writes it |
 | `CF_EXCLUDE_MODS` | No | Mods to exclude |
 
 ---
@@ -1220,7 +1221,7 @@ BETTER_AUTH_SECRET=<written by mcctl console init>   # console sessions; changin
 BETTER_AUTH_BASE_URL=https://mc.example.com          # optional; default http://localhost:<console port>
 
 # mcctl-api options (optional; apply with `mcctl console service restart --api`)
-WORLD_UPLOAD_MAX_SIZE=1073741824     # world ZIP upload, bytes (1 GiB)
+WORLD_UPLOAD_MAX_SIZE=1073741824     # world ZIP upload, bytes (1 GiB); the console reads it too
 WORLD_EXTRACT_MAX_SIZE=5368709120    # uncompressed size of a world ZIP, bytes (5 GiB)
 WORLD_EXTRACT_MAX_ENTRIES=100000
 STATS_ANALYZE_TIMEOUT_MS=600000      # ore/block statistics scan (10 min)
@@ -1234,7 +1235,7 @@ AUDIT_RETENTION_DAYS=90
 - **What reaches servers**: only the keys named in `servers/global.env` (`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT`); Compose fills them from `.env`. To pass another key to every server, add its name to `servers/global.env`. `EXTRA_ARGS` reaches only servers without `server.yaml`. A server's `config.env` overrides these. Apply with `mcctl stop <s> && mcctl start <s>` (a restart does not re-read `.env`).
 - **CF_API_KEY** in `.env` does not reach servers. When needed (java8/pre-17 tags or your own key), set it per server with `mcctl config <server> CF_API_KEY '<key>'`, or add `CF_API_KEY` to `servers/global.env` with the value in `.env` in single quotes.
 - **HOST_IP / HOST_IPS** are read whenever mcctl writes a server's files: the next create, the next mcctl change to an existing server, or `mcctl init --reconfigure` (all servers). Stop and start a server to apply.
-- **Who else reads `.env`**: mcctl-api loads the whole file at startup (`mcctl console service restart --api`); mcctl-console reads only `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` (an entry in `ecosystem.config.cjs` wins until `mcctl upgrade` moves it; apply with `mcctl console service restart --console`). `DEFAULT_MEMORY` and `DEFAULT_VERSION` from older installs are not read.
+- **Who else reads `.env`**: mcctl-api loads the whole file at startup (`mcctl console service restart --api`); mcctl-console reads `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` (an entry in `ecosystem.config.cjs` wins until `mcctl upgrade` moves it; apply with `mcctl console service restart --console`) and, for its upload route, `WORLD_UPLOAD_MAX_SIZE` when its own env has none. `DEFAULT_MEMORY` and `DEFAULT_VERSION` from older installs are not read.
 - **Shell variables** (not `.env`): `MCCTL_ROOT` (platform directory, default `~/minecraft-servers`; `--root` overrides it per command) and `MCCTL_SUDO_PASSWORD` (sudo password for `/etc/avahi/hosts`).
 
 ### Server Configuration (config.env)
@@ -1509,7 +1510,7 @@ curl -u admin:password http://localhost:5001/api/servers            # basic
 
 | Method | Path | Notes |
 |--------|------|-------|
-| GET | `/api/servers/:name/config` | `{config}`: camelCase fields for `config.env` variables present (61 fields, e.g. `maxPlayers` = `MAX_PLAYERS`, `gameMode` = `GAMEMODE`, `motd`, `memory`, `level`) |
+| GET | `/api/servers/:name/config` | `{config}`: camelCase fields for `config.env` variables present (61 fields, e.g. `maxPlayers` = `MAX_PLAYERS`, `gameMode` = `MODE` (a server with only the older `GAMEMODE` shows that value; saving `gameMode` writes `MODE` and removes `GAMEMODE`), `motd`, `memory`, `level`) |
 | PATCH | `/api/servers/:name/config` | Any subset → `{success, config, restartRequired, changedFields}`; a changed `level` is a world assignment (stopped server, R1); 409 on refused `server.yaml` writes |
 | POST | `/api/servers/:name/world/reset` | Empties `worlds/<LEVEL>` (keeps `.meta`); 409 unless the container is stopped, and for internal or shared worlds |
 
@@ -2167,7 +2168,7 @@ MODS_FILE=/data/mods.txt
 | Forge 1.17.x | Java 16/17 | `java17` |
 | **Forge 1.16.5 and below** | **Java 8** | `java8` **(required, higher fails)** |
 
-New servers start on `itzg/minecraft-server:java25` whatever `VERSION` is. `mcctl update` sets each unpinned `itzg/minecraft-server` tag to the tag for its `VERSION` (`java8` up to 1.16.5, `java17` for 1.17-1.20.4, `java21` for 1.20.5-1.21.x, `java25` for 26.x/`LATEST`) and keeps pinned tags: a release tag such as `2026.10.0-java21`, or a digest. To change a server's image yourself, set `image:` in `servers/<name>/server.yaml`, run `mcctl migrate spec <name>`, then stop and start the server.
+New servers get the tag for their `VERSION` (`java25` for `LATEST`, no `VERSION` and versions McVersion cannot read). `mcctl update` sets each unpinned `itzg/minecraft-server` tag to the tag for its `VERSION` (`java8` up to 1.16.5, `java17` for 1.17-1.20.4, `java21` for 1.20.5-1.21.x, `java25` for 26.x/`LATEST`) and keeps pinned tags: a release tag such as `2026.10.0-java21`, or a digest. To change a server's image yourself, set `image:` in `servers/<name>/server.yaml`, run `mcctl migrate spec <name>`, then stop and start the server.
 
 **Available Image Tags:**
 
@@ -2191,7 +2192,7 @@ New servers start on `itzg/minecraft-server:java25` whatever `VERSION` is. `mcct
 | `/mods` | Mod JARs (Forge/Fabric) | Optional - `:ro` for read-only |
 | `/config` | Mod configuration files | Optional |
 
-mcctl server containers mount `./data:/data`, `./logs:/data/logs`, `../../worlds:/worlds` and `../../shared/plugins:/plugins:ro` (paths relative to `servers/<name>/`). `shared/mods` is not mounted: put mod jars in `servers/<name>/data/mods/` or list them in `MODS`.
+mcctl server containers mount `./data:/data`, `./logs:/data/logs`, `../../worlds:/worlds` and `../../shared/plugins:/plugins:ro` (paths relative to `servers/<name>/`). `mcctl init` does not create `shared/mods` (no server mounts it): put mod jars in `servers/<name>/data/mods/` or list them in `MODS`.
 
 **/data Directory Structure:**
 
@@ -2822,7 +2823,7 @@ mcctl logs <server>
 
 **Fix steps:**
 1. Check the Java version matrix in Section 10 (26.x / `LATEST`: Java 25; 1.20.5-1.21.x: Java 21; 1.17-1.20.4: Java 17; 1.16.5 and older: Java 8)
-2. New servers start on `itzg/minecraft-server:java25` whatever `VERSION` is. Change `image` in `servers/<name>/server.yaml` and run `mcctl migrate spec <name>` (or edit the image in `servers/<name>/docker-compose.yml`; mcctl takes it into `server.yaml`), then `mcctl stop <name> && mcctl start <name>`
+2. New servers get the tag for their `VERSION`; a server whose `VERSION` changed later keeps its image. Change `image` in `servers/<name>/server.yaml` and run `mcctl migrate spec <name>` (or edit the image in `servers/<name>/docker-compose.yml`; mcctl takes it into `server.yaml`), then `mcctl stop <name> && mcctl start <name>`
 3. `mcctl update` moves an unpinned `java*` tag to the one `VERSION` needs; a release-version tag (e.g. `2026.10.0-java21`) or digest is kept
 4. For Forge 1.16.5 and below, you **must** use `java8`
 
@@ -2901,7 +2902,7 @@ mcctl logs <server>
 
 | Mistake | Symptom | Fix |
 |---------|---------|-----|
-| `GAMEMODE=creative` | Game mode unchanged | The image reads `MODE`: `mcctl config <server> MODE creative` |
+| `GAMEMODE=creative` | Game mode unchanged | The image reads `MODE`: `mcctl config <server> MODE creative`, or save Game Mode in the console (it writes `MODE` and removes `GAMEMODE`) |
 | Unquoted ` #` in a value | Value cut at the `#` (`MOTD=Hi #1` sets `Hi`) | Quote it (`MOTD='Hi #1'`), or set it with `mcctl config`, which quotes it |
 | A list continued on the next line | Only the first line is the value | One comma-separated line (`MODRINTH_PROJECTS=fabric-api,lithium,sodium`) |
 | A value that starts with a quote set through mcctl | Refused | Pass the value without surrounding quotes; mcctl quotes what needs it |
@@ -2968,7 +2969,7 @@ A: Node.js >= 18.0.0, Docker Engine >= 24.0.0, Docker Compose >= 2.20.0 (`mcctl 
 A: `mcctl create -t` accepts PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH and AUTO_CURSEFORGE (the last two with `--modpack <slug>`). itzg also supports MOHIST, ARCLIGHT, MAGMA_MAINTAINED, KETTING, SPONGEVANILLA, FTBA, CUSTOM (set `TYPE` with `mcctl config`).
 
 **Q: What's the default server type?**
-A: PAPER - a high-performance fork with plugin support. Defaults of `mcctl create`: version `LATEST`, memory 4G (6G for modpacks), image `itzg/minecraft-server:java25`, whitelist off.
+A: PAPER - a high-performance fork with plugin support. Defaults of `mcctl create`: version `LATEST`, memory 4G (6G for modpacks), image tag by `VERSION` (`java25` for `LATEST`), whitelist off.
 
 **Q: How do I change Minecraft version?**
 A: `mcctl config myserver VERSION 1.20.4`, then `mcctl stop myserver && mcctl start myserver`. Check that the image's Java fits the version (older versions need e.g. `java17`).

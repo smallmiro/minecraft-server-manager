@@ -24,7 +24,7 @@ services:
   # Example: mc-omega -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-omega:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-omega
     restart: "no"
     tty: true

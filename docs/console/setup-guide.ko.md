@@ -86,7 +86,6 @@ avahi-daemon은 선택 사항입니다. 없으면 해당 줄에 `⚠`와 설치 
   Created: ~/.minecraft-servers/servers/_template
   Created: ~/.minecraft-servers/worlds
   Created: ~/.minecraft-servers/shared/plugins
-  Created: ~/.minecraft-servers/shared/mods
   Created: ~/.minecraft-servers/backups
 ```
 

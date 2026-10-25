@@ -472,7 +472,7 @@ data: {"type":"connection-closed","data":{"timestamp":"2026-10-25T10:31:00.000Z"
 
 ### GET /api/servers/:name/config
 
-Returns the server's settings from `config.env`. Each field stands for one itzg variable, for example `maxPlayers` for `MAX_PLAYERS`, `gameMode` for `GAMEMODE` and `level` for `LEVEL`. Only variables present in `config.env` appear.
+Returns the server's settings from `config.env`. Each field stands for one itzg variable, for example `maxPlayers` for `MAX_PLAYERS`, `gameMode` for `MODE` and `level` for `LEVEL`. Only variables present in `config.env` appear. A server that has only the older `GAMEMODE` returns it as `gameMode`; a `PATCH` that includes `gameMode` writes `MODE` and removes `GAMEMODE`.
 
 ```json
 {

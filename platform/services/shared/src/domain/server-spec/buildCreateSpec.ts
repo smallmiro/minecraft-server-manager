@@ -1,7 +1,24 @@
 import type { ServerSpecDocument } from './ServerSpecDocument.js';
+import { McVersion } from '../value-objects/McVersion.js';
 
-/** The compose image of a new server (the bundled template's; a test keeps them equal). */
+/**
+ * The image for the newest Minecraft: LATEST, no VERSION, or a version
+ * McVersion cannot read. The bundled template's (a test keeps them equal).
+ */
 export const DEFAULT_SERVER_IMAGE = 'itzg/minecraft-server:java25';
+
+/**
+ * The image of a new server, by the Java its VERSION needs (#826), as
+ * mcctl update picks it. No VERSION (a modpack decides) and snapshots or
+ * pre-releases (24w14a, 1.20.5-rc1) get the newest Java.
+ */
+function imageFor(version: string | undefined): string {
+  try {
+    return `itzg/minecraft-server:${McVersion.create(version ?? 'LATEST').recommendedImageTag}`;
+  } catch {
+    return DEFAULT_SERVER_IMAGE;
+  }
+}
 
 /** What a create request decides (CLI flags, API body, interactive answers), already validated. */
 export interface CreateSpecInput {
@@ -24,9 +41,14 @@ export interface CreateSpecInput {
   playitDomain?: string;
 }
 
-const MODPACK_KEYS: Record<string, { slug: string; version: string; loader: string; exclude: string }> = {
+/**
+ * The itzg variables of the modpack options. CurseForge has no loader
+ * variable (the modpack's manifest decides it) and selects a version by file
+ * name with CF_FILENAME_MATCHER (#826).
+ */
+const MODPACK_KEYS: Record<string, { slug: string; version: string; loader?: string; exclude: string }> = {
   MODRINTH: { slug: 'MODRINTH_MODPACK', version: 'MODRINTH_VERSION', loader: 'MODRINTH_LOADER', exclude: 'MODRINTH_EXCLUDE_FILES' },
-  AUTO_CURSEFORGE: { slug: 'CF_SLUG', version: 'CF_VERSION', loader: 'CF_LOADER', exclude: 'CF_EXCLUDE_MODS' },
+  AUTO_CURSEFORGE: { slug: 'CF_SLUG', version: 'CF_FILENAME_MATCHER', exclude: 'CF_EXCLUDE_MODS' },
 };
 
 /**
@@ -42,7 +64,7 @@ export function buildCreateSpec(input: CreateSpecInput): ServerSpecDocument {
   if (modpack && input.modpackSlug) {
     env[modpack.slug] = input.modpackSlug;
     if (input.modpackVersion) env[modpack.version] = input.modpackVersion;
-    if (input.modLoader) env[modpack.loader] = input.modLoader;
+    if (input.modLoader && modpack.loader) env[modpack.loader] = input.modLoader;
     if (input.modpackExcludeFiles?.length) env[modpack.exclude] = input.modpackExcludeFiles.join(',');
   }
   if (input.enableWhitelist) {
@@ -56,7 +78,7 @@ export function buildCreateSpec(input: CreateSpecInput): ServerSpecDocument {
     type: input.type,
     ...(version !== undefined && { version }),
     memory: input.memory,
-    image: DEFAULT_SERVER_IMAGE,
+    image: imageFor(version),
     world: { level: input.worldName ?? input.name, storage: 'universe' },
     routing: {
       customHostnames: [],

@@ -56,3 +56,15 @@ describe('ServerRepository runtime status (#665)', () => {
     expect(runtime.getStatus).not.toHaveBeenCalled();
   });
 });
+
+describe('ServerRepository.findByName (#826)', () => {
+  it('finds a server whose TYPE and VERSION mcctl create does not offer', async () => {
+    status = 'exited';
+    writeFileSync(join(root, 'servers', 'alpha', 'config.env'), 'TYPE=FTBA\nVERSION=24w14a\n');
+    const repo = new ServerRepository(new Paths(root), runtime);
+    const server = await repo.findByName('alpha');
+    expect(server?.type.value).toBe('FTBA');
+    expect(server?.version.value).toBe('24w14a');
+    expect((await repo.findAll()).map((s) => s.name.value)).toEqual(['alpha']);
+  });
+});

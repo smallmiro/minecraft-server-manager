@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { applyPlatformAuthEnv } from './platform-env';
+import { applyPlatformAuthEnv, platformEnvValue } from './platform-env';
 
 describe('applyPlatformAuthEnv (#686)', () => {
   let root: string;
@@ -90,5 +90,34 @@ describe('applyPlatformAuthEnv (#686)', () => {
       applyPlatformAuthEnv(env);
       expect(env.BETTER_AUTH_SECRET).toBe('env-secret');
     });
+  });
+});
+
+// Like mcctl-api, which loads .env without overriding its env (#826)
+describe('platformEnvValue', () => {
+  let root: string;
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'mcctl-console-env-'));
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('reads the platform .env', () => {
+    writeFileSync(join(root, '.env'), 'WORLD_UPLOAD_MAX_SIZE=2147483648\n');
+    expect(platformEnvValue('WORLD_UPLOAD_MAX_SIZE', { MCCTL_ROOT: root })).toBe('2147483648');
+  });
+
+  it('keeps a value the process env already has', () => {
+    writeFileSync(join(root, '.env'), 'WORLD_UPLOAD_MAX_SIZE=2147483648\n');
+    expect(platformEnvValue('WORLD_UPLOAD_MAX_SIZE', { MCCTL_ROOT: root, WORLD_UPLOAD_MAX_SIZE: '1000' })).toBe('1000');
+  });
+
+  it('is undefined when neither has it', () => {
+    writeFileSync(join(root, '.env'), 'TZ=UTC\n');
+    expect(platformEnvValue('WORLD_UPLOAD_MAX_SIZE', { MCCTL_ROOT: root })).toBeUndefined();
+    expect(platformEnvValue('WORLD_UPLOAD_MAX_SIZE', {})).toBeUndefined();
   });
 });

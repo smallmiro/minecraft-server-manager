@@ -68,8 +68,9 @@ export class ServerRepository implements IServerRepository {
 
     try {
       const serverName = ServerName.fromExisting(config.name);
-      const serverType = ServerType.create(config.type);
-      const mcVersion = McVersion.create(config.version);
+      // A TYPE or VERSION create does not offer must not hide the server (#826)
+      const serverType = ServerType.fromExisting(config.type);
+      const mcVersion = McVersion.fromExisting(config.version);
       const memory = config.memory ? Memory.create(config.memory) : Memory.default();
 
       // Determine world options

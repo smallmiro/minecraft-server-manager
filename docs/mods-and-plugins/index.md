@@ -7,7 +7,7 @@ This guide covers installing mods and plugins for your Minecraft server using mc
 | Type | Description | Server Types |
 |------|-------------|--------------|
 | **Mods** | Modify game mechanics, require client installation | Forge, NeoForge, Fabric, Quilt |
-| **Plugins** | Server-side only, no client changes needed | Paper, Purpur, Spigot, Bukkit |
+| **Plugins** | Server-side only, no client changes needed | Paper, Purpur, Spigot, Bukkit, Leaf, Folia, Pufferfish |
 
 ## Quick Start with mcctl
 
@@ -65,7 +65,7 @@ mcctl mod list modded
 mcctl mod remove modded lithium
 ```
 
-`--curseforge` writes `CURSEFORGE_FILES`, `--spiget` writes `SPIGET_RESOURCES`, and `--url` writes `PLUGINS` on Paper, Purpur, Spigot and Bukkit servers and `MODS` on the others. For server types not in the [Overview](#overview) table, `mcctl mod add` asks for `--force`. Restart the server afterwards.
+`--curseforge` writes `CURSEFORGE_FILES`, `--spiget` writes `SPIGET_RESOURCES`, and `--url` writes `PLUGINS` on the plugin servers and `MODS` on the others. For server types not in the [Overview](#overview) table, including modpack types, `mcctl mod add` asks for `--force`. Restart the server afterwards.
 
 ## Installation Sources
 
@@ -141,7 +141,7 @@ mcctl stop survival && mcctl start survival
     mods/                    # Mod JARs for one server
 ```
 
-Put manually downloaded plugins in `shared/plugins/`. Put mod JARs in the server's own `servers/<name>/data/mods/`, or list their download URLs in `MODS` (see [Direct Download](direct-download.md)). `mcctl init` also creates `shared/mods/`, but servers do not mount it.
+Put manually downloaded plugins in `shared/plugins/`. Put mod JARs in the server's own `servers/<name>/data/mods/`, or list their download URLs in `MODS` (see [Direct Download](direct-download.md)).
 
 ## Auto Cleanup
 

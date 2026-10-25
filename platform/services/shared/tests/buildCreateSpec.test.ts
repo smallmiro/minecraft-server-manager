@@ -20,7 +20,7 @@ describe('buildCreateSpec', () => {
       type: 'PAPER',
       version: '1.21.1',
       memory: '4G',
-      image: DEFAULT_SERVER_IMAGE,
+      image: 'itzg/minecraft-server:java21',
       world: { level: 'alpha', storage: 'universe' },
       routing: { customHostnames: [], autoScale: { up: true, down: true } },
       env: { MOTD: 'Welcome to alpha! Your adventure begins here.' },
@@ -52,7 +52,9 @@ describe('buildCreateSpec', () => {
 
   it.each([
     ['MODRINTH', { MODRINTH_MODPACK: 'pack', MODRINTH_VERSION: '1.0', MODRINTH_LOADER: 'fabric', MODRINTH_EXCLUDE_FILES: 'a.jar,b.jar' }],
-    ['AUTO_CURSEFORGE', { CF_SLUG: 'pack', CF_VERSION: '1.0', CF_LOADER: 'fabric', CF_EXCLUDE_MODS: 'a.jar,b.jar' }],
+    // itzg has no CF_VERSION/CF_LOADER (#826): the version selects the file by
+    // name (CF_FILENAME_MATCHER) and the modpack's manifest decides the loader
+    ['AUTO_CURSEFORGE', { CF_SLUG: 'pack', CF_FILENAME_MATCHER: '1.0', CF_EXCLUDE_MODS: 'a.jar,b.jar' }],
   ])('maps the %s modpack options', (type, env) => {
     const doc = buildCreateSpec({
       ...base,
@@ -62,7 +64,7 @@ describe('buildCreateSpec', () => {
       modLoader: 'fabric',
       modpackExcludeFiles: ['a.jar', 'b.jar'],
     });
-    expect(doc.env).toMatchObject(env);
+    expect(doc.env).toEqual({ MOTD: 'Welcome to alpha! Your adventure begins here.', ...env });
   });
 
   it('leaves VERSION to the modpack when none is given, LATEST for other types', () => {
@@ -74,6 +76,27 @@ describe('buildCreateSpec', () => {
     expect(buildCreateSpec({ ...base, modpackSlug: 'pack' }).env).toEqual({
       MOTD: 'Welcome to alpha! Your adventure begins here.',
     });
+  });
+
+  // The image follows VERSION like mcctl update (#826); LATEST, no VERSION (a
+  // modpack decides) and versions McVersion cannot read get the newest Java
+  it.each([
+    ['FORGE', '1.16.5', 'java8'],
+    ['PAPER', '1.20.4', 'java17'],
+    ['PAPER', '1.20.6', 'java21'],
+    ['FABRIC', '1.21.4', 'java21'],
+    ['PAPER', '26.1', 'java25'],
+    ['PAPER', 'LATEST', 'java25'],
+    ['PAPER', '24w14a', 'java25'],
+    ['PAPER', '1.20.5-rc1', 'java25'],
+  ])('%s %s runs on %s', (type, version, tag) => {
+    expect(buildCreateSpec({ ...base, type, version }).image).toBe(`itzg/minecraft-server:${tag}`);
+  });
+
+  it('gives a modpack without VERSION and a server without VERSION the newest Java', () => {
+    expect(buildCreateSpec({ ...base, version: undefined, type: 'MODRINTH', modpackSlug: 'p' }).image).toBe(DEFAULT_SERVER_IMAGE);
+    expect(buildCreateSpec({ ...base, version: undefined }).image).toBe(DEFAULT_SERVER_IMAGE);
+    expect(DEFAULT_SERVER_IMAGE).toBe('itzg/minecraft-server:java25');
   });
 
   it('uses the image of the bundled template', () => {

@@ -49,7 +49,7 @@ describe('write({ create: true })', () => {
     const written = (await repo.load('alpha'))!;
     expect(written.warnings).toEqual([]);
     expect(Object.keys(written.document.env)).toEqual([
-      'GAMEMODE', 'DIFFICULTY', 'MAX_PLAYERS', 'VIEW_DISTANCE', 'PVP', 'SPAWN_PROTECTION', 'ENABLE_RCON', 'MOTD',
+      'MODE', 'DIFFICULTY', 'MAX_PLAYERS', 'VIEW_DISTANCE', 'PVP', 'SPAWN_PROTECTION', 'ENABLE_RCON', 'MOTD',
       'MODRINTH_DOWNLOAD_DEPENDENCIES', 'SEED',
     ]);
     const values = parseEnvDocument(read('alpha', 'config.env')).values;

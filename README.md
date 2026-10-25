@@ -236,7 +236,7 @@ mcctl create myworld --enable-whitelist         # Turn it on, empty
 4. Registers `<name>.local` with avahi-daemon (mDNS; needs sudo, see [Automation](#automation-sudo-password-handling))
 5. Starts the server (unless `--no-start` specified)
 
-**Defaults**: type `PAPER`, version `LATEST`, memory `4G` (`6G` for modpacks), image `itzg/minecraft-server:java25` (see the [Java Version Selection Guide](#java-version-selection-guide) for older Minecraft versions).
+**Defaults**: type `PAPER`, version `LATEST`, memory `4G` (`6G` for modpacks), image tag by `VERSION` (`java25` for `LATEST`; see the [Java Version Selection Guide](#java-version-selection-guide)).
 
 **World Storage**: Worlds are stored in the shared `worlds/` directory (`EXTRA_ARGS=--universe /worlds/`). A world belongs to one server at a time: the server whose `LEVEL` names it.
 
@@ -542,13 +542,13 @@ Pick the image's Java version for the Minecraft version with the guide below.
 ## Java Version Selection Guide
 
 ```
-Minecraft 26.x / LATEST   → java25 (image of new servers)
+Minecraft 26.x / LATEST   → java25
 Minecraft 1.20.5 - 1.21.x → java21
 Minecraft 1.17 - 1.20.4   → java17
 Minecraft 1.16.5 and older → java8 (required for old Forge)
 ```
 
-New servers start on `itzg/minecraft-server:java25`, whatever `VERSION` is. For an older Minecraft version, set `image:` in `servers/<name>/server.yaml` and run `mcctl migrate spec <name>` (or edit the image in `servers/<name>/docker-compose.yml`; mcctl takes it into `server.yaml`), then stop and start the server. `mcctl update` moves `java*` tags to the one `VERSION` needs and keeps pinned tags, such as a release tag (`2026.10.0-java21`) or a digest.
+`mcctl create` picks the tag `VERSION` needs from this guide; `LATEST`, a modpack without `-v` and snapshots get `java25`. To change a server's image, set `image:` in `servers/<name>/server.yaml` and run `mcctl migrate spec <name>` (or edit the image in `servers/<name>/docker-compose.yml`; mcctl takes it into `server.yaml`), then stop and start the server. `mcctl update` moves `java*` tags to the one `VERSION` needs and keeps pinned tags, such as a release tag (`2026.10.0-java21`) or a digest.
 
 ---
 

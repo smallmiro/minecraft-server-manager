@@ -24,12 +24,18 @@ type CronValidate = (expression: string) => boolean;
  */
 export type AuditLogWriter = (data: AuditLogData) => Promise<void>;
 
+/** How often schedules changed outside the API (mcctl backup-schedule) are picked up (#826). */
+export const SCHEDULE_SYNC_INTERVAL_MS = 60_000;
+
 /**
  * BackupSchedulerService
  * Manages cron-based backup scheduling using node-cron
  */
 export class BackupSchedulerService {
   private tasks: Map<string, CronTask> = new Map();
+  /** The cron expression each task was registered with. */
+  private expressions: Map<string, string> = new Map();
+  private syncTimer: ReturnType<typeof setInterval> | undefined;
   private cronSchedule: CronSchedule | null = null;
   private cronValidate: CronValidate | null = null;
 
@@ -57,6 +63,30 @@ export class BackupSchedulerService {
     }
 
     await this.loadEnabledSchedules();
+    this.syncTimer = setInterval(() => void this.sync(), SCHEDULE_SYNC_INTERVAL_MS);
+    this.syncTimer.unref();
+  }
+
+  /**
+   * Match the tasks to the schedule DB, which the mcctl CLI also writes
+   * (#826): register new or changed enabled schedules, drop the rest. An
+   * unchanged task is left running.
+   */
+  async sync(): Promise<void> {
+    if (!this.cronSchedule) return;
+
+    try {
+      const enabled = (await this.useCase.findAll()).filter((s) => s.enabled);
+      const ids = new Set(enabled.map((s) => s.id));
+      for (const id of [...this.tasks.keys()]) {
+        if (!ids.has(id)) this.unregisterTask(id);
+      }
+      for (const schedule of enabled) {
+        if (this.expressions.get(schedule.id) !== schedule.cronExpression.expression) this.registerTask(schedule);
+      }
+    } catch (error) {
+      this.logger.error(error, 'Failed to sync backup schedules');
+    }
   }
 
   /**
@@ -98,6 +128,7 @@ export class BackupSchedulerService {
       });
 
       this.tasks.set(schedule.id, task);
+      this.expressions.set(schedule.id, cronExpr);
       this.logger.info(
         `Registered backup schedule: ${schedule.name} (${cronExpr})`
       );
@@ -117,6 +148,7 @@ export class BackupSchedulerService {
     if (existing) {
       existing.stop();
       this.tasks.delete(scheduleId);
+      this.expressions.delete(scheduleId);
     }
   }
 
@@ -214,6 +246,7 @@ export class BackupSchedulerService {
       task.stop();
     }
     this.tasks.clear();
+    this.expressions.clear();
 
     // Reload enabled schedules
     await this.loadEnabledSchedules();
@@ -223,10 +256,12 @@ export class BackupSchedulerService {
    * Stop all scheduled tasks
    */
   shutdown(): void {
+    clearInterval(this.syncTimer);
     for (const task of this.tasks.values()) {
       task.stop();
     }
     this.tasks.clear();
+    this.expressions.clear();
     this.logger.info('Backup scheduler stopped');
   }
 

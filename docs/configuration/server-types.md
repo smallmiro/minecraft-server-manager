@@ -162,7 +162,7 @@ mcctl stop myserver && mcctl start myserver
 Forge needs the Java version of its Minecraft version (see [Java Versions and Image Tags](#java-versions-and-image-tags)), and Forge 1.16.5 and older run only on Java 8.
 
 !!! warning "Forge 1.16.5 and Below"
-    New servers start on `java25`. Create the server with `--no-start`, set the image in `servers/<name>/server.yaml`, then write the files and start it:
+    `mcctl create -t FORGE -v 1.16.5` gives the server the `java8` image. A server whose `VERSION` you change later keeps its image: set it in `servers/<name>/server.yaml`, then write the files and start it:
     ```yaml
     image: itzg/minecraft-server:java8
     ```
@@ -294,7 +294,7 @@ Create a server from a CurseForge modpack:
 mcctl create myserver -t AUTO_CURSEFORGE --modpack all-the-mods-8
 ```
 
-`--modpack` is written as `CF_SLUG`, and `--exclude-files` as `CF_EXCLUDE_MODS`. Java 17+ images include a CurseForge API key, so `CF_API_KEY` is only needed on older image tags. For `CF_PAGE_URL`, `CF_FILE_ID` and the other settings, see [CurseForge Modpacks](../mods-and-plugins/modpacks.md#curseforge-modpacks).
+`--modpack` is written as `CF_SLUG`, `--modpack-version` as `CF_FILENAME_MATCHER` (part of the modpack file name), and `--exclude-files` as `CF_EXCLUDE_MODS`. `--mod-loader` is ignored: the modpack's manifest decides the loader. Java 17+ images include a CurseForge API key, so `CF_API_KEY` is only needed on older image tags. For `CF_PAGE_URL`, `CF_FILE_ID` and the other settings, see [CurseForge Modpacks](../mods-and-plugins/modpacks.md#curseforge-modpacks).
 
 ---
 
@@ -534,7 +534,7 @@ Check the image tag for the Minecraft version too (see [Java Versions and Image 
 
 ## Java Versions and Image Tags
 
-Each server runs the image named by `image:` in its `servers/<name>/server.yaml`. New servers start on `itzg/minecraft-server:java25`, whatever `VERSION` is. The tag that matches each Minecraft version:
+Each server runs the image named by `image:` in its `servers/<name>/server.yaml`. A new server gets the tag its `VERSION` needs from the table below. `LATEST`, no `VERSION` (a modpack decides it) and versions mcctl cannot read, such as snapshots and pre-releases, get `java25`. The tag that matches each Minecraft version:
 
 | Minecraft version | Java | Image tag |
 |-------------------|------|-----------|

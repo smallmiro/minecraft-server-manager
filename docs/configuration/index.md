@@ -89,7 +89,7 @@ mcctl config myserver VERSION 1.21.1
 mcctl stop myserver && mcctl start myserver
 ```
 
-`VERSION` does not change the server's Java image. New servers run `itzg/minecraft-server:java25`; for a version that needs an older Java, see [Java Versions and Image Tags](server-types.md#java-versions-and-image-tags).
+`VERSION` does not change the server's Java image. A new server gets the tag its `VERSION` needs; after changing `VERSION`, run `mcctl update` or see [Java Versions and Image Tags](server-types.md#java-versions-and-image-tags).
 
 ### Enable Mods/Plugins
 

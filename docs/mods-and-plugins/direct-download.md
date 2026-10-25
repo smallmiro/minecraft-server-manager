@@ -36,9 +36,7 @@ mcctl stop modded && mcctl start modded
 ### Using Local Files
 
 - Plugins: put JARs in `~/minecraft-servers/shared/plugins/`. Every server mounts it read-only at `/plugins`, and the image copies the JARs into the server's `plugins/` folder when the server starts.
-- Mods: put JARs in the server's own `~/minecraft-servers/servers/<name>/data/mods/`.
-
-`mcctl init` also creates `shared/mods/`, but servers do not mount it.
+- Mods: put JARs in the server's own `~/minecraft-servers/servers/<name>/data/mods/`. There is no shared mods folder.
 
 ## Configuration via mcctl
 
@@ -75,7 +73,7 @@ mcctl stop myserver && mcctl start myserver
 ### With mcctl mod
 
 ```bash
-# Append a URL: to PLUGINS on Paper, Purpur, Spigot and Bukkit servers, to MODS on the others
+# Append a URL: to PLUGINS on plugin servers (Paper and its forks, Spigot, Bukkit), to MODS on the others
 mcctl mod add myserver --url https://example.com/custom-mod.jar
 ```
 

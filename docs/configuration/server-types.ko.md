@@ -162,7 +162,7 @@ mcctl stop myserver && mcctl start myserver
 Forge는 해당 Minecraft 버전의 Java가 필요하며([Java 버전과 이미지 태그](#java-버전과-이미지-태그) 참고), Forge 1.16.5 이하는 Java 8에서만 실행됩니다.
 
 !!! warning "Forge 1.16.5 이하"
-    새 서버는 `java25`로 시작합니다. `--no-start`로 서버를 만들고, `servers/<name>/server.yaml`에서 이미지를 설정한 뒤 파일을 쓰고 시작하세요:
+    `mcctl create -t FORGE -v 1.16.5`로 만든 서버는 `java8` 이미지를 받습니다. 나중에 `VERSION`을 바꾼 서버는 이미지가 그대로이므로, `servers/<name>/server.yaml`에서 이미지를 설정한 뒤 파일을 쓰고 시작하세요:
     ```yaml
     image: itzg/minecraft-server:java8
     ```
@@ -294,7 +294,7 @@ CurseForge 모드팩으로 서버를 생성합니다:
 mcctl create myserver -t AUTO_CURSEFORGE --modpack all-the-mods-8
 ```
 
-`--modpack`은 `CF_SLUG`로, `--exclude-files`는 `CF_EXCLUDE_MODS`로 기록됩니다. Java 17+ 이미지에는 CurseForge API 키가 내장되어 있으므로 `CF_API_KEY`는 더 오래된 이미지 태그에서만 필요합니다. `CF_PAGE_URL`, `CF_FILE_ID` 등 다른 설정은 [CurseForge 모드팩](../mods-and-plugins/modpacks.ko.md#curseforge-모드팩)을 참고하세요.
+`--modpack`은 `CF_SLUG`로, `--modpack-version`은 `CF_FILENAME_MATCHER`(모드팩 파일 이름의 일부)로, `--exclude-files`는 `CF_EXCLUDE_MODS`로 기록됩니다. 로더는 모드팩 매니페스트가 정하므로 `--mod-loader`는 무시됩니다. Java 17+ 이미지에는 CurseForge API 키가 내장되어 있으므로 `CF_API_KEY`는 더 오래된 이미지 태그에서만 필요합니다. `CF_PAGE_URL`, `CF_FILE_ID` 등 다른 설정은 [CurseForge 모드팩](../mods-and-plugins/modpacks.ko.md#curseforge-모드팩)을 참고하세요.
 
 ---
 
@@ -534,7 +534,7 @@ Minecraft 버전에 맞는 이미지 태그도 확인하세요([Java 버전과 �
 
 ## Java 버전과 이미지 태그
 
-각 서버는 `servers/<name>/server.yaml`의 `image:`가 가리키는 이미지로 실행됩니다. 새 서버는 `VERSION`과 관계없이 `itzg/minecraft-server:java25`로 시작합니다. Minecraft 버전별로 맞는 태그는 다음과 같습니다:
+각 서버는 `servers/<name>/server.yaml`의 `image:`가 가리키는 이미지로 실행됩니다. 새 서버는 아래 표에서 `VERSION`에 맞는 태그를 받습니다. `LATEST`, `VERSION` 없음(모드팩이 정함), 스냅샷·프리릴리스처럼 mcctl이 읽지 못하는 버전은 `java25`를 받습니다. Minecraft 버전별로 맞는 태그는 다음과 같습니다:
 
 | Minecraft 버전 | Java | 이미지 태그 |
 |----------------|------|-------------|

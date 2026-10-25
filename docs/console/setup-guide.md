@@ -86,7 +86,6 @@ mcctl creates the platform directory structure at `~/minecraft-servers/` (defaul
   Created: ~/.minecraft-servers/servers/_template
   Created: ~/.minecraft-servers/worlds
   Created: ~/.minecraft-servers/shared/plugins
-  Created: ~/.minecraft-servers/shared/mods
   Created: ~/.minecraft-servers/backups
 ```
 

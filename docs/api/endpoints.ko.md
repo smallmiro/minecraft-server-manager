@@ -472,7 +472,7 @@ data: {"type":"connection-closed","data":{"timestamp":"2026-10-25T10:31:00.000Z"
 
 ### GET /api/servers/:name/config
 
-`config.env`의 서버 설정을 돌려줍니다. 각 필드는 itzg 변수 하나에 대응합니다. 예를 들어 `maxPlayers`는 `MAX_PLAYERS`, `gameMode`는 `GAMEMODE`, `level`은 `LEVEL`입니다. `config.env`에 있는 변수만 나타납니다.
+`config.env`의 서버 설정을 돌려줍니다. 각 필드는 itzg 변수 하나에 대응합니다. 예를 들어 `maxPlayers`는 `MAX_PLAYERS`, `gameMode`는 `MODE`, `level`은 `LEVEL`입니다. `config.env`에 있는 변수만 나타납니다. 예전 `GAMEMODE`만 있는 서버는 그 값을 `gameMode`로 돌려주고, `gameMode`를 담은 `PATCH`는 `MODE`를 쓰고 `GAMEMODE`를 지웁니다.
 
 ```json
 {

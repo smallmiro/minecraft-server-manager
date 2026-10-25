@@ -3,7 +3,9 @@ import {
   log,
   colors,
   ModSourceFactory,
+  ServerType,
   type ModProject,
+  type ServerTypeInfo,
 } from '@minecraft-docker/shared';
 // Auto-register mod source adapters
 import '@minecraft-docker/mod-source-modrinth';
@@ -167,11 +169,10 @@ async function modAdd(
 
     // Check server type supports mods
     const serverType = config['TYPE'] || 'PAPER';
-    const loader = getLoaderFromServerType(serverType);
 
-    if (!loader) {
+    if (!acceptsAddons(ServerType.fromExisting(serverType))) {
       log.error(`Server type '${serverType}' may not support mods`);
-      console.log('Supported types: FORGE, NEOFORGE, FABRIC, QUILT, PAPER, SPIGOT');
+      console.log(`Supported types: ${ServerType.getAll().filter(acceptsAddons).map((t) => t.value).join(', ')}`);
       if (!options.force) {
         console.log('Use --force to add anyway');
         return 1;
@@ -464,10 +465,8 @@ function getEnvKeyForSource(source: string, serverType: string): string {
     case 'spiget':
       return 'SPIGET_RESOURCES';
     case 'url':
-      // Plugins for Paper/Spigot, Mods for Forge/Fabric
-      return ['PAPER', 'SPIGOT', 'BUKKIT', 'PURPUR'].includes(serverType.toUpperCase())
-        ? 'PLUGINS'
-        : 'MODS';
+      // Plugins for Paper/Spigot and their forks, Mods for Forge/Fabric
+      return ServerType.fromExisting(serverType).supportsPlugins ? 'PLUGINS' : 'MODS';
     default:
       return 'MODRINTH_PROJECTS';
   }
@@ -487,19 +486,9 @@ function formatDownloads(count: number): string {
 }
 
 /**
- * Get loader type from server type
+ * Whether mod add fits the server without --force: plugin servers and mod
+ * loaders, not modpacks (the modpack brings its mods) (#826)
  */
-function getLoaderFromServerType(serverType: string): string | null {
-  const loaderMap: Record<string, string> = {
-    FORGE: 'forge',
-    NEOFORGE: 'neoforge',
-    FABRIC: 'fabric',
-    QUILT: 'quilt',
-    PAPER: 'paper',
-    SPIGOT: 'spigot',
-    BUKKIT: 'bukkit',
-    PURPUR: 'purpur',
-  };
-
-  return loaderMap[serverType.toUpperCase()] ?? null;
+function acceptsAddons(type: Pick<ServerTypeInfo, 'supportsPlugins' | 'supportsMods' | 'isModpack'>): boolean {
+  return type.supportsPlugins || (type.supportsMods && !type.isModpack);
 }

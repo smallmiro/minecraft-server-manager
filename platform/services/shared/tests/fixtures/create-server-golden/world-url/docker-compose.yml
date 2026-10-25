@@ -24,7 +24,7 @@ services:
   # Example: mc-eps -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-eps:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-eps
     restart: "no"
     tty: true

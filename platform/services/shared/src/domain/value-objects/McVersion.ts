@@ -28,19 +28,33 @@ export class McVersion {
     return this._patch;
   }
 
+  /** LATEST, or a snapshot/pre-release kept as text (fromExisting): taken as the newest. */
+  private get isUnnumbered(): boolean {
+    return this._major === 0;
+  }
+
+  /** 1.20.5 and later 1.x releases (Java 21). */
+  private get isJava21Era(): boolean {
+    return this._major === 1 && (this._minor > 20 || (this._minor === 20 && this._patch >= 5));
+  }
+
   /**
    * Returns the recommended Java version for this Minecraft version
    */
   get recommendedJavaVersion(): number {
+    // LATEST is the newest release, which needs the newest Java
+    if (this.isUnnumbered) {
+      return 25;
+    }
     // Minecraft 26+ (new versioning scheme) requires Java 25
     if (this._major >= 26) {
       return 25;
     }
-    // Minecraft 1.21+ requires Java 21
-    if (this._major >= 1 && this._minor >= 21) {
+    // Minecraft 1.20.5+ requires Java 21
+    if (this.isJava21Era) {
       return 21;
     }
-    // Minecraft 1.18-1.20.x requires Java 17
+    // Minecraft 1.18-1.20.4 requires Java 17
     if (this._major >= 1 && this._minor >= 18) {
       return 17;
     }
@@ -58,15 +72,18 @@ export class McVersion {
    * but MC gameplay requirements differ from available image tags.
    */
   get recommendedImageTag(): string {
+    if (this.isUnnumbered) {
+      return 'java25';
+    }
     // Minecraft 26+ (new versioning scheme) requires Java 25
     if (this._major >= 26) {
       return 'java25';
     }
-    // Minecraft 1.21+ requires Java 21
-    if (this._major >= 1 && this._minor >= 21) {
+    // Minecraft 1.20.5+ requires Java 21
+    if (this.isJava21Era) {
       return 'java21';
     }
-    // Minecraft 1.17-1.20.x requires Java 17
+    // Minecraft 1.17-1.20.4 requires Java 17
     if (this._major >= 1 && this._minor >= 17) {
       return 'java17';
     }
@@ -118,6 +135,18 @@ export class McVersion {
     }
 
     return new McVersion(trimmed, major, minor, patch);
+  }
+
+  /**
+   * A VERSION read from a server (#826): what create accepts, else the text
+   * as is (24w14a, 1.20.5-rc1), so such a server can still be found.
+   */
+  static fromExisting(value: string): McVersion {
+    try {
+      return McVersion.create(value);
+    } catch {
+      return new McVersion(value.trim(), 0, 0, 0);
+    }
   }
 
   static latest(): McVersion {

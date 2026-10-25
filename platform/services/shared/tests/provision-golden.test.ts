@@ -5,6 +5,8 @@
  * the script was removed. The provision must produce the
  * same config.env settings, the same server compose and the same include
  * list. Comments, key order in YAML and the mcctl header are not compared.
+ * Deliberate changes since then are edited into the fixtures (#826: the image
+ * follows VERSION).
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';

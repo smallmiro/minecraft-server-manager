@@ -542,6 +542,8 @@ Options 탭 상단의 **Hostnames / Domains** 카드는 이 서버로의 연결 
 
 고급 필드의 예로는 Gameplay의 Hardcore, Allow Flight, Spawn Protection, Performance & JVM의 Simulation Distance, Initial Heap, Max Heap, JVM -XX Options, Auto-pause / Auto-stop의 Enable Auto-stop, System의 RCON Password, RCON Port, UID, GID가 있습니다.
 
+Game Mode는 서버 이미지가 읽는 `MODE` 변수로 저장됩니다. 이전 버전으로 만든 서버에는 이미지가 무시하는 `GAMEMODE`가 들어 있습니다. 이 필드는 그 값을 보여 주고, 설정을 저장하면 값이 `MODE`로 옮겨져 다음 시작부터 게임 모드가 적용됩니다.
+
 #### 저장 및 재시작
 
 설정을 수정하면:

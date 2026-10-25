@@ -24,7 +24,7 @@ services:
   # Example: mc-delta -> mc-ironwood
   # ---------------------------------------------------------------------------
   mc-delta:
-    image: itzg/minecraft-server:java25
+    image: itzg/minecraft-server:java21
     container_name: mc-delta
     restart: "no"
     tty: true

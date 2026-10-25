@@ -118,6 +118,12 @@ describe('upgradeServerImageTags', () => {
     expect(read('alpha', 'docker-compose.yml')).toContain('itzg/minecraft-server:java25');
   });
 
+  it.each(['1.20.5', '1.20.6'])('moves a %s server from java17 to java21 (#826)', async (version) => {
+    server('alpha', { version, tag: 'java17' });
+    expect(await upgradeServerImageTags(servers())).toBe(1);
+    expect(read('alpha', 'server.yaml')).toContain('image: itzg/minecraft-server:java21');
+  });
+
   it('reads the quoted image of a compose mcctl rendered (#675)', async () => {
     server('alpha', { version: 'LATEST', tag: 'java21' });
     await updateServer(new Paths(root), 'alpha', (doc) => doc); // renders image: "itzg/minecraft-server:java21"
