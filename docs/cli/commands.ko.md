@@ -1348,7 +1348,7 @@ mcctl player online --all
 
 ### mcctl world new
 
-선택적 시드 설정으로 새 월드 디렉토리를 생성합니다.
+선택적 시드 설정으로 새 월드 디렉토리를 생성합니다. 이 명령은 서버를 시작하지 않습니다. `--server`는 월드를 배정(`LEVEL` 설정)할 뿐이므로 이후 `mcctl start <server>`로 시작하세요. 대화형 모드만 서버 시작 여부를 묻습니다.
 
 ```bash
 mcctl world new [name] [options]

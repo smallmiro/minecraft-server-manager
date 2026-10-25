@@ -1348,7 +1348,7 @@ A world is assigned to a server by the server's `LEVEL` in `servers/<name>/confi
 
 ### mcctl world new
 
-Create a new world directory with optional seed configuration.
+Create a new world directory with optional seed configuration. The command never starts a server: with `--server` it only assigns the world (sets `LEVEL`); run `mcctl start <server>` afterwards. Only the interactive form asks whether to start the server.
 
 ```bash
 mcctl world new [name] [options]
