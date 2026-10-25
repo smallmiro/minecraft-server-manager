@@ -1064,7 +1064,7 @@ mcctl config-snapshot <list|create|show|diff|restore|delete> [args] [options]
 | `restore <id>` | 스냅샷의 파일을 `servers/<server>/`에 다시 씀. `--force`가 없으면 먼저 확인 |
 | `delete <id>` | 스냅샷 삭제. `--force`가 없으면 먼저 확인 |
 
-`list`는 ID의 앞 8자만 보여 줍니다. 나머지 명령에는 전체 ID가 필요하며, 전체 ID는 `create`와 `list --json`이 출력합니다. 서버의 월드를 바꾸는 복원은 [월드 할당 규칙](#world-assignment-rules)을 따릅니다. 복원한 파일을 적용하려면 서버를 재시작합니다.
+나머지 명령에는 전체 ID가 필요하며, `list`, `create`, `list --json`이 전체 ID를 출력합니다. 서버의 월드를 바꾸는 복원은 [월드 할당 규칙](#world-assignment-rules)을 따릅니다. 복원한 파일을 적용하려면 서버를 재시작합니다.
 
 **예제:**
 

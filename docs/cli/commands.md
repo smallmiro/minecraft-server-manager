@@ -1064,7 +1064,7 @@ mcctl config-snapshot <list|create|show|diff|restore|delete> [args] [options]
 | `restore <id>` | Write the snapshot's files back to `servers/<server>/`; asks first unless `--force` |
 | `delete <id>` | Delete a snapshot; asks first unless `--force` |
 
-`list` shows only the first 8 characters of each ID; the other commands need the full ID, printed by `create` and by `list --json`. A restore that changes the server's world follows the [World Assignment Rules](#world-assignment-rules). Restart the server to apply restored files.
+The other commands need the full snapshot ID, which `list`, `create` and `list --json` print. A restore that changes the server's world follows the [World Assignment Rules](#world-assignment-rules). Restart the server to apply restored files.
 
 **Examples:**
 
