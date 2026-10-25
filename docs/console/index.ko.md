@@ -176,7 +176,7 @@ http://localhost:5000
 
 ## 다음 단계
 
-- **[설치 가이드](installation.ko.md)** - 상세한 설치 방법
+- **[설치 가이드](setup-guide.ko.md)** - 상세한 설치 방법
 - **[CLI 명령어](cli-commands.ko.md)** - 전체 CLI 레퍼런스
 - **[API 레퍼런스](../api/endpoints.md)** - REST API 문서
 - **[웹 콘솔 가이드](web-console.ko.md)** - 웹 인터페이스 사용법

@@ -145,7 +145,7 @@ These are environment variables of the `mcctl-api` process. `mcctl console init`
 
 mcctl-api does not start when the selected mode lacks its required variable.
 
-`mcctl console init` asks for an access mode and writes it as follows ([Access Modes](../console/installation.md#access-modes)):
+`mcctl console init` asks for an access mode and writes it as follows ([Access Modes](../console/setup-guide.md#access-modes)):
 
 | `mcctl console init` mode | `AUTH_MODE` written |
 |---------------------------|---------------------|
@@ -302,5 +302,5 @@ Both paths use the same authentication as the other routes. In `api-key` mode a 
 ## Next Steps
 
 - **[API Endpoints](endpoints.md)**: every route
-- **[Installation](../console/installation.md)**: set up mcctl-api and the Web Console
+- **[Setup Guide](../console/setup-guide.md)**: set up mcctl-api and the Web Console
 - **[CLI Commands](../console/cli-commands.md)**: `mcctl console` commands

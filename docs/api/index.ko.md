@@ -145,7 +145,7 @@ API 키는 `X-API-Key` 헤더에서만 읽습니다. `Authorization: Bearer` 헤
 
 선택한 모드에 필요한 변수가 없으면 mcctl-api가 시작하지 않습니다.
 
-`mcctl console init`은 접근 모드를 묻고 다음과 같이 기록합니다([접근 모드](../console/installation.ko.md)):
+`mcctl console init`은 접근 모드를 묻고 다음과 같이 기록합니다([접근 모드](../console/setup-guide.ko.md#access-modes)):
 
 | `mcctl console init` 모드 | 기록되는 `AUTH_MODE` |
 |---------------------------|----------------------|
@@ -302,5 +302,5 @@ Swagger UI(`/docs`)와 OpenAPI 문서(`/docs/json`)는 `NODE_ENV`가 `production
 ## 다음 단계
 
 - **[API 엔드포인트](endpoints.ko.md)**: 모든 라우트
-- **[설치 가이드](../console/installation.ko.md)**: mcctl-api와 웹 콘솔 설정
+- **[설치 가이드](../console/setup-guide.ko.md)**: mcctl-api와 웹 콘솔 설정
 - **[CLI 명령어](../console/cli-commands.ko.md)**: `mcctl console` 명령어

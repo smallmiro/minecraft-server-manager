@@ -133,7 +133,6 @@ nav:
       - Web Console:
           - Overview: console/index.md
           - Setup Guide: console/setup-guide.md
-          - Installation: console/installation.md
           - Using the Console: console/web-console.md
           - Audit Logs: console/audit-log-ui.md
       - Networking:
