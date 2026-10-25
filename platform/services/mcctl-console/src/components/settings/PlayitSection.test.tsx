@@ -101,6 +101,7 @@ describe('PlayitSection', () => {
 
     expect(screen.getByText(/not configured/i)).toBeInTheDocument();
     expect(screen.getByText(/playit.gg agent is not set up/i)).toBeInTheDocument();
+    expect(screen.getByText(/PLAYIT_SECRET_KEY/)).toBeInTheDocument();
   });
 
   it('renders agent status and servers when configured', () => {

@@ -43,7 +43,7 @@ function isPlayitEnabled(paths: Paths): boolean {
 /**
  * Ensure playit service exists in docker-compose.yml
  */
-function ensurePlayitService(paths: Paths): void {
+export function ensurePlayitService(paths: Paths): void {
   const composePath = join(paths.root, 'docker-compose.yml');
   if (!existsSync(composePath)) return;
 

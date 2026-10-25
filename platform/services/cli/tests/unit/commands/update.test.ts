@@ -86,15 +86,23 @@ vi.mock('@minecraft-docker/shared', () => ({
   Paths: vi.fn().mockImplementation(() => ({
     platform: '/tmp/test-platform',
     root: '/tmp/test-root',
+    servers: '/tmp/test-root/servers',
   })),
+}));
+
+vi.mock('../../../src/lib/server-config.js', () => ({
+  serverSpecRepository: vi.fn(() => ({})),
+  updateServer: vi.fn(),
 }));
 
 // Mock node:fs
 const mockExistsSync = vi.fn().mockReturnValue(false);
 const mockReadFileSync = vi.fn().mockReturnValue('{}');
+const mockReaddirSync = vi.fn().mockReturnValue([]);
 vi.mock('node:fs', () => ({
   readFileSync: (...args: any[]) => mockReadFileSync(...args),
   existsSync: (...args: any[]) => mockExistsSync(...args),
+  readdirSync: (...args: any[]) => mockReaddirSync(...args),
 }));
 
 import { updateCommand, updateServices, fetchLatestServiceVersion, getInstalledServiceVersion } from '../../../src/commands/update.js';
@@ -212,6 +220,35 @@ describe('update command', () => {
       const exitCode = await updateServices('/tmp/test-root', { yes: true });
 
       expect(exitCode).toBe(0);
+    });
+
+    it('runs the server image step on a CLI-only host (no services installed, #825)', async () => {
+      mockExistsSync.mockReturnValue(true); // servers dir exists, empty
+      const exitCode = await updateServices('/tmp/test-root', { yes: true });
+
+      expect(exitCode).toBe(0);
+      const out = consoleLogSpy.mock.calls.map((c: any[]) => String(c[0])).join('\n');
+      expect(out).toContain('Checking server image compatibility');
+      expect(out).toContain('No Docker images found');
+      mockExistsSync.mockReturnValue(false);
+    });
+
+    it('skips the server image step with --check when no services are installed', async () => {
+      mockExistsSync.mockReturnValue(true);
+      await updateServices('/tmp/test-root', { check: true });
+
+      const out = consoleLogSpy.mock.calls.map((c: any[]) => String(c[0])).join('\n');
+      expect(out).not.toContain('Checking server image compatibility');
+      mockExistsSync.mockReturnValue(false);
+    });
+
+    it('does not touch server images with --cli-only', async () => {
+      mockExistsSync.mockReturnValue(true);
+      await updateCommand({ cliOnly: true, yes: true });
+
+      const out = consoleLogSpy.mock.calls.map((c: any[]) => String(c[0])).join('\n');
+      expect(out).not.toContain('Checking server image compatibility');
+      mockExistsSync.mockReturnValue(false);
     });
 
     it('should update installed services and restart PM2', async () => {

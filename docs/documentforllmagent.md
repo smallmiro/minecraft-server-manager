@@ -235,7 +235,7 @@ After running `mcctl init`, the following directory structure is created:
 ├── .env                              # Global environment variables
 ├── .mcctl.json                       # mcctl settings (templateVersion, playitEnabled, installId)
 ├── .gitignore
-├── docker-compose.yml                # Main orchestration (mc-router; playit service after `mcctl playit setup`)
+├── docker-compose.yml                # Main orchestration (mc-router; playit service after `mcctl init` with playit or `mcctl playit setup`)
 ├── .mcctl-admin.yml                  # Management Console config (after console init)
 ├── api-config.json                   # Written by `mcctl console api ...` (not read by the running mcctl-api)
 ├── ecosystem.config.cjs              # PM2 process config (after console init)
@@ -332,7 +332,7 @@ External Players → playit.gg cloud → playit-agent (host) → localhost:25565
 **Setup:**
 
 1. Create agent at https://playit.gg/account/agents/new-docker → get SECRET_KEY
-2. `mcctl playit setup` → enter SECRET_KEY (also needed once after `mcctl init --playit-key` or answering Yes in `mcctl init`, which only save the key: the `playit` service is added by `mcctl playit setup`)
+2. `mcctl playit setup` → enter SECRET_KEY (not needed after `mcctl init --playit-key` or answering Yes in `mcctl init`: init saves the key and adds the `playit` service)
 3. `mcctl playit start` → start agent
 4. Create tunnel at https://playit.gg/account/tunnels → Minecraft Java → localhost:25565
 5. `mcctl create myserver --playit-domain xx-xx.craft.playit.gg`, or for an existing server `mcctl playit domain myserver xx-xx.craft.playit.gg` then `mcctl stop myserver && mcctl start myserver`
@@ -392,8 +392,8 @@ playit.gg enables external players to connect to your Minecraft servers without 
 mcctl playit setup
 # Enter your SECRET_KEY when prompted
 
-# Or during initial setup (`mcctl init`, answer Yes, or `mcctl init --playit-key <key>`),
-# then run `mcctl playit setup` once: init saves the key but does not add the playit service
+# Or during initial setup (`mcctl init`, answer Yes, or `mcctl init --playit-key <key>`):
+# init saves the key and adds the playit service
 ```
 
 **Step 3: Start the playit agent**
@@ -515,7 +515,7 @@ Key points:
 ```bash
 mcctl init                       # Initialize platform (asks for host IPs and playit.gg)
 mcctl init --reconfigure         # Change host IPs, timezone, RCON password, ... of an initialized platform
-mcctl init --playit-key <key>    # Enable playit.gg without asking (run `mcctl playit setup` once afterwards)
+mcctl init --playit-key <key>    # Enable playit.gg without asking
 mcctl init --no-playit           # Do not enable playit.gg, without asking
 mcctl init --skip-validation     # Skip the prerequisite checks
 mcctl init --skip-docker         # Do not create the minecraft-net network
@@ -3144,7 +3144,7 @@ A: mcctl configures none, so a client that sends a hostname without a route (or 
 A: A free tunneling service that lets external players connect to your server without port forwarding or a static IP.
 
 **Q: How do I set up playit.gg?**
-A: Run `mcctl playit setup` with your SECRET_KEY (also after `mcctl init --playit-key`, since only `setup` adds the `playit` service), then `mcctl playit start`, create a tunnel at playit.gg, register it with `mcctl playit domain <server> <domain>`, and recreate the server (`mcctl stop <s> && mcctl start <s>`). Turn on the whitelist before sharing the domain.
+A: Run `mcctl playit setup` with your SECRET_KEY (skip it if you enabled playit in `mcctl init`), then `mcctl playit start`, create a tunnel at playit.gg, register it with `mcctl playit domain <server> <domain>`, and recreate the server (`mcctl stop <s> && mcctl start <s>`). Turn on the whitelist before sharing the domain.
 
 **Q: Can multiple servers use playit.gg?**
 A: Yes. Each server needs its own tunnel domain. mc-router routes connections to the correct server based on hostname.
