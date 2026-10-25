@@ -30,13 +30,13 @@ This is equivalent to `docker compose up -d`. It starts the entire platform incl
 
 ### Stop All Infrastructure
 
-Stop all servers, mc-router, and remove the Docker network:
+Stop all servers and mc-router:
 
 ```bash
 mcctl down
 ```
 
-This runs `docker compose down`, stopping all mc-* containers.
+This stops all mc-* containers and runs `docker compose down`, which removes the containers. The `minecraft-net` network is kept.
 
 ### Start Individual Server
 
@@ -73,6 +73,8 @@ To restart a server (e.g., after configuration changes):
 ```bash
 mcctl stop myserver && mcctl start myserver
 ```
+
+If the server is not running, `mcctl stop` exits with code 2 and `&&` skips the start; run `mcctl start myserver` on its own. With `BACKUP_AUTO_ON_STOP=true`, every `mcctl stop` also backs up the worlds.
 
 !!! tip "When to Restart"
     You need to restart a server after:
@@ -146,18 +148,19 @@ Management Console must be installed and running:
 
 ```bash
 mcctl console init       # First-time setup
-mcctl console service start   # Start the console
+mcctl console service start --console   # Start mcctl-api and the console
 ```
 
 ### Server Controls via Web UI
 
-From the **Dashboard**, each server card shows quick action buttons:
+From the **Dashboard**, each server row shows quick action buttons:
 
 | Button | Action | Available When |
 |--------|--------|----------------|
-| Play (Start) | Start the server | Server is stopped |
-| Stop | Graceful shutdown | Server is running |
-| Restart | Stop then start | Server is running |
+| Start | Start the server | Server is stopped |
+| Console | Open the server console page | Server is running |
+| Stop | Graceful shutdown (asks first) | Server is running |
+| Restart | Stop then start (asks first) | Server is running |
 
 ### Server Detail Page
 
@@ -173,13 +176,13 @@ For programmatic control, use the API endpoints:
 
 ```bash
 # Start a server
-curl -X POST http://localhost:5001/servers/myserver/start
+curl -X POST -H "X-API-Key: <key>" http://localhost:5001/api/servers/myserver/start
 
 # Stop a server
-curl -X POST http://localhost:5001/servers/myserver/stop
+curl -X POST -H "X-API-Key: <key>" http://localhost:5001/api/servers/myserver/stop
 
 # Restart a server
-curl -X POST http://localhost:5001/servers/myserver/restart
+curl -X POST -H "X-API-Key: <key>" http://localhost:5001/api/servers/myserver/restart
 ```
 
 See the [API Reference](../api/index.md) for authentication details.
@@ -205,6 +208,8 @@ mcctl console service restart
 # Check service status
 mcctl console service status
 ```
+
+When both mcctl-api and the console are installed, `start`, `stop` and `restart` without `--api` or `--console` ask which services to act on, and fail without a terminal. In scripts, pass `--console` (mcctl-api and the console; for `stop`, the console only) or `--api` (mcctl-api only; for `stop`, both services).
 
 ### Direct PM2 Commands
 
@@ -245,30 +250,22 @@ Player connects → mc-router detects → Docker container starts → Player joi
 
 ### Configuration
 
-Configure auto-scaling in `.env`:
+The auto-scale settings are in the `environment:` of the `router` service in `<root>/docker-compose.yml`:
 
-```bash
-# Enable auto-start on player connect
-AUTO_SCALE_UP=true
-
-# Enable auto-stop when idle
-AUTO_SCALE_DOWN=true
-
-# Idle timeout before stopping (1m, 5m, 10m, 30m, 1h)
-AUTO_SCALE_DOWN_AFTER=10m
-
-# Container start timeout in seconds
-DOCKER_TIMEOUT=120s
-
-# Custom MOTD shown while server is starting
-AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!
+```yaml
+  router:
+    environment:
+      AUTO_SCALE_UP: "true"            # Start a stopped server when a player connects
+      AUTO_SCALE_DOWN: "true"          # Stop idle servers
+      AUTO_SCALE_DOWN_AFTER: "10m"     # Idle timeout before stopping (1m, 5m, 10m, 30m, 1h)
+      DOCKER_TIMEOUT: "120s"           # Container start timeout (Go time.Duration: 120s, 2m)
+      AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"   # MOTD of a stopped server
 ```
 
-After changing settings, restart mc-router:
+Apply a change with `mcctl router start` (`docker compose up -d router` recreates the container). `mcctl router restart` keeps the old values. `mcctl upgrade` patches only the router `image` and `group_add`, so these edits survive an upgrade.
 
-```bash
-mcctl router restart
-```
+!!! note "New images and stopped servers"
+    mc-router starts the existing container of a sleeping server, so after `mcctl update` pulls a new image, a stopped server keeps waking up on its old image until its container is recreated. `mcctl update` offers to do this (see [`mcctl update`](../cli/commands.md#mcctl-update)); by hand, run `docker compose up --no-start --no-deps mc-<server>` from the platform directory.
 
 ### Player Experience
 
@@ -339,7 +336,7 @@ Understanding the difference between infrastructure and server commands:
 
 | Scope | Start | Stop | What It Affects |
 |-------|-------|------|-----------------|
-| **Full Infrastructure** | `mcctl up` | `mcctl down` | mc-router + all servers + network |
+| **Full Infrastructure** | `mcctl up` | `mcctl down` | mc-router + all servers |
 | **All Servers** | `mcctl start --all` | `mcctl stop --all` | All Minecraft servers (not router) |
 | **Single Server** | `mcctl start <name>` | `mcctl stop <name>` | One Minecraft server |
 | **Router Only** | `mcctl router start` | `mcctl router stop` | mc-router only |

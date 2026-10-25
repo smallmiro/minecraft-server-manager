@@ -9,6 +9,7 @@ RCON (Remote Console)을 통해 서버 관리자는 마인크래프트 서버 �
 | 명령어 | 모드 | 설명 |
 |--------|------|------|
 | `mcctl rcon <서버>` | 대화형 | RCON 콘솔 세션 열기 |
+| `mcctl console <서버>` | 대화형 | `mcctl rcon`과 같은 세션 |
 | `mcctl exec <서버> <명령>` | 비대화형 | 단일 명령 실행 |
 
 ### 사용 시점
@@ -30,11 +31,11 @@ RCON (Remote Console)을 통해 서버 관리자는 마인크래프트 서버 �
 
 ```bash
 $ mcctl rcon survival
-Connecting to RCON console for 'survival'...
-Type "help" for commands, Ctrl+C or "exit" to quit
+[INFO] Connecting to RCON console for 'survival'...
+[INFO] Connected! Type "help" for commands, "exit" or Ctrl+C to quit.
 
 > list
-There are 2 of 20 players online: Steve, Alex
+There are 2 of a max of 20 players online: Steve, Alex
 > say 서버 점검 10분 전입니다!
 [Server: 서버 점검 10분 전입니다!]
 > tp Steve 0 100 0
@@ -48,7 +49,7 @@ $
 ```bash
 # 단일 명령 실행
 $ mcctl exec survival list
-There are 2 of 20 players online: Steve, Alex
+There are 2 of a max of 20 players online: Steve, Alex
 
 # 스크립트에서 사용
 $ mcctl exec myserver say "백업 시작..."
@@ -56,7 +57,7 @@ $ mcctl exec myserver say "백업 시작..."
 
 # 스크립트 예시
 PLAYERS=$(mcctl exec myserver list)
-if echo "$PLAYERS" | grep -q "0 of"; then
+if echo "$PLAYERS" | grep -q "There are 0 of"; then
   mcctl stop myserver
 fi
 ```
@@ -373,14 +374,15 @@ The default game mode is now Survival Mode
 
 ```bash
 $ mcctl rcon myserver
-Server 'myserver' is not running
-Start the server first: mcctl start myserver
+[ERROR] Server 'myserver' is not running
+[INFO] Start the server first: mcctl start myserver
 ```
 
 ---
 
 ## 참조
 
+- mcctl 명령어: [`mcctl rcon`](commands.ko.md#mcctl-rcon), [`mcctl console`](commands.ko.md#mcctl-console), [`mcctl exec`](commands.ko.md#mcctl-exec)
 - 마인크래프트 전체 명령어: [Minecraft Wiki - Commands](https://minecraft.wiki/w/Commands)
 - Java Edition 명령어 문법: [Command Syntax](https://minecraft.wiki/w/Commands#Syntax)
 - 대상 선택자: [Target Selector](https://minecraft.wiki/w/Target_selectors)
