@@ -571,7 +571,7 @@ mcctl create [name] [options]
     mcctl create mypack -t AUTO_CURSEFORGE --modpack <slug>
     ```
 
-    안내에 따라 만들려면 이름 없이 `mcctl create`를 실행하고 "Modpack Platforms"에서 **Modrinth Modpack** 또는 **CurseForge Modpack**을 고릅니다. 그러면 모드팩 slug, 모드 로더, 모드팩 버전, 제외할 파일을 차례로 묻습니다.
+    안내에 따라 만들려면 이름 없이 `mcctl create`를 실행하고 "Modpack Platforms"에서 **Modrinth Modpack** 또는 **CurseForge Modpack**을 고릅니다. 그러면 모드팩 slug, 모드 로더(Modrinth만, CurseForge는 로더 변수가 없어 묻지 않음), 모드팩 버전, 제외할 파일을 차례로 묻습니다.
 
 === "자동화 (CI/CD)"
     ```bash
@@ -2549,6 +2549,10 @@ mcctl audit <list|stats|purge> [options]
 ## 환경 변수
 
 자동화 및 CI/CD 파이프라인을 위한 환경 변수입니다.
+
+### NO_COLOR
+
+`NO_COLOR`가 비어 있지 않은 값으로 설정되면 mcctl은 ANSI 색 코드를 출력하지 않습니다([no-color.org](https://no-color.org) 참고). 빈 값은 무시합니다.
 
 ### MCCTL_SUDO_PASSWORD
 

@@ -571,7 +571,7 @@ New servers get 4G of memory (6G for modpack types) and the `itzg/minecraft-serv
     mcctl create mypack -t AUTO_CURSEFORGE --modpack <slug>
     ```
 
-    For a guided setup, run `mcctl create` without a name and choose **Modrinth Modpack** or **CurseForge Modpack** under "Modpack Platforms". It then asks for the modpack slug, the mod loader, the modpack version and the files to exclude.
+    For a guided setup, run `mcctl create` without a name and choose **Modrinth Modpack** or **CurseForge Modpack** under "Modpack Platforms". It then asks for the modpack slug, the mod loader (Modrinth only; CurseForge has no loader variable and skips the question), the modpack version and the files to exclude.
 
 === "Automation (CI/CD)"
     ```bash
@@ -2548,6 +2548,10 @@ An option that needs a value takes it from the next word (`--seed 123`) or after
 ## Environment Variables
 
 Environment variables for automation and CI/CD pipelines.
+
+### NO_COLOR
+
+When `NO_COLOR` is set to a non-empty value, mcctl prints no ANSI color codes (see [no-color.org](https://no-color.org)). An empty value is ignored.
 
 ### MCCTL_SUDO_PASSWORD
 

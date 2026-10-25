@@ -617,8 +617,8 @@ New servers get `MEMORY=4G` (6G for modpack types) and the image tag their `VERS
 
 1. **Server name** - lowercase letters, digits, hyphens
 2. **Server type** - choose "Modrinth Modpack" or "CurseForge Modpack"
-3. **Modpack slug** - text prompt `Modrinth modpack slug or URL:` (e.g., `cobblemon`); there is no search
-4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched); a CurseForge modpack's answer is not written
+3. **Modpack slug** - text prompt `Modrinth modpack slug or URL:` or `CurseForge modpack slug or URL:`, by the chosen platform (e.g., `cobblemon`); there is no search
+4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched); for a CurseForge modpack the question is skipped (it has no loader variable)
 5. **Modpack version** - leave empty for latest
 6. **Exclude mods** - comma-separated files to leave out (e.g. client-only mods)
 7. **World setup**, **memory** (default 6G), **whitelist**, then creation (there is no separate confirmation step)
@@ -1133,7 +1133,7 @@ Before every other command (except `--help`/`--version`), mcctl checks npm for a
 **Interactive modpack flow**: `mcctl create` without a name asks for the name and type; for a modpack type it then asks for:
 
 1. The **modpack slug** or URL (e.g., `cobblemon`, `adrenaserver`; no search in the CLI)
-2. The **mod loader**: Auto-detect, or one of the loaders the modpack's versions list on Modrinth (all of `forge`, `neoforge`, `fabric`, `quilt` if the lookup fails)
+2. The **mod loader** (Modrinth only; CurseForge skips it): Auto-detect, or one of the loaders the modpack's versions list on Modrinth (all of `forge`, `neoforge`, `fabric`, `quilt` if the lookup fails)
 3. The **modpack version** (empty for the latest)
 4. **Mods to exclude** (comma-separated; client-only mods must be listed here in the CLI)
 5. The world, memory (`6G`) and whitelist (no Minecraft version prompt)
