@@ -492,7 +492,7 @@ mcctl create [name] [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--type` | `-t` | 서버 타입 (기본값 `PAPER`): PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
-| `--version` | `-v` | 마인크래프트 버전: `-v 1.21.1` 또는 `=`를 쓴 긴 형식 `--version=1.21.1` (기본값 `LATEST`, 모드팩 타입은 모드팩의 버전 사용) |
+| `--version` | `-v` | 마인크래프트 버전: `-v 1.21.1`, `--version 1.21.1` 또는 `--version=1.21.1` (기본값 `LATEST`, 모드팩 타입은 모드팩의 버전 사용) |
 | `--seed` | `-s` | 월드 생성 시드. 음수 시드도 됩니다(`-s -123`). `--seed=<값>`은 어떤 값이든 받습니다 |
 | `--world-url` | `-u` | ZIP URL에서 월드 다운로드 |
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
@@ -897,7 +897,7 @@ mcctl config <server> [key] [value] [options]
 |----------|-------------|
 | `server` | 서버 이름 |
 | `key` | 설정 키 (선택사항) |
-| `value` | 새 값 (선택사항) |
+| `value` | 새 값 (선택사항). 빈 값(`""`)은 키를 삭제하며 이미지 기본값이 다시 적용됩니다 |
 
 **단축 옵션:**
 
@@ -960,6 +960,9 @@ mcctl config <server> [key] [value] [options]
 
 !!! note "재시작 필요"
     일부 설정 변경은 적용을 위해 서버 재시작이 필요합니다.
+
+!!! note "키 삭제"
+    `mcctl config <server> MOTD ""`는 서버 설정에서 `MOTD`를 삭제하고 알려 줍니다. 설정되지 않은 키는 그렇다고 알리고 아무것도 바꾸지 않습니다. `LEVEL`과 `WORLD_NAME`은 이렇게 삭제할 수 없으니 월드 이름을 지정하세요.
 
 !!! warning "`LEVEL` 변경"
     `LEVEL`은 서버가 사용하는 월드입니다([월드 할당 규칙](#world-assignment-rules) 참고). 서버가 실행 중이거나 다른 서버가 `<world>`를 사용 중이면 `mcctl config <server> LEVEL <world>`는 거부됩니다. 새 `EXTRA_ARGS` 값이 월드 위치를 `worlds/`와 `servers/<server>/data` 사이에서 바꾸는 경우(`--universe`)에도 같습니다.

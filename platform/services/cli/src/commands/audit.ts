@@ -15,6 +15,7 @@ export interface AuditCommandOptions {
   before?: string;
   dryRun?: boolean;
   force?: boolean;
+  root?: string;
   sudoPassword?: string;
 }
 
@@ -22,14 +23,14 @@ export interface AuditCommandOptions {
  * Audit log management command
  */
 export async function auditCommand(options: AuditCommandOptions): Promise<number> {
-  const paths = new Paths();
+  const paths = new Paths(options.root);
 
   if (!paths.isInitialized()) {
     log.error('Platform not initialized. Run: mcctl init');
     return 1;
   }
 
-  const container = getContainer({ sudoPassword: options.sudoPassword });
+  const container = getContainer({ rootDir: options.root, sudoPassword: options.sudoPassword });
   const auditLogPort = container.auditLogPort;
 
   // Route to subcommand

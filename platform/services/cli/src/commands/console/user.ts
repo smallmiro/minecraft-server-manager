@@ -23,8 +23,11 @@ export type AdminUserCommandOptions = ConsoleUserCommandOptions;
 /**
  * Get the ConsoleDatabase instance
  */
+/** Platform root of this invocation (--root); set by consoleUserCommand. */
+let platformRoot: string | undefined;
+
 function getConsoleDb(): ConsoleDatabase {
-  const paths = new Paths();
+  const paths = new Paths(platformRoot);
   const dbPath = join(paths.root, 'data', 'mcctl.db');
   const db = new ConsoleDatabase(dbPath);
   db.ensureSchema();
@@ -458,7 +461,8 @@ async function resetPassword(
 /**
  * Create console user command
  */
-export function consoleUserCommand(): Command {
+export function consoleUserCommand(root?: string): Command {
+  platformRoot = root;
   const cmd = new Command('user')
     .description('Manage console users')
     .addHelpText(

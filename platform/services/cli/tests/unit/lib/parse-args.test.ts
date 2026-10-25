@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseArgs } from '../../../src/lib/parse-args.js';
+import { parseArgs, intFlag, stripRootFlag } from '../../../src/lib/parse-args.js';
 
 describe('parseArgs', () => {
   it('reads a value after a flag', () => {
@@ -39,5 +39,43 @@ describe('parseArgs', () => {
 
   it('does not take a flag as the value', () => {
     expect(parseArgs(['create', 'alpha', '-s', '--no-start']).flags).toEqual({ seed: true, 'no-start': true });
+  });
+
+  it('reads the subcommand of audit (#824)', () => {
+    const r = parseArgs(['audit', 'list', '--limit', '5']);
+    expect(r.subCommand).toBe('list');
+    expect(r.flags).toEqual({ limit: '5' });
+  });
+
+  it.each(['modrinth', 'curseforge', 'spiget', 'url'])('keeps every name after --%s as a positional (#824)', (src) => {
+    const r = parseArgs(['mod', 'add', 'srv', `--${src}`, 'a', 'b']);
+    expect(r.flags).toEqual({ [src]: true });
+    expect(r.positional).toEqual(['srv', 'a', 'b']);
+  });
+
+  it('takes the value of --version after a command, but --version alone before one is the flag (#824)', () => {
+    expect(parseArgs(['create', 'x', '--version', '1.21.1']).flags).toEqual({ version: '1.21.1' });
+    expect(parseArgs(['create', 'x', '-v', '1.21.1']).flags).toEqual({ version: '1.21.1' });
+    expect(parseArgs(['--version']).flags).toEqual({ version: true });
+    expect(parseArgs(['status', '--version']).flags).toEqual({ version: true });
+  });
+});
+
+describe('intFlag (#824)', () => {
+  it('is undefined when the flag is absent and an integer otherwise', () => {
+    expect(intFlag('level', undefined)).toBeUndefined();
+    expect(intFlag('level', '2')).toBe(2);
+  });
+
+  it.each(['abc', true, '2x', ''])('rejects %j with a clear message', (v) => {
+    expect(() => intFlag('level', v as string | boolean)).toThrow('--level must be an integer');
+  });
+});
+
+describe('stripRootFlag (#824)', () => {
+  it('removes --root <path> and --root=<path>, keeping the rest', () => {
+    expect(stripRootFlag(['list', '--root', '/x', '--json'])).toEqual(['list', '--json']);
+    expect(stripRootFlag(['--root=/x', 'status'])).toEqual(['status']);
+    expect(stripRootFlag(['list'])).toEqual(['list']);
   });
 });

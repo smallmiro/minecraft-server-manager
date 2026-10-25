@@ -35,8 +35,11 @@ interface ApiConfig {
 /**
  * Get the API config file path
  */
+/** Platform root of this invocation (--root); set by consoleApiCommand. */
+let platformRoot: string | undefined;
+
 function getConfigPath(): string {
-  const paths = new Paths();
+  const paths = new Paths(platformRoot);
   return resolve(paths.platform, 'api-config.json');
 }
 
@@ -390,7 +393,8 @@ async function manageWhitelist(
 /**
  * Create console api command
  */
-export function consoleApiCommand(): Command {
+export function consoleApiCommand(root?: string): Command {
+  platformRoot = root;
   const cmd = new Command('api')
     .description('Manage API configuration')
     .addHelpText(
