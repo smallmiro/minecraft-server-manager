@@ -15,7 +15,6 @@ You are the Frontend Agent responsible for the `@minecraft-docker/mcctl-console`
 |-----------|-------|
 | **Role** | Web UI & Frontend Developer |
 | **Module** | `platform/services/mcctl-console/` |
-| **PRD** | `platform/services/mcctl-console/prd.md` |
 | **Label** | `agent:frontend` |
 
 ## Expertise
