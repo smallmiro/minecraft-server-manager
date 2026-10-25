@@ -11,6 +11,8 @@
         <link rel="canonical" href="https://minecraft-server-manager.readthedocs.io/ko/development/adr/0003-server-spec/">
       
       
+        <link rel="prev" href="../0002-world-server-assignment/">
+      
       
       
         
@@ -25,7 +27,7 @@
     
     
       
-        <title>ADR-0003: ServerSpec, 서버 정의를 하나로 - Minecraft Docker Server Manager</title>
+        <title>ADR-0003: Server Spec - mcctl — Minecraft Docker Server Manager</title>
       
     
     
@@ -92,7 +94,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="상단/헤더">
-    <a href="../../../" title="Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+    <a href="../../../" title="mcctl — Minecraft Docker Server Manager" class="md-header__button md-logo" aria-label="mcctl — Minecraft Docker Server Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -106,13 +108,13 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Minecraft Docker Server Manager
+            mcctl — Minecraft Docker Server Manager
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR-0003: ServerSpec, 서버 정의를 하나로
+              ADR-0003: Server Spec
             
           </span>
         </div>
@@ -238,6 +240,25 @@
 <nav class="md-tabs" aria-label="탭" data-md-component="tabs">
   <div class="md-grid">
     <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="https://mcctl.mirolab.dev/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  mcctl Home
+
+      </a>
+    </li>
+  
+
       
         
   
@@ -457,10 +478,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../../" class="md-tabs__link">
           
   
@@ -522,13 +545,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="네비게이션" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../../" title="Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="Minecraft Docker Server Manager" data-md-component="logo">
+    <a href="../../../" title="mcctl — Minecraft Docker Server Manager" class="md-nav__button md-logo" aria-label="mcctl — Minecraft Docker Server Manager" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    Minecraft Docker Server Manager
+    mcctl — Minecraft Docker Server Manager
   </label>
   
     <div class="md-nav__source">
@@ -544,6 +567,33 @@
     </div>
   
   <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://mcctl.mirolab.dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mcctl Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
     
       
       
@@ -604,7 +654,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -626,14 +676,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_2" id="__nav_2_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_2">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -734,10 +784,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -755,8 +805,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -816,6 +866,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -831,7 +885,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -853,14 +907,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_4" id="__nav_4_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -887,6 +941,62 @@
     
   
     Commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/audit-log/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Audit Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../cli/rcon-commands/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RCON Commands
   
 
     
@@ -937,7 +1047,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -959,14 +1069,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5" id="__nav_5_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1047,7 +1157,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1069,14 +1179,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1217,7 +1327,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1239,14 +1349,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1428,10 +1538,6 @@
       
         
       
-        
-      
-        
-      
     
     
     
@@ -1447,7 +1553,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1469,14 +1575,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_8" id="__nav_8_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1607,62 +1713,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../console/api-reference/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API Reference
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../console/audit-log-api/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Audit Logs (API)
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../console/audit-log-ui/" class="md-nav__link">
         
   
@@ -1670,7 +1720,7 @@
   <span class="md-ellipsis">
     
   
-    Audit Logs (UI)
+    Audit Logs
   
 
     
@@ -1712,6 +1762,8 @@
       
         
       
+        
+      
     
     
     
@@ -1727,7 +1779,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1749,14 +1801,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_9" id="__nav_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_10" id="__nav_10_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1859,6 +1911,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../advanced/rcon/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RCON
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../advanced/upgrade-runbook/" class="md-nav__link">
         
   
@@ -1918,6 +1998,8 @@
       
   
   
+    
+  
   
   
     
@@ -1933,22 +2015,25 @@
       
         
       
+        
+      
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
         
           
           <div class="md-nav__link md-nav__container">
@@ -1970,14 +2055,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_11" id="__nav_11_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_12" id="__nav_12_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2068,6 +2153,326 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_12_5" id="__nav_12_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_12_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_12_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0001-container-runtime-ports/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-0001: Container Runtime Ports
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0002-world-server-assignment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-0002: World-Server Assignment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-0003: Server Spec
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-0003: Server Spec
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#배경" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        배경
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#결정-요약" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        결정 요약
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="결정 요약">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#확정된-질문2026-10-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        확정된 질문(2026-10-23)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-스키마" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 스키마
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-저장소-저장-동시성" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 저장소, 저장, 동시성
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-렌더링" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 렌더링
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-기존-설치본-가져오기" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 기존 설치본 가져오기
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-provisioncreate-serversh-대체" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. provision(create-server.sh 대체)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-쓰기-경로" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 쓰기 경로
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-단계" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. 단계
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2300,7 +2705,7 @@
 </tr>
 </tbody>
 </table>
-<p>영어판(<a href="./">0003-server-spec.md</a>)이 원본이다. 이 문서는 결정과 표를 줄여 옮겼다.</p>
+<p><a href="https://minecraft-server-manager.readthedocs.io/en/latest/development/adr/0003-server-spec/">영어판</a>이 원본이다. 이 문서는 결정과 표를 줄여 옮겼다.</p>
 <h2 id="배경">배경<a class="headerlink" href="#배경" title="Permanent link">&para;</a></h2>
 <ul>
 <li>서버 하나의 정의가 7곳(<code>config.env</code>, 서버 compose, include 목록, <code>.env</code>, <code>.mcctl.json</code>, avahi hosts, 잠금 파일)에 흩어져 있고, 쓰는 코드가 10곳이 넘는다. 그중 4곳은 compose YAML을 정규식으로 고친다(B4).</li>
@@ -2573,7 +2978,7 @@
 <li><strong>정리(#657)</strong>: <code>write({ create: true })</code>는 전부 아니면 전무다. 선점 뒤 실패하면 추가한 include 항목과 만든 디렉터리를 지우고 오류를 던진다. <code>worlds/</code>는 건드리지 않는다. 생성 중 프로세스가 죽으면 <code>servers/&lt;n&gt;</code>이 남을 수 있고 <code>mcctl delete &lt;n&gt;</code>으로 지운다(<code>ponytail:</code> 표시 파일 없음).</li>
 <li><strong>avahi 어댑터</strong>는 <code>README.md</code> sudoers 줄이 허용하는 명령을 셸 없이 argv로 실행한다: <code>sudo -n tee -a /etc/avahi/hosts</code>(stdin <code>&lt;ip&gt; &lt;host&gt;</code>), <code>sudo -n systemctl restart avahi-daemon</code>. sudo 비밀번호는 환경 변수가 아니라 어댑터 옵션으로 받는다. CLI는 <code>--sudo-password</code>, <code>MCCTL_SUDO_PASSWORD</code>, 또는 <code>promptSudoPasswordIfNeeded</code>가 물은 값(sudo가 아니라 mcctl이 묻는다)을, API는 요청의 <code>sudoPassword</code>를 넘긴다. 비밀번호가 있으면 <code>sudo -S -p '' -v</code>가 stdin으로 먼저 읽고 명령에는 전달되지 않는다(#682). 없으면 <code>sudo -n</code>으로 NOPASSWD나 캐시된 자격에 기대고, 실패하면 경고다.</li>
 </ul>
-<p><strong>옵션 동등성</strong>: 영어판 §5 표가 CLI와 API가 넘기는 모든 옵션을 대응시킨다. 요점: <code>-t</code>의 위치 인자 형식은 없앤다. 모드팩 타입에 버전이 없으면 <code>VERSION</code>을 쓰지 않는다(명시한 <code>LATEST</code>는 쓴다). 메모리를 반영한다(#737). <code>--modpack</code>/<code>--modpack-version</code>/<code>--mod-loader</code>/<code>--exclude-files</code>는 <code>MODRINTH</code>면 <code>MODRINTH_MODPACK</code>/<code>MODRINTH_VERSION</code>/<code>MODRINTH_LOADER</code>/<code>MODRINTH_EXCLUDE_FILES</code>, <code>AUTO_CURSEFORGE</code>면 <code>CF_SLUG</code>/<code>CF_VERSION</code>/<code>CF_LOADER</code>/<code>CF_EXCLUDE_MODS</code>. 화이트리스트는 <code>ENABLE_WHITELIST</code>/<code>WHITELIST</code>(<code>--no-whitelist</code> 우선). <strong>의도된 차이</strong>: 스크립트는 호스트 IP를 찾았을 때만 <code>--playit-domain</code> 값을 라우터 호스트에 넣었지만 TS는 항상 넣는다. <code>--no-playit-domain</code>과 <code>--start</code>는 아무것도 하지 않는다.</p>
+<p><strong>옵션 동등성</strong>: 영어판 §5 표가 CLI와 API가 넘기는 모든 옵션을 대응시킨다. 요점: <code>-t</code>의 위치 인자 형식은 없앤다. 모드팩 타입에 버전이 없으면 <code>VERSION</code>을 쓰지 않는다(명시한 <code>LATEST</code>는 쓴다). 메모리를 반영한다(#737). <code>--modpack</code>/<code>--modpack-version</code>/<code>--mod-loader</code>/<code>--exclude-files</code>는 <code>MODRINTH</code>면 <code>MODRINTH_MODPACK</code>/<code>MODRINTH_VERSION</code>/<code>MODRINTH_LOADER</code>/<code>MODRINTH_EXCLUDE_FILES</code>, <code>AUTO_CURSEFORGE</code>면 <code>CF_SLUG</code>/<code>CF_VERSION</code>/<code>CF_LOADER</code>/<code>CF_EXCLUDE_MODS</code>. 화이트리스트는 <code>ENABLE_WHITELIST</code>/<code>WHITELIST</code>(<code>--no-whitelist</code> 우선). <strong>의도된 차이</strong>: 스크립트는 호스트 IP를 찾았을 때만 <code>--playit-domain</code> 값을 라우터 호스트에 넣었지만 TS는 항상 넣는다. <code>--start</code>는 아무것도 하지 않는다.</p>
 <p><strong>bats → vitest</strong>: <code>get_host_ip</code> 4개 → <code>resolveHostIps</code>. <code>register_avahi_hostname</code> 5개 → 가짜 <code>sudo</code>/<code>avahi-daemon</code>으로 avahi 어댑터 시험. 생성 시험 → 임시 루트에서 provision 시험(실패 뒤 재시도 성공 포함). "compose config 실패 시 중단" → "<code>servers/compose.yml</code>을 읽지 못하면 아무것도 쓰지 않고 중단". 심링크 <code>_template</code> → "렌더러는 <code>templatesDir</code>에 쓰지 않는다". 화이트리스트 3개 → 렌더링 시험. <code>sudo-password.bats</code>는 #735까지 남았고, #735가 사례를 avahi 어댑터 시험으로 옮기고 <code>delete-server.sh</code>와 함께 지웠다.</p>
 <h2 id="6-쓰기-경로">6. 쓰기 경로<a class="headerlink" href="#6-쓰기-경로" title="Permanent link">&para;</a></h2>
 <p>모두 PR 3에서 바꾼다. 모든 쓰기는 <code>updateServerSpec(repo, name, mutate)</code>를 거친다. <code>setEnvKey</code>가 관리 키를 타입 필드로 바꾼다.</p>
