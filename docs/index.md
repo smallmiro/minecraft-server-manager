@@ -1,6 +1,6 @@
 # Minecraft Docker Server Manager
 
-A DevOps solution for managing multiple Minecraft Java Edition servers using Docker and the **mcctl** CLI.
+**mcctl** is an open-source Docker Minecraft server manager. It runs multiple Minecraft Java Edition servers behind one port with mc-router, starts a server when a player connects and stops it when idle, and manages everything from a CLI and a web console. For an overview, visit the [official mcctl website](https://mcctl.mirolab.dev/).
 
 ## Features
 
