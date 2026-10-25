@@ -216,6 +216,18 @@ describe('config-snapshot commands', () => {
       consoleSpy.mockRestore();
     });
 
+    it('prints the full snapshot ID, which the other subcommands require (#828)', async () => {
+      const id = '3f2b8c1e-5a47-4d0e-9b6a-1c2d3e4f5a6b';
+      mockUseCase.list.mockResolvedValue([buildMockSnapshot({ id })]);
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const exitCode = await configSnapshotListCommand({ root: '/tmp/test' });
+
+      expect(exitCode).toBe(0);
+      expect(consoleSpy.mock.calls.some((c) => String(c[0]).includes(id))).toBe(true);
+      consoleSpy.mockRestore();
+    });
+
     it('should output JSON when --json flag is set', async () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
