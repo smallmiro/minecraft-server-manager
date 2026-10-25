@@ -106,8 +106,8 @@ describe('consoleServiceCommand health probe', () => {
 
   it('status: healthy when PM2 online and HTTP ok', async () => {
     expect(await consoleServiceCommand({ subCommand: 'status' })).toBe(0);
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:5001/health', expect.anything());
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:5000/api/auth/get-session', expect.anything());
+    expect(mockFetch).toHaveBeenCalledWith('http://127.0.0.1:5001/health', expect.anything());
+    expect(mockFetch).toHaveBeenCalledWith('http://127.0.0.1:5000/api/auth/get-session', expect.anything());
   });
 
   it('status: API 500 on /health is unhealthy, reason in --json', async () => {
@@ -178,7 +178,7 @@ describe('consoleServiceCommand health probe', () => {
   it('status: probes ports saved by console init when no port flags are given', async () => {
     mockAdminLoad.mockResolvedValue({ api: { port: 6001 }, console: { port: 6000 } });
     expect(await consoleServiceCommand({ subCommand: 'status' })).toBe(0);
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:6001/health', expect.anything());
-    expect(mockFetch).toHaveBeenCalledWith('http://localhost:6000/api/auth/get-session', expect.anything());
+    expect(mockFetch).toHaveBeenCalledWith('http://127.0.0.1:6001/health', expect.anything());
+    expect(mockFetch).toHaveBeenCalledWith('http://127.0.0.1:6000/api/auth/get-session', expect.anything());
   });
 });
