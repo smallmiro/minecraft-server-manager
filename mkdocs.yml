@@ -84,6 +84,8 @@ nav:
   - CLI Reference:
       - Overview: cli/index.md
       - Commands: cli/commands.md
+      - Audit Log: cli/audit-log.md
+      - RCON Commands: cli/rcon-commands.md
   - REST API:
       - Overview: api/index.md
       - Endpoints: api/endpoints.md
@@ -105,14 +107,13 @@ nav:
       - Installation: console/installation.md
       - CLI Commands: console/cli-commands.md
       - Web Console: console/web-console.md
-      - API Reference: console/api-reference.md
-      - Audit Logs (API): console/audit-log-api.md
-      - Audit Logs (UI): console/audit-log-ui.md
+      - Audit Logs: console/audit-log-ui.md
   - Advanced:
       - Overview: advanced/index.md
       - Networking: advanced/networking.md
       - External Access (playit.gg): advanced/external-access.md
       - Backup: advanced/backup.md
+      - RCON: advanced/rcon.md
       - Upgrade Runbook: advanced/upgrade-runbook.md
   - Troubleshooting: troubleshooting/index.md
   - Development:
@@ -120,6 +121,10 @@ nav:
       - Git Workflow: development/git-workflow.md
       - CLI Architecture: development/cli-architecture.md
       - Agent Collaboration: development/agent-collaboration.md
+      - Architecture Decisions:
+          - "ADR-0001: Container Runtime Ports": development/adr/0001-container-runtime-ports.md
+          - "ADR-0002: World-Server Assignment": development/adr/0002-world-server-assignment.md
+          - "ADR-0003: Server Spec": development/adr/0003-server-spec.md
   - AI Assistant: https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962
 
 extra:
