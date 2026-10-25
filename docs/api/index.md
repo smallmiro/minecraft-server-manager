@@ -275,7 +275,7 @@ The key is also stored as `AUTH_API_KEY` in the `mcctl-api` `env` block of `ecos
 
 ## OpenAPI and Swagger UI { #swagger }
 
-Swagger UI (`/docs`) and the OpenAPI document (`/docs/json`) are served only when `NODE_ENV` is not `production` or when `SWAGGER_ENABLED=true`. `mcctl console init` sets `NODE_ENV=production` for installed packages, so a normal install does not serve them. To enable them, add `SWAGGER_ENABLED: 'true'` to the `env` block of the `mcctl-api` app in `ecosystem.config.cjs` and run `mcctl console service restart --api --force`, which starts mcctl-api again from that file ([what `--force` stops](../console/cli-commands.md#mcctl-console-service-restart)).
+Swagger UI (`/docs`) and the OpenAPI document (`/docs/json`) are served only when `NODE_ENV` is not `production` or when `SWAGGER_ENABLED=true`. `mcctl console init` sets `NODE_ENV=production` for installed packages, so a normal install does not serve them. To enable them, add `SWAGGER_ENABLED=true` to `<MCCTL_ROOT>/.env` (mcctl-api reads that file when it starts, because PM2 runs it in `MCCTL_ROOT`) and run `mcctl console service restart --api`.
 
 Both paths use the same authentication as the other routes. In `api-key` mode a browser cannot open `/docs` directly; fetch the document with `curl -H "X-API-Key: <key>" http://localhost:5001/docs/json` and open it in an OpenAPI viewer.
 

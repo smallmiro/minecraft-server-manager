@@ -275,7 +275,7 @@ curl -H "X-API-Key: <key>" http://localhost:5001/api/servers
 
 ## OpenAPI와 Swagger UI { #swagger }
 
-Swagger UI(`/docs`)와 OpenAPI 문서(`/docs/json`)는 `NODE_ENV`가 `production`이 아니거나 `SWAGGER_ENABLED=true`일 때만 제공됩니다. `mcctl console init`은 설치된 패키지에 `NODE_ENV=production`을 설정하므로, 일반 설치에서는 제공되지 않습니다. 켜려면 `ecosystem.config.cjs`의 `mcctl-api` 앱 `env` 블록에 `SWAGGER_ENABLED: 'true'`를 추가하고 `mcctl console service restart --api --force`를 실행합니다. 이 명령은 그 파일에서 mcctl-api를 다시 시작합니다([`--force`가 멈추는 것](../console/cli-commands.ko.md#mcctl-console-service-restart)).
+Swagger UI(`/docs`)와 OpenAPI 문서(`/docs/json`)는 `NODE_ENV`가 `production`이 아니거나 `SWAGGER_ENABLED=true`일 때만 제공됩니다. `mcctl console init`은 설치된 패키지에 `NODE_ENV=production`을 설정하므로, 일반 설치에서는 제공되지 않습니다. 켜려면 `<MCCTL_ROOT>/.env`에 `SWAGGER_ENABLED=true`를 추가하고 `mcctl console service restart --api`를 실행합니다. PM2가 mcctl-api를 `MCCTL_ROOT`에서 실행하므로, mcctl-api는 시작할 때 이 파일을 읽습니다.
 
 두 경로 모두 다른 라우트와 같은 인증을 씁니다. `api-key` 모드에서는 브라우저로 `/docs`를 바로 열 수 없으므로, `curl -H "X-API-Key: <key>" http://localhost:5001/docs/json`으로 문서를 받아 OpenAPI 뷰어에서 엽니다.
 

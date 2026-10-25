@@ -270,7 +270,7 @@ The Management Console provides a full-featured web interface and REST API for m
 | Service | Default Port | Description |
 |---------|-------------|-------------|
 | mcctl-console | 5000 | Next.js Web UI with Better Auth |
-| mcctl-api | 5001 | Fastify REST API (Swagger UI at `/docs` only with `SWAGGER_ENABLED=true` in its PM2 env) |
+| mcctl-api | 5001 | Fastify REST API (Swagger UI at `/docs` only with `SWAGGER_ENABLED=true` in `.env`) |
 
 See the [Web Console Guide](https://minecraft-server-manager.readthedocs.io/en/latest/console/web-console/) for the complete feature walkthrough.
 
