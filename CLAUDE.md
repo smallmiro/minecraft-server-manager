@@ -45,7 +45,7 @@ See `.claude/commands/` for detailed command specifications.
 | **Node.js** | >= 18.0.0 | All packages |
 | **Docker Engine** | >= 24.0.0 | Minecraft server containers |
 | **Docker Compose** | >= 2.20.0 | `include` feature required |
-| **PM2** | >= 6.0.14 | mcctl-api, mcctl-console process management |
+| **PM2** | >= 6.0.0 | mcctl-api, mcctl-console process management (`npm install -g pm2`) |
 
 **OS**: Linux, macOS only
 
@@ -58,7 +58,7 @@ See `.claude/commands/` for detailed command specifications.
 | mc-router | 25565 |
 
 **Notes**:
-- PM2 is bundled as a dependency of `mcctl` CLI and installed automatically
+- `mcctl console init` requires PM2 >= 6.0.0 on `PATH` (`npm install -g pm2`) and stops otherwise (`shared/src/prerequisite/PrerequisiteChecker.ts`). The `pm2` dependency bundled with `mcctl` is used only by `mcctl console service` (`cli/src/infrastructure/pm2-cli.ts`)
 - `better-sqlite3` (mcctl-console dependency) is a native module; build toolchain (gcc, make, python) may be required on some environments
 
 ### Development Only
