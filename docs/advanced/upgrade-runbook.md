@@ -75,7 +75,7 @@ Test hook: `MCCTL_UPGRADE_TTY` replaces `/dev/tty` (a readable file gives the an
 ```bash
 # Variables: current version / target version / platform root
 export OLD=$(mcctl --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')   # for rollback
-export NEW=3.0.2
+export NEW=3.1.0
 export ROOT=~/minecraft-servers          # directory with docker-compose.yml, .env, .mcctl.json
 
 # Check PM2's Node version, then switch the shell to the same one (e.g. 22)

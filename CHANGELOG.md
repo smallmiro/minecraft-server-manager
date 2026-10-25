@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> **Upgrade note (#826).** `GAMEMODE` in an existing server's `config.env` never had an effect: the image reads `MODE`. Nothing is migrated automatically, so servers keep running as before. Saving Game Mode in the console (or `gameMode` through the API) writes it to `MODE` and removes `GAMEMODE`, so it applies for the first time at the next start; `mcctl config <server> MODE <mode>` sets it from the CLI. Servers that already exist keep their image; `mcctl update` moves a 1.20.5/1.20.6 server from `java17` to `java21`.
+## [3.1.0] - 2026-10-25
+
+> **Upgrade notes (v3.1.0).**
+> - **IP allow list (#833):** after updating, bind an existing `internal` install to loopback ([upgrade runbook 4-3](docs/advanced/upgrade-runbook.md#api-loopback-bind)).
+> - **`mcctl world delete <world>` (#823)** needs `--force` or `-y` without a terminal.
+>
+> **Game Mode (#826).** `GAMEMODE` in an existing server's `config.env` never had an effect: the image reads `MODE`. Nothing is migrated automatically, so servers keep running as before. Saving Game Mode in the console (or `gameMode` through the API) writes it to `MODE` and removes `GAMEMODE`, so it applies for the first time at the next start; `mcctl config <server> MODE <mode>` sets it from the CLI. Servers that already exist keep their image; `mcctl update` moves a 1.20.5/1.20.6 server from `java17` to `java21`.
 
 ### Added
 - **Console: sudo password when deleting a server** (#761) - The server delete dialog has the same optional **Sudo Password** field as the create dialog. When filled in, it is sent in the `DELETE /api/servers/:name` body so the API can remove the server's `<name>.local` entry from `/etc/avahi/hosts` on hosts without passwordless sudo; left empty, no body is sent and the API tries `sudo -n`. If the hostname could not be removed, the dialog shows the API's warning before going back to the server list. The password is kept only in the dialog and cleared when it closes.
+
+### Security
+- **mcctl-api IP allow list** (#833) - IP allow-list checks (including the default `internal` access mode) could be bypassed by a remote client. Update to 3.1.0. On an existing `internal` install, also bind mcctl-api to loopback ([upgrade runbook 4-3](docs/advanced/upgrade-runbook.md#api-loopback-bind)). Until you update, block port 5001 from other hosts.
 
 ### Changed
 - **mcctl-api IP allow list and bind address** (#833) - The IP allow list of the `internal`, `ip-whitelist` and `api-key-ip` access modes is matched against the source address of the connection; behind a reverse proxy that is the proxy's address. `mcctl console init` writes `HOST: '127.0.0.1'` for mcctl-api in the `internal` access mode, which allows only clients on the host (the other modes keep `0.0.0.0`), and points the console at `http://127.0.0.1:<api port>`; `mcctl console service` checks health there too. Existing installs keep their `ecosystem.config.cjs`: see [upgrade runbook 4-3](docs/advanced/upgrade-runbook.md#api-loopback-bind) to bind an `internal` install to loopback.
@@ -36,6 +45,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Docs
 - **README and docs checked against the code** (#822) - Every page was compared with the source and fixed in English and Korean. Among the fixes: mc-router settings live in the `router` service of `docker-compose.yml` and are applied with `mcctl router start` (they were described as `.env` keys applied by `mcctl router restart`); getting started now starts mc-router; `AUDIT_AUTO_CLEANUP` is off unless set to `true`; worlds are assigned by server name, not `mc-<name>`; `MODE`, not `GAMEMODE`, sets the game mode; of the platform `.env` only `TZ`, `EXTRA_ARGS`, `RCON_PASSWORD` and `RCON_PORT` reach servers, so `CF_API_KEY` is set per server. The two REST API references are merged into **REST API**, which now documents all 105 mcctl-api routes. The web console pages describe the v3 dashboard, server detail and Routing page, and the audit log page is rewritten from the UI. `mcctl config-snapshot`, `backup init`, `backup schedule`, `playit` and `audit` are documented. `docs/usage/cli-usage-examples.md` and `docs/server-configuration-reference.md` were removed; their remaining content is in the CLI reference and `configuration/server-types.md`.
+- **Web console screenshots recaptured** (#838) - The 30 screenshots in the web console guide and the 6 console screenshots on the landing page now show the v3 screens.
+- **Landing page and docs search metadata** (#816, #818, #820) - The landing page, docs and npm metadata lead with the `mcctl` keyword, and the tab panel and carousel ARIA roles moved off captioned figures.
+- **Contributor docs** (#835) - `CLAUDE.md` and the README state the PM2 requirement correctly, and the orchestrator workflow docs moved to `.claude/docs/`.
 
 ## [3.0.2] - 2026-10-24
 

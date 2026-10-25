@@ -77,6 +77,11 @@ mcctl logs myserver
 
 ## Changelog
 
+### v3.1.0 (2026-10-25)
+- **security(api)**: IP allow-list checks of mcctl-api (including the default `internal` mode) could be bypassed by a remote client (#833); update and bind an existing `internal` install to loopback (upgrade runbook 4-3)
+- **feat(console)**: optional sudo password in the server delete dialog (#761)
+- **fix(cli)**: argument parsing (#824), `mcctl update`/`init` on CLI-only hosts (#825), Java image per version and Game Mode written to `MODE` (#826), `mcctl world delete` asks first, `--force`/`-y` without a terminal (#823)
+
 ### v3.0.2 (2026-10-24)
 - **fix(cli)**: `mcctl update` and `upgrade-v3.sh` skip stopped servers already on the current image and report `up to date` (#810)
 

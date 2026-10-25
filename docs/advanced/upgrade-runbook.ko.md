@@ -75,7 +75,7 @@ v2 CLI에서 드라이런하면 `mcctl upgrade --dry-run` 미리보기는 지금
 ```bash
 # 변수: 올릴 버전 / 플랫폼 루트
 export OLD=$(mcctl --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')   # 현재 버전(롤백용)
-export NEW=3.0.2
+export NEW=3.1.0
 export ROOT=~/minecraft-servers          # docker-compose.yml, .env, .mcctl.json 이 있는 곳
 
 # PM2가 쓰는 Node 버전 확인 후 같은 버전의 셸로 전환 (예: 22)
