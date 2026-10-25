@@ -1497,21 +1497,21 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Management Console (Web Management)
+## 11. Management Console (Web Management)
 
 > **Milestone**: Phase 8 (Milestone 5)
 > **Status**: ✅ Completed (v2.0.0)
 
 Web-based management console service. Consists of two independent services following MSA (Microservice Architecture) principles.
 
-### 10.1 Service Components
+### 11.1 Service Components
 
 | Service | Package | Role |
 |---------|---------|------|
 | **mcctl-api** | `@minecraft-docker/mcctl-api` | Internal REST API service |
 | **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + Management UI |
 
-### 10.2 Architecture Overview
+### 11.2 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1535,7 +1535,7 @@ Web-based management console service. Consists of two independent services follo
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 10.3 CLI Commands (`mcctl console`) ✅
+### 11.3 CLI Commands (`mcctl console`) ✅
 
 > **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
 
@@ -1563,7 +1563,7 @@ mcctl console service status    # Show service status (--json for JSON output)
 mcctl console service logs      # View logs (--api, --console, -f for follow)
 ```
 
-### 10.4 Multi-Agent Collaboration
+### 11.4 Multi-Agent Collaboration
 
 This project uses a **Multi-Agent Collaboration** system for all development work. Each agent has exclusive ownership of their module and must **collaborate, not substitute** for other agents.
 
@@ -1647,7 +1647,7 @@ Agent specification files: `.claude/agents/` directory
 
 For the complete collaboration guide, see [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md).
 
-## 11. Revision History
+## 12. Revision History
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -1661,4 +1661,4 @@ For the complete collaboration guide, see [docs/development/agent-collaboration.
 | 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |
 | 5.0.0 | 2025-01-26 | - | Mark Management Console (Section 10) as Completed, update CLI commands |
 | 5.1.0 | 2025-01-26 | - | Add Section 11: Module PRD Index for centralized document management |
-| 5.2.0 | 2026-10-25 | - | Remove the per-package PRDs and Section 11 (Module PRD Index); they stopped matching the code (#851) |
+| 5.2.0 | 2026-10-25 | - | Remove the per-package PRDs and the Module PRD Index section; they stopped matching the code. Renumber Management Console to Section 11 (it shared number 10 with Future Enhancements) (#851) |
