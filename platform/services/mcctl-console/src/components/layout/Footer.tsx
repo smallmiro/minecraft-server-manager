@@ -42,8 +42,8 @@ const footerSections: FooterSection[] = [
     title: 'Documentation',
     links: [
       { label: 'CLI Commands', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/cli/', external: true },
-      { label: 'API Reference', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/console/', external: true },
-      { label: 'itzg Reference', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/itzg-reference/', external: true },
+      { label: 'API Reference', href: 'https://minecraft-server-manager.readthedocs.io/en/latest/api/', external: true },
+      { label: 'itzg Reference', href: 'https://docker-minecraft-server.readthedocs.io/', external: true },
     ],
   },
   {
@@ -75,6 +75,7 @@ const footerSections: FooterSection[] = [
   {
     title: 'About',
     links: [
+      { label: 'Website', href: 'https://mcctl.mirolab.dev/', external: true },
       { label: 'License', href: 'https://github.com/smallmiro/minecraft-server-manager/blob/main/LICENSE', external: true },
       {
         label: 'Docker Hub',
