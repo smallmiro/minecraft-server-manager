@@ -128,7 +128,7 @@ mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg
     mcctl init --no-playit
     ```
 
-`mcctl playit setup`은 `PLAYIT_SECRET_KEY`를 `.env` 파일에 저장하고, `.mcctl.json`에 `playitEnabled`를 설정하고, `mcctl playit start`에 필요한 `playit` 서비스(Compose 프로필 `playit`)를 `docker-compose.yml`에 추가합니다. `mcctl init --playit-key`를 실행한 뒤에도 `mcctl playit setup`을 한 번 실행하세요.
+`mcctl playit setup`은 `PLAYIT_SECRET_KEY`를 `.env` 파일에 저장하고, `.mcctl.json`에 `playitEnabled`를 설정하고, `mcctl playit start`에 필요한 `playit` 서비스(Compose 프로필 `playit`)를 `docker-compose.yml`에 추가합니다.
 
 ### 3단계: playit-agent 시작
 
