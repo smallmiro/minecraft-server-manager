@@ -106,8 +106,9 @@ export interface IPromptPort {
 
   /**
    * Prompt for modpack slug (project identifier)
+   * @param type - The chosen modpack server type, so the prompt names its platform
    */
-  promptModpackSlug(): Promise<string>;
+  promptModpackSlug(type?: ServerType): Promise<string>;
 
   /**
    * Prompt for modpack version (optional)
