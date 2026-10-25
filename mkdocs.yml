@@ -1,4 +1,4 @@
-site_name: Minecraft Docker Server Manager
+site_name: mcctl — Minecraft Docker Server Manager
 site_url: https://minecraft-server-manager.readthedocs.io/
 repo_url: https://github.com/smallmiro/minecraft-server-manager
 repo_name: smallmiro/minecraft-server-manager
@@ -73,6 +73,7 @@ markdown_extensions:
   - md_in_html
 
 nav:
+  - mcctl Home: https://mcctl.mirolab.dev/
   - Home: index.md
   - Getting Started:
       - Overview: getting-started/index.md
