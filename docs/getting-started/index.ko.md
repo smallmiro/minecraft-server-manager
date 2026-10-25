@@ -9,7 +9,7 @@ Docker Minecraft Server 관리 플랫폼에 오신 것을 환영합니다. 이 �
 - **간편한 서버 생성** - 단일 명령으로 Paper, Forge, Fabric, Vanilla 서버 생성
 - **멀티 서버 라우팅** - 호스트네임 기반 라우팅으로 단일 머신에서 여러 서버 운영
 - **자동 스케일링** - 플레이어 접속 시 자동 시작, 유휴 상태에서 자동 중지
-- **월드 관리** - 잠금 지원과 함께 서버 간 월드 공유 및 관리
+- **월드 관리** - 서버에 월드 배정(한 월드에 한 서버)과 해제
 - **GitHub 백업** - 월드 데이터를 비공개 GitHub 저장소에 자동 백업
 
 ## 아키텍처 개요
@@ -71,6 +71,9 @@ mcctl은 대화형 모드와 CLI 모드를 모두 제공합니다:
 ### 완전한 서버 라이프사이클
 
 ```bash
+# mc-router 시작 (mcctl init 후 한 번)
+mcctl router start
+
 # 서버 생성
 mcctl create myserver -t PAPER -v 1.21.1
 
@@ -137,9 +140,9 @@ mcctl backup restore
 |---------|------|------|
 | OS | Linux, macOS | Linux (Ubuntu 22.04+) |
 | Node.js | 18.0.0+ | 20.0.0+ |
-| Docker | 20.10+ | 24.0+ |
-| Docker Compose | v2.0+ | v2.20+ |
-| RAM | 4GB + 서버당 2GB | 8GB+ |
+| Docker | 24.0+ | 최신 |
+| Docker Compose | v2.20+ | 최신 |
+| RAM | 4GB + 실행 중인 서버마다 `MEMORY`(기본 4G) | 8GB+ |
 | 스토리지 | 10GB | 50GB+ SSD |
 
 !!! note "Windows 지원"

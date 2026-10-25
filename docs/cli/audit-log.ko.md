@@ -1,15 +1,17 @@
 # 감사 로그 관리
 
-감사 로그 시스템은 Minecraft 서버에서 수행되는 모든 중요한 작업을 추적하여 규정 준수, 문제 해결 및 보안 감사를 위한 포괄적인 활동 기록을 제공합니다.
+감사 로그는 Minecraft 서버에서 수행된 작업을 기록하여 문제 해결과 보안 감사를 위한 활동 기록을 제공합니다.
 
 ## 개요
 
-감사 로그는 다음 작업에 대해 자동으로 생성됩니다:
-- **서버 생명주기**: 생성, 삭제, 시작, 중지, 재시작
-- **플레이어 관리**: 화이트리스트 추가/제거, 차단/차단 해제, OP 부여/제거, 강제 퇴장
+CLI와 mcctl-api(웹 콘솔도 제공)가 감사 로그를 기록합니다. 예를 들어 다음 작업이 기록됩니다:
+
+- **서버**: 생성, 삭제, 시작, 중지, 재시작, 설정 및 호스트명 변경
+- **플레이어**: 화이트리스트, 차단/차단 해제, OP 부여/제거와 OP 레벨, 강제 퇴장
+- **월드, 모드 등**: 월드 변경과 지도 렌더링, 모드, playit.gg, 라우터 재시작, 플랫폼 설정, 파일 브라우저 작업, 백업 및 설정 스냅샷 일정
 - **감사 유지보수**: 로그 삭제 작업
 
-로그는 `~/.minecraft-servers/audit.db`의 SQLite 데이터베이스에 저장되며 90일 후 자동 정리됩니다(설정 가능).
+로그는 SQLite 데이터베이스 `<root>/data/audit.db`(기본값 `~/minecraft-servers/data/audit.db`)에 저장됩니다. 오래된 항목은 `mcctl audit purge`를 실행하거나 [자동 정리](#설정)를 켰을 때만 삭제됩니다.
 
 ## 명령어
 
@@ -23,6 +25,7 @@ mcctl audit list [옵션]
 ```
 
 **옵션:**
+
 | 옵션 | 타입 | 설명 |
 |------|------|------|
 | `--limit <숫자>` | number | 표시할 최대 로그 수 (기본값: 50) |
@@ -34,19 +37,23 @@ mcctl audit list [옵션]
 | `--to <날짜>` | ISO date | 종료 날짜 |
 
 **액션 타입:**
-- `server.create` - 서버 생성
-- `server.delete` - 서버 삭제
-- `server.start` - 서버 시작
-- `server.stop` - 서버 중지
-- `server.restart` - 서버 재시작
-- `player.whitelist.add` - 플레이어 화이트리스트 추가
-- `player.whitelist.remove` - 플레이어 화이트리스트 제거
-- `player.ban` - 플레이어 차단
-- `player.unban` - 플레이어 차단 해제
-- `player.op` - 플레이어 OP 권한 부여
-- `player.deop` - 플레이어 OP 권한 제거
-- `player.kick` - 플레이어 서버에서 추방
-- `audit.purge` - 감사 로그 삭제
+
+`--action`에는 `server.create`나 `player.whitelist.add`처럼 전체 이름을 씁니다:
+
+| 접두사 | 액션 |
+|--------|------|
+| `server.` | `create`, `delete`, `start`, `stop`, `restart`, `config`, `hostname` |
+| `player.` | `whitelist.add`, `whitelist.remove`, `whitelist.toggle`, `ban`, `unban`, `op`, `op.level`, `deop`, `kick` |
+| `world.` | `create`, `delete`, `assign`, `release`, `map.render` |
+| `mod.` | `add`, `remove` |
+| `playit.` | `start`, `stop` |
+| `router.` | `restart` |
+| `platform.` | `settings.update` |
+| `file.` | `read`, `write`, `delete`, `mkdir`, `rename`, `upload`, `download` |
+| `backup.schedule.` | `create`, `update`, `delete`, `enable`, `disable`, `run` |
+| `config.snapshot.` | `create`, `delete`, `restore` |
+| `config.snapshot.schedule.` | `create`, `update`, `delete`, `enable`, `disable` |
+| `audit.` | `purge` |
 
 **예제:**
 
@@ -77,12 +84,15 @@ mcctl audit list --action server.start --status failure --limit 20
 ```
 
 **출력 형식:**
+
+항목은 최신순으로 표시되며, 시각은 시스템 로캘 형식을 따릅니다.
+
 ```
 Audit Logs (25 entries):
 
-2026-02-05 14:32:15  server.create              cli:local       server:myserver        success
-2026-02-05 14:30:45  player.whitelist.add       web:admin       player:Steve           success
-2026-02-05 14:28:10  server.start               api:service     server:survival        failure
+2/5/2026, 2:32:15 PM server.create             cli:local       server:myserver      success
+2/5/2026, 2:30:45 PM player.whitelist.add      web:admin       player:Steve         success
+2/5/2026, 2:28:10 PM server.start              api:service     server:survival      failure
 ```
 
 ---
@@ -100,8 +110,8 @@ mcctl audit stats
 ```
 Audit Log Statistics:
 
-Total Logs: 1,234
-Success: 1,180
+Total Logs: 1234
+Success: 1180
 Failure: 54
 
 
@@ -140,6 +150,7 @@ mcctl audit purge [옵션]
 ```
 
 **옵션:**
+
 | 옵션 | 타입 | 설명 |
 |------|------|------|
 | `--days <숫자>` | number | N일보다 오래된 로그 삭제 (기본값: 90) |
@@ -180,12 +191,12 @@ mcctl audit purge --days 180 --force
 
 ## 설정
 
-감사 로그 동작은 `.env` 파일의 환경 변수를 통해 설정합니다:
+자동 정리는 두 환경 변수로 설정합니다:
 
 ```bash
-# ~/.minecraft-servers/.env
+# ~/minecraft-servers/.env
 
-# 오래된 로그 자동 정리
+# 오래된 로그 자동 삭제 (기본값: 꺼짐)
 AUDIT_AUTO_CLEANUP=true
 
 # 보관 기간 (일) (기본값: 90)
@@ -193,8 +204,10 @@ AUDIT_RETENTION_DAYS=90
 ```
 
 **AUDIT_AUTO_CLEANUP:**
-- `true` (기본값): 시스템 시작 시 `AUDIT_RETENTION_DAYS`보다 오래된 로그 자동 삭제
-- `false`: 자동 정리 비활성화 (수동 삭제만 가능)
+- `true`: 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 항목을 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지났을 때)
+- 설정하지 않거나 다른 값(기본값): 자동 정리 없음. `mcctl audit purge`를 사용합니다
+
+mcctl-api는 두 변수를 `<root>/.env`에서 읽으므로 자동 정리는 mcctl-api에서 실행됩니다. CLI는 셸 환경 변수에서만 읽습니다.
 
 **AUDIT_RETENTION_DAYS:**
 - 자동 정리 전에 감사 로그를 보관할 일수
@@ -205,28 +218,28 @@ AUDIT_RETENTION_DAYS=90
 
 **데이터베이스 위치:**
 ```
-~/.minecraft-servers/audit.db
+~/minecraft-servers/data/audit.db
 ```
 
 **스키마:**
 ```sql
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY,
   action TEXT NOT NULL,
   actor TEXT NOT NULL,
   target_type TEXT NOT NULL,
   target_name TEXT NOT NULL,
   details TEXT,
-  status TEXT NOT NULL CHECK (status IN ('success', 'failure')),
+  status TEXT NOT NULL CHECK(status IN ('success', 'failure')),
   error_message TEXT,
-  timestamp TEXT NOT NULL
+  timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_action ON audit_logs(action);
-CREATE INDEX idx_actor ON audit_logs(actor);
-CREATE INDEX idx_target_name ON audit_logs(target_name);
-CREATE INDEX idx_status ON audit_logs(status);
-CREATE INDEX idx_timestamp ON audit_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_target ON audit_logs(target_type, target_name);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status);
 ```
 
 **Details 필드:**
@@ -242,8 +255,8 @@ JSON으로 인코딩된 추가 컨텍스트. 예제:
 
 // 플레이어 차단
 {
-  "reason": "Griefing",
-  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+  "server": "survival",
+  "reason": "Griefing"
 }
 
 // 감사 삭제
@@ -297,6 +310,6 @@ mcctl audit list --action player.whitelist.add --actor web:admin
 
 ## 참고
 
-- [Management Console - 감사 로그 API](../console/audit-log-api.ko.md)
+- [REST API - 감사 로그](../api/endpoints.ko.md#audit-logs)
 - [Web Console - 감사 로그 UI](../console/audit-log-ui.ko.md)
 - [문제 해결](../troubleshooting/index.ko.md)

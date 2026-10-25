@@ -17,8 +17,12 @@ mcctl init [options]
 | Option | Description |
 |--------|-------------|
 | `--root <path>` | Custom data directory |
-| `--skip-validation` | Skip Docker validation |
-| `--skip-docker` | Skip Docker check |
+| `--skip-validation` | Skip the prerequisite checks (Node.js, Docker, Docker Compose, avahi) |
+| `--skip-docker` | Do not create the `minecraft-net` Docker network |
+| `--reconfigure` | Change the settings of an initialized platform, such as the host IP address(es), timezone and RCON password |
+| `--playit-key <key>` | Enable playit.gg with this `PLAYIT_SECRET_KEY` (no question) |
+| `--no-playit` | Do not enable playit.gg (no question) |
+| `--upgrade` | Run [`mcctl upgrade`](#mcctl-upgrade) instead |
 
 **Example:**
 
@@ -36,8 +40,11 @@ mcctl --root /opt/minecraft init
 ~/minecraft-servers/
 ├── docker-compose.yml
 ├── .env
+├── .gitignore
+├── .mcctl.json
 ├── servers/
 │   ├── compose.yml
+│   ├── global.env
 │   └── _template/
 ├── worlds/
 ├── shared/
@@ -45,6 +52,8 @@ mcctl --root /opt/minecraft init
 │   └── mods/
 └── backups/
 ```
+
+`mcctl init` asks which host IP address(es) to use (`HOST_IP`, `HOST_IPS` in `.env`) and whether to enable playit.gg. It writes a random 24-character `RCON_PASSWORD` to `.env`. On a platform that is already initialized it changes nothing and points to `mcctl init --reconfigure`.
 
 ---
 
@@ -68,7 +77,7 @@ Equivalent to `docker compose up -d`.
 
 ### mcctl down
 
-Stop all infrastructure and remove network.
+Stop all infrastructure (mc-router and all Minecraft servers).
 
 ```bash
 mcctl down
@@ -80,7 +89,7 @@ mcctl down
 mcctl down
 ```
 
-Stops all mc-* containers and runs `docker compose down`.
+Stops all mc-* containers and runs `docker compose down`, which removes the containers. The `minecraft-net` network is declared `external` and is kept.
 
 ---
 
@@ -109,7 +118,7 @@ mcctl router start
 # Stop mc-router
 mcctl router stop
 
-# Restart mc-router (useful after configuration changes)
+# Restart mc-router (the container keeps its current settings)
 mcctl router restart
 ```
 
@@ -117,20 +126,19 @@ mc-router handles hostname-based routing for all Minecraft servers. It must be r
 
 **Configuration:**
 
-mc-router settings are configured via environment variables in `.env` file:
+The auto-scale settings are in the `environment:` of the `router` service in `<root>/docker-compose.yml`:
 
-```bash
-# Auto-scaling settings
-AUTO_SCALE_UP=true              # Auto-start servers on player connect
-AUTO_SCALE_DOWN=true            # Auto-stop idle servers
-AUTO_SCALE_DOWN_AFTER=10m       # Idle timeout (1m, 5m, 10m, 30m, 1h)
-DOCKER_TIMEOUT=120s             # Container start timeout (Go time.Duration: 120s, 2m)
-
-# Custom MOTD for sleeping servers
-AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!
+```yaml
+  router:
+    environment:
+      AUTO_SCALE_UP: "true"            # Start a stopped server when a player connects
+      AUTO_SCALE_DOWN: "true"          # Stop idle servers
+      AUTO_SCALE_DOWN_AFTER: "10m"     # Idle timeout (1m, 5m, 10m, 30m, 1h)
+      DOCKER_TIMEOUT: "120s"           # Container start timeout (Go time.Duration: 120s, 2m)
+      AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"   # MOTD of a stopped server
 ```
 
-After changing `.env`, restart mc-router with `mcctl router restart`.
+Apply a change with `mcctl router start` (`docker compose up -d router` recreates the container). `mcctl router restart` keeps the old values. `mcctl upgrade` patches only the router `image` and `group_add`, so these edits survive an upgrade.
 
 ---
 
@@ -314,15 +322,12 @@ mcctl update [options]
 | Option | Description |
 |--------|-------------|
 | `--cli-only` | Update only the mcctl CLI binary (opt out of the full update) |
-| `--check` | Check for updates only (does not install) |
-| `--yes` | Auto-confirm update without prompt |
-| `--force` | Force fresh version check (ignore cache) |
+| `--check` | Show the available updates for the CLI and the installed services; install nothing |
+| `--yes` | Do not ask before updating, and do not recreate stopped servers (see **Stopped servers** below) |
+| `--force` | Accepted for compatibility; every `mcctl update` checks npm without using the cache |
 | `--all` | Deprecated alias — same as the default (kept for backward compatibility) |
 
-!!! note "Default behavior changed"
-    `mcctl update` now updates the CLI **and** all installed services (API, Console, `shared`) plus
-    server image tags / Docker images by default — the previous `--all` behavior. Use `--cli-only`
-    to update just the CLI binary.
+By default `mcctl update` updates the CLI, the installed services (mcctl-api, mcctl-console, `shared`) and the server images. `--cli-only` updates just the CLI binary.
 
 A server's image tag follows its `VERSION` (for example `java21` for 1.21.1). A release tag such as `itzg/minecraft-server:2026.10.0-java21` or a digest (`java21@sha256:…`) in `server.yaml` is a pin and is kept, so a server can stay on a known-good image while an upstream regression is open. If the pinned Java is older than `VERSION` needs, `mcctl update` warns and still keeps it. Once the fix is released, set the tag back to the one for its `VERSION`.
 
@@ -335,38 +340,35 @@ A server's image tag follows its `VERSION` (for example `java21` for 1.21.1). A 
 
     **Output (update available):**
     ```
-    mcctl update check:
-      Installed: 2.11.0
-      Latest:    2.12.1
+    mcctl Version Info
 
-    Update available! Run: mcctl update
+      Installed: 3.0.1
+      Latest:    3.0.2
+
+      Update available: 3.0.1 → 3.0.2
     ```
 
     **Output (up to date):**
     ```
-    mcctl update check:
-      Installed: 2.12.1
-      Latest:    2.12.1
+    mcctl Version Info
 
-    You are up to date.
+      Installed: 3.0.2
+      Latest:    3.0.2
+
+      You are using the latest version.
     ```
+
+    Without `--cli-only`, the services are listed after it (for example `Update available` or `Up to date`).
 
 === "Update CLI Only"
     ```bash
     mcctl update --cli-only
     ```
 
-    **Output:**
+    After the version info it asks `Update mcctl to 3.0.2?` (unless `--yes`), then prints:
+
     ```
-    mcctl update check:
-      Installed: 2.11.0
-      Latest:    2.12.1
-
-    Update available!
-    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
-
-    Updating mcctl...
-    ✓ mcctl updated to 2.12.1
+    ✓ mcctl updated successfully!
     ```
 
 === "Update Everything (default)"
@@ -374,23 +376,24 @@ A server's image tag follows its `VERSION` (for example `java21` for 1.21.1). A 
     mcctl update
     ```
 
-    **Output:**
+    **Output (after the CLI update):**
     ```
-    mcctl update check:
-      Installed: 2.11.0
-      Latest:    2.12.1
-
-    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
-
-    Updating mcctl...
-    ✓ mcctl updated to 2.12.1
-
     Updating services...
-      ✓ @minecraft-docker/mcctl-api: 2.11.0 → 2.12.1 (restarted)
-      ✓ @minecraft-docker/mcctl-console: 2.11.0 → 2.12.1 (restarted)
-      ✓ @minecraft-docker/shared: 2.11.0 → 2.12.1
 
-    All services updated successfully.
+      mcctl-api        3.0.1 → 3.0.2  ✓ Updated & restarted
+      mcctl-console    3.0.1 → 3.0.2  ✓ Updated & restarted
+
+    Checking server image compatibility...
+      ✓ survival: java21 (VERSION=1.21.1 - compatible)
+
+    Updating Docker images...
+
+      ✓ itzg/minecraft-server:java21
+
+    Applying new images to stopped servers...
+      ✓ survival: up to date
+
+      Completed in 41.8s
     ```
 
 === "Auto-confirm (CI/CD)"
@@ -400,13 +403,13 @@ A server's image tag follows its `VERSION` (for example `java21` for 1.21.1). A 
 
 **Behavior Details:**
 
-- **Update check cache**: Version checks are cached for 24 hours at `~/.mcctl-update-check.json`. During normal CLI usage, a non-blocking update check runs automatically in the background.
-- **`--check` exit codes**: Returns exit code `1` if an update is available, `0` if up to date. Useful for scripting.
-- **Default (full update)**: After updating the CLI, also updates installed services and refreshes images:
+- **Update check before each command**: Before every command except `--help` and `--version`, mcctl checks npm for a newer CLI version and prints a notice when there is one. The result is cached for 24 hours in `~/.mcctl-update-check.json`; without a fresh cache entry the command waits up to 2 seconds for npm.
+- **`--check` exit codes**: Exit code `1` if a newer CLI version is available or npm cannot be reached, `0` if the CLI is up to date. Service updates do not change the exit code. Useful for scripting.
+- **Default (full update)**: After updating the CLI (also when the CLI is already up to date):
     - `mcctl-api` and `mcctl-console`: Installs latest version and restarts the PM2 service
     - `shared` library: Installs latest version (no restart needed)
-    - Server `docker-compose.yml` image tags aligned to the recommended Java tag, then Docker images pulled
-    - Services are updated even when the CLI is already up to date
+    - Each server's image tag is set to the tag recommended for its `VERSION` through `server.yaml` (pinned tags are kept, see above), then the servers' Docker images are pulled
+- **Stopped servers**: mc-router auto-scale starts the existing container, so a stopped server keeps its old image until its container is recreated. After pulling, `mcctl update` lists the stopped (`exited` or `created`) servers whose container does not use the pulled image; servers already on it are shown as `up to date`. In a terminal it asks `Recreate the stopped servers now so they use the new image?` (default No). Yes runs `docker compose up --no-start --no-deps mc-<server>` for each of them and prints a rollback command (`docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`). With `--yes`, or without a terminal, nothing is recreated and the `docker compose up --no-start --no-deps` command is printed for each server. Running servers keep their image until you run `mcctl stop <server> && mcctl start <server>`.
 - **`--cli-only` flag**: Updates only the mcctl CLI binary and skips services/images.
 
 !!! tip "Scripting with --check"
@@ -442,12 +445,15 @@ mcctl upgrade [options]
 
 **What it does:**
 
-1. Appends new variables from the bundled `.env.example` to `.env` (existing values are never changed)
+1. Appends new variables from the bundled `.env.example` to `.env` (existing values are never changed). In a terminal it asks for a value for each new variable (Enter keeps the default); `--non-interactive` writes the defaults
 2. Detects the Docker socket group ID and writes `DOCKER_GID` to `.env` (needed by non-root mc-router 1.46+)
 3. Patches the `router` service in the root `docker-compose.yml` (see below)
 4. Updates `servers/_template/` files and records `templateVersion` in `.mcctl.json`
-5. Adds `installId` to `.mcctl.json` if it is missing (an existing value is kept)
-6. (v3.0.0+) If `<root>/scripts` exists, prints its path, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and the link to the [script to mcctl table](../advanced/upgrade-runbook.md#v300-scripts). In a terminal it asks `Remove <path>?` (default `N`) and deletes only on `y`. With `--non-interactive` or without a terminal it prints a hint (`rm -r <path>`) and deletes nothing. With `--dry-run` it only prints `Would ask before removing <path>.`. A symbolic link is unlinked, never followed. There is no option to skip the question.
+5. Creates `servers/global.env` if it is missing and points each server's `docker-compose.yml` at it instead of the platform `.env`, so platform secrets no longer reach the servers. Existing containers keep the old environment until they are recreated: run `mcctl stop <server> && mcctl start <server>` for each server it lists
+6. Moves `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` from `ecosystem.config.cjs` into `.env` (backup: `ecosystem.config.cjs.bak-<timestamp>`); apply with `mcctl console service restart --console`
+7. Lists the servers that have no `server.yaml` yet and writes nothing; they are imported on their next change, or with [`mcctl migrate spec`](#mcctl-migrate-spec)
+8. Adds `installId` to `.mcctl.json` if it is missing (an existing value is kept)
+9. (v3.0.0+) If `<root>/scripts` exists, prints its path, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and the link to the [script to mcctl table](../advanced/upgrade-runbook.md#v300-scripts). In a terminal it asks `Remove <path>?` (default `N`) and deletes only on `y`. With `--non-interactive` or without a terminal it prints a hint (`rm -r <path>`) and deletes nothing. With `--dry-run` it only prints `Would ask before removing <path>.`. A symbolic link is unlinked, never followed. There is no option to skip the question.
 
 **docker-compose.yml router patch:** only the `router` service's `image` tag and `group_add` entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.
 
@@ -485,17 +491,24 @@ mcctl create [name] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, MODRINTH |
-| `--version` | `-v` | Minecraft version (e.g., 1.21.1) |
+| `--type` | `-t` | Server type (default `PAPER`): PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
+| `--version` | `-v` | Minecraft version: `-v 1.21.1`, or the long form with `=`: `--version=1.21.1` (default `LATEST`; modpack types use the modpack's version) |
 | `--seed` | `-s` | World seed for generation. A negative seed works (`-s -123`); `--seed=<value>` takes any value |
 | `--world-url` | `-u` | Download world from ZIP URL |
 | `--world` | `-w` | Use existing world from worlds/ directory |
-| `--modpack` | | Enable Modrinth modpack server creation (interactive search) |
+| `--modpack <slug>` | | Modpack slug; required with `-t MODRINTH` or `-t AUTO_CURSEFORGE` |
+| `--modpack-version <version>` | | Modpack version (default: latest) |
+| `--mod-loader <loader>` | | Mod loader of the modpack, e.g. `fabric`, `forge`, `neoforge`, `quilt` (omit to detect it from the modpack) |
+| `--exclude-files <list>` | | Comma-separated files to leave out of the modpack, e.g. client-only mods |
 | `--no-start` | | Create without starting |
 | `--whitelist` | | Enable whitelist and add initial players (comma-separated, e.g. `Steve,Alex`) |
 | `--enable-whitelist` | | Enable whitelist without initial players |
 | `--no-whitelist` | | Disable whitelist (default; overrides the two options above) |
+| `--playit-domain <domain>` | | playit.gg external domain of the server (e.g. `aa.example.com`) |
+| `--no-playit-domain` | | Do not set a playit.gg domain (also the default without `--playit-domain`) |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
+
+New servers get 4G of memory (6G for modpack types) and the image `itzg/minecraft-server:java25`. Interactive `mcctl create` asks for the memory; afterwards change it with `mcctl config <name> MEMORY <size>`. For modpack details see [Modpacks](../mods-and-plugins/modpacks.md).
 
 !!! info "One world, one server"
     `--world` (and the default world `<name>` of a new server) is refused when another server already uses that world. See [World Assignment Rules](#world-assignment-rules).
@@ -548,17 +561,19 @@ mcctl create [name] [options]
     mcctl create private --enable-whitelist
     ```
 
-=== "Modpack (Modrinth)"
+=== "Modpack"
     ```bash
-    # Interactive modpack creation (search, select version, choose loader)
-    mcctl create myserver --modpack
+    # Modrinth modpack by slug
+    mcctl create cobblemon -t MODRINTH --modpack cobblemon
 
-    # The CLI will guide you through:
-    # 1. Search Modrinth for modpacks
-    # 2. Select a modpack version
-    # 3. Choose a mod loader (only supported loaders shown)
-    # 4. Configure memory and other settings
+    # Pin the modpack version and loader, leave out client-only mods
+    mcctl create mypack -t MODRINTH --modpack <slug> --modpack-version <version> --mod-loader fabric --exclude-files <file1>,<file2>
+
+    # CurseForge modpack by slug
+    mcctl create mypack -t AUTO_CURSEFORGE --modpack <slug>
     ```
+
+    For a guided setup, run `mcctl create` without a name and choose **Modrinth Modpack** or **CurseForge Modpack** under "Modpack Platforms". It then asks for the modpack slug, the mod loader, the modpack version and the files to exclude.
 
 === "Automation (CI/CD)"
     ```bash
@@ -583,7 +598,11 @@ mcctl create [name] [options]
 | `BUKKIT` | Classic plugin server | Yes | No |
 | `PURPUR` | Paper fork with more features | Yes | No |
 | `QUILT` | Modern modding toolchain | No | Yes |
+| `LEAF` | Lightweight Paper fork | Yes | No |
+| `FOLIA` | Multi-threaded Paper server for large worlds | Yes | No |
+| `PUFFERFISH` | Paper fork for large servers | Yes | No |
 | `MODRINTH` | Modrinth modpack server | No | Yes |
+| `AUTO_CURSEFORGE` | CurseForge modpack server | No | Yes |
 
 ---
 
@@ -770,7 +789,9 @@ Connect to server RCON console. This is the same interactive session as [`mcctl 
 mcctl console <name>
 ```
 
-!!! note "Changed in this release: TCP RCON instead of `docker exec`"
+The subcommands `mcctl console init`, `service`, `user`, `api` and `remove` manage the Management Console instead; see [Console CLI Commands](../console/cli-commands.md). `mcctl admin <subcommand>` is a deprecated alias for them. A server with one of these names is reached with `mcctl rcon <name>`.
+
+!!! note "Since v3.0.0: TCP RCON instead of `docker exec`"
     `mcctl console` connects to the server's RCON port over TCP (the container address, `RCON_PORT` and `RCON_PASSWORD`), like `mcctl rcon`. It used to run `docker exec -i mc-<name> rcon-cli`. The server must be running and its RCON port reachable from the host running `mcctl`. Type `exit` or `quit`, or press `Ctrl+C`/`Ctrl+D`, to leave. Piped input runs line by line (`printf 'list\n' | mcctl console myserver`). The session ends when the server closes the connection (for example after `stop`); a connection error exits with code 1.
 
 **Example:**
@@ -802,11 +823,11 @@ mcctl rcon <server>
 
 ```bash
 $ mcctl rcon survival
-Connecting to RCON console for 'survival'...
-Type "help" for commands, Ctrl+C or "exit" to quit
+[INFO] Connecting to RCON console for 'survival'...
+[INFO] Connected! Type "help" for commands, "exit" or Ctrl+C to quit.
 
 > list
-There are 2 of 20 players online: Steve, Alex
+There are 2 of a max of 20 players online: Steve, Alex
 > say Server maintenance in 10 minutes!
 [Server: Server maintenance in 10 minutes!]
 > tp Steve 0 100 0
@@ -855,7 +876,7 @@ mcctl exec myserver time set day
 
 # Use in scripts
 PLAYERS=$(mcctl exec myserver list)
-if echo "$PLAYERS" | grep -q "0 of"; then
+if echo "$PLAYERS" | grep -q "There are 0 of"; then
   mcctl stop myserver
 fi
 ```
@@ -888,6 +909,8 @@ mcctl config <server> [key] [value] [options]
 | `--no-pvp` | Disable PvP |
 | `--command-block` | Enable command blocks |
 | `--no-command-block` | Disable command blocks |
+
+`--json` prints the values, or the change (`server`, `key`, `oldValue`, `newValue`), as JSON.
 
 **Examples:**
 
@@ -947,7 +970,7 @@ mcctl config <server> [key] [value] [options]
 
 ### mcctl server-backup
 
-Backup server configuration (config.env, docker-compose.yml).
+Back up a server's configuration files to `backups/servers/<server>/<id>.tar.gz`: `config.env`, `docker-compose.yml` and, when present, `server.yaml`, `data/ops.json`, `data/whitelist.json`, `data/banned-players.json`, `data/banned-ips.json` and `data/server.properties`. The ID is the creation time (`20260120-203357`).
 
 ```bash
 mcctl server-backup <server> [options]
@@ -1011,10 +1034,60 @@ mcctl server-restore <server> [backup-id] [options]
 mcctl server-restore myserver
 
 # Restore specific backup
-mcctl server-restore myserver abc123
+mcctl server-restore myserver 20260120-203357
 
 # Preview restoration
-mcctl server-restore myserver abc123 --dry-run
+mcctl server-restore myserver 20260120-203357 --dry-run
+```
+
+It asks before restoring unless `--force` or `--json` is given. The current files are copied to `backups/servers/<server>/.pre-restore/` first. Restart the server to apply the restored files.
+
+---
+
+## Config Snapshots
+
+### mcctl config-snapshot
+
+Save and restore copies of a server's configuration files. A snapshot holds the files in `servers/<server>/` itself (not `data/`): `server.yaml`, `config.env`, `docker-compose.yml` and any other `.yml`, `.yaml`, `.json` or `.properties` file up to 1 MB. Snapshots are stored in `backups/meta/config-snapshots.db` and `backups/meta/config-snapshot-storage/`.
+
+```bash
+mcctl config-snapshot <list|create|show|diff|restore|delete> [args] [options]
+```
+
+| Command | Description |
+|---------|-------------|
+| `list [server]` | List snapshots, newest first (`--limit <n>`, default 20; `--json`) |
+| `create <server>` | Create a snapshot (`--description "..."`; `--json`) |
+| `show <id>` | Show a snapshot (`--files` lists its files; `--json`) |
+| `diff <id1> <id2>` | Show what changed between two snapshots (`--files-only`; `--json`) |
+| `restore <id>` | Write the snapshot's files back to `servers/<server>/`; asks first unless `--force` |
+| `delete <id>` | Delete a snapshot; asks first unless `--force` |
+
+`list` shows only the first 8 characters of each ID; the other commands need the full ID, printed by `create` and by `list --json`. A restore that changes the server's world follows the [World Assignment Rules](#world-assignment-rules). Restart the server to apply restored files.
+
+**Examples:**
+
+```bash
+mcctl config-snapshot create survival --description "Before mod update"
+mcctl config-snapshot list survival
+mcctl config-snapshot diff <id1> <id2> --files-only
+mcctl config-snapshot restore <id>
+```
+
+### mcctl config-snapshot schedule
+
+Create snapshots on a schedule. The schedules are run by mcctl-api, which reads them when it starts: after adding, removing, enabling or disabling a schedule here, restart it with `mcctl console service restart --api`.
+
+| Command | Description |
+|---------|-------------|
+| `schedule list` | List schedules (`--server <name>`; `--json`) |
+| `schedule add` | Add a schedule: `--server <name>`, `--cron "<expression>"` and `--name "<name>"` are required; `--retention <n>` keeps the newest n snapshots of this schedule (default 10); `--json` |
+| `schedule remove <id>` | Remove a schedule; asks first unless `--force` |
+| `schedule enable <id>` | Enable a schedule |
+| `schedule disable <id>` | Disable a schedule |
+
+```bash
+mcctl config-snapshot schedule add --server survival --cron "0 3 * * *" --name "Daily"
 ```
 
 ---
@@ -1026,16 +1099,19 @@ mcctl server-restore myserver abc123 --dry-run
 Manage server operators.
 
 ```bash
-mcctl op <server> <action> [player]
+mcctl op <server> <action> [player] [level]
 ```
 
 **Actions:**
 
 | Action | Description |
 |--------|-------------|
-| `list` | Show current operators |
-| `add <player>` | Add operator (updates RCON + config.env) |
+| `list` | Show operators with their level and role (read from `data/ops.json`) |
+| `add <player> [level]` | Add operator: `OPS` in `config.env`, and over RCON when the server is running (the level is then written to `data/ops.json`). Without a level it asks in a terminal; with `--json` it uses 4 |
 | `remove <player>` | Remove operator |
+| `set-level <player> <level>` | Change an operator's level in `data/ops.json`. The server must be running; restart it to apply |
+
+Levels: `1` Moderator, `2` Gamemaster, `3` Admin, `4` Owner. `--json` prints the result as JSON.
 
 **Examples:**
 
@@ -1043,8 +1119,14 @@ mcctl op <server> <action> [player]
 # List operators
 mcctl op survival list
 
-# Add operator
+# Add operator (asks for the level)
 mcctl op survival add Steve
+
+# Add operator with level 2
+mcctl op survival add Alex 2
+
+# Change the level
+mcctl op survival set-level Alex 3
 
 # Remove operator
 mcctl op survival remove Steve
@@ -1054,8 +1136,10 @@ mcctl op survival remove Steve
 ```
 Operators for survival:
 
-  Steve
-  Alex
+  Player       Level             Role
+  ------------------------------------------------------------
+  Steve                4   Owner
+  Alex                 2   Gamemaster
 ```
 
 ---
@@ -1078,6 +1162,8 @@ mcctl whitelist <server> <action> [player]
 | `on` | Enable whitelist |
 | `off` | Disable whitelist |
 | `status` | Show whitelist status |
+
+`--json` prints the result as JSON.
 
 **Examples:**
 
@@ -1140,6 +1226,8 @@ mcctl ban <server> ip <action> [ip] [reason]
 | `ip add <ip> [reason]` | Ban IP address |
 | `ip remove <ip>` | Unban IP address |
 
+`--json` prints the result as JSON.
+
 **Examples:**
 
 ```bash
@@ -1163,7 +1251,7 @@ mcctl ban survival ip add 192.168.1.100 "Spam"
 ```
 Banned Players for survival:
 
-  Griefer (Reason: Griefing spawn area)
+  Griefer - Griefing spawn area
 ```
 
 ---
@@ -1175,6 +1263,8 @@ Kick a player from the server.
 ```bash
 mcctl kick <server> <player> [reason]
 ```
+
+The server must be running. `--json` prints the result as JSON.
 
 **Examples:**
 
@@ -1217,9 +1307,8 @@ mcctl player online --all
 
       Status: Running (2/20)
 
-      Players:
-        - Steve
-        - Alex
+      Steve
+      Alex
     ```
 
 === "All Servers"
@@ -1231,14 +1320,14 @@ mcctl player online --all
     ```
     Online Players (All Servers):
 
-      survival: 2 players
-        - Steve
-        - Alex
+      Total: 2 players
 
-      creative: 0 players
-
-      Total: 2 players online
+      survival (2/20):
+        Steve
+        Alex
     ```
+
+    Running servers with no players online are left out.
 
 ---
 
@@ -1276,7 +1365,8 @@ mcctl world new [name] [options]
 |--------|-------|-------------|
 | `--seed` | `-s` | World seed for generation. A negative seed works (`-s -123`); `--seed=<value>` takes any value |
 | `--server` | | Server to assign world to (sets `LEVEL`, and `SEED` if given). The server must be stopped |
-| `--no-start` | | Don't auto-start server after assignment |
+| `--no-start` | | Interactive mode: do not ask whether to start the server, and do not start it |
+| `--json` | | Print the result as JSON |
 
 **Examples:**
 
@@ -1286,8 +1376,8 @@ mcctl world new [name] [options]
     # Prompts for:
     # 1. World name
     # 2. Optional seed
-    # 3. Optional server assignment
-    # 4. Auto-start preference (if server assigned)
+    # 3. Server to assign the world to (must be stopped)
+    # 4. Whether to start the server
     ```
 
 === "CLI Mode"
@@ -1303,20 +1393,20 @@ mcctl world new [name] [options]
 
     # Create with seed and assign to server
     mcctl world new myworld --seed 12345 --server myserver
-
-    # Create and assign without auto-starting
-    mcctl world new myworld --server myserver --no-start
     ```
+
+    With a world name the server is not started; start it with `mcctl start <server>`.
 
 **What it does:**
 
-1. Creates world directory in `worlds/<name>/`
-2. Creates `.seed` file if seed is provided (for reference)
-3. If server assigned:
+1. Creates world directory in `worlds/<name>/` with a `.meta` file (name, seed, creation time)
+2. If server assigned:
    - Refuses if the server is running or the world is used by another server (the server is not stopped for you)
    - Updates server's `config.env` with `LEVEL=<world-name>`
    - Sets `SEED=<seed>` if provided
-   - Optionally starts the server
+   - In interactive mode, starts the server if you answer yes
+
+`mcctl world new` needs at least one server; without any it stops with `No servers available. Create a server first.`
 
 !!! tip "Seed Behavior"
     The seed is applied via the server's `SEED` environment variable.
@@ -1350,7 +1440,7 @@ mcctl world list [options]
     Worlds:
 
       survival-world
-        Status: assigned: mc-survival
+        Status: assigned: survival
         Size: 514.0MB
         Path: /home/myuser/minecraft-servers/worlds/survival-world
 
@@ -1372,18 +1462,20 @@ mcctl world list [options]
         "name": "survival-world",
         "path": "/home/myuser/minecraft-servers/worlds/survival-world",
         "isLocked": true,
-        "lockedBy": "mc-survival",
-        "servers": ["mc-survival"],
+        "lockedBy": "survival",
         "size": "514.0MB",
-        "lastModified": "2026-01-21T13:19:48.853Z"
+        "lastModified": "2026-01-21T13:19:48.853Z",
+        "servers": ["survival"],
+        "dimensions": { "nether": true, "end": true }
       },
       {
         "name": "creative-world",
         "path": "/home/myuser/minecraft-servers/worlds/creative-world",
         "isLocked": false,
-        "servers": [],
         "size": "128.5MB",
-        "lastModified": "2026-01-20T10:30:00.000Z"
+        "lastModified": "2026-01-20T10:30:00.000Z",
+        "servers": [],
+        "dimensions": { "nether": false, "end": false }
       }
     ]
     ```
@@ -1418,7 +1510,7 @@ mcctl world assign [world] [server]
 
 === "CLI Mode"
     ```bash
-    mcctl world assign survival mc-myserver
+    mcctl world assign survival myserver
     ```
 
 !!! info "One world, one server"
@@ -1480,7 +1572,7 @@ mcctl world delete [world] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--force` | `-f` | Skip confirmation prompt (does not delete a world a server uses) |
+| `--force` | | Skip the confirmation (does not delete a world a server uses) |
 | `--json` | | Output in JSON format |
 
 !!! danger "Permanent Deletion"
@@ -1514,27 +1606,28 @@ mcctl world delete [world] [options]
 
 - **Assignment Check**: Cannot delete a world that any server uses, running or not; `--force` does not override this. Assign another world to the server first. Servers that keep their world inside `servers/<name>/data` (no `EXTRA_ARGS=--universe /worlds/`) do not block deleting `worlds/<world>`
 - **Fail-closed**: Refused while any server's `config.env` cannot be read or interpreted (see [World Assignment Rules](#world-assignment-rules))
-- **Confirmation Prompt**: Requires typing "DELETE" to confirm (unless `--force`)
-- **Size Display**: Shows world size before deletion
-
-**Output Example:**
-
-```
-World 'old-world' (512.5 MB) will be permanently deleted.
-
-Type DELETE to confirm: DELETE
-
-✓ World 'old-world' deleted
-  Freed: 512.5 MB
-```
+- **Confirmation Prompt**: Asks for confirmation (yes/no) before deleting, unless `--force`
+- **Size**: The interactive mode shows the world size before you confirm; after deleting, the freed size is printed
 
 ---
 
 ## Backup Management
 
+### mcctl backup init
+
+Set up the GitHub world backup interactively.
+
+```bash
+mcctl backup init [--force]
+```
+
+It asks for a GitHub personal access token, the repository (`username/repo`), the branch and whether to back up when a server stops. After testing access to the repository it writes `BACKUP_GITHUB_TOKEN`, `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` and `BACKUP_AUTO_ON_STOP` to `.env`. If a backup is already configured it asks before overwriting; `--force` skips that question. Creating the repository and the token is described in the [Backup Guide](../advanced/backup.md).
+
+---
+
 ### mcctl backup status
 
-Show backup configuration status.
+Show backup configuration status. `mcctl backup` without a subcommand does the same.
 
 ```bash
 mcctl backup status [options]
@@ -1555,25 +1648,13 @@ mcctl backup status
 **Output (configured):**
 
 ```
-=== Backup Status ===
-
-Configuration: Configured
-Repository:    myuser/minecraft-backup-repo
-Branch:        main
-Auto on stop:  true
-
-Cache:         Exists
-Last commit:   fd8633b
-Last date:     2026-01-20 21:06:35 +0900
-
-Worlds dir:    /home/myuser/minecraft-servers/worlds
-Cache dir:     /home/myuser/.minecraft-backup
-
 Backup Configuration:
 
   Status: Configured
   Repository: myuser/minecraft-backup-repo
   Branch: main
+  Last backup: 1/20/2026, 9:06:35 PM
+  Auto backup: enabled
 ```
 
 **Output (not configured):**
@@ -1587,6 +1668,8 @@ Backup Configuration:
     BACKUP_GITHUB_TOKEN=your-token
     BACKUP_GITHUB_REPO=username/repo
 ```
+
+[`mcctl backup init`](#mcctl-backup-init) writes these settings for you.
 
 ---
 
@@ -1708,6 +1791,26 @@ Every server must be stopped. The result is exactly the commit, `worlds/.locks` 
 
 ---
 
+### mcctl backup schedule
+
+Back up the worlds on a schedule. The schedules are run by mcctl-api, which reads them when it starts: after adding, removing, enabling or disabling a schedule here, restart it with `mcctl console service restart --api`.
+
+| Command | Description |
+|---------|-------------|
+| `backup schedule list` | List schedules (`--json`) |
+| `backup schedule add` | Add a schedule: `--cron <expression or preset>` (required; presets `hourly`, `daily`, `every-6h`, `every-12h`, `weekly`), `--name <name>` (default `Backup Schedule`), `--max-count <n>`, `--max-age-days <n>`, `--json` |
+| `backup schedule remove <id>` | Remove a schedule |
+| `backup schedule enable <id>` | Enable a schedule |
+| `backup schedule disable <id>` | Disable a schedule |
+
+After each scheduled backup, backups beyond the newest `--max-count` and backups older than `--max-age-days` are removed from the repository history (the latest backup is always kept). See [Scheduled Backups](../advanced/backup.md#scheduled-backups).
+
+```bash
+mcctl backup schedule add --cron daily --name "Daily Backup" --max-count 30
+```
+
+---
+
 ## Player Utilities
 
 ### mcctl player (Interactive Mode)
@@ -1738,10 +1841,9 @@ mcctl player <server>
 
 The interactive mode provides:
 
-- Server selection with status indicators
+- Server selection (running servers only; the actions run over RCON)
 - Online player list with easy selection
 - Action menu (op/deop, whitelist add/remove, ban/unban, kick, view info)
-- Automatic server restart prompts when needed
 
 ---
 
@@ -1786,11 +1888,11 @@ Player: Notch
 
 ```json
 {
-  "username": "Notch",
+  "name": "Notch",
   "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "uuidNoDashes": "069a79f444e94726a5befca90e38aaf5",
   "skinUrl": "https://textures.minecraft.net/texture/...",
-  "source": "mojang",
-  "cached": true
+  "source": "mojang"
 }
 ```
 
@@ -1801,7 +1903,7 @@ Player: Notch
     - **Username**: Cached for 30 days (can change)
     - **Skin URL**: Cached for 1 day (changes frequently)
 
-    Cache location: `~/.minecraft-docker/.player-cache`
+    Cache location: `~/.mcctl/.player-cache`
 
 ---
 
@@ -1840,43 +1942,7 @@ Player Cache Statistics
 
 ---
 
-### mcctl player online
-
-Show online players on servers.
-
-```bash
-mcctl player online <server>
-mcctl player online --all
-```
-
-**Options:**
-
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--all` | `-a` | Show players on all servers |
-| `--json` | | Output in JSON format |
-
-**Examples:**
-
-```bash
-# Single server
-mcctl player online myserver
-
-# All servers
-mcctl player online --all
-```
-
-**Output:**
-
-```
-Online Players for myserver:
-
-  Status: Running (3/20)
-
-  Steve
-  Alex
-  Notch
-```
+`mcctl player online` is described under [Player Management](#mcctl-player-online).
 
 ---
 
@@ -1936,6 +2002,7 @@ mcctl migrate worlds [options]
 | Option | Description |
 |--------|-------------|
 | `--all` | Migrate all servers without selection |
+| `--server <name>` | Migrate only this server |
 | `--dry-run` | Preview changes without applying |
 | `--backup` | Create backup before migration |
 | `--force` | Skip confirmation prompts |
@@ -2056,7 +2123,7 @@ mcctl mod search lithium --json
 **Output Example:**
 
 ```
-Search results for "sodium" (25 total):
+Search results for "sodium" on Modrinth (25 total):
 
   sodium (12.5M downloads)
     Sodium server client
@@ -2148,7 +2215,7 @@ mcctl mod add <server> <mod...> [options]
 **How It Works:**
 
 1. **Validation**: Verifies mod exists on Modrinth (if using Modrinth source)
-2. **Server Type Check**: Warns if server type may not support mods
+2. **Server Type Check**: Refuses server types without mod or plugin support (for example VANILLA) unless `--force`
 3. **Config Update**: Adds mod to appropriate environment variable in `config.env`
 4. **Restart Required**: Server must be restarted to apply changes
 
@@ -2342,7 +2409,7 @@ Available Mod Sources:
     mcctl mod add myserver sodium lithium
 
   CurseForge --curseforge
-    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
+    Popular mod platform. Java 17+ images include a built-in CF_API_KEY; set it in .env only for java8 or pre-17 tags or your own key
     Config: CURSEFORGE_FILES
     mcctl mod add myserver --curseforge jei journeymap
 
@@ -2419,16 +2486,58 @@ mcctl mod add myserver --curseforge jei journeymap
 
 ---
 
-## Global Options Reference
+## External Access (playit.gg)
 
-These options work with all commands:
+### mcctl playit
+
+Manage the playit.gg agent and the servers' external domains. Setting up playit.gg is described in [External Access (playit.gg)](../advanced/external-access.md).
+
+```bash
+mcctl playit <start|stop|status|setup|domain> [args]
+```
+
+| Command | Description |
+|---------|-------------|
+| `start` | Start the `playit-agent` container (needs `PLAYIT_SECRET_KEY` and playit.gg enabled) |
+| `stop` | Stop the agent |
+| `status` | Show the agent state, whether `PLAYIT_SECRET_KEY` is set and the servers with a playit.gg domain (`--json`) |
+| `setup` | Ask for the `PLAYIT_SECRET_KEY`, save it to `.env`, enable playit.gg and add the `playit` service to `docker-compose.yml` if it is missing |
+| `domain <server> <domain>` | Set a server's playit.gg domain (`PLAYIT_DOMAIN`) |
+| `domain <server> --remove` | Remove a server's playit.gg domain |
+
+Without arguments, `mcctl playit domain` asks for the server and the domain. A domain change takes effect after `mcctl stop <server> && mcctl start <server>`; restarting the container does not apply it.
+
+---
+
+## Audit Log
+
+### mcctl audit
+
+Show and clean up the audit log of actions taken with the CLI, the API and the web console. Details, action names and settings: [Audit Log](audit-log.md).
+
+```bash
+mcctl audit <list|stats|purge> [options]
+```
+
+| Command | Description |
+|---------|-------------|
+| `list` | Show entries, newest first: `--limit <n>` (default 50), `--action`, `--actor`, `--target`, `--status <status>` (`success` or `failure`), `--from <date>`, `--to <date>` |
+| `stats` | Count the entries by status, action and actor |
+| `purge` | Delete entries older than `--days <n>` (default 90) or before `--before <date>`; asks first unless `--force`; `--dry-run` only counts |
+
+---
+
+## Global Options Reference
 
 | Option | Description | Example |
 |--------|-------------|---------|
-| `--root <path>` | Custom data directory | `mcctl --root /opt/mc status` |
-| `--json` | JSON output format | `mcctl status --json` |
-| `-h, --help` | Show help | `mcctl --help` |
+| `--root <path>` | Data directory (default: `MCCTL_ROOT` or `~/minecraft-servers`) | `mcctl --root /opt/mc status` |
+| `--json` | JSON output, for the commands that support it (listed with each command) | `mcctl status --json` |
+| `--sudo-password <pwd>` | Sudo password for the mDNS entry of `create` and `delete` (or [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password)) | `mcctl delete myserver --yes --sudo-password "..."` |
+| `-h, --help` | Show help (the same page for every command) | `mcctl --help` |
 | `--version` | Show version | `mcctl --version` |
+
+An option that needs a value takes it from the next word (`--seed 123`) or after `=` (`--seed=123`). Switches such as `--force`, `--json` and `--yes` also accept `=true` or `=false`. Everything after `--` is passed on unchanged (`mcctl exec myserver -- say -h`).
 
 ---
 
@@ -2467,4 +2576,12 @@ export MCCTL_SUDO_PASSWORD="your-password"
 
 ```bash
 mcctl create myserver --sudo-password "your-password"
+```
+
+### MCCTL_ROOT
+
+Data directory used when `--root` is not given (default: `~/minecraft-servers`).
+
+```bash
+export MCCTL_ROOT=/opt/minecraft
 ```

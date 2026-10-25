@@ -7,7 +7,7 @@
 | **이 ADR을 바꾸는 후속 이슈** | #665(D4, [포트 경계 정리](#포트-경계-정리665-d4)), #669(A7), C2, #675(D5), #641(k8s 어댑터), #732(S3, [백업 포트](#백업-포트732-s3)), #670(A4: `IWorldAssignmentPort` 확정, [ADR-0002](0002-world-server-assignment.ko.md)), #735(S7, [서버 삭제](#스크립트-제거-s7-delete-serversh735)) |
 | **사용하는 이슈** | #667(D2, API), #668(D3, CLI), #666(E3, 계약 테스트), #715(스크립트 제거) |
 
-이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](0001-container-runtime-ports.md)에 있습니다.
+이 문서는 영어판의 요약입니다. 포트 시그니처 전체, 48개 함수 매핑, 호출 지점 표, 구현 단계는 [영어판](https://minecraft-server-manager.readthedocs.io/en/latest/development/adr/0001-container-runtime-ports/)에 있습니다.
 
 ## 배경
 
@@ -229,7 +229,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 
 ## 백업 포트(#732, S3)
 
-상태: 제안됨(2026-10-23). system-architect 리뷰(APPROVE WITH CHANGES)와 Codex 리뷰(R1~R14, S1~S5)를 반영해 고쳤고, `a5d246a`에 대한 architect 재검토(S1~S5)에 따라 단순화했다. #653, #664, #727을 흡수한다. 시그니처, 절차, 버그별 테스트 표 전체는 [영어판](0001-container-runtime-ports.md#backup-port-732-s3)에 있습니다.
+상태: 제안됨(2026-10-23). system-architect 리뷰(APPROVE WITH CHANGES)와 Codex 리뷰(R1~R14, S1~S5)를 반영해 고쳤고, `a5d246a`에 대한 architect 재검토(S1~S5)에 따라 단순화했다. #653, #664, #727을 흡수한다. 시그니처, 절차, 버그별 테스트 표 전체는 [영어판](https://minecraft-server-manager.readthedocs.io/en/latest/development/adr/0001-container-runtime-ports/#backup-port-732-s3)에 있습니다.
 
 **지원 범위**: 로컬 단일 호스트에서만 동작한다. `worlds/`, `servers/<n>/data/`, `backups/`는 같은 파일시스템에 있어야 하고, 일반 파일과 디렉터리만 다룬다. 이 조건에 맞지 않으면 아무것도 바꾸기 전에 거부한다.
 

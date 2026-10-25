@@ -1,15 +1,17 @@
 # Audit Log Management
 
-The audit log system tracks all critical operations performed on your Minecraft servers, providing a comprehensive activity history for compliance, troubleshooting, and security auditing.
+The audit log records the operations performed on your Minecraft servers, giving an activity history for troubleshooting and security auditing.
 
 ## Overview
 
-Audit logs are automatically generated for:
-- **Server lifecycle**: create, delete, start, stop, restart
-- **Player management**: whitelist add/remove, ban/unban, op/deop, kick
+The CLI and mcctl-api (which also serves the web console) write audit log entries, for example for:
+
+- **Servers**: create, delete, start, stop, restart, configuration and hostname changes
+- **Players**: whitelist, ban/unban, op/deop and OP level, kick
+- **Worlds, mods and more**: world changes and map renders, mods, playit.gg, router restart, platform settings, file browser actions, backup and config snapshot schedules
 - **Audit maintenance**: log purge operations
 
-Logs are stored in SQLite database at `~/.minecraft-servers/audit.db` with automatic cleanup after 90 days (configurable).
+Logs are stored in the SQLite database `<root>/data/audit.db` (default `~/minecraft-servers/data/audit.db`). Old entries are deleted only by `mcctl audit purge` or when [automatic cleanup](#configuration) is enabled.
 
 ## Commands
 
@@ -23,6 +25,7 @@ mcctl audit list [options]
 ```
 
 **Options:**
+
 | Option | Type | Description |
 |--------|------|-------------|
 | `--limit <number>` | number | Maximum number of logs to display (default: 50) |
@@ -34,19 +37,23 @@ mcctl audit list [options]
 | `--to <date>` | ISO date | End date |
 
 **Action Types:**
-- `server.create` - Server creation
-- `server.delete` - Server deletion
-- `server.start` - Server startup
-- `server.stop` - Server shutdown
-- `server.restart` - Server restart
-- `player.whitelist.add` - Player added to whitelist
-- `player.whitelist.remove` - Player removed from whitelist
-- `player.ban` - Player banned
-- `player.unban` - Player unbanned
-- `player.op` - Player granted operator status
-- `player.deop` - Player operator status revoked
-- `player.kick` - Player kicked from server
-- `audit.purge` - Audit logs purged
+
+`--action` takes the full name, such as `server.create` or `player.whitelist.add`:
+
+| Prefix | Actions |
+|--------|---------|
+| `server.` | `create`, `delete`, `start`, `stop`, `restart`, `config`, `hostname` |
+| `player.` | `whitelist.add`, `whitelist.remove`, `whitelist.toggle`, `ban`, `unban`, `op`, `op.level`, `deop`, `kick` |
+| `world.` | `create`, `delete`, `assign`, `release`, `map.render` |
+| `mod.` | `add`, `remove` |
+| `playit.` | `start`, `stop` |
+| `router.` | `restart` |
+| `platform.` | `settings.update` |
+| `file.` | `read`, `write`, `delete`, `mkdir`, `rename`, `upload`, `download` |
+| `backup.schedule.` | `create`, `update`, `delete`, `enable`, `disable`, `run` |
+| `config.snapshot.` | `create`, `delete`, `restore` |
+| `config.snapshot.schedule.` | `create`, `update`, `delete`, `enable`, `disable` |
+| `audit.` | `purge` |
 
 **Examples:**
 
@@ -77,12 +84,15 @@ mcctl audit list --action server.start --status failure --limit 20
 ```
 
 **Output Format:**
+
+Entries are listed newest first; the time uses the system's locale format.
+
 ```
 Audit Logs (25 entries):
 
-2026-02-05 14:32:15  server.create              cli:local       server:myserver        success
-2026-02-05 14:30:45  player.whitelist.add       web:admin       player:Steve           success
-2026-02-05 14:28:10  server.start               api:service     server:survival        failure
+2/5/2026, 2:32:15 PM server.create             cli:local       server:myserver      success
+2/5/2026, 2:30:45 PM player.whitelist.add      web:admin       player:Steve         success
+2/5/2026, 2:28:10 PM server.start              api:service     server:survival      failure
 ```
 
 ---
@@ -100,8 +110,8 @@ mcctl audit stats
 ```
 Audit Log Statistics:
 
-Total Logs: 1,234
-Success: 1,180
+Total Logs: 1234
+Success: 1180
 Failure: 54
 
 
@@ -140,6 +150,7 @@ mcctl audit purge [options]
 ```
 
 **Options:**
+
 | Option | Type | Description |
 |--------|------|-------------|
 | `--days <number>` | number | Delete logs older than N days (default: 90) |
@@ -163,7 +174,7 @@ mcctl audit purge --before 2026-01-01
 mcctl audit purge --days 60 --dry-run
 
 # Force purge without confirmation
-mcmcctl audit purge --days 180 --force
+mcctl audit purge --days 180 --force
 ```
 
 **Output:**
@@ -180,12 +191,12 @@ mcmcctl audit purge --days 180 --force
 
 ## Configuration
 
-Audit log behavior is configured via environment variables in `.env` file:
+Automatic cleanup is configured with two environment variables:
 
 ```bash
-# ~/.minecraft-servers/.env
+# ~/minecraft-servers/.env
 
-# Automatic cleanup of old logs
+# Delete old logs automatically (default: off)
 AUDIT_AUTO_CLEANUP=true
 
 # Retention period in days (default: 90)
@@ -193,8 +204,10 @@ AUDIT_RETENTION_DAYS=90
 ```
 
 **AUDIT_AUTO_CLEANUP:**
-- `true` (default): Automatically delete logs older than `AUDIT_RETENTION_DAYS` on system startup
-- `false`: Disable automatic cleanup (manual purge only)
+- `true`: While new entries are written, entries older than `AUDIT_RETENTION_DAYS` are deleted (after every 100 new entries, or 24 hours after the last cleanup)
+- Unset or any other value (default): no automatic cleanup; use `mcctl audit purge`
+
+mcctl-api reads both variables from `<root>/.env`, so the cleanup runs in mcctl-api. The CLI reads them only from the shell environment.
 
 **AUDIT_RETENTION_DAYS:**
 - Number of days to retain audit logs before auto-cleanup
@@ -205,28 +218,28 @@ AUDIT_RETENTION_DAYS=90
 
 **Database Location:**
 ```
-~/.minecraft-servers/audit.db
+~/minecraft-servers/data/audit.db
 ```
 
 **Schema:**
 ```sql
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY,
   action TEXT NOT NULL,
   actor TEXT NOT NULL,
   target_type TEXT NOT NULL,
   target_name TEXT NOT NULL,
   details TEXT,
-  status TEXT NOT NULL CHECK (status IN ('success', 'failure')),
+  status TEXT NOT NULL CHECK(status IN ('success', 'failure')),
   error_message TEXT,
-  timestamp TEXT NOT NULL
+  timestamp TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_action ON audit_logs(action);
-CREATE INDEX idx_actor ON audit_logs(actor);
-CREATE INDEX idx_target_name ON audit_logs(target_name);
-CREATE INDEX idx_status ON audit_logs(status);
-CREATE INDEX idx_timestamp ON audit_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_target ON audit_logs(target_type, target_name);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_status ON audit_logs(status);
 ```
 
 **Details Field:**
@@ -242,8 +255,8 @@ JSON-encoded additional context. Examples:
 
 // Player ban
 {
-  "reason": "Griefing",
-  "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5"
+  "server": "survival",
+  "reason": "Griefing"
 }
 
 // Audit purge
@@ -297,6 +310,6 @@ mcctl audit list --action player.whitelist.add --actor web:admin
 
 ## See Also
 
-- [Management Console - Audit Log API](../console/audit-log-api.md)
+- [REST API - Audit logs](../api/endpoints.md#audit-logs)
 - [Web Console - Audit Log UI](../console/audit-log-ui.md)
 - [Troubleshooting](../troubleshooting/index.md)

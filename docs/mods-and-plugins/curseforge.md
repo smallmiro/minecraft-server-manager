@@ -16,23 +16,20 @@ Download mods and plugins from [CurseForge](https://www.curseforge.com/minecraft
 
 ### Step 1: Get API Key
 
+Skip this step on Java 17+ images, which include a key; new mcctl servers use `java25`. You need your own key only for `java8` and other pre-Java 17 tags, or to use your own.
+
 1. Go to [CurseForge API Console](https://console.curseforge.com/)
 2. Sign in and create an API key
-3. Add the key to your platform `.env` file:
-
-```bash
-# Edit global environment file
-nano ~/minecraft-servers/.env
-
-# Add this line
-CF_API_KEY=your_api_key_here
-```
+3. Set the key on the server in Step 2, or for every server as in [Step 4: Configure API Key](#step-4-configure-api-key)
 
 ### Step 2: Create Server and Add Mods
 
 ```bash
 # Create a Forge server
-mcctl create modded --type FORGE --version 1.20.4
+mcctl create modded -t FORGE -v 1.20.4
+
+# Only with your own key (java8 and other pre-Java 17 tags, or your own key)
+mcctl config modded CF_API_KEY '<your-api-key>'
 
 # Add CurseForge mods
 mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade"
@@ -42,7 +39,7 @@ mcctl stop modded && mcctl start modded
 ```
 
 !!! note "API Key Optional"
-    Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. The key goes in your `.env` file.
+    Java 17+ images include a built-in CF_API_KEY; set it only for java8/pre-17 tags or to use your own key. Set it per server with `mcctl config`; a key only in the platform `.env` does not reach servers.
 
 ## Getting API Key
 
@@ -71,18 +68,26 @@ mcctl stop modded && mcctl start modded
 
 ### Step 4: Configure API Key
 
-Add the API key to your platform's `.env` file:
+Set the key for one server:
 
 ```bash
-# Edit .env file
-nano ~/minecraft-servers/.env
-
-# Add the API key
-CF_API_KEY=your_api_key_here
+mcctl config myserver CF_API_KEY '<your-api-key>'
 ```
 
-!!! tip "Escaping $ in API Key"
-    If your API key contains `$`, escape it with `$$` in the `.env` file.
+Or for every server: add a `CF_API_KEY` line to `~/minecraft-servers/servers/global.env`, put the value in `~/minecraft-servers/.env` in single quotes, then stop and start the servers:
+
+```bash
+# servers/global.env
+CF_API_KEY
+
+# .env
+CF_API_KEY='your_api_key_here'
+```
+
+A key only in `.env` does not reach servers: they receive only the `.env` keys named in `servers/global.env`.
+
+!!! tip "Keys that contain `$`"
+    `mcctl config` writes the value in single quotes for you, and single quotes in `.env` keep it literal too. Do not escape `$` as `$$`: inside single quotes it stays `$$`.
 
 ## Supported Reference Formats
 
@@ -130,22 +135,32 @@ mcctl config myserver CURSEFORGE_FILES "jei@10.2.1.1005"
 mcctl config myserver CURSEFORGE_FILES "jei,journeymap:4596105,238222"
 ```
 
+### With mcctl mod
+
+```bash
+# Add references to CURSEFORGE_FILES (mcctl does not check them)
+mcctl mod add myserver --curseforge jei journeymap jade
+
+# Remove one again
+mcctl mod remove myserver jade
+```
+
 ## Configuration Reference
 
 | Config Key | Description |
 |------------|-------------|
-| `CURSEFORGE_FILES` | Comma/space/newline separated list of mod references |
+| `CURSEFORGE_FILES` | Comma- or space-separated list of mod references |
 
 !!! note "API Key Location"
-    The `CF_API_KEY` is set in the platform `.env` file, not in individual server `config.env` files.
+    Set `CF_API_KEY` per server with `mcctl config`, or add its name to `servers/global.env` to pass the `.env` value to every server. A key only in `.env` does not reach servers.
 
 ## Complete Examples
 
 ### Forge Mod Server
 
 ```bash
-# Create server
-mcctl create modded --type FORGE --version 1.20.4
+# Create server without starting it
+mcctl create modded -t FORGE -v 1.20.4 --no-start
 
 # Configure mods
 mcctl config modded CURSEFORGE_FILES "jei,journeymap,jade,mouse-tweaks,appleskin"
@@ -159,7 +174,7 @@ mcctl start modded
 
 ```bash
 # Create Fabric server
-mcctl create mixed --type FABRIC --version 1.21.1
+mcctl create mixed -t FABRIC -v 1.21.1
 
 # CurseForge mods (CF_API_KEY optional on Java 17+ images)
 mcctl config mixed CURSEFORGE_FILES "jei,journeymap"
@@ -182,13 +197,15 @@ mcctl config myserver CURSEFORGE_FILES "jei:4593548,journeymap:4596105,jade:4587
 
 - Files are automatically **upgraded** when newer versions are available
 - **Removed** references are automatically cleaned up
-- To remove all CurseForge mods:
+- To remove CurseForge mods, remove their references:
 
 ```bash
-# Clear all CurseForge mods
-mcctl config myserver CURSEFORGE_FILES ""
+# Remove references as they are written in CURSEFORGE_FILES
+mcctl mod remove myserver jei journeymap
 mcctl stop myserver && mcctl start myserver
 ```
+
+To drop the whole list, delete `CURSEFORGE_FILES` under `env:` in `servers/myserver/server.yaml`, run `mcctl migrate spec myserver`, then stop and start the server.
 
 ## Dependencies
 
@@ -205,7 +222,7 @@ mcctl config myserver CURSEFORGE_FILES "jei,forge-api"
 
 ## Advanced Configuration (Manual)
 
-For complex configurations, edit `config.env` directly:
+For complex configurations, edit `config.env` directly. Each value stays on one line; for long lists, use a listing file (below).
 
 ```bash
 nano ~/minecraft-servers/servers/myserver/config.env
@@ -214,13 +231,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 Example `config.env`:
 
 ```bash
-# CurseForge mods (multi-line format)
-CURSEFORGE_FILES=jei
-journeymap
-jade
-mouse-tweaks
-appleskin
-storage-drawers
+# CurseForge mods (one line, comma-separated)
+CURSEFORGE_FILES=jei,journeymap,jade,mouse-tweaks,appleskin,storage-drawers
 ```
 
 ### Using Listing Files
@@ -253,11 +265,7 @@ Then reference it in `config.env`:
 CURSEFORGE_FILES=@/data/cf-mods.txt
 ```
 
-And mount the directory:
-
-```bash
-# This is automatically done by mcctl
-```
+`/data` in the container is the server's `servers/myserver/data/` folder.
 
 ## Troubleshooting
 
@@ -265,7 +273,7 @@ And mount the directory:
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| 401 Unauthorized | Invalid or missing API key | Verify `CF_API_KEY` in `.env` |
+| 401 Unauthorized | Invalid or missing API key | Check `CF_API_KEY` for the server (`mcctl config <server> CF_API_KEY`, or `servers/global.env` and `.env`) |
 | 403 Forbidden | API key lacks permissions | Regenerate API key from console |
 | Mod not found | Wrong slug or ID | Verify from CurseForge URL |
 | Version mismatch | Mod doesn't support server version | Use specific file ID for compatible version |
@@ -274,8 +282,11 @@ And mount the directory:
 ### Check API Key Configuration
 
 ```bash
-# View .env file (don't share the output!)
-cat ~/minecraft-servers/.env | grep CF_API_KEY
+# Key set for one server (don't share the output!)
+mcctl config myserver CF_API_KEY
+
+# Key passed to every server
+grep CF_API_KEY ~/minecraft-servers/servers/global.env ~/minecraft-servers/.env
 ```
 
 ### Check Current Configuration

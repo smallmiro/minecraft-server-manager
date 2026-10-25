@@ -18,7 +18,7 @@
 
 ```bash
 # Fabric 서버 생성
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # Modrinth 모드 추가
 mcctl config modded MODRINTH_PROJECTS "fabric-api,lithium,sodium"
@@ -34,7 +34,7 @@ mcctl stop modded && mcctl start modded
 
 ```bash
 # Paper 서버 생성
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 
 # Modrinth 플러그인 추가
 mcctl config survival MODRINTH_PROJECTS "luckperms,chunky,spark"
@@ -42,6 +42,21 @@ mcctl config survival MODRINTH_PROJECTS "luckperms,chunky,spark"
 # 재시작하여 변경사항 적용
 mcctl stop survival && mcctl start survival
 ```
+
+### mcctl mod 사용
+
+```bash
+# Modrinth 검색
+mcctl mod search lithium
+
+# slug 또는 프로젝트 ID로 추가 (mcctl이 먼저 Modrinth에서 확인)
+mcctl mod add modded fabric-api lithium
+
+# 재시작하여 변경사항 적용
+mcctl stop modded && mcctl start modded
+```
+
+`mcctl mod add`는 각 프로젝트의 slug를 `MODRINTH_PROJECTS`에 추가합니다. 버전 지정자와 로더 접두사(아래)는 `mcctl config`로 설정하세요.
 
 ## 프로젝트 Slug 찾기
 
@@ -115,9 +130,11 @@ mcctl config myserver MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE "release"
 
 | 값 | 설명 |
 |----|------|
-| `none` | 의존성 없음 (기본값) |
+| `none` | 의존성 없음 (이미지 기본값) |
 | `required` | 필수 의존성만 다운로드 |
 | `optional` | 필수 및 선택적 의존성 다운로드 |
+
+mcctl로 만든 새 서버는 `required`로 시작합니다.
 
 ### 버전 제어
 
@@ -133,8 +150,8 @@ mcctl config myserver MODRINTH_LOADER "fabric"
 
 | 설정 키 | 기본값 | 설명 |
 |--------|--------|------|
-| `MODRINTH_PROJECTS` | - | 쉼표 또는 줄바꿈으로 구분된 프로젝트 목록 |
-| `MODRINTH_DOWNLOAD_DEPENDENCIES` | `none` | `none`, `required`, 또는 `optional` |
+| `MODRINTH_PROJECTS` | - | 쉼표로 구분된 프로젝트 목록 (목록 파일에서는 한 줄에 하나) |
+| `MODRINTH_DOWNLOAD_DEPENDENCIES` | `none` (mcctl 새 서버: `required`) | `none`, `required`, 또는 `optional` |
 | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | `release` | 기본값: `release`, `beta`, `alpha` |
 | `VERSION_FROM_MODRINTH_PROJECTS` | `false` | 마인크래프트 버전 자동 설정 |
 | `MODRINTH_LOADER` | auto | 로더 타입 오버라이드 |
@@ -144,8 +161,8 @@ mcctl config myserver MODRINTH_LOADER "fabric"
 ### Fabric 성능 서버
 
 ```bash
-# 서버 생성
-mcctl create performance --type FABRIC --version 1.21.1
+# 시작하지 않고 서버 생성
+mcctl create performance -t FABRIC -v 1.21.1 --no-start
 
 # 모드 설정
 mcctl config performance MODRINTH_PROJECTS "fabric-api,lithium,phosphor,ferritecore,krypton,c2me-fabric"
@@ -159,8 +176,8 @@ mcctl start performance
 ### Paper 플러그인 서버
 
 ```bash
-# 서버 생성
-mcctl create survival --type PAPER --version 1.21.1
+# 시작하지 않고 서버 생성
+mcctl create survival -t PAPER -v 1.21.1 --no-start
 
 # 플러그인 설정
 mcctl config survival MODRINTH_PROJECTS "luckperms,vault,chunky,spark"
@@ -182,7 +199,7 @@ mcctl config myserver MODRINTH_PROJECTS "fabric-api,sodium:release,iris:alpha"
 
 ## 고급 설정 (수동)
 
-고급 멀티라인 설정은 `config.env`를 직접 편집합니다:
+`mcctl config`로 다루지 않는 설정은 `config.env`를 직접 편집합니다. 값은 한 줄에 쓰며, 목록이 길면 목록 파일(아래)을 사용하세요.
 
 ```bash
 nano ~/minecraft-servers/servers/myserver/config.env
@@ -191,13 +208,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 `config.env` 예시:
 
 ```bash
-# Modrinth 모드 (여러 줄 형식)
-MODRINTH_PROJECTS=fabric-api
-lithium
-phosphor
-ferritecore
-krypton
-c2me-fabric
+# Modrinth 모드 (한 줄, 쉼표 구분)
+MODRINTH_PROJECTS=fabric-api,lithium,phosphor,ferritecore,krypton,c2me-fabric
 
 # 의존성 설정
 MODRINTH_DOWNLOAD_DEPENDENCIES=required

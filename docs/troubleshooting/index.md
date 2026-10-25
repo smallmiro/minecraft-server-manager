@@ -38,9 +38,9 @@ mcctl logs <server-name> -n 100
 
 | Cause | Log Message | Solution |
 |-------|-------------|----------|
-| Wrong Java version | `UnsupportedClassVersionError` | Change image tag (java8, java17, java21) |
+| Wrong Java version | `UnsupportedClassVersionError` | Change the image tag (`java8`, `java17`, `java21`, `java25`); see below |
 | Out of memory | `OutOfMemoryError` | Increase `MEMORY` in config.env |
-| EULA not accepted | `EULA must be accepted` | Set `EULA=TRUE` in .env |
+| EULA not accepted | `EULA must be accepted` | mcctl sets `EULA: "TRUE"` in each server's `docker-compose.yml`; restore that line if the file was edited by hand |
 | Port conflict | `Address already in use` | Check other services using the port |
 | Corrupt world | `java.io.IOException` | Restore from backup |
 
@@ -48,9 +48,12 @@ mcctl logs <server-name> -n 100
 
 | Minecraft Version | Required Java |
 |-------------------|---------------|
-| 1.21+ | Java 21 |
-| 1.18 - 1.20.4 | Java 17 or 21 |
-| Forge 1.16.5 and below | Java 8 |
+| 26.x and `LATEST` | Java 25 |
+| 1.20.5–1.21.x | Java 21 |
+| 1.17–1.20.4 | Java 17 |
+| 1.16.5 and older | Java 8 |
+
+To change the tag, edit `image` in `servers/<name>/docker-compose.yml` (mcctl takes the change into `server.yaml`), then stop and start the server. `mcctl update` keeps a pinned tag: one that starts with a release version (for example `2026.10.0-java21`) or a digest.
 
 ### Cannot Connect to Server
 
@@ -77,7 +80,7 @@ mcctl console <server-name>
 | Server not running | `mcctl start <server-name>` |
 | Wrong hostname | Use correct format: `<server>.<ip>.nip.io:25565` |
 | Firewall blocking | Open port 25565 |
-| DNS not resolving | Use IP address directly or check nip.io |
+| DNS not resolving | Check nip.io (`nslookup <server>.<ip>.nip.io`) or use `<server>.local` on the LAN; a bare IP has no route in mc-router |
 
 ### Slow Performance
 
@@ -144,6 +147,7 @@ mcctl logs <server-name> | grep -i error
 
 - another server already uses the world (a world and its `<world>_nether` / `<world>_the_end` folders count as one world), or a server uses the world you try to delete (`--force` does not override this)
 - the server is running, paused, restarting or created (nothing is stopped for you)
+- the server keeps its world inside `servers/<name>/data`: it cannot get another world, and its world cannot be released, until `mcctl migrate worlds` moves the world to `worlds/`
 - any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely (path separators, `.`/`..`, quotes, control characters, `${VAR}` outside single quotes, or an unsupported `--universe` location). Every assignment change and world delete/reset is refused until it is fixed
 
 **Diagnosis:**
@@ -161,6 +165,8 @@ grep -E '^(LEVEL|WORLD_NAME)=' servers/*/config.env
 1. Stop the server (`mcctl stop <server-name>`).
 2. To free a world another server uses, run `mcctl world release <world-name>` on that stopped server. It switches back to its own default world `<server>`.
 3. If a `config.env` is reported as unreadable, fix its `LEVEL` line to a plain `LEVEL=<name>` and run the command again.
+4. If the error says the server keeps its world inside `servers/<name>/data`, stop the server and run `mcctl migrate worlds --server <server-name>` first.
+5. A server in the `created` state (for example after `mcctl update` recreated it) is not stopped by `mcctl stop`. Start it once, then stop it: `mcctl start <server-name> && mcctl stop <server-name>`.
 
 !!! note "Duplicate assignments from older installs"
     Older versions allowed two servers on the same world. These are reported, not fixed: `mcctl world list` shows `assigned: a, b` with a warning, `GET /api/worlds` returns them in `assignmentWarnings`, and the Web Console shows a warning alert. Assign another world to all but one of the servers.
@@ -212,6 +218,37 @@ No output means the file is clean. Each printed line starts with its line number
 
 2. If a password line was there, change that account's password with `passwd`.
 3. For a multi-IP entry, set `HOST_IP` in `.env` to one IPv4 address (or use `HOST_IPS` for several), then add the entry again: `echo '192.168.1.10 myserver.local' | sudo tee -a /etc/avahi/hosts`.
+
+### mc-router Cannot Read the Docker Socket
+
+**Symptoms:** `mcctl logs router` shows `permission denied` for `/var/run/docker.sock`; no server is routed or started on connect.
+
+**Cause:** mc-router 1.46+ runs as a non-root user and reads the socket through `group_add: ["${DOCKER_GID:-999}"]` in `docker-compose.yml`. `DOCKER_GID` in `.env` must match the socket's group.
+
+**Fix:**
+
+```bash
+stat -c %g /var/run/docker.sock                  # socket group ID (Linux)
+grep '^DOCKER_GID=' ~/minecraft-servers/.env     # must match
+mcctl upgrade                                    # sets DOCKER_GID from the socket and patches the router service
+mcctl router start                               # recreate mc-router with the new group
+```
+
+### Web Console Returns 500 After a Node.js Change
+
+**Symptoms:** Console pages return HTTP 500, and `pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`.
+
+**Cause:** The native `better-sqlite3` module was built for a different Node.js version than the one the PM2 daemon runs.
+
+**Fix:** `mcctl console service status` prints the steps: `pm2 kill`, switch to the Node.js version you installed mcctl with (for example `nvm use 22`), then `mcctl console service start`. See also [Upgrade Runbook, step 4](../advanced/upgrade-runbook.md#4-restart-api--console-if-needed).
+
+### `mcctl console` Cannot Connect
+
+**Symptoms:** `mcctl console <server-name>` (or `mcctl rcon <server-name>`) prints `Failed to connect to RCON`.
+
+**Cause:** `mcctl console` connects over TCP to the container's IP address on the Docker network. The server must be fully started, and the host must reach that IP; Docker Desktop on macOS may not expose it.
+
+**Fix:** Wait until `mcctl logs <server-name>` shows `Done`, or use `mcctl exec <server-name> <command>`, which runs `rcon-cli` inside the container.
 
 ---
 

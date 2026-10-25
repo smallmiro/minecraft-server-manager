@@ -18,7 +18,7 @@ Download mods and plugins from [Modrinth](https://modrinth.com/) - an open-sourc
 
 ```bash
 # Create a Fabric server
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # Add Modrinth mods
 mcctl config modded MODRINTH_PROJECTS "fabric-api,lithium,sodium"
@@ -34,7 +34,7 @@ mcctl stop modded && mcctl start modded
 
 ```bash
 # Create a Paper server
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 
 # Add Modrinth plugins
 mcctl config survival MODRINTH_PROJECTS "luckperms,chunky,spark"
@@ -42,6 +42,21 @@ mcctl config survival MODRINTH_PROJECTS "luckperms,chunky,spark"
 # Restart to apply changes
 mcctl stop survival && mcctl start survival
 ```
+
+### With mcctl mod
+
+```bash
+# Search Modrinth
+mcctl mod search lithium
+
+# Add projects by slug or project ID; mcctl checks them on Modrinth first
+mcctl mod add modded fabric-api lithium
+
+# Restart to apply changes
+mcctl stop modded && mcctl start modded
+```
+
+`mcctl mod add` adds each project's slug to `MODRINTH_PROJECTS`. Set version specifiers and loader prefixes (below) with `mcctl config`.
 
 ## Finding Project Slug
 
@@ -115,9 +130,11 @@ mcctl config myserver MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE "release"
 
 | Value | Description |
 |-------|-------------|
-| `none` | No dependencies (default) |
+| `none` | No dependencies (image default) |
 | `required` | Download required dependencies only |
 | `optional` | Download required and optional dependencies |
+
+New servers created by mcctl start with `required`.
 
 ### Version Control
 
@@ -133,8 +150,8 @@ mcctl config myserver MODRINTH_LOADER "fabric"
 
 | Config Key | Default | Description |
 |------------|---------|-------------|
-| `MODRINTH_PROJECTS` | - | Comma or newline separated list of projects |
-| `MODRINTH_DOWNLOAD_DEPENDENCIES` | `none` | `none`, `required`, or `optional` |
+| `MODRINTH_PROJECTS` | - | Comma-separated list of projects (one per line in a listing file) |
+| `MODRINTH_DOWNLOAD_DEPENDENCIES` | `none` (new mcctl servers: `required`) | `none`, `required`, or `optional` |
 | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | `release` | Default: `release`, `beta`, `alpha` |
 | `VERSION_FROM_MODRINTH_PROJECTS` | `false` | Auto-set Minecraft version |
 | `MODRINTH_LOADER` | auto | Override loader type |
@@ -144,8 +161,8 @@ mcctl config myserver MODRINTH_LOADER "fabric"
 ### Fabric Performance Server
 
 ```bash
-# Create server
-mcctl create performance --type FABRIC --version 1.21.1
+# Create server without starting it
+mcctl create performance -t FABRIC -v 1.21.1 --no-start
 
 # Configure mods
 mcctl config performance MODRINTH_PROJECTS "fabric-api,lithium,phosphor,ferritecore,krypton,c2me-fabric"
@@ -159,8 +176,8 @@ mcctl start performance
 ### Paper Plugin Server
 
 ```bash
-# Create server
-mcctl create survival --type PAPER --version 1.21.1
+# Create server without starting it
+mcctl create survival -t PAPER -v 1.21.1 --no-start
 
 # Configure plugins
 mcctl config survival MODRINTH_PROJECTS "luckperms,vault,chunky,spark"
@@ -182,7 +199,7 @@ mcctl config myserver MODRINTH_PROJECTS "fabric-api,sodium:release,iris:alpha"
 
 ## Advanced Configuration (Manual)
 
-For advanced multi-line configurations, edit `config.env` directly:
+For settings `mcctl config` does not cover, edit `config.env` directly. Each value stays on one line; for long lists, use a listing file (below).
 
 ```bash
 nano ~/minecraft-servers/servers/myserver/config.env
@@ -191,13 +208,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 Example `config.env`:
 
 ```bash
-# Modrinth mods (multi-line format)
-MODRINTH_PROJECTS=fabric-api
-lithium
-phosphor
-ferritecore
-krypton
-c2me-fabric
+# Modrinth mods (one line, comma-separated)
+MODRINTH_PROJECTS=fabric-api,lithium,phosphor,ferritecore,krypton,c2me-fabric
 
 # Dependency settings
 MODRINTH_DOWNLOAD_DEPENDENCIES=required

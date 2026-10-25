@@ -29,14 +29,19 @@ mcctl config myserver --command-block # Enable command blocks
 
 ## Configuration Files
 
-For reference, the platform uses these configuration files:
+For reference, the platform uses these configuration files (under `~/minecraft-servers/`):
 
 | File | Purpose | Managed By |
 |------|---------|------------|
-| `.env` | Global environment variables | `mcctl init` |
-| `servers/<name>/config.env` | Per-server configuration | `mcctl config` |
-| `docker-compose.yml` | Main orchestration | `mcctl init` (auto-generated) |
-| `servers/<name>/docker-compose.yml` | Per-server compose | `mcctl create` (auto-generated) |
+| `.env` | Platform settings. Only the keys named in `servers/global.env` reach servers | `mcctl init` |
+| `servers/global.env` | Names of the `.env` keys passed to every server | `mcctl init`, `mcctl upgrade` |
+| `servers/<name>/server.yaml` | Server definition | `mcctl create`, `mcctl config` and every other mcctl change |
+| `servers/<name>/config.env` | Server environment variables, generated from `server.yaml` | mcctl |
+| `docker-compose.yml` | Main orchestration: mc-router and its settings | `mcctl init` |
+| `servers/<name>/docker-compose.yml` | Server container, generated from `server.yaml` | mcctl |
+| `servers/compose.yml` | List of the server compose files | mcctl |
+
+See [Server Definition (server.yaml)](server-yaml.md) for how mcctl keeps the generated files in step.
 
 ## Configuration Categories
 
@@ -58,6 +63,14 @@ For reference, the platform uses these configuration files:
 
     [:octicons-arrow-right-24: Server Types](server-types.md)
 
+-   :material-file-document:{ .lg .middle } **Server Definition**
+
+    ---
+
+    `server.yaml`, the file mcctl writes each server's files from
+
+    [:octicons-arrow-right-24: Server Definition](server-yaml.md)
+
 </div>
 
 ## Common Configuration Tasks
@@ -76,6 +89,8 @@ mcctl config myserver VERSION 1.21.1
 mcctl stop myserver && mcctl start myserver
 ```
 
+`VERSION` does not change the server's Java image. New servers run `itzg/minecraft-server:java25`; for a version that needs an older Java, see [Java Versions and Image Tags](server-types.md#java-versions-and-image-tags).
+
 ### Enable Mods/Plugins
 
 For mod servers (Forge/Fabric):
@@ -92,29 +107,34 @@ For plugin servers (Paper/Spigot), place plugins in `shared/plugins/` directory.
 
 ### Configure Auto-Scaling
 
+mc-router reads its auto-scaling settings from the `router` service in `~/minecraft-servers/docker-compose.yml`, not from `.env`:
+
+```yaml
+services:
+  router:
+    environment:
+      AUTO_SCALE_UP: "true"         # Auto-start servers on player connect
+      AUTO_SCALE_DOWN: "true"       # Auto-stop idle servers
+      AUTO_SCALE_DOWN_AFTER: "10m"  # Idle timeout
+      DOCKER_TIMEOUT: "120s"        # Server startup timeout (Go time.Duration: 120s, 2m)
+```
+
 ```bash
-# View current mc-router settings
+# Show mc-router status and routes
 mcctl status router
 
-# After editing .env, restart mc-router
-mcctl router restart
+# After editing docker-compose.yml, recreate mc-router
+mcctl router start
 ```
 
-Auto-scaling settings in `~/minecraft-servers/.env`:
-
-```bash
-AUTO_SCALE_UP=true              # Auto-start servers on player connect
-AUTO_SCALE_DOWN=true            # Auto-stop idle servers
-AUTO_SCALE_DOWN_AFTER=10m       # Idle timeout
-DOCKER_TIMEOUT=120s             # Server startup timeout (Go time.Duration: 120s, 2m)
-```
+`mcctl router restart` keeps the old settings; `mcctl router start` recreates the container from the edited file. `mcctl upgrade` changes only the router `image` and `group_add` in this file, so your edits stay. To turn auto-scaling off for one server, set `routing.autoScale` in its [server.yaml](server-yaml.md).
 
 ### Change Server Properties
 
 ```bash
 # Game settings
 mcctl config myserver DIFFICULTY hard
-mcctl config myserver GAMEMODE survival
+mcctl config myserver MODE survival
 mcctl config myserver MAX_PLAYERS 30
 
 # World settings
@@ -131,8 +151,11 @@ mcctl whitelist myserver add Steve
 Settings are applied in this order (later overrides earlier):
 
 1. **Default values** - Built into itzg/minecraft-server image
-2. **Global `.env`** - Platform-wide defaults
-3. **Server `config.env`** - Per-server overrides (via `mcctl config`)
+2. **`servers/global.env`** - The platform keys it names (`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT`), with their values from `.env`
+3. **Server `config.env`** - Per-server values, generated from `server.yaml` (via `mcctl config`)
+4. **`environment` in the server's `docker-compose.yml`** - Only `EULA=TRUE`
+
+Other `.env` keys do not reach servers. To pass one to every server, add its name to `servers/global.env` (see [Setting Classification](environment.md#setting-classification)).
 
 ## Validation
 
@@ -164,6 +187,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 mcctl stop myserver && mcctl start myserver
 ```
 
+mcctl writes `config.env` and the server's `docker-compose.yml` from `servers/<name>/server.yaml`. A hand edit of `config.env` is taken into `server.yaml` the next time mcctl changes the server. Edits to `docker-compose.yml` outside `image` and the `mc-router.*` labels, such as resource limits, are kept, but a later change that has to rewrite the file stops with `compose_edited`. See [Hand edits](server-yaml.md#hand-edits) and the [value rules](environment.md#value-rules) for `config.env`.
+
 !!! note "When to Edit Files Directly"
     Direct file editing is only needed for:
 
@@ -176,5 +201,6 @@ mcctl stop myserver && mcctl start myserver
 ## Next Steps
 
 - **[Environment Variables](environment.md)** - All available configuration options
+- **[Server Definition (server.yaml)](server-yaml.md)** - The file each server's settings are generated from
 - **[Server Types](server-types.md)** - Detailed guide for each server platform
 - **[Advanced Networking](../advanced/networking.md)** - Network configuration

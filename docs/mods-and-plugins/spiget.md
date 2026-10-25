@@ -21,7 +21,7 @@ Download plugins from [SpigotMC](https://www.spigotmc.org/) using the [Spiget AP
 
 ```bash
 # Create a Paper server
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 
 # Add SpigotMC plugins (using numeric resource IDs)
 mcctl config survival SPIGET_RESOURCES "28140,34315,6245"
@@ -59,6 +59,9 @@ The resource ID is the numeric portion at the end of the SpigotMC resource URL.
 ```bash
 # Add plugins (comma-separated numeric IDs)
 mcctl config myserver SPIGET_RESOURCES "28140,34315,6245"
+
+# Or append IDs with mcctl mod (mcctl does not check them)
+mcctl mod add myserver --spiget 28140 34315
 
 # Restart to apply
 mcctl stop myserver && mcctl start myserver
@@ -109,7 +112,7 @@ For restricted plugins, use the shared plugins directory:
 # Download plugin manually and place in shared directory
 # Location: ~/minecraft-servers/shared/plugins/
 
-# The file will be automatically available to all servers
+# Every server copies the file into its plugins/ folder at its next start
 ```
 
 ## Complete Examples
@@ -117,8 +120,8 @@ For restricted plugins, use the shared plugins directory:
 ### Paper Server with Multiple Plugins
 
 ```bash
-# Create server
-mcctl create survival --type PAPER --version 1.21.1
+# Create server without starting it
+mcctl create survival -t PAPER -v 1.21.1 --no-start
 
 # Configure plugins
 mcctl config survival SPIGET_RESOURCES "28140,34315,6245"
@@ -132,7 +135,7 @@ mcctl start survival
 
 ```bash
 # Create server
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 
 # Spiget plugins (SpigotMC)
 mcctl config survival SPIGET_RESOURCES "28140,34315"
@@ -150,11 +153,11 @@ For plugins that restrict Spiget downloads:
 
 1. Download the plugin manually from SpigotMC
 2. Place the JAR file in `~/minecraft-servers/shared/plugins/`
-3. The plugin will be available to all servers
+3. The plugin is copied into each server when the server starts
 
 ```bash
-# Create server (manual plugins are auto-mounted)
-mcctl create survival --type PAPER --version 1.21.1
+# Create server without starting it (shared/plugins/ is mounted automatically)
+mcctl create survival -t PAPER -v 1.21.1 --no-start
 
 # Add Spiget plugins for ones that work
 mcctl config survival SPIGET_RESOURCES "28140,34315"

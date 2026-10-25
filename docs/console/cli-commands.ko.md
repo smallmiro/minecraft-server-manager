@@ -93,6 +93,7 @@ mcctl console init --api-port 8001 --console-port 8000
 - `mcctl-api`와 `mcctl-console` PM2 프로세스를 중지합니다.
 - `.mcctl-admin.yml`과 `ecosystem.config.cjs`를 삭제하므로, API 접근 모드를 다시 선택하고, api-key 계열 모드에서는 새 API 키가 생성되며, `--api-port`와 `--console-port`를 지정하지 않으면 포트는 기본값으로 돌아갑니다.
 - `data/mcctl.db`는 유지하므로 다른 사용자는 영향을 받지 않습니다.
+- `.env`의 콘솔 세션 시크릿 `BETTER_AUTH_SECRET`을 유지하므로 로그인한 사용자는 로그인 상태를 유지합니다.
 
 입력한 관리자 이메일이 `data/mcctl.db`에 이미 있으면 `User '<email>' already exists` 오류와 함께 `mcctl console init --force`를 안내하고 실패합니다. `--force`를 지정하면 해당 사용자를 (세션 포함) 삭제한 뒤 새 이름과 비밀번호로 다시 생성합니다.
 
@@ -105,6 +106,7 @@ mcctl console init --api-port 8001 --console-port 8000
 | `.mcctl-admin.yml` | 메인 Management Console 설정 |
 | `data/mcctl.db` | 콘솔 사용자 데이터베이스 (`mcctl-console`을 선택한 경우에만 생성) |
 | `ecosystem.config.cjs` | PM2 프로세스 설정 |
+| `.env` | `mcctl-console`을 선택하면 콘솔 세션 시크릿 `BETTER_AUTH_SECRET`이 추가됩니다. 이미 사용 중인 시크릿은 유지됩니다 |
 
 ---
 
@@ -179,19 +181,19 @@ mcctl console remove --keep-config
 ### 출력 예시
 
 ```
-  제거될 항목:
-    - PM2 프로세스 (mcctl-api, mcctl-console)
-    - 설정 파일 (.mcctl-admin.yml, users.yaml)
-    - PM2 에코시스템 설정 (ecosystem.config.cjs)
+  This will remove:
+    - PM2 processes (mcctl-api, mcctl-console)
+    - Configuration files (.mcctl-admin.yml, users.yaml)
+    - PM2 ecosystem config (ecosystem.config.cjs)
 
-? Console Service를 제거하시겠습니까? Yes
+? Are you sure you want to remove Console Service? Yes
 
-PM2 프로세스 중지 및 제거 중...  중지 및 제거됨: mcctl-api, mcctl-console
-설정 파일 제거 중...  설정 파일 2개 제거됨
+Stopping and removing PM2 processes...  Stopped and removed: mcctl-api, mcctl-console
+Removing configuration files...  Removed 2 configuration file(s)
 
-Console Service가 성공적으로 제거되었습니다
+Console Service removed successfully
 
-  재설치하려면 실행: mcctl console init
+  To reinstall, run: mcctl console init
 ```
 
 확인 프롬프트에는 여전히 `users.yaml`이 표시되지만 이 파일은 존재하는 경우에만 삭제되므로, 현재 설치에서는 2개 파일(`.mcctl-admin.yml`, `ecosystem.config.cjs`)이 제거됩니다.
@@ -201,6 +203,8 @@ Console Service가 성공적으로 제거되었습니다
 ## mcctl console user
 
 관리자 콘솔 사용자를 관리합니다.
+
+이 명령어들은 `MCCTL_ROOT`(기본값 `~/minecraft-servers`)가 가리키는 데이터 디렉토리의 `data/mcctl.db`를 사용합니다. `--root`는 받지 않으므로, 다른 데이터 디렉토리를 쓰려면 변수를 지정하세요. 예: `MCCTL_ROOT=/opt/minecraft mcctl console user list`
 
 ### 하위 명령어
 
@@ -292,11 +296,11 @@ mcctl console user add
 
 ? Email: operator@example.com
 ? Name: Operator
-? Role: User - 표준 접근
+? Role: User - Standard access
 ? Password: ********
 ? Confirm password: ********
 
-'operator@example.com' 사용자가 성공적으로 생성되었습니다!
+User 'operator@example.com' created successfully!
 ```
 
 대화형 비밀번호 입력은 최소 8자 이상이어야 합니다.
@@ -339,10 +343,10 @@ mcctl console user remove [email] [options]
 ```bash
 mcctl console user remove
 
-? 제거할 사용자 선택: operator@example.com (user)
-? 'operator@example.com' 사용자를 삭제하시겠습니까? Yes
+? Select user to remove: operator@example.com (user)
+? Are you sure you want to delete user 'operator@example.com'? Yes
 
-'operator@example.com' 사용자가 삭제되었습니다.
+User 'operator@example.com' deleted successfully.
 ```
 
 **CLI 모드:**
@@ -400,7 +404,7 @@ mcctl console user reset-password operator@example.com
 ? New password: ********
 ? Confirm password: ********
 
-'operator@example.com'의 비밀번호가 재설정되었습니다.
+Password for 'operator@example.com' has been reset.
 ```
 
 **CLI 모드:**
@@ -415,7 +419,7 @@ mcctl console user reset-password operator@example.com --password "NewSecurePass
 
 API 설정 및 접근 제어를 관리합니다.
 
-이 명령어들은 데이터 디렉토리(`MCCTL_ROOT`, 기본값 `~/minecraft-servers`)의 `api-config.json`을 읽고 씁니다. 이 파일은 `mcctl console init`이 생성하는 `.mcctl-admin.yml`과는 별개의 파일입니다. 명령어가 변경 사항을 저장하기 전까지는 기본값(모드 `internal`, 포트 `5001`, 빈 IP 화이트리스트)이 사용됩니다.
+이 명령어들은 데이터 디렉토리(`MCCTL_ROOT`, 기본값 `~/minecraft-servers`)의 `api-config.json`을 읽고 씁니다. 이 파일은 `mcctl console init`이 생성하는 `.mcctl-admin.yml`과는 별개의 파일입니다. `mcctl console user`와 마찬가지로 `--root`는 받지 않습니다. 명령어가 변경 사항을 저장하기 전까지는 기본값(모드 `internal`, 포트 `5001`, 빈 IP 화이트리스트)이 사용됩니다.
 
 !!! warning "변경 사항이 실행 중인 mcctl-api에 반영되지 않습니다"
     이 명령어들은 `api-config.json`만 변경합니다. 실행 중인 `mcctl-api`는 접근 모드, API 키, IP 화이트리스트를 `ecosystem.config.cjs`의 `env` 블록(`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`)에서 읽는데, 이 명령어들은 해당 파일을 건드리지 않습니다. 따라서 여기서 바꾼 값은 `mcctl console service restart`를 실행해도 API에 영향을 주지 않으며, `mcctl console api status`도 실행 중인 API가 사용하는 값이 아니라 `api-config.json`의 내용을 보여줍니다.
@@ -454,9 +458,9 @@ API Configuration
   Port: 5001
   API Key: mctk_a1b...9f3c
 
-  IP Whitelist: (비어있음)
+  IP Whitelist: (empty)
 
-  Mode: X-API-Key 헤더를 통한 외부 접근
+  Mode: External access with X-API-Key header
 ```
 
 ### mcctl console api key regenerate
@@ -478,13 +482,13 @@ mcctl console api key regenerate [options]
 ```bash
 mcctl console api key regenerate
 
-? API 키를 재생성하시겠습니까? 기존의 모든 클라이언트를 업데이트해야 합니다. Yes
-
-API 키가 성공적으로 재생성되었습니다.
+? Are you sure you want to regenerate the API key? All existing clients will need to be updated. Yes
+Note: saved to /home/user/minecraft-servers/api-config.json only. mcctl-api reads AUTH_* from ecosystem.config.cjs (written by `mcctl console init`), so this does not change the running API. Re-run `mcctl console init` to apply an access mode.
+API key regenerated successfully.
 
 New API Key: mctk_0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0
 
-새 API 키로 모든 클라이언트를 업데이트하세요.
+Please update all clients with the new API key.
 ```
 
 ### mcctl console api mode
@@ -583,6 +587,8 @@ PM2를 통해 Management Console 수명주기를 관리합니다.
 | `status` | 서비스 상태 표시 |
 | `logs` | 서비스 로그 보기 |
 
+하위 명령어 없이 `mcctl console service`를 실행하면 상태를 표시합니다.
+
 ### mcctl console service start
 
 PM2를 통해 Management Console 프로세스 (API와 Console)를 시작합니다.
@@ -613,13 +619,15 @@ mcctl console service start --api
 mcctl console service start --console
 ```
 
+시작한 뒤 명령은 [헬스 체크](#헬스-체크와-종료-코드)가 통과할 때까지 최대 15초 기다린 후 상태를 출력하며, 시작한 서비스가 정상이 아니면 종료 코드 1로 끝납니다.
+
 **출력 예시:**
 
 ```
-PM2를 통해 콘솔 서비스 시작 중...
-  Started mcctl-api
-  Started mcctl-console
-콘솔 서비스가 성공적으로 시작되었습니다
+[INFO] Starting console services via PM2...
+[INFO]   Started mcctl-api
+[INFO]   Started mcctl-console
+[INFO] Console services started successfully
 
   Console Service Status (PM2)
 
@@ -640,7 +648,7 @@ PM2를 통해 콘솔 서비스 시작 중...
     Uptime: 3s
     Restarts: 0
 
-  모든 서비스 정상
+  All services healthy
 ```
 
 ### mcctl console service stop
@@ -692,6 +700,10 @@ mcctl console service restart [options]
 
 `--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "API only"와 "API + Console" 중 무엇을 재시작할지 묻습니다.
 
+`--force` 없이 재시작하면 PM2가 이미 가진 환경과 옵션이 그대로 유지됩니다. `ecosystem.config.cjs`(예: `env` 블록이나 `max_memory_restart`)를 수정했다면 `--force`를 사용해 파일에서 프로세스를 다시 만드세요. 서비스가 시작할 때 플랫폼 `.env`에서 읽는 값은 일반 재시작만으로 충분합니다.
+
+`start`와 마찬가지로 [헬스 체크](#헬스-체크와-종료-코드)를 최대 15초 기다리며, 재시작한 서비스가 정상이 아니면 종료 코드 1로 끝납니다.
+
 **예제:**
 
 ```bash
@@ -700,6 +712,9 @@ mcctl console service restart
 
 # API만 재시작
 mcctl console service restart --api
+
+# ecosystem.config.cjs에서 두 프로세스를 다시 만들기
+mcctl console service restart --console --force
 ```
 
 ### mcctl console service status
@@ -738,7 +753,7 @@ mcctl console service status [options]
     Uptime: 2h 15m
     Restarts: 0
 
-  모든 서비스 정상
+  All services healthy
 ```
 
 **JSON 출력:**
@@ -767,6 +782,16 @@ mcctl console service status [options]
   "healthy": true
 }
 ```
+
+PM2에 등록되지 않은 서비스는 JSON 출력에서 `null`입니다.
+
+#### 헬스 체크와 종료 코드
+
+명령은 온라인 상태인 각 서비스가 HTTP로 응답하는지 확인합니다. mcctl-api는 `GET /health`에 2xx 상태를, mcctl-console은 `GET /api/auth/get-session`에 500 미만의 상태를 반환해야 합니다. 확인에 실패하면 해당 서비스에 `Health: HTTP 500`이나 `Health: unreachable` 같은 줄이 추가되고(JSON 출력에서는 `"health"`), 요약이 `Some services need attention`으로 바뀝니다.
+
+- `status`는 설치된 서비스가 온라인이 아니거나 확인에 실패하면 종료 코드 1로 끝납니다. 두 서비스 모두 PM2에 등록되어 있지 않으면 `Services not running`을 출력하고 종료 코드 0으로 끝납니다.
+- `start`와 `restart`는 최대 15초 동안 확인을 반복하며, 그래도 정상이 아닌 서비스가 있으면 종료 코드 1로 끝납니다.
+- PM2 오류 로그에 다른 Node.js 버전용으로 빌드된 네이티브 모듈(`NODE_MODULE_VERSION` 또는 `ERR_DLOPEN_FAILED`)이 보이면 복구 방법도 출력합니다. `pm2 kill`을 실행하고, mcctl을 설치할 때 쓴 Node.js 버전으로 전환한 뒤(예: `nvm use 22`), `mcctl console service start`를 실행하세요.
 
 ### mcctl console service logs
 
@@ -854,7 +879,11 @@ mcctl console service logs --api
 **설정 변경 후 재시작:**
 
 ```bash
-mcctl console service restart
+# 플랫폼 .env를 바꾼 뒤 (예: Platform Settings에서)
+mcctl console service restart --console
+
+# ecosystem.config.cjs를 수정한 뒤 (일반 재시작은 이전 env와 옵션을 유지)
+mcctl console service restart --console --force
 ```
 
 **부팅 시 자동 시작:**

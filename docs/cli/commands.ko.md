@@ -17,8 +17,12 @@ mcctl init [options]
 | 옵션 | 설명 |
 |--------|-------------|
 | `--root <path>` | 사용자 지정 데이터 디렉토리 |
-| `--skip-validation` | Docker 검증 건너뛰기 |
-| `--skip-docker` | Docker 확인 건너뛰기 |
+| `--skip-validation` | 사전 요구사항 확인(Node.js, Docker, Docker Compose, avahi) 건너뛰기 |
+| `--skip-docker` | `minecraft-net` Docker 네트워크를 만들지 않음 |
+| `--reconfigure` | 이미 초기화된 플랫폼의 설정 변경 (호스트 IP 주소, 타임존, RCON 비밀번호 등) |
+| `--playit-key <key>` | 이 `PLAYIT_SECRET_KEY`로 playit.gg 활성화 (묻지 않음) |
+| `--no-playit` | playit.gg를 켜지 않음 (묻지 않음) |
+| `--upgrade` | 대신 [`mcctl upgrade`](#mcctl-upgrade) 실행 |
 
 **예제:**
 
@@ -36,8 +40,11 @@ mcctl --root /opt/minecraft init
 ~/minecraft-servers/
 ├── docker-compose.yml
 ├── .env
+├── .gitignore
+├── .mcctl.json
 ├── servers/
 │   ├── compose.yml
+│   ├── global.env
 │   └── _template/
 ├── worlds/
 ├── shared/
@@ -45,6 +52,8 @@ mcctl --root /opt/minecraft init
 │   └── mods/
 └── backups/
 ```
+
+`mcctl init`은 사용할 호스트 IP 주소(`.env`의 `HOST_IP`, `HOST_IPS`)와 playit.gg 사용 여부를 묻습니다. `.env`에는 무작위 24자 `RCON_PASSWORD`를 기록합니다. 이미 초기화된 플랫폼에서는 아무것도 바꾸지 않고 `mcctl init --reconfigure`를 안내합니다.
 
 ---
 
@@ -68,7 +77,7 @@ mcctl up
 
 ### mcctl down
 
-모든 인프라를 중지하고 네트워크를 제거합니다.
+모든 인프라(mc-router 및 모든 마인크래프트 서버)를 중지합니다.
 
 ```bash
 mcctl down
@@ -80,7 +89,7 @@ mcctl down
 mcctl down
 ```
 
-모든 mc-* 컨테이너를 중지하고 `docker compose down`을 실행합니다.
+모든 mc-* 컨테이너를 중지하고 `docker compose down`을 실행하며, 이때 컨테이너가 제거됩니다. `minecraft-net` 네트워크는 `external`로 선언되어 있어 남습니다.
 
 ---
 
@@ -109,7 +118,7 @@ mcctl router start
 # mc-router 중지
 mcctl router stop
 
-# mc-router 재시작 (설정 변경 후 유용)
+# mc-router 재시작 (컨테이너의 현재 설정은 그대로 유지)
 mcctl router restart
 ```
 
@@ -117,20 +126,19 @@ mc-router는 모든 마인크래프트 서버에 대한 호스트명 기반 라�
 
 **설정:**
 
-mc-router 설정은 `.env` 파일의 환경 변수로 구성합니다:
+오토스케일 설정은 `<root>/docker-compose.yml`에 있는 `router` 서비스의 `environment:`에 있습니다:
 
-```bash
-# 오토스케일링 설정
-AUTO_SCALE_UP=true              # 플레이어 접속 시 서버 자동 시작
-AUTO_SCALE_DOWN=true            # 유휴 서버 자동 중지
-AUTO_SCALE_DOWN_AFTER=10m       # 유휴 타임아웃 (1m, 5m, 10m, 30m, 1h)
-DOCKER_TIMEOUT=120s             # 컨테이너 시작 타임아웃 (Go time.Duration: 120s, 2m)
-
-# 슬립 상태 서버의 커스텀 MOTD
-AUTO_SCALE_ASLEEP_MOTD=§e§l서버가 슬립 중§r\n§7접속하면 깨어납니다!
+```yaml
+  router:
+    environment:
+      AUTO_SCALE_UP: "true"            # 플레이어가 접속하면 중지된 서버 시작
+      AUTO_SCALE_DOWN: "true"          # 유휴 서버 중지
+      AUTO_SCALE_DOWN_AFTER: "10m"     # 유휴 타임아웃 (1m, 5m, 10m, 30m, 1h)
+      DOCKER_TIMEOUT: "120s"           # 컨테이너 시작 타임아웃 (Go time.Duration: 120s, 2m)
+      AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"   # 중지된 서버의 MOTD
 ```
 
-`.env` 변경 후 `mcctl router restart`로 mc-router를 재시작하세요.
+변경 사항은 `mcctl router start`로 적용합니다(`docker compose up -d router`가 컨테이너를 다시 만듭니다). `mcctl router restart`는 이전 값을 그대로 유지합니다. `mcctl upgrade`는 router의 `image`와 `group_add`만 수정하므로 이 편집 내용은 업그레이드 후에도 남습니다.
 
 ---
 
@@ -314,15 +322,12 @@ mcctl update [options]
 | 옵션 | 설명 |
 |--------|-------------|
 | `--cli-only` | mcctl CLI 바이너리만 업데이트 (전체 업데이트 opt-out) |
-| `--check` | 업데이트만 확인 (설치하지 않음) |
-| `--yes` | 확인 프롬프트 없이 자동 업데이트 |
-| `--force` | 캐시를 무시하고 강제 버전 확인 |
+| `--check` | CLI와 설치된 서비스의 업데이트를 보여 주기만 하고 아무것도 설치하지 않음 |
+| `--yes` | 업데이트 전에 묻지 않고, 중지된 서버도 다시 만들지 않음 (아래 **중지된 서버** 참조) |
+| `--force` | 호환용으로 받음. `mcctl update`는 항상 캐시 없이 npm을 확인 |
 | `--all` | Deprecated 별칭 — 기본 동작과 동일 (하위 호환용) |
 
-!!! note "기본 동작 변경"
-    `mcctl update`는 이제 기본적으로 CLI **와 함께** 설치된 모든 서비스(API, Console, `shared`) 및
-    서버 이미지 태그/Docker 이미지까지 업데이트합니다(기존 `--all` 동작). CLI 바이너리만 업데이트하려면
-    `--cli-only`를 사용하세요.
+기본적으로 `mcctl update`는 CLI, 설치된 서비스(mcctl-api, mcctl-console, `shared`), 서버 이미지를 업데이트합니다. `--cli-only`는 CLI 바이너리만 업데이트합니다.
 
 서버 이미지 태그는 `VERSION`을 따릅니다(예: 1.21.1이면 `java21`). `server.yaml`의 `itzg/minecraft-server:2026.10.0-java21` 같은 릴리스 태그나 digest(`java21@sha256:…`)는 고정으로 보고 그대로 둡니다. 업스트림 회귀가 해결되지 않은 동안 검증된 이미지에 서버를 묶어 둘 수 있습니다. 고정한 Java가 `VERSION`에 필요한 버전보다 낮으면 `mcctl update`가 경고하지만 태그는 그대로 둡니다. 수정이 릴리스되면 `VERSION`에 맞는 태그로 되돌리세요.
 
@@ -335,38 +340,35 @@ mcctl update [options]
 
     **출력 (업데이트 가능):**
     ```
-    mcctl update check:
-      Installed: 2.11.0
-      Latest:    2.12.1
+    mcctl Version Info
 
-    Update available! Run: mcctl update
+      Installed: 3.0.1
+      Latest:    3.0.2
+
+      Update available: 3.0.1 → 3.0.2
     ```
 
     **출력 (최신 버전):**
     ```
-    mcctl update check:
-      Installed: 2.12.1
-      Latest:    2.12.1
+    mcctl Version Info
 
-    You are up to date.
+      Installed: 3.0.2
+      Latest:    3.0.2
+
+      You are using the latest version.
     ```
+
+    `--cli-only`가 없으면 그 뒤에 서비스 목록이 표시됩니다(예: `Update available`, `Up to date`).
 
 === "CLI만 업데이트"
     ```bash
     mcctl update --cli-only
     ```
 
-    **출력:**
+    버전 정보 다음에 `Update mcctl to 3.0.2?`를 묻고(`--yes`가 없을 때), 이어서 다음을 출력합니다:
+
     ```
-    mcctl update check:
-      Installed: 2.11.0
-      Latest:    2.12.1
-
-    Update available!
-    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
-
-    Updating mcctl...
-    ✓ mcctl updated to 2.12.1
+    ✓ mcctl updated successfully!
     ```
 
 === "전체 업데이트 (기본)"
@@ -374,23 +376,24 @@ mcctl update [options]
     mcctl update
     ```
 
-    **출력:**
+    **출력 (CLI 업데이트 이후):**
     ```
-    mcctl update check:
-      Installed: 2.11.0
-      Latest:    2.12.1
-
-    ? Do you want to update mcctl to 2.12.1? (Y/n) Y
-
-    Updating mcctl...
-    ✓ mcctl updated to 2.12.1
-
     Updating services...
-      ✓ @minecraft-docker/mcctl-api: 2.11.0 → 2.12.1 (restarted)
-      ✓ @minecraft-docker/mcctl-console: 2.11.0 → 2.12.1 (restarted)
-      ✓ @minecraft-docker/shared: 2.11.0 → 2.12.1
 
-    All services updated successfully.
+      mcctl-api        3.0.1 → 3.0.2  ✓ Updated & restarted
+      mcctl-console    3.0.1 → 3.0.2  ✓ Updated & restarted
+
+    Checking server image compatibility...
+      ✓ survival: java21 (VERSION=1.21.1 - compatible)
+
+    Updating Docker images...
+
+      ✓ itzg/minecraft-server:java21
+
+    Applying new images to stopped servers...
+      ✓ survival: up to date
+
+      Completed in 41.8s
     ```
 
 === "자동 확인 (CI/CD)"
@@ -400,13 +403,13 @@ mcctl update [options]
 
 **동작 상세:**
 
-- **업데이트 확인 캐시**: 버전 확인은 `~/.mcctl-update-check.json`에 24시간 동안 캐시됩니다. 일반 CLI 사용 중에는 백그라운드에서 비차단 업데이트 확인이 자동으로 실행됩니다.
-- **`--check` 종료 코드**: 업데이트가 가능하면 종료 코드 `1`, 최신 버전이면 `0`을 반환합니다. 스크립팅에 유용합니다.
-- **기본 동작 (전체 업데이트)**: CLI 업데이트 후 설치된 서비스와 이미지까지 갱신합니다:
+- **명령 실행 전 업데이트 확인**: `--help`와 `--version`을 제외한 모든 명령은 실행 전에 npm에서 새 CLI 버전을 확인하고, 새 버전이 있으면 알림을 출력합니다. 결과는 `~/.mcctl-update-check.json`에 24시간 동안 캐시되며, 유효한 캐시가 없으면 명령이 npm 응답을 최대 2초 기다립니다.
+- **`--check` 종료 코드**: 새 CLI 버전이 있거나 npm에 연결할 수 없으면 종료 코드 `1`, CLI가 최신이면 `0`을 반환합니다. 서비스 업데이트 여부는 종료 코드에 영향을 주지 않습니다. 스크립팅에 유용합니다.
+- **기본 동작 (전체 업데이트)**: CLI 업데이트 후(CLI가 이미 최신이어도) 다음을 수행합니다:
     - `mcctl-api` 및 `mcctl-console`: 최신 버전 설치 후 PM2 서비스 재시작
     - `shared` 라이브러리: 최신 버전 설치 (재시작 불필요)
-    - 각 서버 `docker-compose.yml`의 이미지 태그를 권장 Java 태그로 정렬한 뒤 Docker 이미지 pull
-    - CLI가 이미 최신이어도 서비스는 갱신됩니다
+    - 각 서버의 이미지 태그를 `server.yaml`을 통해 `VERSION`에 맞는 권장 태그로 바꾸고(고정 태그는 유지, 위 참조) 서버의 Docker 이미지를 pull
+- **중지된 서버**: mc-router 오토스케일은 기존 컨테이너를 시작하므로, 중지된 서버는 컨테이너를 다시 만들 때까지 이전 이미지를 계속 씁니다. pull이 끝나면 `mcctl update`는 컨테이너가 pull한 이미지를 쓰지 않는 중지된(`exited` 또는 `created`) 서버를 보여 주고, 이미 그 이미지를 쓰는 서버는 `up to date`로 표시합니다. 터미널에서는 `Recreate the stopped servers now so they use the new image?`를 묻습니다(기본값 No). Yes를 고르면 서버마다 `docker compose up --no-start --no-deps mc-<server>`를 실행하고 되돌리는 명령(`docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`)을 출력합니다. `--yes`를 주거나 터미널이 없으면 아무것도 다시 만들지 않고 서버마다 `docker compose up --no-start --no-deps` 명령만 출력합니다. 실행 중인 서버는 `mcctl stop <server> && mcctl start <server>`를 실행할 때까지 기존 이미지를 유지합니다.
 - **`--cli-only` 플래그**: mcctl CLI 바이너리만 업데이트하고 서비스/이미지는 건너뜁니다.
 
 !!! tip "스크립트에서 --check 활용"
@@ -442,12 +445,15 @@ mcctl upgrade [options]
 
 **동작:**
 
-1. 번들된 `.env.example`의 새 변수를 `.env`에 추가합니다 (기존 값은 변경하지 않음)
+1. 번들된 `.env.example`의 새 변수를 `.env`에 추가합니다 (기존 값은 변경하지 않음). 터미널에서는 새 변수마다 값을 묻고(Enter는 기본값 유지), `--non-interactive`이면 기본값을 기록합니다
 2. Docker 소켓의 그룹 ID를 감지해 `.env`에 `DOCKER_GID`로 기록합니다 (non-root mc-router 1.46+에 필요)
 3. 루트 `docker-compose.yml`의 `router` 서비스를 패치합니다 (아래 참조)
 4. `servers/_template/` 파일을 갱신하고 `.mcctl.json`에 `templateVersion`을 기록합니다
-5. `.mcctl.json`에 `installId`가 없으면 추가합니다 (기존 값은 유지)
-6. (v3.0.0 이상) `<root>/scripts`가 있으면 경로, v3.0.0부터 쓰지 않으며 직접 고친 파일이 있을 수 있다는 경고, [스크립트 → mcctl 대응표](../advanced/upgrade-runbook.ko.md#v300-scripts) 링크를 출력합니다. 터미널에서는 `Remove <path>?`(기본값 `N`)를 묻고 `y`일 때만 삭제합니다. `--non-interactive`이거나 터미널이 없으면 힌트(`rm -r <path>`)만 출력하고 아무것도 지우지 않습니다. `--dry-run`이면 `Would ask before removing <path>.`만 출력합니다. 심볼릭 링크는 링크만 지우고 따라가지 않습니다. 확인을 건너뛰는 옵션은 없습니다.
+5. `servers/global.env`가 없으면 만들고, 각 서버의 `docker-compose.yml`이 플랫폼 `.env` 대신 이 파일을 읽도록 바꿔 플랫폼 비밀 값이 서버에 전달되지 않게 합니다. 기존 컨테이너는 다시 만들 때까지 이전 환경을 유지하므로, 표시된 서버마다 `mcctl stop <server> && mcctl start <server>`를 실행합니다
+6. `ecosystem.config.cjs`의 `BETTER_AUTH_SECRET`, `BETTER_AUTH_BASE_URL`을 `.env`로 옮깁니다(백업: `ecosystem.config.cjs.bak-<timestamp>`). `mcctl console service restart --console`로 적용합니다
+7. 아직 `server.yaml`이 없는 서버를 알려 주기만 하고 아무것도 쓰지 않습니다. 이 서버들은 다음 변경 때, 또는 [`mcctl migrate spec`](#mcctl-migrate-spec)으로 가져옵니다
+8. `.mcctl.json`에 `installId`가 없으면 추가합니다 (기존 값은 유지)
+9. (v3.0.0 이상) `<root>/scripts`가 있으면 경로, v3.0.0부터 쓰지 않으며 직접 고친 파일이 있을 수 있다는 경고, [스크립트 → mcctl 대응표](../advanced/upgrade-runbook.ko.md#v300-scripts) 링크를 출력합니다. 터미널에서는 `Remove <path>?`(기본값 `N`)를 묻고 `y`일 때만 삭제합니다. `--non-interactive`이거나 터미널이 없으면 힌트(`rm -r <path>`)만 출력하고 아무것도 지우지 않습니다. `--dry-run`이면 `Would ask before removing <path>.`만 출력합니다. 심볼릭 링크는 링크만 지우고 따라가지 않습니다. 확인을 건너뛰는 옵션은 없습니다.
 
 **docker-compose.yml router 패치:** `router` 서비스의 `image` 태그와 `group_add` 항목만 번들 템플릿에 맞춥니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.
 
@@ -485,17 +491,24 @@ mcctl create [name] [options]
 
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
-| `--type` | `-t` | 서버 타입: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, MODRINTH |
-| `--version` | `-v` | 마인크래프트 버전 (예: 1.21.1) |
+| `--type` | `-t` | 서버 타입 (기본값 `PAPER`): PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
+| `--version` | `-v` | 마인크래프트 버전: `-v 1.21.1` 또는 `=`를 쓴 긴 형식 `--version=1.21.1` (기본값 `LATEST`, 모드팩 타입은 모드팩의 버전 사용) |
 | `--seed` | `-s` | 월드 생성 시드. 음수 시드도 됩니다(`-s -123`). `--seed=<값>`은 어떤 값이든 받습니다 |
 | `--world-url` | `-u` | ZIP URL에서 월드 다운로드 |
 | `--world` | `-w` | worlds/ 디렉토리의 기존 월드 사용 |
-| `--modpack` | | Modrinth 모드팩 서버 생성 활성화 (대화형 검색) |
+| `--modpack <slug>` | | 모드팩 slug. `-t MODRINTH` 또는 `-t AUTO_CURSEFORGE`에서 필수 |
+| `--modpack-version <version>` | | 모드팩 버전 (기본값: 최신) |
+| `--mod-loader <loader>` | | 모드팩의 모드 로더. 예: `fabric`, `forge`, `neoforge`, `quilt` (생략하면 모드팩에서 감지) |
+| `--exclude-files <list>` | | 모드팩에서 뺄 파일 목록(쉼표 구분). 예: 클라이언트 전용 모드 |
 | `--no-start` | | 생성만 하고 시작하지 않음 |
 | `--whitelist` | | 화이트리스트 활성화 + 초기 플레이어 등록 (쉼표 구분, 예: `Steve,Alex`) |
 | `--enable-whitelist` | | 초기 플레이어 없이 화이트리스트 활성화 |
 | `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
+| `--playit-domain <domain>` | | 서버의 playit.gg 외부 도메인 (예: `aa.example.com`) |
+| `--no-playit-domain` | | playit.gg 도메인을 설정하지 않음 (`--playit-domain`이 없을 때의 기본 동작과 같음) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
+
+새 서버는 메모리 4G(모드팩 타입은 6G)와 이미지 `itzg/minecraft-server:java25`로 만들어집니다. 대화형 `mcctl create`는 메모리를 묻고, 생성 후에는 `mcctl config <name> MEMORY <size>`로 바꿉니다. 모드팩에 대한 자세한 내용은 [모드팩](../mods-and-plugins/modpacks.ko.md)에 있습니다.
 
 !!! info "create가 쓰는 파일"
     `mcctl create`는 `servers/<이름>/server.yaml`을 쓰고, 그 파일에서 `config.env`, `docker-compose.yml`, `servers/compose.yml` 항목을 만듭니다([서버 정의](../configuration/server-yaml.md)). 서버가 만들어지기 전에 실패하면 아무것도 남기지 않으므로 같은 명령을 다시 실행하면 됩니다. 서버는 만들어졌지만 시작하지 못하면 서버는 그대로 두고 원인과 함께 종료 코드 1로 끝납니다. `mcctl start <이름>`으로 시작하세요.
@@ -548,17 +561,19 @@ mcctl create [name] [options]
     mcctl create private --enable-whitelist
     ```
 
-=== "모드팩 (Modrinth)"
+=== "모드팩"
     ```bash
-    # 대화형 모드팩 생성 (검색, 버전 선택, 로더 선택)
-    mcctl create myserver --modpack
+    # slug로 Modrinth 모드팩 서버 생성
+    mcctl create cobblemon -t MODRINTH --modpack cobblemon
 
-    # CLI가 다음을 안내합니다:
-    # 1. Modrinth에서 모드팩 검색
-    # 2. 모드팩 버전 선택
-    # 3. 모드 로더 선택 (지원되는 로더만 표시)
-    # 4. 메모리 및 기타 설정 구성
+    # 모드팩 버전과 로더를 고정하고 클라이언트 전용 모드는 제외
+    mcctl create mypack -t MODRINTH --modpack <slug> --modpack-version <version> --mod-loader fabric --exclude-files <file1>,<file2>
+
+    # slug로 CurseForge 모드팩 서버 생성
+    mcctl create mypack -t AUTO_CURSEFORGE --modpack <slug>
     ```
+
+    안내에 따라 만들려면 이름 없이 `mcctl create`를 실행하고 "Modpack Platforms"에서 **Modrinth Modpack** 또는 **CurseForge Modpack**을 고릅니다. 그러면 모드팩 slug, 모드 로더, 모드팩 버전, 제외할 파일을 차례로 묻습니다.
 
 === "자동화 (CI/CD)"
     ```bash
@@ -583,7 +598,11 @@ mcctl create [name] [options]
 | `BUKKIT` | 클래식 플러그인 서버 | Yes | No |
 | `PURPUR` | 더 많은 기능이 있는 Paper 포크 | Yes | No |
 | `QUILT` | 현대적인 모딩 툴체인 | No | Yes |
+| `LEAF` | 경량 Paper 포크 | Yes | No |
+| `FOLIA` | 큰 월드용 멀티스레드 Paper 서버 | Yes | No |
+| `PUFFERFISH` | 대형 서버용 Paper 포크 | Yes | No |
 | `MODRINTH` | Modrinth 모드팩 서버 | No | Yes |
+| `AUTO_CURSEFORGE` | CurseForge 모드팩 서버 | No | Yes |
 
 ---
 
@@ -770,7 +789,9 @@ mcctl logs router
 mcctl console <name>
 ```
 
-!!! note "이번 릴리스 변경: `docker exec` 대신 TCP RCON"
+하위 명령 `mcctl console init`, `service`, `user`, `api`, `remove`는 관리 콘솔을 관리합니다. 자세한 내용은 [콘솔 CLI 명령어](../console/cli-commands.ko.md)에 있습니다. `mcctl admin <subcommand>`는 이 명령들의 deprecated 별칭입니다. 이름이 이 하위 명령과 같은 서버에는 `mcctl rcon <name>`으로 접속합니다.
+
+!!! note "v3.0.0부터: `docker exec` 대신 TCP RCON"
     `mcctl console`은 `mcctl rcon`처럼 서버의 RCON 포트에 TCP로 연결합니다(컨테이너 주소, `RCON_PORT`, `RCON_PASSWORD`). 예전에는 `docker exec -i mc-<name> rcon-cli`를 실행했습니다. 서버가 실행 중이어야 하고, `mcctl`을 실행하는 호스트에서 RCON 포트에 닿아야 합니다. `exit`나 `quit`을 입력하거나 `Ctrl+C`/`Ctrl+D`를 누르면 끝납니다. 파이프 입력은 한 줄씩 실행합니다(`printf 'list\n' | mcctl console myserver`). 서버가 연결을 끊으면(예: `stop` 뒤) 세션이 끝나고, 연결 오류는 종료 코드 1로 끝납니다.
 
 **예제:**
@@ -802,13 +823,13 @@ mcctl rcon <server>
 
 ```bash
 $ mcctl rcon survival
-Connecting to RCON console for 'survival'...
-Type "help" for commands, Ctrl+C or "exit" to quit
+[INFO] Connecting to RCON console for 'survival'...
+[INFO] Connected! Type "help" for commands, "exit" or Ctrl+C to quit.
 
 > list
-There are 2 of 20 players online: Steve, Alex
-> say 서버 점검 10분 전입니다!
-[Server: 서버 점검 10분 전입니다!]
+There are 2 of a max of 20 players online: Steve, Alex
+> say Server maintenance in 10 minutes!
+[Server: Server maintenance in 10 minutes!]
 > tp Steve 0 100 0
 Teleported Steve to 0.0, 100.0, 0.0
 > exit
@@ -855,7 +876,7 @@ mcctl exec myserver time set day
 
 # 스크립트에서 사용
 PLAYERS=$(mcctl exec myserver list)
-if echo "$PLAYERS" | grep -q "0 of"; then
+if echo "$PLAYERS" | grep -q "There are 0 of"; then
   mcctl stop myserver
 fi
 ```
@@ -888,6 +909,8 @@ mcctl config <server> [key] [value] [options]
 | `--no-pvp` | PvP 비활성화 |
 | `--command-block` | 커맨드 블록 활성화 |
 | `--no-command-block` | 커맨드 블록 비활성화 |
+
+`--json`을 주면 설정 값, 또는 변경 내용(`server`, `key`, `oldValue`, `newValue`)을 JSON으로 출력합니다.
 
 **예제:**
 
@@ -947,7 +970,7 @@ mcctl config <server> [key] [value] [options]
 
 ### mcctl server-backup
 
-서버 설정(config.env, docker-compose.yml)을 백업합니다.
+서버 설정 파일을 `backups/servers/<server>/<id>.tar.gz`로 백업합니다: `config.env`, `docker-compose.yml`, 그리고 있으면 `server.yaml`, `data/ops.json`, `data/whitelist.json`, `data/banned-players.json`, `data/banned-ips.json`, `data/server.properties`. ID는 생성 시각(`20260120-203357`)입니다.
 
 ```bash
 mcctl server-backup <server> [options]
@@ -1011,10 +1034,60 @@ mcctl server-restore <server> [backup-id] [options]
 mcctl server-restore myserver
 
 # 특정 백업 복원
-mcctl server-restore myserver abc123
+mcctl server-restore myserver 20260120-203357
 
 # 복원 미리보기
-mcctl server-restore myserver abc123 --dry-run
+mcctl server-restore myserver 20260120-203357 --dry-run
+```
+
+`--force`나 `--json`이 없으면 복원 전에 확인을 묻습니다. 현재 파일은 먼저 `backups/servers/<server>/.pre-restore/`에 복사됩니다. 복원한 파일을 적용하려면 서버를 재시작합니다.
+
+---
+
+## 설정 스냅샷
+
+### mcctl config-snapshot
+
+서버 설정 파일의 사본을 저장하고 복원합니다. 스냅샷에는 `servers/<server>/` 바로 아래(`data/` 제외)의 파일이 들어갑니다: `server.yaml`, `config.env`, `docker-compose.yml`, 그리고 1MB 이하의 다른 `.yml`, `.yaml`, `.json`, `.properties` 파일. 스냅샷은 `backups/meta/config-snapshots.db`와 `backups/meta/config-snapshot-storage/`에 저장됩니다.
+
+```bash
+mcctl config-snapshot <list|create|show|diff|restore|delete> [args] [options]
+```
+
+| 명령 | 설명 |
+|------|------|
+| `list [server]` | 스냅샷 목록, 최신순 (`--limit <n>`, 기본값 20; `--json`) |
+| `create <server>` | 스냅샷 생성 (`--description "..."`; `--json`) |
+| `show <id>` | 스냅샷 상세 (`--files`로 파일 목록 표시; `--json`) |
+| `diff <id1> <id2>` | 두 스냅샷 사이의 변경 내용 (`--files-only`; `--json`) |
+| `restore <id>` | 스냅샷의 파일을 `servers/<server>/`에 다시 씀. `--force`가 없으면 먼저 확인 |
+| `delete <id>` | 스냅샷 삭제. `--force`가 없으면 먼저 확인 |
+
+`list`는 ID의 앞 8자만 보여 줍니다. 나머지 명령에는 전체 ID가 필요하며, 전체 ID는 `create`와 `list --json`이 출력합니다. 서버의 월드를 바꾸는 복원은 [월드 할당 규칙](#world-assignment-rules)을 따릅니다. 복원한 파일을 적용하려면 서버를 재시작합니다.
+
+**예제:**
+
+```bash
+mcctl config-snapshot create survival --description "Before mod update"
+mcctl config-snapshot list survival
+mcctl config-snapshot diff <id1> <id2> --files-only
+mcctl config-snapshot restore <id>
+```
+
+### mcctl config-snapshot schedule
+
+일정에 따라 스냅샷을 만듭니다. 일정은 mcctl-api가 실행하며, mcctl-api는 시작할 때 일정을 읽습니다. 여기서 일정을 추가, 삭제, 활성화, 비활성화한 뒤에는 `mcctl console service restart --api`로 mcctl-api를 재시작합니다.
+
+| 명령 | 설명 |
+|------|------|
+| `schedule list` | 일정 목록 (`--server <name>`; `--json`) |
+| `schedule add` | 일정 추가: `--server <name>`, `--cron "<expression>"`, `--name "<name>"`는 필수. `--retention <n>`은 이 일정의 최신 스냅샷 n개를 남김(기본값 10); `--json` |
+| `schedule remove <id>` | 일정 삭제. `--force`가 없으면 먼저 확인 |
+| `schedule enable <id>` | 일정 활성화 |
+| `schedule disable <id>` | 일정 비활성화 |
+
+```bash
+mcctl config-snapshot schedule add --server survival --cron "0 3 * * *" --name "Daily"
 ```
 
 ---
@@ -1026,16 +1099,19 @@ mcctl server-restore myserver abc123 --dry-run
 서버 관리자(OP)를 관리합니다.
 
 ```bash
-mcctl op <server> <action> [player]
+mcctl op <server> <action> [player] [level]
 ```
 
 **액션:**
 
 | 액션 | 설명 |
 |--------|-------------|
-| `list` | 현재 관리자 목록 |
-| `add <player>` | 관리자 추가 (RCON + config.env 업데이트) |
+| `list` | 관리자와 레벨, 역할 표시 (`data/ops.json`에서 읽음) |
+| `add <player> [level]` | 관리자 추가: `config.env`의 `OPS`에 추가하고, 서버가 실행 중이면 RCON으로도 적용합니다(이때 레벨을 `data/ops.json`에 기록). 레벨을 주지 않으면 터미널에서 묻고, `--json`이면 4를 씁니다 |
 | `remove <player>` | 관리자 제거 |
+| `set-level <player> <level>` | `data/ops.json`에서 관리자의 레벨 변경. 서버가 실행 중이어야 하며, 적용하려면 재시작합니다 |
+
+레벨: `1` Moderator, `2` Gamemaster, `3` Admin, `4` Owner. `--json`을 주면 결과를 JSON으로 출력합니다.
 
 **예제:**
 
@@ -1043,8 +1119,14 @@ mcctl op <server> <action> [player]
 # 관리자 목록
 mcctl op survival list
 
-# 관리자 추가
+# 관리자 추가 (레벨을 물음)
 mcctl op survival add Steve
+
+# 레벨 2로 관리자 추가
+mcctl op survival add Alex 2
+
+# 레벨 변경
+mcctl op survival set-level Alex 3
 
 # 관리자 제거
 mcctl op survival remove Steve
@@ -1054,8 +1136,10 @@ mcctl op survival remove Steve
 ```
 Operators for survival:
 
-  Steve
-  Alex
+  Player       Level             Role
+  ------------------------------------------------------------
+  Steve                4   Owner
+  Alex                 2   Gamemaster
 ```
 
 ---
@@ -1078,6 +1162,8 @@ mcctl whitelist <server> <action> [player]
 | `on` | 화이트리스트 활성화 |
 | `off` | 화이트리스트 비활성화 |
 | `status` | 화이트리스트 상태 표시 |
+
+`--json`을 주면 결과를 JSON으로 출력합니다.
 
 **예제:**
 
@@ -1140,6 +1226,8 @@ mcctl ban <server> ip <action> [ip] [reason]
 | `ip add <ip> [reason]` | IP 주소 밴 |
 | `ip remove <ip>` | IP 주소 밴 해제 |
 
+`--json`을 주면 결과를 JSON으로 출력합니다.
+
 **예제:**
 
 ```bash
@@ -1163,7 +1251,7 @@ mcctl ban survival ip add 192.168.1.100 "스팸"
 ```
 Banned Players for survival:
 
-  Griefer (Reason: Griefing spawn area)
+  Griefer - Griefing spawn area
 ```
 
 ---
@@ -1175,6 +1263,8 @@ Banned Players for survival:
 ```bash
 mcctl kick <server> <player> [reason]
 ```
+
+서버가 실행 중이어야 합니다. `--json`을 주면 결과를 JSON으로 출력합니다.
 
 **예제:**
 
@@ -1217,9 +1307,8 @@ mcctl player online --all
 
       Status: Running (2/20)
 
-      Players:
-        - Steve
-        - Alex
+      Steve
+      Alex
     ```
 
 === "모든 서버"
@@ -1231,14 +1320,14 @@ mcctl player online --all
     ```
     Online Players (All Servers):
 
-      survival: 2 players
-        - Steve
-        - Alex
+      Total: 2 players
 
-      creative: 0 players
-
-      Total: 2 players online
+      survival (2/20):
+        Steve
+        Alex
     ```
+
+    접속한 플레이어가 없는 실행 중 서버는 표시하지 않습니다.
 
 ---
 
@@ -1276,7 +1365,8 @@ mcctl world new [name] [options]
 |--------|-------|-------------|
 | `--seed` | `-s` | 월드 생성 시드. 음수 시드도 됩니다(`-s -123`). `--seed=<값>`은 어떤 값이든 받습니다 |
 | `--server` | | 월드를 할당할 서버 (`LEVEL`을 설정하고, 시드가 있으면 `SEED`도 설정). 서버가 중지되어 있어야 함 |
-| `--no-start` | | 할당 후 서버 자동 시작 안 함 |
+| `--no-start` | | 대화형 모드: 서버 시작 여부를 묻지 않고, 시작하지도 않음 |
+| `--json` | | 결과를 JSON으로 출력 |
 
 **예제:**
 
@@ -1286,8 +1376,8 @@ mcctl world new [name] [options]
     # 다음을 프롬프트로 물어봅니다:
     # 1. 월드 이름
     # 2. 선택적 시드
-    # 3. 선택적 서버 할당
-    # 4. 자동 시작 여부 (서버 할당 시)
+    # 3. 월드를 할당할 서버 (중지되어 있어야 함)
+    # 4. 서버 시작 여부
     ```
 
 === "CLI 모드"
@@ -1303,20 +1393,20 @@ mcctl world new [name] [options]
 
     # 시드와 함께 생성하고 서버에 할당
     mcctl world new myworld --seed 12345 --server myserver
-
-    # 자동 시작 없이 생성 후 할당
-    mcctl world new myworld --server myserver --no-start
     ```
+
+    월드 이름을 주면 서버는 시작하지 않습니다. `mcctl start <server>`로 시작합니다.
 
 **수행 내용:**
 
-1. `worlds/<name>/` 디렉토리에 월드 디렉토리 생성
-2. 시드가 제공되면 `.seed` 파일 생성 (참조용)
-3. 서버가 할당되면:
+1. `worlds/<name>/` 디렉토리에 월드 디렉토리와 `.meta` 파일(이름, 시드, 생성 시각) 생성
+2. 서버가 할당되면:
    - 서버가 실행 중이거나 다른 서버가 그 월드를 사용 중이면 거부 (서버를 대신 중지하지 않음)
    - 서버의 `config.env`에 `LEVEL=<world-name>` 업데이트
    - 시드가 있으면 `SEED=<seed>` 설정
-   - 선택적으로 서버 시작
+   - 대화형 모드에서 시작하겠다고 답하면 서버 시작
+
+`mcctl world new`에는 서버가 하나 이상 있어야 합니다. 서버가 없으면 `No servers available. Create a server first.`로 멈춥니다.
 
 !!! tip "시드 동작"
     시드는 서버의 `SEED` 환경 변수를 통해 적용됩니다.
@@ -1350,7 +1440,7 @@ mcctl world list [options]
     Worlds:
 
       survival-world
-        Status: assigned: mc-survival
+        Status: assigned: survival
         Size: 514.0MB
         Path: /home/myuser/minecraft-servers/worlds/survival-world
 
@@ -1372,18 +1462,20 @@ mcctl world list [options]
         "name": "survival-world",
         "path": "/home/myuser/minecraft-servers/worlds/survival-world",
         "isLocked": true,
-        "lockedBy": "mc-survival",
-        "servers": ["mc-survival"],
+        "lockedBy": "survival",
         "size": "514.0MB",
-        "lastModified": "2026-01-21T13:19:48.853Z"
+        "lastModified": "2026-01-21T13:19:48.853Z",
+        "servers": ["survival"],
+        "dimensions": { "nether": true, "end": true }
       },
       {
         "name": "creative-world",
         "path": "/home/myuser/minecraft-servers/worlds/creative-world",
         "isLocked": false,
-        "servers": [],
         "size": "128.5MB",
-        "lastModified": "2026-01-20T10:30:00.000Z"
+        "lastModified": "2026-01-20T10:30:00.000Z",
+        "servers": [],
+        "dimensions": { "nether": false, "end": false }
       }
     ]
     ```
@@ -1418,7 +1510,7 @@ mcctl world assign [world] [server]
 
 === "CLI 모드"
     ```bash
-    mcctl world assign survival mc-myserver
+    mcctl world assign survival myserver
     ```
 
 !!! info "월드 하나는 서버 하나"
@@ -1480,7 +1572,7 @@ mcctl world delete [world] [options]
 
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
-| `--force` | `-f` | 확인 프롬프트 건너뛰기 (서버가 사용 중인 월드는 삭제하지 않음) |
+| `--force` | | 확인 건너뛰기 (서버가 사용 중인 월드는 삭제하지 않음) |
 | `--json` | | JSON 형식으로 출력 |
 
 !!! danger "영구 삭제"
@@ -1514,27 +1606,28 @@ mcctl world delete [world] [options]
 
 - **할당 확인**: 서버가 사용 중인 월드는 실행 여부와 관계없이 삭제할 수 없으며 `--force`로도 우회할 수 없음. 먼저 서버에 다른 월드를 할당하세요. 월드를 `servers/<name>/data` 안에 두는 서버(`EXTRA_ARGS=--universe /worlds/` 없음)는 `worlds/<world>` 삭제를 막지 않음
 - **안전 우선(fail-closed)**: 어떤 서버의 `config.env`를 읽거나 해석할 수 없으면 거부됨([월드 할당 규칙](#world-assignment-rules) 참고)
-- **확인 프롬프트**: "DELETE" 입력 필요 (`--force` 미사용 시)
-- **크기 표시**: 삭제 전 월드 크기 표시
-
-**출력 예시:**
-
-```
-World 'old-world' (512.5 MB) will be permanently deleted.
-
-Type DELETE to confirm: DELETE
-
-✓ World 'old-world' deleted
-  Freed: 512.5 MB
-```
+- **확인 프롬프트**: `--force`가 없으면 삭제 전에 확인(yes/no)을 묻습니다
+- **크기**: 대화형 모드는 확인 전에 월드 크기를 보여 주고, 삭제 후에는 확보된 크기를 출력합니다
 
 ---
 
 ## 백업 관리
 
+### mcctl backup init
+
+GitHub 월드 백업을 대화형으로 설정합니다.
+
+```bash
+mcctl backup init [--force]
+```
+
+GitHub 개인 액세스 토큰, 저장소(`username/repo`), 브랜치, 서버 중지 시 백업 여부를 묻습니다. 저장소 접근을 확인한 뒤 `.env`에 `BACKUP_GITHUB_TOKEN`, `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH`, `BACKUP_AUTO_ON_STOP`을 기록합니다. 백업이 이미 설정되어 있으면 덮어쓸지 묻고, `--force`는 이 질문을 건너뜁니다. 저장소와 토큰을 만드는 방법은 [백업 가이드](../advanced/backup.ko.md)에 있습니다.
+
+---
+
 ### mcctl backup status
 
-백업 설정 상태를 표시합니다.
+백업 설정 상태를 표시합니다. 하위 명령 없이 `mcctl backup`을 실행해도 같습니다.
 
 ```bash
 mcctl backup status [options]
@@ -1555,25 +1648,13 @@ mcctl backup status
 **출력 (설정됨):**
 
 ```
-=== Backup Status ===
-
-Configuration: Configured
-Repository:    myuser/minecraft-backup-repo
-Branch:        main
-Auto on stop:  true
-
-Cache:         Exists
-Last commit:   fd8633b
-Last date:     2026-01-20 21:06:35 +0900
-
-Worlds dir:    /home/myuser/minecraft-servers/worlds
-Cache dir:     /home/myuser/.minecraft-backup
-
 Backup Configuration:
 
   Status: Configured
   Repository: myuser/minecraft-backup-repo
   Branch: main
+  Last backup: 1/20/2026, 9:06:35 PM
+  Auto backup: enabled
 ```
 
 **출력 (설정되지 않음):**
@@ -1587,6 +1668,8 @@ Backup Configuration:
     BACKUP_GITHUB_TOKEN=your-token
     BACKUP_GITHUB_REPO=username/repo
 ```
+
+[`mcctl backup init`](#mcctl-backup-init)이 이 설정을 대신 기록합니다.
 
 ---
 
@@ -1708,6 +1791,26 @@ mcctl backup restore [commit] [--force]
 
 ---
 
+### mcctl backup schedule
+
+일정에 따라 월드를 백업합니다. 일정은 mcctl-api가 실행하며, mcctl-api는 시작할 때 일정을 읽습니다. 여기서 일정을 추가, 삭제, 활성화, 비활성화한 뒤에는 `mcctl console service restart --api`로 mcctl-api를 재시작합니다.
+
+| 명령 | 설명 |
+|------|------|
+| `backup schedule list` | 일정 목록 (`--json`) |
+| `backup schedule add` | 일정 추가: `--cron <expression or preset>` (필수, 프리셋 `hourly`, `daily`, `every-6h`, `every-12h`, `weekly`), `--name <name>` (기본값 `Backup Schedule`), `--max-count <n>`, `--max-age-days <n>`, `--json` |
+| `backup schedule remove <id>` | 일정 삭제 |
+| `backup schedule enable <id>` | 일정 활성화 |
+| `backup schedule disable <id>` | 일정 비활성화 |
+
+예약 백업이 끝날 때마다 최신 `--max-count`개를 넘는 백업과 `--max-age-days`일보다 오래된 백업이 저장소 기록에서 지워집니다(가장 최근 백업은 항상 남습니다). [예약 백업](../advanced/backup.ko.md#예약-백업)을 참고하십시오.
+
+```bash
+mcctl backup schedule add --cron daily --name "Daily Backup" --max-count 30
+```
+
+---
+
 ## 플레이어 유틸리티
 
 ### mcctl player (대화형 모드)
@@ -1738,10 +1841,9 @@ mcctl player <server>
 
 대화형 모드 제공 기능:
 
-- 상태 표시가 있는 서버 선택
+- 서버 선택 (실행 중인 서버만, 액션은 RCON으로 실행)
 - 온라인 플레이어 목록 및 쉬운 선택
 - 액션 메뉴 (op/deop, 화이트리스트 추가/제거, 밴/밴 해제, 강퇴, 정보 보기)
-- 필요시 자동 서버 재시작 프롬프트
 
 ---
 
@@ -1786,11 +1888,11 @@ Player: Notch
 
 ```json
 {
-  "username": "Notch",
+  "name": "Notch",
   "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+  "uuidNoDashes": "069a79f444e94726a5befca90e38aaf5",
   "skinUrl": "https://textures.minecraft.net/texture/...",
-  "source": "mojang",
-  "cached": true
+  "source": "mojang"
 }
 ```
 
@@ -1801,7 +1903,7 @@ Player: Notch
     - **사용자명**: 30일간 캐시 (변경 가능)
     - **스킨 URL**: 1일간 캐시 (자주 변경됨)
 
-    캐시 위치: `~/.minecraft-docker/.player-cache`
+    캐시 위치: `~/.mcctl/.player-cache`
 
 ---
 
@@ -1840,43 +1942,7 @@ Player Cache Statistics
 
 ---
 
-### mcctl player online
-
-서버의 온라인 플레이어를 표시합니다.
-
-```bash
-mcctl player online <server>
-mcctl player online --all
-```
-
-**옵션:**
-
-| 옵션 | 단축 | 설명 |
-|--------|-------|-------------|
-| `--all` | `-a` | 모든 서버의 플레이어 표시 |
-| `--json` | | JSON 형식으로 출력 |
-
-**예제:**
-
-```bash
-# 단일 서버
-mcctl player online myserver
-
-# 모든 서버
-mcctl player online --all
-```
-
-**출력:**
-
-```
-Online Players for myserver:
-
-  Status: Running (3/20)
-
-  Steve
-  Alex
-  Notch
-```
+`mcctl player online`은 [플레이어 관리](#mcctl-player-online)에 설명되어 있습니다.
 
 ---
 
@@ -1936,6 +2002,7 @@ mcctl migrate worlds [options]
 | 옵션 | 설명 |
 |--------|-------------|
 | `--all` | 선택 없이 모든 서버 마이그레이션 |
+| `--server <name>` | 이 서버만 마이그레이션 |
 | `--dry-run` | 변경 사항을 적용하지 않고 미리보기 |
 | `--backup` | 마이그레이션 전 백업 생성 |
 | `--force` | 확인 프롬프트 건너뛰기 |
@@ -2056,7 +2123,7 @@ mcctl mod search lithium --json
 **출력 예시:**
 
 ```
-Search results for "sodium" (25 total):
+Search results for "sodium" on Modrinth (25 total):
 
   sodium (12.5M downloads)
     Sodium server client
@@ -2148,7 +2215,7 @@ mcctl mod add <server> <mod...> [options]
 **작동 방식:**
 
 1. **검증**: Modrinth에서 모드 존재 여부 확인 (Modrinth 소스 사용 시)
-2. **서버 타입 확인**: 서버 타입이 모드를 지원하지 않을 수 있으면 경고
+2. **서버 타입 확인**: 모드나 플러그인을 지원하지 않는 서버 타입(예: VANILLA)은 `--force`가 없으면 거부
 3. **설정 업데이트**: `config.env`의 적절한 환경 변수에 모드 추가
 4. **재시작 필요**: 변경 사항 적용을 위해 서버 재시작 필요
 
@@ -2342,7 +2409,7 @@ Available Mod Sources:
     mcctl mod add myserver sodium lithium
 
   CurseForge --curseforge
-    Popular mod platform. CF_API_KEY optional (built into Java 17+ images)
+    Popular mod platform. Java 17+ images include a built-in CF_API_KEY; set it in .env only for java8 or pre-17 tags or your own key
     Config: CURSEFORGE_FILES
     mcctl mod add myserver --curseforge jei journeymap
 
@@ -2419,16 +2486,58 @@ mcctl mod add myserver --curseforge jei journeymap
 
 ---
 
-## 전역 옵션 레퍼런스
+## 외부 접속 (playit.gg)
 
-이 옵션들은 모든 명령어에서 사용할 수 있습니다:
+### mcctl playit
+
+playit.gg 에이전트와 서버의 외부 도메인을 관리합니다. playit.gg 설정 방법은 [playit.gg 외부 접속](../advanced/external-access.ko.md)에 있습니다.
+
+```bash
+mcctl playit <start|stop|status|setup|domain> [args]
+```
+
+| 명령 | 설명 |
+|------|------|
+| `start` | `playit-agent` 컨테이너 시작 (`PLAYIT_SECRET_KEY`와 playit.gg 활성화 필요) |
+| `stop` | 에이전트 중지 |
+| `status` | 에이전트 상태, `PLAYIT_SECRET_KEY` 설정 여부, playit.gg 도메인이 있는 서버 표시 (`--json`) |
+| `setup` | `PLAYIT_SECRET_KEY`를 묻고 `.env`에 저장한 뒤 playit.gg를 켜고, 없으면 `docker-compose.yml`에 `playit` 서비스 추가 |
+| `domain <server> <domain>` | 서버의 playit.gg 도메인(`PLAYIT_DOMAIN`) 설정 |
+| `domain <server> --remove` | 서버의 playit.gg 도메인 제거 |
+
+인자 없이 `mcctl playit domain`을 실행하면 서버와 도메인을 묻습니다. 도메인 변경은 `mcctl stop <server> && mcctl start <server>` 후에 적용되며, 컨테이너 재시작으로는 적용되지 않습니다.
+
+---
+
+## 감사 로그
+
+### mcctl audit
+
+CLI, API, 웹 콘솔에서 수행한 작업의 감사 로그를 조회하고 정리합니다. 자세한 내용, 액션 이름, 설정은 [감사 로그](audit-log.ko.md)에 있습니다.
+
+```bash
+mcctl audit <list|stats|purge> [options]
+```
+
+| 명령 | 설명 |
+|------|------|
+| `list` | 항목을 최신순으로 표시: `--limit <n>`(기본값 50), `--action`, `--actor`, `--target`, `--status <status>`(`success` 또는 `failure`), `--from <date>`, `--to <date>` |
+| `stats` | 상태, 액션, 액터별 항목 수 |
+| `purge` | `--days <n>`(기본값 90)일보다 오래되었거나 `--before <date>` 이전인 항목 삭제. `--force`가 없으면 먼저 확인하고, `--dry-run`은 개수만 셈 |
+
+---
+
+## 전역 옵션 레퍼런스
 
 | 옵션 | 설명 | 예제 |
 |--------|-------------|---------|
-| `--root <path>` | 사용자 지정 데이터 디렉토리 | `mcctl --root /opt/mc status` |
-| `--json` | JSON 출력 형식 | `mcctl status --json` |
-| `-h, --help` | 도움말 표시 | `mcctl --help` |
+| `--root <path>` | 데이터 디렉토리 (기본값: `MCCTL_ROOT` 또는 `~/minecraft-servers`) | `mcctl --root /opt/mc status` |
+| `--json` | JSON 출력. 지원하는 명령에서만 동작 (각 명령에 표시) | `mcctl status --json` |
+| `--sudo-password <pwd>` | `create`, `delete`의 mDNS 항목 처리용 sudo 비밀번호 (또는 [`MCCTL_SUDO_PASSWORD`](#mcctl_sudo_password)) | `mcctl delete myserver --yes --sudo-password "..."` |
+| `-h, --help` | 도움말 표시 (모든 명령에서 같은 페이지) | `mcctl --help` |
 | `--version` | 버전 표시 | `mcctl --version` |
+
+값이 필요한 옵션은 다음 단어(`--seed 123`)나 `=` 뒤(`--seed=123`)에서 값을 읽습니다. `--force`, `--json`, `--yes` 같은 스위치는 `=true`나 `=false`도 받습니다. `--` 뒤의 모든 인자는 그대로 전달됩니다(`mcctl exec myserver -- say -h`).
 
 ---
 
@@ -2467,4 +2576,12 @@ export MCCTL_SUDO_PASSWORD="your-password"
 
 ```bash
 mcctl create myserver --sudo-password "your-password"
+```
+
+### MCCTL_ROOT
+
+`--root`를 주지 않았을 때 쓰는 데이터 디렉토리입니다(기본값: `~/minecraft-servers`).
+
+```bash
+export MCCTL_ROOT=/opt/minecraft
 ```

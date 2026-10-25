@@ -7,13 +7,13 @@
 | 플랫폼 | 설정 키 | API 키 필요 | 적합한 용도 |
 |--------|--------|------------|------------|
 | [Packwiz](#packwiz) | `PACKWIZ_URL` | 아니오 | 커스텀/자체 호스팅 모드팩 |
-| [CurseForge](#curseforge-모드팩) | `CF_PAGE_URL`, `CF_SLUG` | 예 | 인기 모드팩 |
+| [CurseForge](#curseforge-모드팩) | `CF_PAGE_URL`, `CF_SLUG` | 아니오 (Java 17+ 이미지는 내장) | 인기 모드팩 |
 | [Modrinth](#modrinth-모드팩) | `MODRINTH_MODPACK` | 아니오 | 오픈소스 모드팩 |
 | [FTB](#ftb-모드팩) | `FTB_MODPACK_ID` | 아니오 | Feed the Beast 모드팩 |
 | [ZIP 아카이브](#zip-모드팩) | `MODPACK`, `GENERIC_PACKS` | 아니오 | 수동/커스텀 아카이브 |
 
 !!! note "모드팩과 서버 타입"
-    모드팩을 설치할 때 서버 TYPE은 모드팩 플랫폼에 따라 자동으로 설정되는 경우가 많습니다. 예를 들어 CurseForge 모드팩은 `TYPE=AUTO_CURSEFORGE`를 사용하고 Modrinth 모드팩은 `TYPE=MODRINTH`를 사용합니다.
+    `mcctl create <name> -t AUTO_CURSEFORGE --modpack <slug>`와 `mcctl create <name> -t MODRINTH --modpack <slug>`는 `TYPE`과 모드팩을 함께 설정합니다. 다른 플랫폼은 `--no-start`로 서버를 만들고 `mcctl config`로 `TYPE`과 플랫폼 키를 설정한 뒤 시작합니다. `--no-start` 없이 `mcctl create`를 실행하면 서버가 바로 시작되어 모드팩을 설정하기 전에 월드가 생성됩니다.
 
 ---
 
@@ -24,14 +24,14 @@
 ### mcctl 빠른 시작
 
 ```bash
-# Packwiz 모드팩으로 Fabric 서버 생성
-mcctl create modded --type FABRIC --version 1.21.1
+# Packwiz 모드팩용 Fabric 서버를 시작하지 않고 생성
+mcctl create modded -t FABRIC -v 1.21.1 --no-start
 
 # Packwiz 모드팩 URL 설정
 mcctl config modded PACKWIZ_URL "https://example.com/modpack/pack.toml"
 
-# 재시작하여 적용
-mcctl stop modded && mcctl start modded
+# 서버 시작
+mcctl start modded
 ```
 
 ### 설정 레퍼런스
@@ -68,24 +68,17 @@ mcctl stop modded && mcctl start modded
 ### mcctl 빠른 시작
 
 ```bash
-# 서버 생성 (CurseForge 모드팩의 경우 TYPE이 자동 설정됨)
-mcctl create modded
+# 시작하지 않고 서버 생성 (TYPE=AUTO_CURSEFORGE와 CF_SLUG 기록)
+mcctl create modded -t AUTO_CURSEFORGE --modpack all-the-mods-8 --no-start
 
-# CurseForge 모드팩용 서버 타입 설정
-mcctl config modded TYPE "AUTO_CURSEFORGE"
-
-# 페이지 URL로 모드팩 설정
-mcctl config modded CF_PAGE_URL "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
-
-# 또는 슬러그로 (더 짧음)
-mcctl config modded CF_SLUG "all-the-mods-8"
-
-# 메모리 설정 (모드팩은 일반적으로 더 많이 필요)
+# 메모리 설정 (모드팩 서버는 6G로 시작, 큰 팩은 더 필요)
 mcctl config modded MEMORY "8G"
 
-# 재시작하여 적용
-mcctl stop modded && mcctl start modded
+# 서버 시작
+mcctl start modded
 ```
+
+`--exclude-files`는 `CF_EXCLUDE_MODS`로 기록됩니다. slug 대신 페이지 URL로 모드팩을 지정하려면 `mcctl config`로 `CF_PAGE_URL`을 설정하세요.
 
 ### 모드팩 지정 방법
 
@@ -100,7 +93,7 @@ mcctl stop modded && mcctl start modded
 
 | 설정 키 | 설명 |
 |--------|------|
-| `CF_API_KEY` | CurseForge API 키 (선택 사항: Java 17+ 이미지는 내장, java8/17 미만 태그 또는 자체 키 사용 시에만 `.env`에 설정) |
+| `CF_API_KEY` | CurseForge API 키 (선택 사항: Java 17+ 이미지는 내장, java8/17 미만 태그 또는 자체 키 사용 시에만 설정) |
 | `CF_PAGE_URL` | 모드팩 또는 특정 파일의 전체 URL |
 | `CF_SLUG` | URL 경로의 짧은 식별자 |
 | `CF_FILE_ID` | 버전 고정을 위한 특정 파일 ID |
@@ -129,12 +122,10 @@ mcctl config modded CF_PARALLEL_DOWNLOADS "6"
 ### 전체 예제
 
 ```bash
-# CurseForge 모드팩 서버 생성 및 설정
-mcctl create atm8
+# 시작하지 않고 CurseForge 모드팩 서버 생성
+mcctl create atm8 -t AUTO_CURSEFORGE --modpack all-the-mods-8 --no-start
 
 # 모드팩 설정
-mcctl config atm8 TYPE "AUTO_CURSEFORGE"
-mcctl config atm8 CF_PAGE_URL "https://www.curseforge.com/minecraft/modpacks/all-the-mods-8"
 mcctl config atm8 MEMORY "8G"
 mcctl config atm8 CF_EXCLUDE_MODS "optifine,journeymap"
 mcctl config atm8 CF_PARALLEL_DOWNLOADS "6"
@@ -152,21 +143,17 @@ mcctl start atm8
 ### mcctl 빠른 시작
 
 ```bash
-# 서버 생성
-mcctl create modded
+# 시작하지 않고 서버 생성 (TYPE=MODRINTH와 MODRINTH_MODPACK 기록)
+mcctl create modded -t MODRINTH --modpack cobblemon-modpack --no-start
 
-# Modrinth 모드팩용 서버 타입 설정
-mcctl config modded TYPE "MODRINTH"
+# 메모리 설정 (모드팩 서버는 6G로 시작)
+mcctl config modded MEMORY "8G"
 
-# 슬러그로 모드팩 설정
-mcctl config modded MODRINTH_MODPACK "cobblemon-modpack"
-
-# 메모리 설정
-mcctl config modded MEMORY "6G"
-
-# 재시작하여 적용
-mcctl stop modded && mcctl start modded
+# 서버 시작
+mcctl start modded
 ```
+
+`--mod-loader`, `--modpack-version`, `--exclude-files`는 각각 `MODRINTH_LOADER`, `MODRINTH_VERSION`, `MODRINTH_EXCLUDE_FILES`로 기록됩니다. 이름 없이 `mcctl create`를 실행하면 이 값들을 대화형으로 묻습니다.
 
 ### 모드팩 지정 방법
 
@@ -186,7 +173,7 @@ mcctl stop modded && mcctl start modded
 | `VERSION` | - | 자동 선택을 위해 `LATEST` 또는 `SNAPSHOT` 설정 |
 | `MODRINTH_MODPACK_VERSION_TYPE` | - | `release`, `beta` 또는 `alpha`로 제한 |
 | `MODRINTH_VERSION` | - | 정확한 모드팩 버전 ID |
-| `MODRINTH_LOADER` | auto | 특정 로더: `forge`, `fabric`, `quilt` |
+| `MODRINTH_LOADER` | auto | 특정 로더: `forge`, `neoforge`, `fabric`, `quilt` |
 
 ### 파일 관리
 
@@ -227,15 +214,22 @@ mcctl create myserver -t MODRINTH --modpack create-plus \
 필드를 사용합니다. 입력값은 서버의 `config.env`에 `MODRINTH_EXCLUDE_FILES`
 (CurseForge는 `CF_EXCLUDE_MODS`)로 기록됩니다.
 
+Modrinth 모드팩이면 다이얼로그가 포함된 모드를 Modrinth에서 하나씩 조회해
+서버 미지원으로 표시된 모드를 **Exclude mods**에 추가합니다. 서버를 만들기 전에
+목록을 확인하세요. 다이얼로그는 모드팩에 있는 로더와 Minecraft 버전 조합만
+제시하며, API도 다른 조합은 거부합니다.
+
+서버를 한 번 시작한 뒤에는 서버의 **Mods** 탭에 모드팩이 설치한 jar 목록이
+나옵니다. jar를 **Excluded**로 바꾸면 같은 제외 목록에 추가되며, 적용하려면
+서버를 재시작합니다.
+
 ### 전체 예제
 
 ```bash
-# Modrinth 모드팩 서버 생성 및 설정
-mcctl create cobblemon
+# 시작하지 않고 Modrinth 모드팩 서버 생성
+mcctl create cobblemon -t MODRINTH --modpack cobblemon-modpack --no-start
 
 # 모드팩 설정
-mcctl config cobblemon TYPE "MODRINTH"
-mcctl config cobblemon MODRINTH_MODPACK "cobblemon-modpack"
 mcctl config cobblemon MODRINTH_MODPACK_VERSION_TYPE "release"
 mcctl config cobblemon MEMORY "6G"
 mcctl config cobblemon MODRINTH_EXCLUDE_FILES "optifine,shaders"
@@ -253,8 +247,8 @@ mcctl start cobblemon
 ### mcctl 빠른 시작
 
 ```bash
-# 서버 생성
-mcctl create ftb
+# 시작하지 않고 서버 생성 (mcctl create -t는 FTBA를 받지 않음)
+mcctl create ftb --no-start
 
 # 서버 타입 설정 (FTB가 아닌 FTBA 사용)
 mcctl config ftb TYPE "FTBA"
@@ -265,8 +259,8 @@ mcctl config ftb FTB_MODPACK_ID "23"
 # 메모리 설정 (FTB 팩은 대용량)
 mcctl config ftb MEMORY "8G"
 
-# 재시작하여 적용
-mcctl stop ftb && mcctl start ftb
+# 서버 시작
+mcctl start ftb
 ```
 
 !!! info "FTBA vs FTB"
@@ -294,8 +288,8 @@ mcctl stop ftb && mcctl start ftb
 ### 전체 예제
 
 ```bash
-# FTB 모드팩 서버 생성 및 설정
-mcctl create infinity
+# 시작하지 않고 FTB 모드팩 서버 생성
+mcctl create infinity --no-start
 
 # 모드팩 설정
 mcctl config infinity TYPE "FTBA"
@@ -315,14 +309,14 @@ ZIP 아카이브에서 모드팩을 설치합니다.
 ### mcctl 빠른 시작
 
 ```bash
-# 적절한 타입으로 서버 생성
-mcctl create modded --type FORGE
+# 팩이 만들어진 타입과 버전으로 서버를 시작하지 않고 생성
+mcctl create modded -t FORGE -v 1.20.1 --no-start
 
 # 모드팩 URL 설정
 mcctl config modded MODPACK "https://example.com/modpack.zip"
 
-# 재시작하여 적용
-mcctl stop modded && mcctl start modded
+# 서버 시작
+mcctl start modded
 ```
 
 ### 여러 팩

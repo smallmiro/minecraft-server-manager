@@ -10,6 +10,10 @@
 - [x] Node.js 18+ 설치됨
 - [x] mcctl 설치됨 (`npm install -g @minecraft-docker/mcctl`)
 - [x] 플랫폼 초기화됨 (`mcctl init`)
+- [x] mc-router 시작됨 (`mcctl router start`)
+
+!!! note "mc-router는 한 번 시작합니다"
+    `mcctl init`은 mc-router를 시작하지 않고, 서버를 생성하면 그 서버만 시작됩니다. `mcctl router start`를 한 번 실행하세요. 직접 중지하기 전까지 재부팅 후에도 Docker가 mc-router를 다시 시작합니다. `mcctl up`은 mc-router와 모든 서버를 시작합니다.
 
 ## 1단계: 첫 번째 서버 생성
 
@@ -25,8 +29,13 @@ mcctl create
 
 1. **서버 이름** - 고유한 이름 (예: `survival`, `creative`)
 2. **서버 타입** - Paper, Vanilla, Forge, Fabric 등
-3. **Minecraft 버전** - 예: 1.21.1, 1.20.4
-4. **메모리 할당** - 기본값은 4GB
+3. **Minecraft 버전** - 예: 1.21.1, 1.20.4 (모드팩 타입은 대신 모드팩을 묻습니다)
+4. **월드** - 새 월드, 시드를 지정한 새 월드, `worlds/`의 기존 월드, 월드 ZIP URL 중에서 선택
+5. **메모리 할당** - 기본값은 4GB (모드팩은 6GB)
+6. **화이트리스트** - 기본값은 꺼짐이며, 켜면 플레이어를 추가할 수 있습니다
+7. **playit.gg 도메인** - playit.gg를 활성화한 경우에만
+
+`/etc/avahi/hosts`가 있으면(avahi-daemon이 설치된 경우) `<name>.local` 등록을 위해 먼저 sudo 비밀번호를 묻습니다(Enter를 누르면 비밀번호 없이 sudo를 시도합니다).
 
 ### CLI 모드 (자동화용)
 
@@ -44,6 +53,7 @@ mcctl create myserver -t PAPER -v 1.21.1
 | `-v, --version` | Minecraft 버전 | 최신 버전 |
 | `-s, --seed` | 월드 시드 | 랜덤 |
 | `--no-start` | 시작하지 않고 생성만 | 자동 시작 |
+| `--whitelist`, `--enable-whitelist` | 화이트리스트 켜기 (지정한 플레이어로, 또는 빈 목록으로) | 꺼짐 |
 
 ## 2단계: 서버 시작 대기
 
@@ -67,18 +77,17 @@ mcctl logs myserver -f
 
 ### 서버 주소 확인
 
-create 명령의 출력을 확인하거나 다음을 실행합니다:
+create 명령은 `Connect via: myserver.local:25565`만 출력합니다. 서버의 모든 주소는 `mcctl status`의 HOSTNAME 열에 표시됩니다:
 
 ```bash
 mcctl status
 ```
 
-접속 정보가 표시됩니다:
-
 ```
-Servers:
-  mc-myserver (running)
-    Connect: myserver.192.168.1.100.nip.io:25565
+MINECRAFT SERVERS
+SERVER               STATUS       HEALTH     HOSTNAME
+------               ------       ------     --------
+myserver             running      healthy    myserver.local,myserver.192.168.1.100.nip.io
 ```
 
 ### Minecraft에서 접속
@@ -90,7 +99,7 @@ Servers:
 
 !!! success "접속 방법"
     === "nip.io (권장)"
-        인터넷에 연결된 모든 네트워크에서 작동합니다:
+        `192.168.1.100`에 접근할 수 있는 네트워크(보통 같은 LAN)에서 작동합니다. `HOST_IPS`에 넣은 VPN 주소에는 별도의 호스트네임이 생깁니다:
         ```
         myserver.192.168.1.100.nip.io:25565
         ```
@@ -101,11 +110,7 @@ Servers:
         myserver.local:25565
         ```
 
-    === "직접 IP"
-        DNS가 작동하지 않는 경우:
-        ```
-        192.168.1.100:25565
-        ```
+    IP만으로(`192.168.1.100:25565`) 접속하면 작동하지 않습니다. mc-router는 클라이언트가 보낸 호스트네임으로 서버를 고르기 때문입니다. 인터넷에서 접속하게 하려면 [외부 접속](../advanced/external-access.ko.md)을 참조하세요.
 
 ## 4단계: 서버 관리
 
@@ -118,18 +123,35 @@ mcctl status
 출력:
 
 ```
-Platform Status
-===============
+=== Server Status (mc-router Managed) ===
 
-Router: mc-router (running)
+INFRASTRUCTURE
+SERVICE              STATUS       HEALTH     PORT/INFO
+-------              ------       ------     ---------
+mc-router            running      healthy    :25565 (hostname routing)
+avahi-daemon         running      (system)   mDNS broadcast
 
-Servers:
-  mc-myserver
-    Status: running
-    Type: PAPER 1.21.1
-    Memory: 4G
-    Players: 0/20
-    Connect: myserver.192.168.1.100.nip.io:25565
+MINECRAFT SERVERS
+SERVER               STATUS       HEALTH     HOSTNAME
+------               ------       ------     --------
+myserver             running      healthy    myserver.local,myserver.192.168.1.100.nip.io
+```
+
+타입, 버전, 메모리, 플레이어는 `mcctl status myserver`(모든 서버는 `mcctl status --detail`)로 확인합니다:
+
+```
+=== Server: myserver ===
+
+  myserver
+    Container: mc-myserver
+    Status:    running (healthy)
+    Hostname:  myserver.local,myserver.192.168.1.100.nip.io
+    Type:      PAPER
+    Version:   1.21.1
+    Memory:    4G
+    Uptime:    5m
+    Resources: 1.2 GB / 15.5 GB (7.7%) | CPU: 3.1%
+    Players:   0/20 - none
 ```
 
 ### 서버 로그 확인
@@ -154,7 +176,7 @@ mcctl start myserver
 ```
 
 !!! note "접속 시 자동 시작"
-    mc-router를 사용하면 중지된 서버도 플레이어가 접속을 시도할 때 자동으로 시작됩니다.
+    mc-router를 사용하면 중지된 서버도 플레이어가 접속을 시도할 때 자동으로 시작됩니다. 이 기능에는 서버 컨테이너가 있어야 합니다. `--no-start`로 생성한 서버나 `mcctl down`(컨테이너를 삭제함) 후의 모든 서버는 `mcctl start <name>`(또는 `mcctl up`)을 한 번 실행해야 접속 시 시작됩니다.
 
 ### 서버 콘솔 접속 (RCON)
 
@@ -162,7 +184,7 @@ mcctl start myserver
 mcctl console myserver
 ```
 
-대화형 RCON 세션이 열립니다:
+대화형 RCON 세션이 열립니다(서버가 실행 중이어야 합니다):
 
 ```
 > list
@@ -170,7 +192,10 @@ There are 0 of a max of 20 players online:
 > help
 ```
 
-종료하려면 `Ctrl+C`를 누릅니다.
+종료하려면 `exit`나 `quit`를 입력하거나 `Ctrl+C` 또는 `Ctrl+D`를 누릅니다.
+
+!!! note "Docker Desktop (macOS)"
+    `mcctl console`은 Docker 네트워크에 있는 컨테이너 IP 주소로 TCP 접속하는데, Docker Desktop은 이 주소를 호스트에 노출하지 않을 수 있습니다. 이때는 `mcctl exec myserver <command>`를 사용하세요.
 
 ## 예제: 여러 서버 생성
 
@@ -194,12 +219,12 @@ mcctl status
 
 ## mcctl 업데이트 유지
 
-mcctl은 npm에서 자기 자신과 설치된 모든 서비스를 업데이트할 수 있습니다.
+`mcctl update`는 npm에서 CLI와 설치된 서비스(mcctl-api, mcctl-console, shared 라이브러리)를 업데이트합니다.
 
 ### 업데이트 확인
 
 ```bash
-mcctl update --check
+mcctl update --check   # CLI 업데이트가 있으면 exit 1
 ```
 
 ### mcctl 업데이트
@@ -210,19 +235,16 @@ mcctl update
 
 # 자동 확인 (CI/CD에 유용)
 mcctl update --yes
+
+# CLI만 업데이트
+mcctl update --cli-only
 ```
 
-### CLI 및 모든 서비스 업데이트
-
-mcctl과 함께 mcctl-api, mcctl-console, shared 라이브러리를 업데이트합니다:
-
-```bash
-mcctl update --all
-```
+`mcctl update`는 또한 각 서버의 이미지 태그를 `VERSION`과 비교하고, 서버 이미지를 받은 뒤, 터미널에서는 아직 옛 이미지를 쓰는 중지된 서버를 다시 만들지 묻습니다(기본값 No). `mcctl upgrade`는 실행하지 않으므로 이어서 `mcctl upgrade`를 실행해 `.env`, `servers/_template`, 라우터를 갱신하세요. 전체 절차는 [업그레이드 런북](../advanced/upgrade-runbook.ko.md)에 있습니다.
 
 !!! tip "자동 업데이트 확인"
-    mcctl은 24시간마다 백그라운드에서 자동으로 업데이트를 확인합니다.
-    새 버전이 있으면 알림이 표시됩니다.
+    mcctl은 각 명령을 실행하기 전에(`--help`, `--version` 제외) npm에서 새 버전을 확인합니다. 결과는 `~/.mcctl-update-check.json`에 24시간 동안 캐시되며, 캐시가 오래되면 명령이 확인을 기다립니다(최대 약 2초).
+    새 버전이 있으면 알림을 출력합니다.
 
 전체 update 명령어 레퍼런스는 [mcctl update](../cli/commands.ko.md#mcctl-update)를 참조하세요.
 
@@ -242,7 +264,7 @@ mcctl update --all
 
     ---
 
-    서버 간 월드 공유 및 잠금
+    서버에 월드 배정 (한 월드에 한 서버)
 
     [:octicons-arrow-right-24: 월드 관리](../cli/commands.ko.md#월드-관리)
 
@@ -278,6 +300,8 @@ mcctl update --all
 
 | 작업 | 명령어 |
 |------|--------|
+| mc-router 시작 | `mcctl router start` |
+| mc-router와 모든 서버 시작 | `mcctl up` |
 | 서버 생성 | `mcctl create <name> [-t TYPE] [-v VERSION]` |
 | 서버 목록 | `mcctl status` |
 | 상세 상태 | `mcctl status --detail` |
@@ -287,7 +311,7 @@ mcctl update --all
 | 로그 확인 | `mcctl logs <name> [-f]` |
 | RCON 콘솔 | `mcctl console <name>` |
 | RCON 명령 실행 | `mcctl exec <name> <command>` |
-| 서버 삭제 | `mcctl delete <name>` |
+| 서버 삭제 (먼저 확인, 월드는 유지) | `mcctl delete <name> [--delete-world]` |
 
 ### 플레이어 관리
 
@@ -325,9 +349,10 @@ mcctl update --all
 | 작업 | 명령어 |
 |------|--------|
 | 업데이트 확인 | `mcctl update --check` |
-| mcctl 업데이트 | `mcctl update` |
-| 모든 서비스 업데이트 | `mcctl update --all` |
+| CLI와 서비스 업데이트 | `mcctl update` |
+| CLI만 업데이트 | `mcctl update --cli-only` |
 | 자동 확인 업데이트 | `mcctl update --yes` |
+| 업데이트 후 플랫폼 파일 동기화 | `mcctl upgrade` |
 
 ---
 
@@ -340,16 +365,11 @@ mcctl update --all
    mcctl logs <server> -n 100
    ```
 
-2. **EULA 동의 확인:**
-   ```bash
-   mcctl config <server> EULA
-   # EULA=TRUE 여야 함
-   ```
-
-3. **Java 버전 호환성 확인:**
-   - Minecraft 1.21+ → Java 21 필요
-   - Minecraft 1.18-1.20.4 → Java 17+ 필요
-   - Forge 1.16.5 이하 → Java 8 필요
+2. **Java 버전 호환성 확인:**
+   - Minecraft 26.x와 `LATEST` → Java 25 필요
+   - Minecraft 1.20.5–1.21.x → Java 21 필요
+   - Minecraft 1.17–1.20.4 → Java 17 필요
+   - Minecraft 1.16.5 이하 → Java 8 필요
 
 ### 서버에 접속할 수 없음
 
@@ -357,6 +377,7 @@ mcctl update --all
    ```bash
    mcctl status
    # mc-router가 "running"과 "healthy" 상태여야 함
+   mcctl router start   # 실행 중이 아니면
    ```
 
 2. **서버 호스트명 확인:**

@@ -9,6 +9,7 @@ RCON (Remote Console) allows server administrators to execute Minecraft server c
 | Command | Mode | Description |
 |---------|------|-------------|
 | `mcctl rcon <server>` | Interactive | Open RCON console session |
+| `mcctl console <server>` | Interactive | Same session as `mcctl rcon` |
 | `mcctl exec <server> <cmd>` | Non-interactive | Execute single command |
 
 ### When to Use Each
@@ -30,11 +31,11 @@ RCON (Remote Console) allows server administrators to execute Minecraft server c
 
 ```bash
 $ mcctl rcon survival
-Connecting to RCON console for 'survival'...
-Type "help" for commands, Ctrl+C or "exit" to quit
+[INFO] Connecting to RCON console for 'survival'...
+[INFO] Connected! Type "help" for commands, "exit" or Ctrl+C to quit.
 
 > list
-There are 2 of 20 players online: Steve, Alex
+There are 2 of a max of 20 players online: Steve, Alex
 > say Server maintenance in 10 minutes!
 [Server: Server maintenance in 10 minutes!]
 > tp Steve 0 100 0
@@ -48,7 +49,7 @@ $
 ```bash
 # Single command execution
 $ mcctl exec survival list
-There are 2 of 20 players online: Steve, Alex
+There are 2 of a max of 20 players online: Steve, Alex
 
 # Scripting example
 $ mcctl exec myserver say "Backup starting..."
@@ -56,7 +57,7 @@ $ mcctl exec myserver say "Backup starting..."
 
 # Use in scripts
 PLAYERS=$(mcctl exec myserver list)
-if echo "$PLAYERS" | grep -q "0 of"; then
+if echo "$PLAYERS" | grep -q "There are 0 of"; then
   mcctl stop myserver
 fi
 ```
@@ -373,14 +374,15 @@ Modify entity/block NBT data:
 
 ```bash
 $ mcctl rcon myserver
-Server 'myserver' is not running
-Start the server first: mcctl start myserver
+[ERROR] Server 'myserver' is not running
+[INFO] Start the server first: mcctl start myserver
 ```
 
 ---
 
 ## Reference
 
+- mcctl commands: [`mcctl rcon`](commands.md#mcctl-rcon), [`mcctl console`](commands.md#mcctl-console), [`mcctl exec`](commands.md#mcctl-exec)
 - Full Minecraft commands: [Minecraft Wiki - Commands](https://minecraft.wiki/w/Commands)
 - Java Edition command syntax: [Command Syntax](https://minecraft.wiki/w/Commands#Syntax)
 - Target selectors: [Target Selector](https://minecraft.wiki/w/Target_selectors)

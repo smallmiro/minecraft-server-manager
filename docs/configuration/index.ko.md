@@ -29,14 +29,19 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 
 ## 설정 파일
 
-참고로 플랫폼은 다음 설정 파일들을 사용합니다:
+참고로 플랫폼은 다음 설정 파일들을 사용합니다(`~/minecraft-servers/` 아래):
 
 | 파일 | 용도 | 관리 주체 |
 |------|------|-----------|
-| `.env` | 전역 환경 변수 | `mcctl init` |
-| `servers/<name>/config.env` | 서버별 설정 | `mcctl config` |
-| `docker-compose.yml` | 메인 오케스트레이션 | `mcctl init` (자동 생성) |
-| `servers/<name>/docker-compose.yml` | 서버별 compose | `mcctl create` (자동 생성) |
+| `.env` | 플랫폼 설정. `servers/global.env`에 이름이 있는 키만 서버에 전달됩니다 | `mcctl init` |
+| `servers/global.env` | 모든 서버에 전달할 `.env` 키의 이름 | `mcctl init`, `mcctl upgrade` |
+| `servers/<name>/server.yaml` | 서버 정의 | `mcctl create`, `mcctl config` 및 그 밖의 모든 mcctl 변경 |
+| `servers/<name>/config.env` | 서버 환경 변수, `server.yaml`에서 생성 | mcctl |
+| `docker-compose.yml` | 메인 오케스트레이션: mc-router와 그 설정 | `mcctl init` |
+| `servers/<name>/docker-compose.yml` | 서버 컨테이너, `server.yaml`에서 생성 | mcctl |
+| `servers/compose.yml` | 서버 compose 파일 목록 | mcctl |
+
+mcctl이 생성 파일을 어떻게 맞춰 두는지는 [서버 정의 (server.yaml)](server-yaml.ko.md)를 참고하세요.
 
 ## 설정 카테고리
 
@@ -58,6 +63,14 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 
     [:octicons-arrow-right-24: 서버 타입](server-types.ko.md)
 
+-   :material-file-document:{ .lg .middle } **서버 정의**
+
+    ---
+
+    mcctl이 각 서버의 파일을 만들어 쓰는 원본 파일 `server.yaml`
+
+    [:octicons-arrow-right-24: 서버 정의](server-yaml.ko.md)
+
 </div>
 
 ## 일반적인 설정 작업
@@ -76,6 +89,8 @@ mcctl config myserver VERSION 1.21.1
 mcctl stop myserver && mcctl start myserver
 ```
 
+`VERSION`을 바꿔도 서버의 Java 이미지는 바뀌지 않습니다. 새 서버는 `itzg/minecraft-server:java25`로 실행되며, 더 낮은 Java가 필요한 버전은 [Java 버전과 이미지 태그](server-types.ko.md#java-버전과-이미지-태그)를 참고하세요.
+
 ### 모드/플러그인 활성화
 
 모드 서버(Forge/Fabric)의 경우:
@@ -92,29 +107,34 @@ mcctl config myserver CURSEFORGE_FILES "jei,journeymap"
 
 ### 자동 스케일링 설정
 
+mc-router는 자동 스케일링 설정을 `.env`가 아니라 `~/minecraft-servers/docker-compose.yml`의 `router` 서비스에서 읽습니다:
+
+```yaml
+services:
+  router:
+    environment:
+      AUTO_SCALE_UP: "true"         # 플레이어 접속 시 서버 자동 시작
+      AUTO_SCALE_DOWN: "true"       # 유휴 서버 자동 중지
+      AUTO_SCALE_DOWN_AFTER: "10m"  # 유휴 타임아웃
+      DOCKER_TIMEOUT: "120s"        # 서버 시작 타임아웃 (Go time.Duration: 120s, 2m)
+```
+
 ```bash
-# 현재 mc-router 설정 보기
+# mc-router 상태와 라우트 보기
 mcctl status router
 
-# .env 편집 후 mc-router 재시작
-mcctl router restart
+# docker-compose.yml 편집 후 mc-router 재생성
+mcctl router start
 ```
 
-`~/minecraft-servers/.env`의 자동 스케일링 설정:
-
-```bash
-AUTO_SCALE_UP=true              # 플레이어 접속 시 서버 자동 시작
-AUTO_SCALE_DOWN=true            # 유휴 서버 자동 중지
-AUTO_SCALE_DOWN_AFTER=10m       # 유휴 타임아웃
-DOCKER_TIMEOUT=120s             # 서버 시작 타임아웃 (Go time.Duration: 120s, 2m)
-```
+`mcctl router restart`는 이전 설정을 그대로 사용합니다. `mcctl router start`는 편집한 파일로 컨테이너를 다시 만듭니다. `mcctl upgrade`는 이 파일에서 router의 `image`와 `group_add`만 바꾸므로 편집한 내용은 유지됩니다. 한 서버만 자동 스케일링을 끄려면 그 서버의 [server.yaml](server-yaml.ko.md)에서 `routing.autoScale`을 설정합니다.
 
 ### 서버 속성 변경
 
 ```bash
 # 게임 설정
 mcctl config myserver DIFFICULTY hard
-mcctl config myserver GAMEMODE survival
+mcctl config myserver MODE survival
 mcctl config myserver MAX_PLAYERS 30
 
 # 월드 설정
@@ -131,8 +151,11 @@ mcctl whitelist myserver add Steve
 설정은 다음 순서로 적용됩니다 (나중 것이 이전 것을 덮어씀):
 
 1. **기본값** - itzg/minecraft-server 이미지에 내장
-2. **전역 `.env`** - 플랫폼 전체 기본값
-3. **서버 `config.env`** - 서버별 오버라이드 (`mcctl config`로 관리)
+2. **`servers/global.env`** - 이 파일에 이름이 있는 플랫폼 키(`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT`), 값은 `.env`에서 가져옴
+3. **서버 `config.env`** - 서버별 값, `server.yaml`에서 생성 (`mcctl config`로 관리)
+4. **서버 `docker-compose.yml`의 `environment`** - `EULA=TRUE`만 있음
+
+그 밖의 `.env` 키는 서버에 전달되지 않습니다. 모든 서버에 전달하려면 `servers/global.env`에 이름을 추가하세요([설정 분류](environment.ko.md#설정-분류) 참고).
 
 ## 유효성 검사
 
@@ -164,6 +187,8 @@ nano ~/minecraft-servers/servers/myserver/config.env
 mcctl stop myserver && mcctl start myserver
 ```
 
+mcctl은 `config.env`와 서버의 `docker-compose.yml`을 `servers/<name>/server.yaml`에서 만들어 씁니다. `config.env`를 손으로 고치면 다음에 mcctl이 그 서버를 바꿀 때 `server.yaml`로 가져옵니다. `docker-compose.yml`에서 `image`와 `mc-router.*` 라벨 외의 부분(예: 리소스 제한)을 고친 내용은 유지되지만, 나중에 이 파일을 다시 써야 하는 변경은 `compose_edited`로 멈춥니다. [손으로 고친 경우](server-yaml.ko.md#손으로-고친-경우)와 `config.env`의 [값 규칙](environment.ko.md#값-규칙)을 참고하세요.
+
 !!! note "직접 파일 편집이 필요한 경우"
     직접 파일 편집은 다음 경우에만 필요합니다:
 
@@ -176,5 +201,6 @@ mcctl stop myserver && mcctl start myserver
 ## 다음 단계
 
 - **[환경 변수](environment.ko.md)** - 사용 가능한 모든 설정 옵션
+- **[서버 정의 (server.yaml)](server-yaml.ko.md)** - 각 서버 설정의 원본 파일
 - **[서버 타입](server-types.ko.md)** - 각 서버 플랫폼에 대한 상세 가이드
 - **[고급 네트워킹](../advanced/networking.ko.md)** - 네트워크 설정

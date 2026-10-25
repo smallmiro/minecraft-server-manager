@@ -78,7 +78,8 @@ mcctl playit start
 
 # 5. playit 도메인을 서버에 등록합니다
 mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg
-# 기존 서버는 docker-compose.yml 라벨을 수정합니다
+# 기존 서버는 다음을 실행한 뒤 서버를 중지했다가 시작합니다:
+# mcctl playit domain myserver xx-xx.craft.playit.gg
 
 # 6. 도메인을 친구들에게 공유합니다!
 #    접속 주소: xx-xx.craft.playit.gg
@@ -109,6 +110,9 @@ mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg
     mcctl init
     # "Enable playit.gg tunneling?" 질문에 Yes를 선택합니다
     # 프롬프트에서 SECRET_KEY를 입력합니다
+
+    # 이어서 playit-agent 서비스를 추가합니다 (SECRET_KEY를 다시 입력)
+    mcctl playit setup
     ```
 
 === "플랫폼 설정 후"
@@ -124,7 +128,7 @@ mcctl create myserver -t PAPER -v 1.21.1 --playit-domain xx-xx.craft.playit.gg
     mcctl init --no-playit
     ```
 
-이 명령은 `PLAYIT_SECRET_KEY`를 `.env` 파일에 저장하고 playit 프로필을 활성화합니다.
+`mcctl playit setup`은 `PLAYIT_SECRET_KEY`를 `.env` 파일에 저장하고, `.mcctl.json`에 `playitEnabled`를 설정하고, `mcctl playit start`에 필요한 `playit` 서비스(Compose 프로필 `playit`)를 `docker-compose.yml`에 추가합니다. `mcctl init --playit-key`를 실행한 뒤에도 `mcctl playit setup`을 한 번 실행하세요.
 
 ### 3단계: playit-agent 시작
 
@@ -144,7 +148,7 @@ mcctl playit status
 === playit.gg Agent Status ===
 
   Agent:      running
-  SECRET_KEY: configured
+  SECRET_KEY: configured ✓
 
 REGISTERED SERVERS
 
@@ -176,21 +180,19 @@ REGISTERED SERVERS
     ```
 
 === "기존 서버"
-    서버의 `docker-compose.yml`에서 mc-router.host 라벨에 playit 도메인을 추가합니다:
-
-    ```yaml
-    # ~/minecraft-servers/servers/myserver/docker-compose.yml
-    services:
-      mc-myserver:
-        labels:
-          mc-router.host: "myserver.192.168.1.100.nip.io,xx-xx.craft.playit.gg"
-    ```
-
-    서버를 재시작합니다:
+    `mcctl playit domain`으로 도메인을 등록합니다. 서버의 `PLAYIT_DOMAIN`을 설정하고 `mc-router.host` 라벨에 도메인을 추가합니다:
 
     ```bash
-    mcctl stop myserver && mcctl start myserver
+    mcctl playit domain myserver xx-xx.craft.playit.gg
     ```
+
+    그런 다음 컨테이너를 다시 만듭니다(재시작으로는 호스트네임이 적용되지 않습니다):
+
+    ```bash
+    mcctl stop myserver && mcctl start myserver   # 중지된 서버라면 `mcctl start myserver`
+    ```
+
+    인수 없이 `mcctl playit domain`을 실행하면 서버를 고르고 도메인을 입력할 수 있고, `mcctl playit domain myserver --remove`는 도메인을 지웁니다. 라벨에 손으로 추가한 도메인은 커스텀 호스트네임으로 취급되므로 `mcctl playit status`와 웹 콘솔에 외부 주소로 표시되지 않습니다.
 
 ### 6단계: 접속 및 공유
 
@@ -261,23 +263,28 @@ DNS 레코드에 두 가지 옵션이 있습니다:
 
 ### mc-router 라벨 업데이트
 
-커스텀 도메인을 설정한 후, 서버의 mc-router.host 라벨을 업데이트합니다:
+커스텀 도메인을 설정한 후, 서버의 playit 도메인으로 등록하고 컨테이너를 다시 만듭니다:
 
-```yaml
-labels:
-  mc-router.host: "myserver.192.168.1.100.nip.io,minecraft.example.com"
+```bash
+mcctl playit domain myserver minecraft.example.com
+mcctl stop myserver && mcctl start myserver
 ```
+
+`xx-xx.craft.playit.gg` 도메인도 함께 쓰려면 커스텀 도메인을 커스텀 호스트네임으로 추가하세요: 웹 콘솔 > 서버 > **Options** > **Hostnames / Domains** > **Custom Domains**, 또는 `servers/myserver/server.yaml`의 `routing.customHostnames`에 추가한 뒤 `mcctl migrate spec myserver`를 실행합니다.
 
 ## playit-agent 관리
 
 ### CLI 명령어
+
+명령 레퍼런스: [`mcctl playit`](../cli/commands.ko.md#mcctl-playit).
 
 | 명령어 | 설명 |
 |--------|------|
 | `mcctl playit start` | playit-agent 컨테이너 시작 |
 | `mcctl playit stop` | playit-agent 컨테이너 중지 |
 | `mcctl playit status` | 에이전트 상태 및 등록된 서버 확인 |
-| `mcctl playit setup` | SECRET_KEY 설정 또는 재설정 |
+| `mcctl playit setup` | SECRET_KEY 설정 또는 재설정, `playit` 서비스 추가 |
+| `mcctl playit domain <server> [domain]` | 서버의 playit.gg 도메인 설정 (`--remove`는 삭제, 인수가 없으면 프롬프트) |
 
 ### 상태 확인
 
@@ -291,7 +298,7 @@ mcctl playit status
 === playit.gg Agent Status ===
 
   Agent:      running
-  SECRET_KEY: configured
+  SECRET_KEY: configured ✓
   Uptime:     2d 5h 30m
 
 REGISTERED SERVERS
@@ -386,9 +393,9 @@ Management Console API에서 제공하는 playit.gg 엔드포인트:
    docker logs playit-agent
    ```
 
-4. **필요시 재설정:**
+4. **필요시 재설정** (`mcctl playit start`가 `no such service: playit`을 보고할 때도):
    ```bash
-   mcctl playit setup
+   mcctl playit setup   # docker-compose.yml에 playit 서비스가 없으면 함께 추가
    ```
 
 ### 외부 플레이어가 접속할 수 없음
@@ -417,7 +424,7 @@ Management Console API에서 제공하는 playit.gg 엔드포인트:
 
 5. **mc-router 로그 확인:**
    ```bash
-   docker logs router 2>&1 | grep playit
+   mcctl logs router -n 200 | grep playit
    ```
 
 ### 접속 시간 초과
@@ -444,7 +451,7 @@ Management Console API에서 제공하는 playit.gg 엔드포인트:
 
 ### 화이트리스트 활성화
 
-서버에 접속할 수 있는 사람을 제한합니다:
+새 서버는 생성할 때 켜지 않았다면(예: `mcctl create --enable-whitelist`) 화이트리스트가 꺼져 있으므로, 켜기 전까지 도메인을 아는 누구나 접속할 수 있습니다. 서버에 접속할 수 있는 사람을 제한합니다:
 
 ```bash
 mcctl whitelist myserver on
@@ -465,6 +472,8 @@ mcctl config myserver ONLINE_MODE true
 
 ### 기본 RCON 비밀번호 변경
 
+`mcctl init`은 무작위 RCON 비밀번호를 생성합니다. 2.32.0 이전에 만든 설치는 아직 `changeme`를 쓸 수 있으니 바꾼 뒤 서버마다 컨테이너를 다시 만드세요([RCON 비밀번호](index.ko.md#rcon-비밀번호) 참조):
+
 ```bash
 # ~/minecraft-servers/.env에서
 RCON_PASSWORD=매우-안전한-랜덤-비밀번호
@@ -480,7 +489,7 @@ mcctl player online myserver
 mcctl logs myserver -f
 
 # 감사 로그 확인
-mcctl audit list --recent
+mcctl audit list --limit 20
 ```
 
 ### SECRET_KEY 보호
@@ -524,7 +533,7 @@ mcctl audit list --recent
 
 ## Docker 설정 참조
 
-playit-agent는 플랫폼의 `docker-compose.yml`에 Docker Compose 프로필로 정의되어 있습니다:
+`mcctl playit setup`이 플랫폼의 `docker-compose.yml`에 playit-agent를 Docker Compose 프로필로 추가합니다:
 
 ```yaml
 services:
@@ -550,6 +559,7 @@ services:
 | 변수 | 필수 | 설명 |
 |------|------|------|
 | `PLAYIT_SECRET_KEY` | 예 (활성화 시) | playit.gg의 에이전트 인증 키 |
+| `PLAYIT_DOMAIN` | 아니요 | 서버별 값으로 `servers/<name>/config.env`에 있음(`--playit-domain` 또는 `mcctl playit domain`으로 설정): 서버의 라우터 호스트네임에 추가되는 playit.gg 도메인 |
 
 ## 참고 문서
 

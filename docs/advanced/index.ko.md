@@ -141,7 +141,7 @@ sequenceDiagram
 mcctl world list
 
 # 월드를 중지된 서버에 할당 (서버의 LEVEL 설정)
-mcctl world assign survival mc-myserver
+mcctl world assign survival myserver
 
 # 월드를 쓰던 서버를 자신의 기본 월드로 되돌리기
 mcctl world release survival
@@ -149,6 +149,7 @@ mcctl world release survival
 
 - 잠금 파일은 없습니다. `worlds/.locks`는 더 이상 읽거나 쓰거나 만들지 않으며, 기존 디렉토리는 무해하고 `rm -rf worlds/.locks`로 지워도 안전합니다.
 - 할당과 해제에는 중지된 서버가 필요합니다. 서버를 자동으로 중지하지 않습니다.
+- 월드를 `servers/<name>/data` 안에 두는 서버는 `mcctl migrate worlds`로 월드를 `worlds/`로 옮기기 전까지 다른 월드를 할당받을 수 없습니다.
 - 서버를 삭제하면 그 월드는 다시 쓸 수 있습니다. `mcctl world delete`는 `--force`를 써도 서버가 사용 중인 월드를 거부합니다.
 - 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면, 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 이전 설치의 중복 할당은 `mcctl world list`가 알려 줄 뿐 고치지 않습니다.
 
@@ -205,21 +206,27 @@ services:
 mcctl stop myserver && mcctl start myserver
 ```
 
+!!! warning "손으로 고친 compose 파일"
+    `servers/<name>/docker-compose.yml`은 `servers/<name>/server.yaml`에서 생성됩니다. 이렇게 손으로 고친 뒤에는 이 파일을 다시 쓰는 변경(예: `mcctl update`의 이미지 태그 변경, `mcctl playit domain`, 호스트네임 편집, `mcctl init --reconfigure`)이 `compose_edited`로 실패합니다. `mcctl migrate spec <name> --force`는 파일을 다시 생성하고 고친 내용을 버리며, 사본을 `docker-compose.yml.bak`에 남깁니다. [server.yaml 손으로 고친 경우](../configuration/server-yaml.ko.md#손으로-고친-경우)를 참조하세요.
+
 ## 보안 고려사항
 
 ### RCON 비밀번호
 
-`.env`에서 기본 RCON 비밀번호를 변경합니다:
+`mcctl init`은 `.env`에 무작위 24자 `RCON_PASSWORD`를 씁니다. 2.32.0 이전에 만든 설치에는 아직 `changeme`가 남아 있을 수 있으니 바꾸세요:
 
 ```bash
 RCON_PASSWORD=매우-안전한-비밀번호-여기에
 ```
 
-그런 다음 모든 서비스를 재시작합니다:
+서버는 컨테이너가 만들어질 때 `servers/global.env`를 통해 이 값을 받으므로 서버마다 컨테이너를 다시 만듭니다:
 
 ```bash
-mcctl down && mcctl up
+mcctl stop myserver && mcctl start myserver                          # 실행 중인 서버
+cd ~/minecraft-servers && docker compose up --no-start --no-deps mc-otherserver   # 중지된 서버 (중지 상태 유지)
 ```
+
+`mcctl down && mcctl up`으로도 적용되지만, `mcctl up`은 모든 서버를 시작합니다.
 
 ### 화이트리스트
 

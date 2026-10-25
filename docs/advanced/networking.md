@@ -4,13 +4,14 @@ Configure hostname-based routing for your Minecraft servers using nip.io, mDNS, 
 
 ## Overview
 
-The platform supports three connection methods:
+The platform supports these hostname methods:
 
-| Method | URL Example | Client Setup | Works Remotely |
+| Method | URL Example | Client Setup | Reachable From |
 |--------|-------------|--------------|----------------|
-| **nip.io** (Recommended) | `myserver.192.168.1.100.nip.io:25565` | None | Yes |
+| **nip.io** (Recommended) | `myserver.192.168.1.100.nip.io:25565` | None | Networks that can reach the IP in the name (LAN, VPN) |
 | **mDNS** | `myserver.local:25565` | avahi/Bonjour | LAN only |
-| **Direct IP** | `192.168.1.100:25565` | None | Yes |
+
+mc-router picks the server by the hostname the client sends, so a bare IP such as `192.168.1.100:25565` does not reach a server. For access from the internet, see [External Access](external-access.md).
 
 ## nip.io Magic DNS
 
@@ -43,19 +44,17 @@ Set your host IP in `.env`:
 HOST_IP=192.168.1.100
 ```
 
-When you create a server, mcctl automatically configures both nip.io and mDNS hostnames:
+When you create a server, mcctl puts both hostnames in its `mc-router.host` label:
 
-```bash
-mcctl create myserver
-# Hostnames:
-#   - myserver.192.168.1.100.nip.io:25565 (nip.io)
-#   - myserver.local:25565 (mDNS)
-```
+- `myserver.192.168.1.100.nip.io:25565` (nip.io, one per address in `HOST_IPS`, else `HOST_IP`)
+- `myserver.local:25565` (mDNS)
+
+`mcctl status` shows them in the HOSTNAME column.
 
 ### Benefits
 
 - **No client configuration** - Works immediately
-- **Works remotely** - Accessible from any network with internet
+- **Works across your networks** - From any network that can reach the IP in the name, such as your LAN or a VPN address in `HOST_IPS`
 - **Simple setup** - Just set HOST_IP in .env
 - **Multiple servers** - Each server gets a unique hostname
 
@@ -101,12 +100,19 @@ mDNS allows `.local` hostnames to work on local networks.
 
 #### Register Hostnames
 
-mcctl automatically registers hostnames when creating servers:
+`mcctl create` registers `<name>.local` when avahi-daemon is installed. It appends `<ip> <name>.local` to `/etc/avahi/hosts` and restarts avahi-daemon with sudo, using the first host address (`HOST_IPS`, else `HOST_IP`; IPv4 only):
 
-```bash
-mcctl create myserver
-# Registers myserver.local with avahi-daemon
-```
+- It asks for your sudo password when `/etc/avahi/hosts` exists. For scripts, pass `--sudo-password` or set `MCCTL_SUDO_PASSWORD`. Press Enter to try sudo without a password.
+- For passwordless operation, allow the commands mcctl runs, for example in `/etc/sudoers.d/mcctl`:
+
+    ```
+    %docker ALL=(ALL) NOPASSWD: /usr/bin/tee -a /etc/avahi/hosts
+    %docker ALL=(ALL) NOPASSWD: /usr/bin/sed -i * /etc/avahi/hosts
+    %docker ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart avahi-daemon
+    ```
+
+- If sudo fails, the server is still created and mcctl prints a warning; add the line by hand (below).
+- `mcctl delete` removes the `<name>.local` line the same way.
 
 Manual registration:
 
@@ -180,10 +186,10 @@ mc-router handles hostname-based routing and auto-scaling.
 # Check router status
 mcctl status router
 
-# Start router
+# Start router (also recreates it after docker-compose.yml changes)
 mcctl router start
 
-# Restart router (after config changes)
+# Restart the running container (keeps its current settings)
 mcctl router restart
 
 # Stop router
@@ -204,20 +210,28 @@ services:
 
 ### Auto-scaling Settings
 
-Configure in `~/minecraft-servers/.env`:
+mc-router's settings are in the `router` service of `~/minecraft-servers/docker-compose.yml`, not in `.env`:
 
-```bash
-# Auto-scaling configuration
-AUTO_SCALE_UP=true       # Start servers on connect
-AUTO_SCALE_DOWN=false    # Stop idle servers (see note)
-DOCKER_TIMEOUT=120s      # Wait time (Go time.Duration: 120s, 2m)
+```yaml
+services:
+  router:
+    environment:
+      IN_DOCKER: "true"
+      AUTO_SCALE_UP: "true"          # Start servers on connect
+      AUTO_SCALE_DOWN: "true"        # Stop idle servers (see note)
+      AUTO_SCALE_DOWN_AFTER: "10m"   # Idle time before a server is stopped
+      DOCKER_TIMEOUT: "120s"         # Wait time (Go time.Duration: 120s, 2m; bare integers fail)
 ```
 
-Then restart the router:
+After editing, recreate the router (`mcctl router restart` keeps the old settings):
 
 ```bash
-mcctl router restart
+mcctl router start
 ```
+
+`mcctl upgrade` changes only the router `image` and `group_add`, so your edits stay.
+
+To turn auto-scaling off for one server, set `routing.autoScale.up` or `routing.autoScale.down` to `false` in `servers/<name>/server.yaml`, run `mcctl migrate spec <name>`, then recreate its container: `mcctl stop <name> && mcctl start <name>` when it runs, `mcctl start <name>` when it is stopped. These become the server's `mc-router.auto-scale-up` / `mc-router.auto-scale-down` labels.
 
 !!! info "AUTO_SCALE_DOWN"
     Auto scale down is fully enabled and supported since mc-router v1.39.1.
@@ -295,12 +309,21 @@ HOST_IPS=192.168.1.100,100.64.0.5
 #### 4. Recreate Servers or Update Labels
 
 ```bash
-# New servers automatically get multiple hostnames
+# New servers automatically get a hostname for each IP
 mcctl create myserver
 
-# For existing servers, update hostnames with the new IPs
+# Existing servers: choose "Host IP(s)", select every address,
+# and answer yes to "Update existing servers with new IP hostnames?"
 mcctl init --reconfigure
+
+# Make sure mc-router runs
+mcctl router start
+
+# Recreate each running server so its container gets the new hostnames
+mcctl stop myserver && mcctl start myserver
 ```
+
+A container keeps the hostnames it was created with; a restart does not apply new ones. `mcctl start <name>` recreates and starts a stopped server; to recreate it and leave it stopped, run `docker compose up --no-start --no-deps mc-<name>` in `~/minecraft-servers`.
 
 #### 5. Client Connection
 
@@ -374,25 +397,28 @@ sudo zerotier-cli listnetworks
 docker inspect mc-myserver | grep mc-router.host
 
 # Check mc-router logs for hostname
-docker logs router 2>&1 | grep myserver
+mcctl logs router -n 200 | grep myserver
 ```
 
 !!! warning "When VPN IP Changes"
-    If your VPN IP changes, run `mcctl init --reconfigure`, enter the new IPs, and accept updating existing servers.
+    If your VPN IP changes, run `mcctl init --reconfigure`, select the new IPs, accept updating existing servers, then recreate each server as in step 4. If the first address changed, also fix the `<name>.local` lines in `/etc/avahi/hosts`; mcctl does not rewrite them.
 
 ### Debug Mode
 
-Enable mc-router debug output in `.env`:
+Add `DEBUG: "true"` to the `environment:` of the `router` service in `~/minecraft-servers/docker-compose.yml`:
 
-```bash
-# ~/minecraft-servers/.env
-DEBUG=true
+```yaml
+services:
+  router:
+    environment:
+      DEBUG: "true"
 ```
 
-Then restart:
+Then recreate the router and follow its log:
 
 ```bash
-mcctl router restart
+mcctl router start
+mcctl logs router -f
 ```
 
 ---
@@ -401,18 +427,17 @@ mcctl router restart
 
 ### Docker Network
 
-All Minecraft containers run on a shared Docker network:
+All Minecraft containers run on a shared Docker network. `mcctl init` creates it as a bridge network named `minecraft-net` with subnet `172.28.0.0/16`, and the compose file uses it as an external network:
 
 ```yaml
 # docker-compose.yml
 networks:
   minecraft-net:
+    external: true
     name: ${MINECRAFT_NETWORK:-minecraft-net}
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${MINECRAFT_SUBNET:-172.28.0.0/16}
 ```
+
+`MINECRAFT_SUBNET` in `.env` is not used.
 
 ### Port Mapping
 
@@ -422,7 +447,8 @@ Only mc-router exposes port 25565:
 services:
   router:
     ports:
-      - "25565:25565"  # Public port
+      - "25565:25565"            # Public port
+      - "127.0.0.1:25580:8080"   # mc-router management API (localhost only)
 ```
 
 Individual Minecraft servers don't expose ports - they're accessed through mc-router.
@@ -453,12 +479,12 @@ creative.minecraft.example.com  A  192.168.1.100
 
 ### Server Configuration
 
-Update the mc-router.host label:
+Add the domain as a custom hostname of the server:
 
-```yaml
-labels:
-  mc-router.host: "survival.minecraft.example.com"
-```
+- Web console: server detail > **Options** > **Hostnames / Domains** > **Custom Domains**, then **Save**
+- Or add it under `routing.customHostnames` in `servers/survival/server.yaml` and run `mcctl migrate spec survival`
+
+mcctl keeps `survival.local` and the nip.io hostnames in the `mc-router.host` label next to your domain. Then recreate the container, since a restart does not apply hostnames: `mcctl stop survival && mcctl start survival` when it runs, `mcctl start survival` when it is stopped.
 
 ### HTTPS/TLS
 
@@ -499,6 +525,7 @@ sudo firewall-cmd --reload
 1. Check mc-router is running:
    ```bash
    mcctl status router
+   mcctl router start   # if it is not running
    ```
 
 2. Check hostname is configured:
@@ -513,10 +540,10 @@ sudo firewall-cmd --reload
 
 ### Server Not Starting
 
-1. Check Docker timeout in `.env`:
-   ```bash
-   # ~/minecraft-servers/.env
-   DOCKER_TIMEOUT=180s # Increase if server takes long to start
+1. Check `DOCKER_TIMEOUT` of the `router` service in `docker-compose.yml`, then recreate the router with `mcctl router start`:
+   ```yaml
+   # ~/minecraft-servers/docker-compose.yml (router environment)
+   DOCKER_TIMEOUT: "180s"   # Increase if server takes long to start
    ```
 
 2. Check server logs:

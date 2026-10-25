@@ -13,6 +13,8 @@
 - **월드 관리**: 서버에 월드 배정(한 월드에 한 서버)과 해제
 - **플레이어 관리**: CLI를 통한 운영자, 화이트리스트, 밴, 킥
 - **GitHub 백업**: 비공개 저장소에 자동 월드 백업
+- **웹 콘솔과 REST API**: 브라우저에서 서버, 월드, 플레이어, 백업 관리 (`mcctl console init`)
+- **외부 접속**: 포트 포워딩 없이 playit.gg로 인터넷에서 접속
 
 ## 시스템 요구사항
 
@@ -30,6 +32,9 @@ npm install -g @minecraft-docker/mcctl
 
 # 플랫폼 초기화
 mcctl init
+
+# mc-router 한 번 시작 (중지하기 전까지 Docker와 함께 다시 시작됨)
+mcctl router start
 
 # 서버 생성 (대화형 모드)
 mcctl create
@@ -49,6 +54,7 @@ mcctl status
 
 | 명령어 | 설명 |
 |--------|------|
+| `mcctl router start` | mc-router 시작 (25565 포트의 호스트네임 라우팅) |
 | `mcctl create` | 새 서버 생성 (대화형) |
 | `mcctl start <name>` | 서버 시작 |
 | `mcctl stop <name>` | 서버 중지 |
@@ -79,6 +85,8 @@ flowchart TB
 - [빠른 시작](getting-started/quickstart.ko.md) - 첫 서버 만들기
 - [CLI 명령어](cli/commands.ko.md) - 전체 명령어 참조
 - [설정](configuration/index.ko.md) - mcctl로 서버 설정
+- [관리 콘솔](console/index.ko.md) - 웹 콘솔과 REST API
+- [외부 접속](advanced/external-access.ko.md) - playit.gg로 인터넷 접속
 
 ## 도움이 필요하신가요?
 

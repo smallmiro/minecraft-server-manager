@@ -1,248 +1,145 @@
 # 감사 로그 웹 콘솔 가이드
 
-웹 콘솔은 mcctl-console 서비스를 통해 감사 로그를 보고 관리하기 위한 사용자 친화적인 인터페이스를 제공합니다.
+웹 콘솔의 **Audit** 페이지는 mcctl-api와 mcctl CLI가 기록한 감사 로그를 보여줍니다. 서버 수명주기, 플레이어 관리, 월드, 백업, 설정, 파일 작업이 기록됩니다. 같은 데이터를 명령줄이나 HTTP로 보려면 [CLI - 감사 로그 명령어](../cli/audit-log.md)와 [API 레퍼런스](../api/endpoints.md)를 참고하세요.
+
+![감사 로그](../images/audit-log.png)
 
 ## 감사 로그 접근
 
-**URL:**
-```
-http://localhost:5000/audit-logs
-```
+- 상단 내비게이션 바의 **Audit**를 클릭하거나, 대시보드 **Recent Activity** 카드의 **View All**을 클릭합니다.
+- URL: `http://localhost:5000/audit-logs`
 
-**내비게이션:**
-메인 대시보드에서 사이드바 내비게이션의 **Audit Logs**를 클릭합니다.
-
-## 기능 개요
-
-### 1. 감사 로그 테이블
-
-메인 감사 로그 테이블은 다음 열로 최근 활동을 표시합니다:
-
-| 열 | 설명 |
-|----|------|
-| **Timestamp** | 작업이 발생한 시간 (로컬 시간대) |
-| **Action** | 작업 타입 (색상 코딩된 칩) |
-| **Actor** | 작업을 수행한 주체 |
-| **Target** | 영향을 받은 대상 (server/player/audit) |
-| **Status** | 성공 (녹색 체크) 또는 실패 (빨간색 X) |
-| **Details** | 전체 컨텍스트를 볼 수 있는 확장 가능한 행 |
-
-**테이블 기능:**
-- 정렬 가능한 열 (헤더 클릭하여 정렬)
-- 확장 가능한 행 (행 클릭하여 세부 정보 보기)
-- 페이지네이션 (기본 페이지당 50개 항목)
-- 자동 새로고침 (30초 간격)
-- SSE를 통한 실시간 업데이트
-
-### 2. 필터링
-
-필터 패널을 사용하여 결과 범위를 좁힙니다:
-
-**필터 옵션:**
-- **Action Type**: 모든 작업 타입이 있는 드롭다운
-- **Actor**: Actor 필터를 위한 텍스트 입력
-- **Target Name**: 서버/플레이어 이름을 위한 텍스트 입력
-- **Status**: Success/Failure 토글
-- **Date Range**: From/To 날짜를 위한 캘린더 선택기
-
-**빠른 필터:**
-- All Logs
-- Server Operations
-- Player Management
-- Failures Only
-- Last 24 Hours
-- Last 7 Days
-- Last 30 Days
-
-**예제 워크플로:**
-1. "Failures Only" 빠른 필터 선택
-2. "Last 24 Hours" 날짜 범위 선택
-3. "Apply Filters" 클릭
-4. 실패한 작업 검토
-
-### 3. 확장 가능한 세부 정보
-
-모든 로그 항목을 클릭하여 전체 세부 정보 보기:
-
-**확장 뷰 포함 사항:**
-- 밀리초 단위의 전체 타임스탬프
-- 오류 메시지 (실패 시)
-- JSON 세부 정보 객체 (형식화 및 구문 강조 표시)
-- ID 복사 버튼
-- 관련 엔티티 링크 (server/player)
-
-**예제 세부 정보 (서버 생성):**
-```json
-{
-  "type": "PAPER",
-  "version": "1.21.1",
-  "memory": "4G",
-  "worldOptions": {
-    "type": "new",
-    "seed": null
-  }
-}
-```
-
-### 4. 통계 대시보드 위젯
-
-메인 대시보드에는 **Audit Log Stats** 위젯이 포함됩니다:
-
-**표시 내용:**
-- 전체 로그 수
-- Success 대 Failure 비율 (파이 차트)
-- 상위 5개 작업 (막대 차트)
-- 상위 5개 Actor (막대 차트)
-- 최근 실패 (목록)
-
-**새로고침:**
-- 60초마다 자동 업데이트
-- 수동 새로고침 버튼
-
-### 5. 서버 활동 탭
-
-각 서버 세부 정보 페이지에는 서버별 감사 로그를 표시하는 **Activity** 탭이 포함됩니다:
-
-**표시 내용:**
-- 해당 서버와 관련된 모든 작업
-- `targetName: <server-name>`으로 필터링됨
-- 동일한 필터링 및 정렬 옵션
-- 타임라인 뷰 (시간순)
-
-**사용 사례:**
-- 서버 생명주기 추적 (create → start → stop → delete)
-- 서버 설정을 수정한 사람 검토
-- 서버 시작 실패 디버그
-
-### 6. 내보내기 기능
-
-외부 분석 또는 규정 준수를 위해 감사 로그 내보내기:
-
-**내보내기 형식:**
-- **CSV**: 스프레드시트 호환
-- **JSON**: 세부 정보가 포함된 전체 데이터
-- **PDF**: 인쇄 가능한 보고서 (적용된 필터 포함)
-
-**내보내기 방법:**
-1. 원하는 필터 적용
-2. 툴바에서 **Export** 버튼 클릭
-3. 형식 선택 (CSV/JSON/PDF)
-4. 파일 자동 다운로드
-
-**CSV 예제:**
-```csv
-Timestamp,Action,Actor,Target Type,Target Name,Status,Error Message
-2026-02-05 14:32:15,server.create,cli:local,server,myserver,success,
-2026-02-05 14:30:45,player.whitelist.add,web:admin,player,Steve,success,
-```
-
-### 7. 오래된 로그 삭제
-
-UI를 통해 오래된 감사 로그 삭제:
-
-**접근:**
-- 감사 로그 페이지에서 **Settings** 아이콘 클릭
-- **Purge Logs** 선택
-
-**삭제 대화 상자:**
-- 보관 기간 선택 (30/60/90/180일 또는 사용자 지정 날짜)
-- 삭제 수 미리보기
-- 비밀번호로 확인 (관리자만)
-
-**안전 기능:**
-- 삭제 전 Dry-run 미리보기
-- 확인 대화 상자
-- 7일 미만의 로그는 삭제 불가
+Admin 역할이든 User 역할이든 로그인한 모든 사용자가 감사 로그를 보고 내보낼 수 있습니다. 서버별 권한(Viewer, Operator, Owner)은 감사 로그를 제한하지 않습니다.
 
 ## 실시간 업데이트
 
-감사 로그 페이지는 실시간 업데이트를 위해 Server-Sent Events (SSE)를 사용합니다:
+페이지 헤더에는 실시간(SSE) 연결이 열려 있으면 녹색 점과 함께 **Live**가, 끊겨 있으면 회색 점과 함께 **Disconnected**가 표시됩니다. 페이지는 3초마다 스스로 다시 연결합니다.
 
-**라이브 표시기:**
-- 녹색 점: 연결됨 및 업데이트 수신 중
-- 빨간색 점: 연결 끊김 (클릭하여 재연결)
+목록은 저절로 새로고침되지 않습니다. 새 항목이 도착하면 필터 위에 "N new logs available - Click to refresh" 배너가 나타나며, 이를 클릭하면 새 항목을 불러옵니다. 필터를 바꿔도 목록을 다시 불러옵니다.
 
-**새 로그 도착 시:**
-- 행이 잠시 강조 표시됨 (노란색 페이드)
-- 카운터 업데이트
-- 통계 새로고침
+## 통계
 
-**자동 스크롤:**
-- 도착하는 최신 로그를 보기 위해 자동 스크롤 토글
-- 중단 방지를 위해 기본적으로 비활성화됨
+상단의 카드 4개는 설정된 필터와 관계없이 전체 감사 로그를 요약합니다. 30초마다 새로고침됩니다.
 
-## 작업 색상 코딩
+| 카드 | 값 |
+|------|----|
+| **Total Logs** | 항목 수 |
+| **Success Rate** | 상태가 success인 항목의 비율 |
+| **Failures** | 실패한 항목 수 |
+| **Active Users** | 최근 1,000개 항목에 나타난 서로 다른 수행자(actor) 수 |
 
-작업은 카테고리별로 색상 코딩됩니다:
+## 필터
 
-| 색상 | 카테고리 | 작업 |
-|------|----------|------|
-| 파란색 | 서버 생명주기 | create, start, stop, restart, delete |
-| 녹색 | 플레이어 추가 | whitelist.add, op |
-| 노란색 | 플레이어 수정 | kick, unban, deop |
-| 빨간색 | 플레이어 제거 | whitelist.remove, ban |
-| 보라색 | 유지보수 | audit.purge |
+**Filters** 패널은 접을 수 있고, 활성 필터 수를 표시하며, **Clear All** 버튼이 있습니다. 필터는 바꾸는 즉시 적용되고 페이지 URL에 남으므로, 필터링한 화면을 북마크할 수 있습니다.
 
-## 키보드 단축키
-
-| 키 | 작업 |
-|----|------|
-| `F` | 필터 검색에 포커스 |
-| `R` | 로그 새로고침 |
-| `E` | 내보내기 대화 상자 열기 |
-| `Esc` | 확장된 세부 정보 닫기 |
-| `/` | 검색 바에 포커스 |
-| `↑`/`↓` | 행 탐색 |
-| `Enter` | 선택한 행 확장 |
-
-## 권한
-
-감사 로그 접근에는 적절한 역할이 필요합니다:
-
-| 역할 | 권한 |
+| 필터 | 설명 |
 |------|------|
-| **Admin** | 전체 접근 (보기, 내보내기, 삭제) |
-| **Operator** | 보기 및 내보내기만 가능 |
-| **Viewer** | 보기만 가능 (내보내기 또는 삭제 불가) |
+| **From** / **To** | 하루 단위 날짜 범위 (UTC) |
+| **Action** | 액션 하나: Create, Delete, Start, Stop, Restart, Whitelist Add, Whitelist Remove, Ban, Unban, Op, Deop, Kick, Purge, Platform Settings. 대상 유형을 고르면 서버 또는 플레이어 액션으로 목록이 좁혀집니다 |
+| **Target type** | **All**, **Server**, **Player** |
+| **Status** | **All**, **Success**, **Failure** |
+| **Target Name** | 서버, 월드, 플레이어 등 대상의 정확한 이름 |
+| **Actor** | 기록된 그대로의 수행자, 예: `api:console`, `cli:local` |
+
+그 밖에 기록되는 액션(월드, 백업과 백업 스케줄, 설정 스냅샷, 모드, 파일, playit.gg, mc-router)은 **Action** 목록에 없습니다. **Target Name**이나 **Actor**로 찾거나 [`mcctl audit list --action <action>`](../cli/audit-log.md#mcctl-audit-list)을 사용하세요.
+
+웹 콘솔에서 한 플레이어 작업은 서버를 대상으로, 플레이어 이름을 세부 정보로 기록합니다. CLI는 플레이어를 대상으로 기록합니다. 따라서 **Player** 대상 유형에는 CLI에서 한 플레이어 작업만 표시됩니다.
+
+## 로그 테이블
+
+| 컬럼 | 설명 |
+|------|------|
+| **Timestamp** | "21m ago" 같은 상대 시간. 마우스를 올리면 정확한 시각이 표시됩니다 |
+| **Action** | 색상 칩으로 표시되는 액션 레이블 ([액션 색상](#액션-색상) 참조) |
+| **Actor** | 웹 콘솔에서 한 작업은 `console`(`api:console`로 기록), Platform Settings 변경과 파일 작업은 사용자 이름(`api:<user>`로 기록), CLI 명령어는 `local` 칩(`cli:local`로 기록) |
+| **Target** | 서버, 월드, 플레이어 등 대상의 이름. 서버는 상세 페이지로, 플레이어는 Players 페이지로 연결됩니다 |
+| **Status** | **OK**(녹색) 또는 **Error**(빨간색) |
+
+- 세부 정보나 오류 메시지가 있는 행은 앞에 화살표가 있으며, 클릭하면 행 아래에 펼쳐집니다. 실패한 항목은 펼쳐진 상태로 시작합니다.
+- 행을 클릭하면 상세 드로어가 열립니다 ([로그 상세](#로그-상세) 참조).
+- 페이지당 25, 50(기본값), 100행 중에서 고를 수 있습니다.
+
+서버의 **Activity** 탭은 한 서버에 대해 같은 테이블을 Target 컬럼 없이 보여주며, **Action** 필터, 상태 토글, 이 페이지로 이동하는 **View Full History** 링크가 있습니다 ([웹 콘솔 가이드](web-console.md#activity-탭) 참조).
+
+## 로그 상세
+
+오른쪽 드로어에는 항목의 **ID**, **Timestamp**(초 단위, 시간대 포함), **Action**, **Status**, **Actor**, **Target**(`<type>/<name>`), 실패한 항목의 오류 메시지, 기록된 필드를 담은 **Details** 표가 표시됩니다. 서버 생성 항목의 세부 정보는 `type`, `version`, `memory`, `modpack`, `modpackVersion`, `modLoader`, `excludeFiles`입니다.
+
+**Related Logs**에는 탭이 두 개 있습니다. **Same Target**은 대상이 같은 다른 항목을, **Same Actor**는 수행자가 같은 다른 항목을 최신순으로 최대 10개씩 보여줍니다.
+
+## 내보내기
+
+Filters 패널의 **Export**를 클릭하면 **Export Audit Logs** 다이얼로그가 열립니다:
+
+1. **CSV** 또는 **JSON**을 고릅니다.
+2. **Applied Filters**와 **Estimated Rows**를 확인합니다. 내보내기는 현재 설정된 필터를 사용합니다.
+3. **Export CSV** 또는 **Export JSON**을 클릭합니다. 파일은 `audit-logs-<timestamp>.csv` 또는 `audit-logs-<timestamp>.json`으로 저장됩니다.
+
+내보내기는 최대 5,000행입니다. 일치하는 항목이 더 많으면 다이얼로그에 안내가 표시되므로, 나머지는 필터를 좁혀 내보내세요.
+
+CSV 예시:
+
+```csv
+ID,Timestamp,Action,Actor,Target Type,Target Name,Status,Error Message,Details
+7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f,2026-10-24T14:32:15.123Z,server.start,api:console,server,survival,success,"",""
+2b8e9f10-1a2b-4c3d-9e4f-5a6b7c8d9e0f,2026-10-24T14:30:45.020Z,player.whitelist.add,cli:local,player,Steve,success,"","{""server"":""survival""}"
+```
+
+JSON 파일에는 `exportedAt`, `filters`, `total`, `logs` 배열이 들어 있습니다.
+
+## 액션 색상
+
+| 색상 | 액션 |
+|------|------|
+| 녹색 | Create, Whitelist Add, Unban |
+| 빨간색 | Delete, Ban, Kick |
+| 파란색 | Start, Op |
+| 황색 | Stop, Whitelist Remove, Deop, Platform Settings |
+| 보라색 | Restart |
+| 회색 | Purge, 그리고 전용 레이블이 없는 모든 액션 (`world.create`처럼 이름으로 표시) |
+
+## 오래된 로그 삭제
+
+웹 콘솔에는 삭제(purge) 기능이 없습니다. 오래된 항목은 [`mcctl audit purge`](../cli/audit-log.md#mcctl-audit-purge)(`--dry-run`으로 삭제 대상을 미리 확인)나 Admin 역할이 필요한 `DELETE /api/audit-logs`로 삭제합니다. 플랫폼 `.env`에 `AUDIT_AUTO_CLEANUP=true`를 설정하면 `AUDIT_RETENTION_DAYS`(기본값 90)보다 오래된 항목이 자동으로 삭제됩니다.
 
 ## 문제 해결
 
 ### 로그가 업데이트되지 않음
 
 **증상:**
-- 라이브 표시기에 빨간색 점 표시
-- 새 로그가 나타나지 않음
+- 헤더에 **Disconnected**가 표시됨
+- 새 작업을 해도 "new logs available" 배너가 나타나지 않음
 
 **해결 방법:**
-1. 네트워크 연결 확인
-2. 재연결 버튼 클릭
-3. 페이지 새로고침 (F5)
-4. mcctl-api 서비스가 실행 중인지 확인
+1. 몇 초 기다립니다. 페이지는 3초마다 다시 연결합니다
+2. 페이지를 새로고침합니다 (F5)
+3. mcctl-api와 mcctl-console이 실행 중인지 확인합니다: `mcctl console service status`
 
-### 성능 문제
+### 페이지가 느림
 
 **증상:**
-- 대규모 결과 세트로 인한 느린 페이지 로드
+- 항목이 많을 때 테이블 로딩이 느림
 
 **해결 방법:**
-1. 날짜 범위 필터 축소
-2. 작업 필터 적용
-3. 설정에서 페이지네이션 크기 증가
-4. 서버 측 페이지네이션 활성화
+1. 날짜 범위를 좁힙니다
+2. 액션, 대상, 수행자로 필터링합니다
+3. 페이지당 행 수를 줄입니다
 
 ### 로그 누락
 
 **증상:**
-- 예상 로그가 나타나지 않음
+- 예상한 항목이 보이지 않음
 
 **가능한 원인:**
-1. 자동 정리로 오래된 로그 삭제됨 (보관 설정 확인)
-2. 수동 삭제가 수행됨
-3. 필터가 로그를 숨기고 있음 (필터 재설정)
-4. 시간대 불일치 (브라우저 시간대 확인)
+1. 자동 정리로 오래된 항목이 삭제됨 (`AUDIT_AUTO_CLEANUP`, `AUDIT_RETENTION_DAYS`)
+2. 수동 삭제(purge)가 실행됨
+3. 필터에 가려짐: **Clear All**을 클릭하세요
+4. 해당 액션이 **Action** 목록에 없음: **Target Name**이나 **Actor**로 검색하세요
+5. 웹 콘솔에서 한 플레이어 작업은 **Player** 대상 유형이 아니라 서버 아래에 기록됨
 
 ## 참고
 
-- [CLI - 감사 로그 명령어](../cli/audit-log.ko.md)
-- [API - 감사 로그 참조](./audit-log-api.ko.md)
-- [설정 가이드](../configuration/environment.ko.md)
+- [CLI - 감사 로그 명령어](../cli/audit-log.md)
+- [API 레퍼런스](../api/endpoints.md)
+- [감사 로그 변수](../configuration/environment.md#감사-로그-변수)
+- [웹 콘솔 가이드](web-console.md)

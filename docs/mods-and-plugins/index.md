@@ -6,8 +6,8 @@ This guide covers installing mods and plugins for your Minecraft server using mc
 
 | Type | Description | Server Types |
 |------|-------------|--------------|
-| **Mods** | Modify game mechanics, require client installation | Forge, Fabric, Quilt |
-| **Plugins** | Server-side only, no client changes needed | Paper, Spigot, Bukkit |
+| **Mods** | Modify game mechanics, require client installation | Forge, NeoForge, Fabric, Quilt |
+| **Plugins** | Server-side only, no client changes needed | Paper, Purpur, Spigot, Bukkit |
 
 ## Quick Start with mcctl
 
@@ -17,10 +17,10 @@ First, create a server with the appropriate type for mods or plugins:
 
 ```bash
 # For mods (Forge/Fabric)
-mcctl create modded --type FABRIC --version 1.21.1
+mcctl create modded -t FABRIC -v 1.21.1
 
 # For plugins (Paper)
-mcctl create survival --type PAPER --version 1.21.1
+mcctl create survival -t PAPER -v 1.21.1
 ```
 
 ### Configure Mods/Plugins
@@ -44,12 +44,35 @@ mcctl stop modded && mcctl start modded
 !!! tip "Restart Required"
     After changing mod/plugin configuration, restart the server to apply changes.
 
+### With mcctl mod
+
+`mcctl mod` writes the same keys for you:
+
+```bash
+# Search Modrinth
+mcctl mod search sodium
+
+# Add Modrinth projects (mcctl checks the slugs on Modrinth)
+mcctl mod add modded fabric-api lithium
+
+# Other sources
+mcctl mod add modded --curseforge jei journeymap
+mcctl mod add survival --spiget 28140
+mcctl mod add modded --url https://example.com/custom-mod.jar
+
+# List and remove
+mcctl mod list modded
+mcctl mod remove modded lithium
+```
+
+`--curseforge` writes `CURSEFORGE_FILES`, `--spiget` writes `SPIGET_RESOURCES`, and `--url` writes `PLUGINS` on Paper, Purpur, Spigot and Bukkit servers and `MODS` on the others. For server types not in the [Overview](#overview) table, `mcctl mod add` asks for `--force`. Restart the server afterwards.
+
 ## Installation Sources
 
 | Source | Best For | API Key Required | mcctl Config Key |
 |--------|----------|------------------|------------------|
 | [Modrinth](modrinth.md) | Modern mods/plugins | No | `MODRINTH_PROJECTS` |
-| [CurseForge](curseforge.md) | Large mod library | Yes | `CURSEFORGE_FILES` |
+| [CurseForge](curseforge.md) | Large mod library | No (built in for Java 17+ images) | `CURSEFORGE_FILES` |
 | [Spiget](spiget.md) | SpigotMC plugins | No | `SPIGET_RESOURCES` |
 | [Direct Download](direct-download.md) | Custom/private files | No | `MODS` / `PLUGINS` |
 | [Modpacks](modpacks.md) | Pre-configured collections | Varies | Server TYPE |
@@ -108,16 +131,17 @@ mcctl stop survival && mcctl start survival
 
 ### Using Shared Directories
 
-mcctl init creates shared directories for mods and plugins:
+`mcctl init` creates `shared/plugins/`, which every server mounts read-only at `/plugins`. The image copies those jars into the server's `plugins/` folder when it starts.
 
 ```
 ~/minecraft-servers/
   shared/
-    mods/       # Place mod JARs here (read-only mount)
-    plugins/    # Place plugin JARs here (read-only mount)
+    plugins/                 # Plugin JARs for all servers (read-only mount)
+  servers/<name>/data/
+    mods/                    # Mod JARs for one server
 ```
 
-Place your manually downloaded files in these directories. They are automatically mounted to all servers.
+Put manually downloaded plugins in `shared/plugins/`. Put mod JARs in the server's own `servers/<name>/data/mods/`, or list their download URLs in `MODS` (see [Direct Download](direct-download.md)). `mcctl init` also creates `shared/mods/`, but servers do not mount it.
 
 ## Auto Cleanup
 
@@ -147,10 +171,10 @@ mcctl config myserver USES_PLUGINS "true"
 
 ## Environment Variable Processing
 
-By default, environment variables in synced config files are processed. To disable:
+By default, environment variables are not processed in files copied by the sync. To enable it:
 
 ```bash
-mcctl config myserver REPLACE_ENV_DURING_SYNC "false"
+mcctl config myserver REPLACE_ENV_DURING_SYNC "true"
 ```
 
 ## Advanced Configuration (Manual)
@@ -165,15 +189,14 @@ nano ~/minecraft-servers/servers/myserver/config.env
 Example `config.env`:
 
 ```bash
-# Modrinth mods (multi-line format)
-MODRINTH_PROJECTS=fabric-api
-lithium
-sodium
-iris
+# Modrinth mods (one line, comma-separated)
+MODRINTH_PROJECTS=fabric-api,lithium,sodium,iris
 
 # Dependency settings
 MODRINTH_DOWNLOAD_DEPENDENCIES=required
 ```
+
+Each value must stay on one line; for long lists use a listing file (see [Using Listing Files](modrinth.md#using-listing-files)). mcctl takes a hand edit into `server.yaml` the next time it changes the server.
 
 ## Next Steps
 

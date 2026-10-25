@@ -30,13 +30,13 @@ mcctl up
 
 ### 전체 인프라 중지
 
-모든 서버, mc-router를 중지하고 Docker 네트워크를 제거합니다:
+모든 서버와 mc-router를 중지합니다:
 
 ```bash
 mcctl down
 ```
 
-`docker compose down`을 실행하여 모든 mc-* 컨테이너를 중지합니다.
+모든 mc-* 컨테이너를 중지하고 `docker compose down`을 실행하며, 이때 컨테이너가 제거됩니다. `minecraft-net` 네트워크는 남습니다.
 
 ### 개별 서버 시작
 
@@ -73,6 +73,8 @@ mcctl stop --all
 ```bash
 mcctl stop myserver && mcctl start myserver
 ```
+
+서버가 실행 중이 아니면 `mcctl stop`이 종료 코드 2로 끝나 `&&` 뒤의 시작이 실행되지 않습니다. 이때는 `mcctl start myserver`만 실행합니다. `BACKUP_AUTO_ON_STOP=true`이면 `mcctl stop`을 실행할 때마다 월드도 백업합니다.
 
 !!! tip "재시작이 필요한 경우"
     다음 변경 후에는 서버를 재시작해야 합니다:
@@ -146,18 +148,19 @@ Management Console이 설치되고 실행 중이어야 합니다:
 
 ```bash
 mcctl console init       # 최초 설정
-mcctl console service start   # 콘솔 시작
+mcctl console service start --console   # mcctl-api와 콘솔 시작
 ```
 
 ### Web UI를 통한 서버 제어
 
-**대시보드**에서 각 서버 카드의 빠른 액션 버튼을 사용합니다:
+**대시보드**에서 각 서버 행의 빠른 액션 버튼을 사용합니다:
 
 | 버튼 | 동작 | 사용 가능 시점 |
 |------|------|----------------|
-| 재생 (Start) | 서버 시작 | 서버가 중지된 상태 |
-| 중지 (Stop) | 정상 종료 | 서버가 실행 중 |
-| 재시작 (Restart) | 중지 후 시작 | 서버가 실행 중 |
+| 시작 (Start) | 서버 시작 | 서버가 중지된 상태 |
+| 콘솔 (Console) | 서버 콘솔 페이지 열기 | 서버가 실행 중 |
+| 중지 (Stop) | 정상 종료 (먼저 확인) | 서버가 실행 중 |
+| 재시작 (Restart) | 중지 후 시작 (먼저 확인) | 서버가 실행 중 |
 
 ### 서버 상세 페이지
 
@@ -173,13 +176,13 @@ mcctl console service start   # 콘솔 시작
 
 ```bash
 # 서버 시작
-curl -X POST http://localhost:5001/servers/myserver/start
+curl -X POST -H "X-API-Key: <key>" http://localhost:5001/api/servers/myserver/start
 
 # 서버 중지
-curl -X POST http://localhost:5001/servers/myserver/stop
+curl -X POST -H "X-API-Key: <key>" http://localhost:5001/api/servers/myserver/stop
 
 # 서버 재시작
-curl -X POST http://localhost:5001/servers/myserver/restart
+curl -X POST -H "X-API-Key: <key>" http://localhost:5001/api/servers/myserver/restart
 ```
 
 인증 세부사항은 [API 참조](../api/index.ko.md)를 확인하세요.
@@ -205,6 +208,8 @@ mcctl console service restart
 # 서비스 상태 확인
 mcctl console service status
 ```
+
+mcctl-api와 콘솔이 모두 설치되어 있으면 `--api`나 `--console` 없이 실행한 `start`, `stop`, `restart`는 대상 서비스를 묻고, 터미널이 없으면 실패합니다. 스크립트에서는 `--console`(mcctl-api와 콘솔, `stop`은 콘솔만) 또는 `--api`(mcctl-api만, `stop`은 두 서비스 모두)를 줍니다.
 
 ### PM2 직접 명령어
 
@@ -245,30 +250,22 @@ mc-router는 플레이어 활동에 따라 서버를 자동으로 시작/중지�
 
 ### 설정
 
-`.env`에서 Auto-Scale을 설정합니다:
+오토스케일 설정은 `<root>/docker-compose.yml`에 있는 `router` 서비스의 `environment:`에 있습니다:
 
-```bash
-# 플레이어 접속 시 자동 시작 활성화
-AUTO_SCALE_UP=true
-
-# 유휴 시 자동 중지 활성화
-AUTO_SCALE_DOWN=true
-
-# 중지까지의 유휴 시간 (1m, 5m, 10m, 30m, 1h)
-AUTO_SCALE_DOWN_AFTER=10m
-
-# 컨테이너 시작 타임아웃 (초)
-DOCKER_TIMEOUT=120s
-
-# 서버 시작 중 표시되는 커스텀 MOTD
-AUTO_SCALE_ASLEEP_MOTD=§e§lServer is sleeping§r\n§7Connect to wake up!
+```yaml
+  router:
+    environment:
+      AUTO_SCALE_UP: "true"            # 플레이어가 접속하면 중지된 서버 시작
+      AUTO_SCALE_DOWN: "true"          # 유휴 서버 중지
+      AUTO_SCALE_DOWN_AFTER: "10m"     # 중지까지의 유휴 시간 (1m, 5m, 10m, 30m, 1h)
+      DOCKER_TIMEOUT: "120s"           # 컨테이너 시작 타임아웃 (Go time.Duration: 120s, 2m)
+      AUTO_SCALE_ASLEEP_MOTD: "§e§lServer is sleeping§r\n§7Connect to wake up!"   # 중지된 서버의 MOTD
 ```
 
-설정 변경 후 mc-router를 재시작합니다:
+변경 사항은 `mcctl router start`로 적용합니다(`docker compose up -d router`가 컨테이너를 다시 만듭니다). `mcctl router restart`는 이전 값을 그대로 유지합니다. `mcctl upgrade`는 router의 `image`와 `group_add`만 수정하므로 이 편집 내용은 업그레이드 후에도 남습니다.
 
-```bash
-mcctl router restart
-```
+!!! note "새 이미지와 중지된 서버"
+    mc-router는 대기 중인 서버의 기존 컨테이너를 시작하므로, `mcctl update`가 새 이미지를 pull한 뒤에도 중지된 서버는 컨테이너를 다시 만들 때까지 이전 이미지로 깨어납니다. `mcctl update`가 이 작업을 제안하며([`mcctl update`](../cli/commands.ko.md#mcctl-update) 참조), 직접 하려면 플랫폼 디렉토리에서 `docker compose up --no-start --no-deps mc-<server>`를 실행합니다.
 
 ### 플레이어 경험
 
@@ -339,7 +336,7 @@ Auto-Scale이 활성화된 경우:
 
 | 범위 | 시작 | 중지 | 영향 범위 |
 |------|------|------|-----------|
-| **전체 인프라** | `mcctl up` | `mcctl down` | mc-router + 모든 서버 + 네트워크 |
+| **전체 인프라** | `mcctl up` | `mcctl down` | mc-router + 모든 서버 |
 | **모든 서버** | `mcctl start --all` | `mcctl stop --all` | 모든 Minecraft 서버 (라우터 제외) |
 | **개별 서버** | `mcctl start <name>` | `mcctl stop <name>` | Minecraft 서버 하나 |
 | **라우터만** | `mcctl router start` | `mcctl router stop` | mc-router만 |

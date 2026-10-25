@@ -38,7 +38,7 @@ The output MUST contain all 18 sections in this order:
 | 7 | Configuration | .env.example, config.env, environment variables |
 | 8 | REST API Reference | `mcctl-api/src/routes/**/*.ts` (ALL endpoints, curl examples) |
 | 9 | Web Console | `mcctl-console/src/app/**/*` (pages, components, SSE) |
-| 10 | itzg/minecraft-server Reference | docs/itzg-reference/, server-configuration-reference.md |
+| 10 | itzg/minecraft-server Reference | docs/itzg-reference/, docs/configuration/server-types.md |
 | 11 | mc-router Reference | docker-compose.yml mc-router config, docs |
 | 12 | docker-compose.yml Examples | Server type templates, compose patterns |
 | 13 | Common Use Cases | Step-by-step workflows from actual features |
@@ -96,7 +96,7 @@ Use `orchestrator-agent` to launch parallel analysis agents. Each agent reads sp
 - **Extract**: Current version, full release history with dates and changes
 
 #### 1g. Server Configuration Reference
-- **Path**: `docs/server-configuration-reference.md`
+- **Path**: `docs/configuration/server-types.md`, `docs/configuration/environment.md`, `docs/configuration/server-yaml.md`
 - **Also read**: `docs/itzg-reference/**/*.md`
 - **Extract**: All itzg environment variables, server types, Java options, mod loaders
 
