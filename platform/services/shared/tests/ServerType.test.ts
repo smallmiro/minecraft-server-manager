@@ -213,4 +213,24 @@ describe('ServerType', () => {
       });
     });
   });
+
+  // A TYPE set outside mcctl (mcctl config <srv> TYPE FTBA) must not hide the server (#826)
+  describe('fromExisting', () => {
+    test('reads a known type like create', () => {
+      expect(ServerType.fromExisting(' paper ').equals(ServerType.create('PAPER'))).toBe(true);
+    });
+
+    test('keeps a type mcctl does not know, supporting neither plugins nor mods', () => {
+      const type = ServerType.fromExisting('ftba');
+      expect(type.value).toBe('FTBA');
+      expect(type.label).toBe('FTBA');
+      expect(type.supportsPlugins).toBe(false);
+      expect(type.supportsMods).toBe(false);
+      expect(type.isModpack).toBe(false);
+    });
+
+    test('create still refuses it', () => {
+      expect(() => ServerType.create('FTBA')).toThrow(/Invalid server type/);
+    });
+  });
 });

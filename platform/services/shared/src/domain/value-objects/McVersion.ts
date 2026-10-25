@@ -28,8 +28,9 @@ export class McVersion {
     return this._patch;
   }
 
-  private get isLatest(): boolean {
-    return this._value === 'LATEST';
+  /** LATEST, or a snapshot/pre-release kept as text (fromExisting): taken as the newest. */
+  private get isUnnumbered(): boolean {
+    return this._major === 0;
   }
 
   /** 1.20.5 and later 1.x releases (Java 21). */
@@ -42,7 +43,7 @@ export class McVersion {
    */
   get recommendedJavaVersion(): number {
     // LATEST is the newest release, which needs the newest Java
-    if (this.isLatest) {
+    if (this.isUnnumbered) {
       return 25;
     }
     // Minecraft 26+ (new versioning scheme) requires Java 25
@@ -71,7 +72,7 @@ export class McVersion {
    * but MC gameplay requirements differ from available image tags.
    */
   get recommendedImageTag(): string {
-    if (this.isLatest) {
+    if (this.isUnnumbered) {
       return 'java25';
     }
     // Minecraft 26+ (new versioning scheme) requires Java 25
@@ -134,6 +135,18 @@ export class McVersion {
     }
 
     return new McVersion(trimmed, major, minor, patch);
+  }
+
+  /**
+   * A VERSION read from a server (#826): what create accepts, else the text
+   * as is (24w14a, 1.20.5-rc1), so such a server can still be found.
+   */
+  static fromExisting(value: string): McVersion {
+    try {
+      return McVersion.create(value);
+    } catch {
+      return new McVersion(value.trim(), 0, 0, 0);
+    }
   }
 
   static latest(): McVersion {

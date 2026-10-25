@@ -144,40 +144,54 @@ const SERVER_TYPE_INFO: Record<ServerTypeEnum, Omit<ServerTypeInfo, 'value'>> = 
   },
 };
 
+/** A TYPE mcctl does not offer (FTBA, MOHIST, ... set with mcctl config): no known features. */
+const OTHER_TYPE_INFO = {
+  description: 'Server type set outside mcctl',
+  supportsPlugins: false,
+  supportsMods: false,
+  isModpack: false,
+  recommended: false,
+};
+
 export class ServerType {
-  private constructor(private readonly _value: ServerTypeEnum) {
+  /** A ServerTypeEnum value, or any TYPE through fromExisting. */
+  private constructor(private readonly _value: string) {
     Object.freeze(this);
   }
 
-  get value(): ServerTypeEnum {
+  get value(): string {
     return this._value;
   }
 
-  get info(): ServerTypeInfo {
+  private get details(): Omit<ServerTypeInfo, 'value'> {
+    return SERVER_TYPE_INFO[this._value as ServerTypeEnum] ?? { label: this._value, ...OTHER_TYPE_INFO };
+  }
+
+  get info(): Omit<ServerTypeInfo, 'value'> & { value: string } {
     return {
       value: this._value,
-      ...SERVER_TYPE_INFO[this._value],
+      ...this.details,
     };
   }
 
   get label(): string {
-    return SERVER_TYPE_INFO[this._value].label;
+    return this.details.label;
   }
 
   get description(): string {
-    return SERVER_TYPE_INFO[this._value].description;
+    return this.details.description;
   }
 
   get supportsPlugins(): boolean {
-    return SERVER_TYPE_INFO[this._value].supportsPlugins;
+    return this.details.supportsPlugins;
   }
 
   get supportsMods(): boolean {
-    return SERVER_TYPE_INFO[this._value].supportsMods;
+    return this.details.supportsMods;
   }
 
   get isModpack(): boolean {
-    return SERVER_TYPE_INFO[this._value].isModpack;
+    return this.details.isModpack;
   }
 
   static create(value: string): ServerType {
@@ -189,6 +203,14 @@ export class ServerType {
     }
 
     return new ServerType(upperValue as ServerTypeEnum);
+  }
+
+  /**
+   * A TYPE read from a server (#826): any value, so a server whose TYPE was
+   * set outside mcctl can still be found. create() refuses the unknown ones.
+   */
+  static fromExisting(value: string): ServerType {
+    return new ServerType(value.toUpperCase().trim());
   }
 
   static fromEnum(value: ServerTypeEnum): ServerType {

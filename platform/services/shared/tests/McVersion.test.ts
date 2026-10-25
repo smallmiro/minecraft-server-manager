@@ -133,4 +133,23 @@ describe('McVersion', () => {
       expect(v.recommendedImageTag).toBe('java25');
     });
   });
+
+  // A VERSION read from a server must not hide it (#826)
+  describe('fromExisting', () => {
+    test('reads a release like create', () => {
+      expect(McVersion.fromExisting('1.20.6').equals(McVersion.create('1.20.6'))).toBe(true);
+      expect(McVersion.fromExisting('1.20.6').recommendedImageTag).toBe('java21');
+    });
+
+    test.each(['24w14a', '1.20.5-rc1'])('keeps %s as text, on the newest Java', (value) => {
+      const v = McVersion.fromExisting(value);
+      expect(v.value).toBe(value);
+      expect(v.recommendedJavaVersion).toBe(25);
+      expect(v.recommendedImageTag).toBe('java25');
+    });
+
+    test('create still refuses it', () => {
+      expect(() => McVersion.create('24w14a')).toThrow(/Invalid Minecraft version format/);
+    });
+  });
 });
