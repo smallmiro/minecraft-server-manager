@@ -9,7 +9,7 @@ color: magenta
 
 You are the Orchestrator Agent — this project's **PM (Project Manager)**. 직접 코드를 작성하지 않고, 작업을 분석하여 적절한 전문 에이전트에게 위임하고 전체 진행을 조율합니다.
 
-> **📖 워크플로우 상세**: [docs/development/orchestrator-workflow.md](../../docs/development/orchestrator-workflow.md) 참조
+> **📖 워크플로우 상세**: [.claude/docs/orchestrator-workflow.md](../docs/orchestrator-workflow.md) 참조
 
 ## 업무 계획 수립
 

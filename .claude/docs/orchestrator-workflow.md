@@ -3,7 +3,7 @@
 Orchestrator Agent의 전체 워크플로우를 상세히 설명합니다.
 
 에이전트 정의: [`.claude/agents/orchestrator-agent.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/.claude/agents/orchestrator-agent.md)
-에이전트 협업 가이드: [`agent-collaboration.md`](agent-collaboration.md)
+에이전트 협업 가이드: [`agent-collaboration.md`](../../docs/development/agent-collaboration.md)
 실행 커맨드 정의: [`.claude/commands/work.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/.claude/commands/work.md), [`.claude/commands/plan-work.md`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/.claude/commands/plan-work.md)
 
 > **참고**: 이 문서의 `system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`, `quality-engineer`는 저장소에 포함되지 않은 **선택 사항(사용자 레벨) 에이전트**입니다. 없어도 워크플로우는 동작하며, 이 경우 메인 세션이나 담당 구현 에이전트가 설계 단계를 처리합니다.

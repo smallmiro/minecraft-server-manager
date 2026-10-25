@@ -21,7 +21,7 @@ A multi-server Minecraft management system using `itzg/minecraft-server` with `i
 | **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
 | **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
 | **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
-| **PM2** | >= 6.0.14 | Bundled | Installed with mcctl; runs the Console services |
+| **PM2** | >= 6.0.0 | Latest | Install globally (`npm install -g pm2`) before `mcctl console init`; runs the Console services |
 | **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 |
 
 ## Features
