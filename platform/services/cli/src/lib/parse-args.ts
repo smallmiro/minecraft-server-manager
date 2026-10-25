@@ -6,7 +6,7 @@ const isValue = (arg: string | undefined): arg is string =>
   !!arg && (!arg.startsWith('-') || /^-\d/.test(arg));
 
 /** Boolean-only flags (never take a value) */
-const BOOLEAN_ONLY_FLAGS = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'no-playit-domain', 'remove', 'non-interactive', 'upgrade', 'modrinth', 'curseforge', 'spiget', 'url'];
+const BOOLEAN_ONLY_FLAGS = ['all', 'json', 'help', 'version', 'force', 'yes', 'delete-world', 'follow', 'detail', 'watch', 'offline', 'no-start', 'no-whitelist', 'enable-whitelist', 'list', 'dry-run', 'api', 'console', 'build', 'no-build', 'keep-config', 'check', 'reconfigure', 'no-playit', 'remove', 'non-interactive', 'upgrade', 'modrinth', 'curseforge', 'spiget', 'url'];
 
 /** `--version` is a boolean only before the command (`mcctl --version`); after it, it carries a value. */
 const isBooleanOnly = (key: string, hasCommand: boolean): boolean =>

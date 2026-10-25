@@ -880,7 +880,6 @@ mcctl update --cli-only
 | `--check` | Check only, don't install (exit code 1 = update available, or the npm registry could not be reached) |
 | `--yes` | Auto-confirm update without prompt |
 | `--cli-only` | Update only the CLI binary, not the services |
-| `--force` | Accepted, no effect (`mcctl update` always checks npm afresh) |
 | `--all` | Deprecated alias (same as the default) |
 
 Besides the packages, `mcctl update` aligns each server's `itzg/minecraft-server` tag with its `VERSION` (pinned tags such as `2026.10.0-java21` or a digest are kept) and pulls the images. mc-router auto-scale starts the existing container, so a stopped server would wake up on its old image: `mcctl update` lists the stopped servers whose image differs (the rest are `up to date`) and, in a terminal, asks whether to recreate them (default No). Running servers are not touched; apply the new image with `mcctl stop <server> && mcctl start <server>`.

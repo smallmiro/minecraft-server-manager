@@ -324,7 +324,6 @@ mcctl update [options]
 | `--cli-only` | mcctl CLI 바이너리만 업데이트 (전체 업데이트 opt-out) |
 | `--check` | CLI와 설치된 서비스의 업데이트를 보여 주기만 하고 아무것도 설치하지 않음 |
 | `--yes` | 업데이트 전에 묻지 않고, 중지된 서버도 다시 만들지 않음 (아래 **중지된 서버** 참조) |
-| `--force` | 호환용으로 받음. `mcctl update`는 항상 캐시 없이 npm을 확인 |
 | `--all` | Deprecated 별칭 — 기본 동작과 동일 (하위 호환용) |
 
 기본적으로 `mcctl update`는 CLI, 설치된 서비스(mcctl-api, mcctl-console, `shared`), 서버 이미지를 업데이트합니다. `--cli-only`는 CLI 바이너리만 업데이트합니다.
@@ -505,7 +504,6 @@ mcctl create [name] [options]
 | `--enable-whitelist` | | 초기 플레이어 없이 화이트리스트 활성화 |
 | `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
 | `--playit-domain <domain>` | | 서버의 playit.gg 외부 도메인 (예: `aa.example.com`) |
-| `--no-playit-domain` | | playit.gg 도메인을 설정하지 않음 (`--playit-domain`이 없을 때의 기본 동작과 같음) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
 새 서버는 메모리 4G(모드팩 타입은 6G)와 `VERSION`에 맞는 `itzg/minecraft-server` 태그로 만들어집니다. 예를 들어 1.16.5는 `java8`, 1.21.1은 `java21`이고, `LATEST`, `-v` 없는 모드팩, 스냅샷은 `java25`입니다([Java 버전과 이미지 태그](../configuration/server-types.ko.md#java-버전과-이미지-태그) 참고). 대화형 `mcctl create`는 메모리를 묻고, 생성 후에는 `mcctl config <name> MEMORY <size>`로 바꿉니다. 모드팩에 대한 자세한 내용은 [모드팩](../mods-and-plugins/modpacks.ko.md)에 있습니다.

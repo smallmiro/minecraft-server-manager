@@ -224,7 +224,6 @@ export interface ServerSpecRenderer {
 | `--exclude-files` | same / `excludeFiles` | `env.MODRINTH_EXCLUDE_FILES` / `env.CF_EXCLUDE_MODS` |
 | `--whitelist P`, `--enable-whitelist`, `--no-whitelist` (wins) | CLI only | `env.ENABLE_WHITELIST=TRUE` (+ `WHITELIST`); template whitelist lines dropped |
 | `--playit-domain D` | CLI only | `routing.playitDomain`. **Intended difference**: the script added `D` to the router hosts only when a host IP was found; TS always adds it. |
-| `--no-playit-domain` | CLI only | no-op (the script ignores it too) |
 | `--start` | — | no-op (default) |
 | `--no-start` | `--no-start` / `autoStart: false` | skip `start` |
 | `MCCTL_SUDO_PASSWORD` | `--sudo-password` / `sudoPassword` | avahi adapter option |

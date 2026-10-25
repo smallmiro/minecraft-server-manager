@@ -606,7 +606,6 @@ mcctl create [name] [options]
 | `--enable-whitelist` | | Turn on the whitelist, empty | off |
 | `--no-whitelist` | | Whitelist off (wins over the two above) | - |
 | `--playit-domain <domain>` | | playit.gg external domain of the server | - |
-| `--no-playit-domain` | | Do not set a playit.gg domain (also the default) | - |
 | `--no-start` | | Create without starting (no container is created) | - |
 | `--sudo-password <pwd>` | | Sudo password for registering `<name>.local` | - |
 
@@ -1063,7 +1062,6 @@ The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest f
 mcctl update                    # Update CLI + installed services + server images (default)
 mcctl update --cli-only         # Update only the CLI binary
 mcctl update --check            # Show available updates (CLI and services); exits 1 if a newer CLI exists or npm cannot be reached
-mcctl update --force            # Accepted for compatibility; every update checks npm without the cache
 mcctl update --yes              # Do not ask; also never recreates stopped servers
 mcctl update --all              # Deprecated alias (same as the default)
 ```

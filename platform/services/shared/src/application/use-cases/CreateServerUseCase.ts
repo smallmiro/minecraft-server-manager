@@ -49,7 +49,6 @@ interface CreateServerOptions {
   enableWhitelist?: boolean;
   whitelistPlayers?: string[];
   playitDomain?: string;
-  noPlayitDomain?: boolean;
 }
 
 /** What TypeScript provisioning needs (#675, ADR-0003 §5). */
@@ -180,7 +179,6 @@ function parseConfigValues(config: CreateServerConfig) {
     enableWhitelist,
     whitelistPlayers: config.whitelistPlayers,
     playitDomain: config.playitDomain,
-    noPlayitDomain: config.noPlayitDomain,
   };
   return { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite };
 }

@@ -324,7 +324,6 @@ mcctl update [options]
 | `--cli-only` | Update only the mcctl CLI binary (opt out of the full update) |
 | `--check` | Show the available updates for the CLI and the installed services; install nothing |
 | `--yes` | Do not ask before updating, and do not recreate stopped servers (see **Stopped servers** below) |
-| `--force` | Accepted for compatibility; every `mcctl update` checks npm without using the cache |
 | `--all` | Deprecated alias — same as the default (kept for backward compatibility) |
 
 By default `mcctl update` updates the CLI, the installed services (mcctl-api, mcctl-console, `shared`) and the server images. `--cli-only` updates just the CLI binary.
@@ -505,7 +504,6 @@ mcctl create [name] [options]
 | `--enable-whitelist` | | Enable whitelist without initial players |
 | `--no-whitelist` | | Disable whitelist (default; overrides the two options above) |
 | `--playit-domain <domain>` | | playit.gg external domain of the server (e.g. `aa.example.com`) |
-| `--no-playit-domain` | | Do not set a playit.gg domain (also the default without `--playit-domain`) |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
 New servers get 4G of memory (6G for modpack types) and the `itzg/minecraft-server` tag their `VERSION` needs, for example `java8` for 1.16.5 and `java21` for 1.21.1 (`java25` for `LATEST`, a modpack without `-v` and snapshots; see [Java Versions and Image Tags](../configuration/server-types.md#java-versions-and-image-tags)). Interactive `mcctl create` asks for the memory; afterwards change it with `mcctl config <name> MEMORY <size>`. For modpack details see [Modpacks](../mods-and-plugins/modpacks.md).
@@ -1539,7 +1537,6 @@ mcctl world release [world] [options]
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Accepted and ignored (a running server is never released) |
 
 **Examples:**
 
