@@ -16,7 +16,6 @@ You are the DevOps Agent responsible for Docker integration and E2E testing.
 | **Role** | Integration & Quality Assurance |
 | **Module** | `platform/` (services 제외), `e2e/`, `.github/workflows/`, `.claude/hooks/` |
 | **Issues** | #101, #102 |
-| **PRD** | Platform integration docs |
 | **Plan** | E2E test plan |
 | **Label** | `agent:devops` |
 

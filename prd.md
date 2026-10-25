@@ -1497,28 +1497,21 @@ minecraft-server-manager/
 - [ ] Player synchronization between servers
 - [ ] Automated world migration
 
-## 10. Management Console (Web Management)
+## 11. Management Console (Web Management)
 
 > **Milestone**: Phase 8 (Milestone 5)
 > **Status**: ✅ Completed (v2.0.0)
 
 Web-based management console service. Consists of two independent services following MSA (Microservice Architecture) principles.
 
-### 10.1 Service Components
+### 11.1 Service Components
 
 | Service | Package | Role |
 |---------|---------|------|
 | **mcctl-api** | `@minecraft-docker/mcctl-api` | Internal REST API service |
 | **mcctl-console** | `@minecraft-docker/mcctl-console` | BFF + Management UI |
 
-### 10.2 Detailed Documents
-
-Each service has an independent PRD:
-
-- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md)
-- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md)
-
-### 10.3 Architecture Overview
+### 11.2 Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1542,7 +1535,7 @@ Each service has an independent PRD:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 10.4 CLI Commands (`mcctl console`) ✅
+### 11.3 CLI Commands (`mcctl console`) ✅
 
 > **Note**: `mcctl admin` commands are deprecated. Use `mcctl console` instead. The `admin` command alias still works for backward compatibility but will be removed in a future release.
 
@@ -1570,7 +1563,7 @@ mcctl console service status    # Show service status (--json for JSON output)
 mcctl console service logs      # View logs (--api, --console, -f for follow)
 ```
 
-### 10.5 Multi-Agent Collaboration
+### 11.4 Multi-Agent Collaboration
 
 This project uses a **Multi-Agent Collaboration** system for all development work. Each agent has exclusive ownership of their module and must **collaborate, not substitute** for other agents.
 
@@ -1607,10 +1600,6 @@ This project uses a **Multi-Agent Collaboration** system for all development wor
 | 🚀 **Release Manager** | Git, Docker | Version tagging, deployment | User request |
 
 #### Per-Agent Documentation
-
-Each module agent manages its own PRD:
-- **mcctl-api**: [PRD](platform/services/mcctl-api/prd.md)
-- **mcctl-console**: [PRD](platform/services/mcctl-console/prd.md)
 
 Agent specification files: `.claude/agents/` directory
 
@@ -1658,61 +1647,6 @@ Agent specification files: `.claude/agents/` directory
 
 For the complete collaboration guide, see [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md).
 
-## 11. Module PRD Index
-
-All services have independent PRD documents for detailed specifications:
-
-### 11.1 Module Documents
-
-| Module | PRD | Description | Status |
-|--------|-----|-------------|--------|
-| **shared** | [prd.md](platform/services/shared/prd.md) | Core Domain Layer, Use Cases, Common Adapters | ✅ v1.0 |
-| **cli** | [prd.md](platform/services/cli/prd.md) | CLI Tool (@clack/prompts interactive) | ✅ v1.0 |
-| **mcctl-api** | [prd.md](platform/services/mcctl-api/prd.md) | Fastify REST API Service | ✅ v1.0 |
-| **mcctl-console** | [prd.md](platform/services/mcctl-console/prd.md) | Next.js BFF + Web Console | ✅ v1.0 |
-
-### 11.2 Module Responsibilities
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         shared                                   │
-│  Domain: Entities, Value Objects                                │
-│  Application: Use Cases, Ports                                  │
-│  Infrastructure: ShellAdapter, Repositories                     │
-├─────────────────────────────────────────────────────────────────┤
-│         cli              │    mcctl-api    │   mcctl-console    │
-│  ClackPromptAdapter      │  ApiPromptAdapter│  WebPromptAdapter  │
-│  @clack/prompts          │  Fastify Routes │  Next.js App       │
-│  Terminal UI             │  REST API       │  BFF + Web UI      │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 11.3 Document Hierarchy
-
-```
-prd.md (This Document)
-├── Section 9: CLI Architecture → shared/prd.md, cli/prd.md
-├── Section 10: Management Console → mcctl-api/prd.md, mcctl-console/prd.md
-│
-├── platform/services/shared/prd.md
-│   └── Domain Layer, Application Layer, Infrastructure Layer
-│
-├── platform/services/cli/prd.md
-│   └── CLI Commands, Interactive Mode, Player Management
-│
-├── platform/services/mcctl-api/prd.md
-│   └── REST API, Authentication, OpenAPI/Swagger
-│
-└── platform/services/mcctl-console/prd.md
-    └── BFF Pattern, NextAuth.js, Dashboard UI
-```
-
-### 11.4 Cross-References
-
-- **Section 9** (CLI Architecture) → Details in `cli/prd.md`, `shared/prd.md`
-- **Section 10** (Management Console) → Details in `mcctl-api/prd.md`, `mcctl-console/prd.md`
-- **Agent Ownership** → See Section 10.5 for module ownership rules
-
 ## 12. Revision History
 
 | Version | Date | Author | Changes |
@@ -1727,3 +1661,4 @@ prd.md (This Document)
 | 4.1.0 | 2025-01-25 | - | Add Section 10.5: Multi-Agent Collaboration with ownership rules |
 | 5.0.0 | 2025-01-26 | - | Mark Management Console (Section 10) as Completed, update CLI commands |
 | 5.1.0 | 2025-01-26 | - | Add Section 11: Module PRD Index for centralized document management |
+| 5.2.0 | 2026-10-25 | - | Remove the per-package PRDs and the Module PRD Index section; they stopped matching the code. Renumber Management Console to Section 11 (it shared number 10 with Future Enhancements) (#851) |
