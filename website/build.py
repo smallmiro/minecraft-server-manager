@@ -20,13 +20,13 @@ IGNORE = (".wrangler", "_site", "build.py", "test_build.py", "wrangler.jsonc", "
 META = {
     "en": {},
     "ko": {
-        "title": "Minecraft Server Manager — 포트 하나로 여러 자바 서버 운영",
-        "description": "직접 호스팅하는 모든 마인크래프트 자바 서버를 포트 하나로 운영하세요. 플레이어가 접속하면 서버가 켜지고, 아무도 없으면 꺼집니다. CLI와 웹 콘솔을 제공합니다.",
+        "title": "mcctl — Minecraft Server Manager: 포트 하나로 여러 자바 서버 운영",
+        "description": "mcctl은 직접 호스팅하는 모든 마인크래프트 자바 서버를 Docker로 띄워 포트 하나로 운영하는 오픈소스 서버 관리 도구입니다. 플레이어가 접속하면 서버가 켜지고, 아무도 없으면 꺼집니다. CLI와 웹 콘솔을 제공합니다.",
         "og_description": "Docker로 띄우고, 플레이어가 오면 깨웁니다.",
     },
     "ja": {
-        "title": "Minecraft Server Manager — ひとつのポートで複数の Java サーバーを運用",
-        "description": "ホストしているすべての Minecraft Java サーバーをひとつのポートで。プレイヤーが接続するとサーバーが起動し、誰もいなくなると停止します。CLI と Web コンソール付き。",
+        "title": "mcctl — Minecraft Server Manager: ひとつのポートで複数の Java サーバーを運用",
+        "description": "mcctl は、ホストしているすべての Minecraft Java サーバーを Docker で動かし、ひとつのポートで運用するオープンソースのサーバー管理ツールです。プレイヤーが接続するとサーバーが起動し、誰もいなくなると停止します。CLI と Web コンソール付き。",
         "og_description": "Docker で動かし、プレイヤーが来たら起こす。",
     },
 }
@@ -111,7 +111,7 @@ def render(src, lang):
     if "og_description" in m:
         t = _meta(t, "property", "og:description", m["og_description"])
     if "title" in m:
-        t = _meta(t, "property", "og:title", "Minecraft Server Manager")
+        t = _meta(t, "property", "og:title", "mcctl — Minecraft Server Manager")
     url = BASE + PATHS[lang]
     t = _sub1(r'<meta property="og:url" content="[^"]*">', '<meta property="og:url" content="%s">' % url, t)
     alts = "".join('\n<link rel="alternate" hreflang="%s" href="%s">' % (h, BASE + PATHS.get(h, ""))
