@@ -205,7 +205,7 @@ ${colors.cyan('World New Options:')}
   --seed <seed>              World seed (optional, random if empty)
   --server <name>            Server to assign world to
   --no-start                 Interactive only: skip the "start server?" question
-                             (world new never starts the server; use `mcctl start <server>`)
+                             (world new never starts the server; use mcctl start <server>)
 
 ${colors.cyan('Player Management (Interactive):')}
   ${colors.bold('player')}                     Interactive mode: server → player → action
