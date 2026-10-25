@@ -17,6 +17,7 @@ import {
 } from '../lib/update-checker.js';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 import { rerenderServers } from '../lib/server-config.js';
+import { ensurePlayitService } from './playit.js';
 
 /**
  * Initialize the platform
@@ -109,7 +110,7 @@ export async function initCommand(options: {
   for (const dir of directories) {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
-      console.log(`  Created: ${dir.replace(paths.root, '~/.minecraft-servers')}`);
+      console.log(`  Created: ${dir.replace(paths.root, '~/minecraft-servers')}`);
     }
   }
   console.log('');
@@ -177,6 +178,11 @@ export async function initCommand(options: {
 
   if (selectedIPs === null) {
     log.warn('IP selection cancelled. Using auto-detection.');
+    // Blank the template placeholder: an empty HOST_IP falls through to auto-detection
+    const envPath = join(paths.root, '.env');
+    if (existsSync(envPath)) {
+      atomicWriteFileSync(envPath, readFileSync(envPath, 'utf-8').replace(/^HOST_IP=.*$/m, 'HOST_IP='));
+    }
   } else {
     // Update .env file with selected IPs
     const envPath = join(paths.root, '.env');
@@ -313,6 +319,7 @@ export async function initCommand(options: {
       atomicWriteFileSync(envPath, envContent);
       console.log(`  ✓ Saved PLAYIT_SECRET_KEY to .env`);
     }
+    ensurePlayitService(paths);
   }
   console.log('');
 
@@ -363,7 +370,10 @@ export async function initCommand(options: {
   console.log(`  2. Create your first server:`);
   console.log(`     ${colors.cyan('mcctl create myserver')}`);
   console.log('');
-  console.log(`  3. Connect via Minecraft:`);
+  console.log(`  3. Start the router (init does not start it):`);
+  console.log(`     ${colors.cyan('mcctl router start')}`);
+  console.log('');
+  console.log(`  4. Connect via Minecraft:`);
   console.log(`     ${colors.cyan('myserver.local:25565')}`);
   console.log('');
   console.log('  For help:');
@@ -564,6 +574,9 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
       envUpdates['HOST_IP'] = primaryIP!;
       if (ipList.length > 1) {
         envUpdates['HOST_IPS'] = selectedIPs;
+      } else if (envConfig.HOST_IPS) {
+        // HOST_IPS takes precedence over HOST_IP, so a single choice must clear it
+        envUpdates['HOST_IPS'] = '';
       }
       newHostIPs = selectedIPs;
       ipChanged = true;
@@ -659,6 +672,10 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
         console.log(`  ${colors.green('✓')} Updated ${updatedCount} server(s)`);
       }
     }
+
+    // Router labels live on the server containers: only a recreate (stop/start) applies them
+    console.log('');
+    console.log(colors.yellow('  Stop and start each server (mcctl stop <name> && mcctl start <name>) so the new hostnames apply.'));
 
     // Prompt to restart mc-router
     const restartRouter = await confirm({
