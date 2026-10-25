@@ -6,7 +6,6 @@ export interface ConfigSnapshotRestoreOptions {
   root?: string;
   id: string;
   force?: boolean;
-  noSafety?: boolean;
 }
 
 /**

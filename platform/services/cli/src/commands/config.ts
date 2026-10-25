@@ -1,5 +1,6 @@
 import { Paths, log, colors } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
+import { writeServerConfig } from '../lib/server-config.js';
 import { getContainer } from '../infrastructure/index.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -90,7 +91,7 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
   }
 
   // View specific key
-  if (!options.value) {
+  if (options.value === undefined) {
     const currentValue = config[options.key];
     if (currentValue === undefined) {
       log.error(`Key '${options.key}' not found in config`);
@@ -102,6 +103,11 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
       console.log(`${options.key}=${currentValue}`);
     }
     return 0;
+  }
+
+  // An empty value removes the key: the image default applies again
+  if (options.value === '') {
+    return removeConfigKey(paths, options.serverName, options.key, config, options.json);
   }
 
   // Set config value
@@ -139,6 +145,39 @@ export async function configCommand(options: ConfigCommandOptions): Promise<numb
     log.error(`Failed to update ${options.key}`);
     return 1;
   }
+}
+
+/** `config <server> KEY ""`: remove KEY from the server's config (through server.yaml, like a write). */
+async function removeConfigKey(
+  paths: Paths,
+  serverName: string,
+  key: string,
+  config: Record<string, string>,
+  json?: boolean
+): Promise<number> {
+  // LEVEL/WORLD_NAME decide the world: change them with a value, which runs the assignment rules (#670)
+  if (key === 'LEVEL' || key === 'WORLD_NAME') {
+    log.error(`${key} cannot be removed: set a world name instead (mcctl config ${serverName} ${key} <world>)`);
+    return 1;
+  }
+  const had = config[key] !== undefined;
+  if (had) {
+    try {
+      await writeServerConfig(paths, serverName, { remove: [key] });
+    } catch (error) {
+      log.error(error instanceof Error ? error.message : String(error));
+      return 1;
+    }
+  }
+  if (json) {
+    console.log(JSON.stringify({ server: serverName, key, removed: had }));
+  } else if (had) {
+    console.log(colors.green(`✓ ${key} removed (was ${config[key]}); the image default applies`));
+    log.info('Restart server to apply changes: mcctl stop <server> && mcctl start <server>');
+  } else {
+    console.log(`${key} is not set in config; nothing to remove`);
+  }
+  return 0;
 }
 
 /**

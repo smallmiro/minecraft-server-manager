@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { serverNameArg, legacyServerNameWarning } from './lib/legacy-server-name.js';
-import { parseArgs } from './lib/parse-args.js';
+import { parseArgs, intFlag, stripRootFlag } from './lib/parse-args.js';
 import { Paths, log, colors, AuditActionEnum } from '@minecraft-docker/shared';
 import {
   initCommand,
@@ -99,10 +99,10 @@ async function handleConsoleCommand(
       });
     case 'user':
       // Commander-based: pass the raw args, since parseArgs already consumed the options
-      await consoleUserCommand().parseAsync(subCommandArgs, { from: 'user' });
+      await consoleUserCommand(rootDir).parseAsync(stripRootFlag(subCommandArgs), { from: 'user' });
       return 0;
     case 'api':
-      await consoleApiCommand().parseAsync(subCommandArgs, { from: 'user' });
+      await consoleApiCommand(rootDir).parseAsync(stripRootFlag(subCommandArgs), { from: 'user' });
       return 0;
     case 'remove':
       return consoleRemoveCommand({
@@ -740,7 +740,7 @@ async function main(): Promise<void> {
         // op command: op <server> <action> [player] [level]
         // parseArgs treats second arg as subCommand, so:
         // subCommand = server name, positional[0] = action, positional[1] = player, positional[2] = level
-        const level = positional[2] !== undefined ? parseInt(positional[2], 10) : flags['level'] as number | undefined;
+        const level = positional[2] !== undefined ? parseInt(positional[2], 10) : intFlag('level', flags['level']);
         exitCode = await opCommand({
           root: rootDir,
           serverName: subCommand,
@@ -930,6 +930,7 @@ async function main(): Promise<void> {
           before: flags['before'] as string | undefined,
           dryRun: flags['dry-run'] === true,
           force: flags['force'] === true,
+          root: rootDir,
           sudoPassword,
         });
         break;
@@ -1066,7 +1067,6 @@ async function main(): Promise<void> {
               root: rootDir,
               id: positional[0] ?? '',
               force: flags['force'] === true,
-              noSafety: flags['no-safety'] === true,
             });
             break;
 
