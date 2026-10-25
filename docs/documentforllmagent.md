@@ -504,7 +504,7 @@ Key points:
 
 **Environment Variables**: `MCCTL_ROOT` (data directory), `MCCTL_SUDO_PASSWORD` (alternative to `--sudo-password`).
 
-**Argument parsing**: an option that needs a value takes it from the next word (`--seed 123`) or after `=` (`--seed=123`); a negative number is a value (`-s -123`). Switches such as `--force`, `--json` and `--yes` also accept `=true`/`=false`. Everything after `--` is passed through unchanged (`mcctl exec myserver -- say -h`). Short flags: `-t` type, `-v` version, `-s` seed, `-u` world-url, `-w` world, `-f` follow, `-n` lines, `-m` message, `-y` yes, `-a` all, `-d` detail, `-W` watch, `-h` help. Write the Minecraft version as `-v 1.21.1` or `--version=1.21.1`.
+**Argument parsing**: an option that needs a value takes it from the next word (`--seed 123`) or after `=` (`--seed=123`); a negative number is a value (`-s -123`). Switches such as `--force`, `--json` and `--yes` also accept `=true`/`=false`. Everything after `--` is passed through unchanged (`mcctl exec myserver -- say -h`). Short flags: `-t` type, `-v` version, `-s` seed, `-u` world-url, `-w` world, `-f` follow, `-n` lines, `-m` message, `-y` yes, `-a` all, `-d` detail, `-W` watch, `-h` help. Write the Minecraft version as `-v 1.21.1`, `--version 1.21.1` or `--version=1.21.1` (`--version` alone before a command prints the mcctl version).
 
 **Exit codes**: `0` success, `1` error, `2` for `mcctl start`/`mcctl stop` when the server is already running/stopped. `mcctl update --check` exits 1 when a newer CLI exists; `mcctl exec` returns the RCON command's exit code.
 
@@ -594,7 +594,7 @@ mcctl create [name] [options]
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
 | `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE | PAPER |
-| `--version` | `-v` | Minecraft version: `-v 1.21.1` or `--version=1.21.1` (modpack types use the modpack's version) | LATEST |
+| `--version` | `-v` | Minecraft version: `-v 1.21.1`, `--version 1.21.1` or `--version=1.21.1` (modpack types use the modpack's version) | LATEST |
 | `--seed` | `-s` | World seed (negative works: `-s -123`) | Random |
 | `--world-url` | `-u` | Download world from ZIP URL | - |
 | `--world` | `-w` | Use existing world from worlds/ (sets `LEVEL`; refused if another server uses it) | - |
@@ -716,6 +716,7 @@ Scripts: the `list` reply is `There are N of a max of M players online: ...`; te
 mcctl config <server>                    # View all config
 mcctl config <server> MOTD               # View specific key
 mcctl config <server> MOTD "Welcome!"    # Set value
+mcctl config <server> MOTD ""            # Remove the key (image default applies; LEVEL/WORLD_NAME refused)
 mcctl config <server> --cheats           # Enable cheats (ALLOW_CHEATS=true)
 mcctl config <server> --no-cheats        # Disable cheats
 mcctl config <server> --pvp              # Enable PvP

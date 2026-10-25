@@ -492,7 +492,7 @@ mcctl create [name] [options]
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--type` | `-t` | Server type (default `PAPER`): PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE |
-| `--version` | `-v` | Minecraft version: `-v 1.21.1`, or the long form with `=`: `--version=1.21.1` (default `LATEST`; modpack types use the modpack's version) |
+| `--version` | `-v` | Minecraft version: `-v 1.21.1`, `--version 1.21.1` or `--version=1.21.1` (default `LATEST`; modpack types use the modpack's version) |
 | `--seed` | `-s` | World seed for generation. A negative seed works (`-s -123`); `--seed=<value>` takes any value |
 | `--world-url` | `-u` | Download world from ZIP URL |
 | `--world` | `-w` | Use existing world from worlds/ directory |
@@ -897,7 +897,7 @@ mcctl config <server> [key] [value] [options]
 |----------|-------------|
 | `server` | Server name |
 | `key` | Configuration key (optional) |
-| `value` | New value (optional) |
+| `value` | New value (optional). An empty value (`""`) removes the key, so the image default applies again |
 
 **Shortcut Options:**
 
@@ -960,6 +960,9 @@ mcctl config <server> [key] [value] [options]
 
 !!! note "Restart Required"
     Some configuration changes require a server restart to take effect.
+
+!!! note "Removing a key"
+    `mcctl config <server> MOTD ""` removes `MOTD` from the server's config and says so; a key that is not set is reported and nothing changes. `LEVEL` and `WORLD_NAME` cannot be removed this way: set a world name instead.
 
 !!! warning "Changing `LEVEL`"
     `LEVEL` is the world the server uses (see [World Assignment Rules](#world-assignment-rules)). `mcctl config <server> LEVEL <world>` is refused while the server is running and when another server uses `<world>`. The same applies to `EXTRA_ARGS` when the new value moves the world between `worlds/` and `servers/<server>/data` (`--universe`).
