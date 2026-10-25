@@ -243,7 +243,7 @@ This project uses a **Multi-Agent Collaboration** system where specialized agent
 4. **병렬 실행**: 독립적인 작업을 병렬로 처리하여 효율 극대화
 5. **동기화 조율**: 에이전트 간 핸드오프와 통합 관리
 
-See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) and [`.claude/agents/orchestrator-agent.md`](.claude/agents/orchestrator-agent.md) for the complete collaboration guide.
+See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) and [`.claude/agents/orchestrator-agent.md`](.claude/agents/orchestrator-agent.md) for the complete collaboration guide, and [docs/orchestrator-workflow.md](docs/orchestrator-workflow.md) for the orchestrator's step-by-step workflow (intake → `/plan-work` → execution mode → `/work` tier routing → completion).
 
 #### Model Assignment
 
@@ -392,6 +392,7 @@ See [docs/development/git-workflow.md](docs/development/git-workflow.md) for com
 | CLI Commands | [docs/cli/commands.md](docs/cli/commands.md) |
 | Getting Started | [docs/getting-started/quickstart.md](docs/getting-started/quickstart.md) |
 | Agent Collaboration | [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) |
+| Orchestrator Workflow | [docs/orchestrator-workflow.md](docs/orchestrator-workflow.md) |
 | CLI Architecture | [docs/development/cli-architecture.md](docs/development/cli-architecture.md) |
 | Git Workflow | [docs/development/git-workflow.md](docs/development/git-workflow.md) |
 | itzg Reference | [docs/itzg-reference/](docs/itzg-reference/) |
