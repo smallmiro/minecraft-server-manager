@@ -43,6 +43,16 @@ Before starting, ensure you have the following installed:
   mcctl --version
   ```
 
+- [x] **PM2 6 or higher installed globally** (needed from Phase 2)
+  ```bash
+  npm install -g pm2
+  pm2 --version  # Should be 6.0.0 or higher
+  ```
+
+- [x] **Ports available**
+  - Port 5000 for the web console
+  - Port 5001 for the API
+
 !!! tip "New Installation?"
     If you haven't installed mcctl yet, see the [Installation Guide](../getting-started/installation.md) for detailed instructions on setting up Node.js, Docker, and mcctl.
 
@@ -311,6 +321,8 @@ Select the authentication mode for the REST API:
 !!! note "Access modes"
     `mcctl console init` writes the access mode to `AUTH_MODE` as the value mcctl-api recognises: `internal` → `ip-whitelist` limited to loopback (127.0.0.1, ::1), `api-key-ip` → `combined`, `open` → `disabled`; `api-key` and `ip-whitelist` are written as is.
 
+    See [Access Modes](#access-modes) for each mode and how to change it later.
+
 !!! danger "open Mode Warning"
     The `open` mode disables all authentication. If you select it, a confirmation prompt appears:
     ```
@@ -525,6 +537,147 @@ After completing the full setup, the following files exist in your data director
 | `data/mcctl.db` | `mcctl console init` | SQLite database for user accounts (Better Auth) |
 | `ecosystem.config.cjs` | `mcctl console init` | PM2 process configuration for API and Console |
 
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `MCCTL_ROOT` | Data directory path | `~/minecraft-servers` |
+| `PORT` | Listening port of each service, set in its `env` block | `5001` (mcctl-api), `5000` (mcctl-console) |
+| `HOST` | mcctl-api listening address | `127.0.0.1` for the `internal` access mode, `0.0.0.0` for the others |
+| `HOSTNAME` | Console server hostname | `0.0.0.0` |
+| `MCCTL_API_URL` | Internal API URL | `http://127.0.0.1:5001` |
+| `NODE_ENV` | Environment mode | `production` |
+| `LOG_LEVEL` | mcctl-api log level: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent` | `info` when `NODE_ENV=production`, otherwise `debug` |
+| `WORLD_UPLOAD_MAX_SIZE` | Max world ZIP size in bytes for `POST /api/worlds/upload` | `1073741824` (1 GB) |
+| `BETTER_AUTH_SECRET` | Console session secret, written to `<root>/.env` by `mcctl console init`. Changing it signs everyone out | Generated |
+| `BETTER_AUTH_BASE_URL` | Public URL of the console, read from `<root>/.env`. Set it when users open the console from an address other than `localhost`, a private LAN address, or a `.local` name (see [Cannot Log In to Web Console](#cannot-log-in-to-web-console)) | `http://localhost:<console port>` |
+
+### PM2 Ecosystem Configuration
+
+The `mcctl console init` command generates `ecosystem.config.cjs` in the data directory (`<root>/ecosystem.config.cjs`, where `<root>` is `MCCTL_ROOT`, default `~/minecraft-servers`). The service packages are installed under `<root>/.services/`, and the file points to them with absolute paths. The values below are an example for `<root>` = `/home/user/minecraft-servers`:
+
+```javascript
+// ecosystem.config.cjs
+module.exports = {
+  apps: [
+    {
+      name: 'mcctl-api',
+      script: '/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-api/dist/index.js',
+      cwd: '/home/user/minecraft-servers',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 5001,
+        HOST: '127.0.0.1', // internal access mode; 0.0.0.0 for the other modes
+        MCCTL_ROOT: '/home/user/minecraft-servers',
+        AUTH_MODE: 'ip-whitelist', // written for the "internal" access mode, see the "Access modes" note in Step 4
+        AUTH_IP_WHITELIST: '127.0.0.1,::1,::ffff:127.0.0.1',
+        // AUTH_API_KEY is added for the api-key access modes
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      autorestart: true,
+      max_memory_restart: '500M',
+      // Shutdown waits for a running auto-backup to re-enable auto-save (#734)
+      kill_timeout: 130000,
+    },
+    {
+      name: 'mcctl-console',
+      script: '/home/user/minecraft-servers/.services/node_modules/@minecraft-docker/mcctl-console/.next/standalone/platform/services/mcctl-console/server.js',
+      cwd: '/home/user/minecraft-servers',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 5000,
+        HOSTNAME: '0.0.0.0',
+        MCCTL_API_URL: 'http://127.0.0.1:5001',
+        MCCTL_ROOT: '/home/user/minecraft-servers',
+        // MCCTL_API_KEY is added for the api-key access modes
+        // BETTER_AUTH_SECRET is written to .env, not here
+      },
+      instances: 1,
+      exec_mode: 'fork',
+      watch: false,
+      autorestart: true,
+      max_memory_restart: '500M',
+    },
+  ],
+};
+```
+
+The `AUTH_MODE` value is translated from the access mode you chose; see the "Access modes" note in [Step 4](#step-4-api-access-mode).
+
+Only the services you selected during `mcctl console init` appear in the file. Installations that predate the `.services/` directory keep their packages in `<root>/node_modules/`, and `mcctl console init` still uses that location when the packages are found there.
+
+`kill_timeout: 130000` gives mcctl-api time to finish a running auto-backup when it shuts down. Files written by versions before v3.0.0 do not have it; see [Give mcctl-api time to finish an auto-backup](../advanced/upgrade-runbook.md#pm2-kill-timeout).
+
+---
+
+## Access Modes
+
+`mcctl console init` asks for the access mode during setup ([Step 4](#step-4-api-access-mode)). The mode, API key and IP whitelist are written to the `env` block of `ecosystem.config.cjs` (`AUTH_MODE`, `AUTH_API_KEY`, `AUTH_IP_WHITELIST`), which is what the running mcctl-api reads. The `mcctl console api` commands do not change those values yet (see the warning in [CLI Commands](cli-commands.md#mcctl-console-api)), so to switch modes, change the key or change the IP whitelist today, reinitialize with `mcctl console init --force`.
+
+### internal (Recommended for Production)
+
+Internal access only, no external exposure. The most secure option for home/local deployments.
+
+```bash
+mcctl console init
+# Select "internal" when prompted for API access mode
+```
+
+### api-key
+
+Requires `X-API-Key` header for all API requests.
+
+```bash
+mcctl console init
+# Select "api-key" when prompted
+# An API key will be generated and displayed
+```
+
+After initialization, your API key will be displayed. Save it securely.
+
+To get a new API key, reinitialize with `mcctl console init --force`. `mcctl console api key regenerate` currently does not change the key the running API uses.
+
+### ip-whitelist
+
+Only allows access from specified IP addresses or CIDR ranges.
+
+```bash
+mcctl console init
+# Select "ip-whitelist" when prompted
+# Enter allowed IPs when prompted (comma-separated)
+```
+
+To change the allowed IPs, reinitialize with `mcctl console init --force` and enter the new list. `mcctl console api whitelist` currently does not change the whitelist the running API uses.
+
+If you also install mcctl-console, include `127.0.0.1` in the list; see the warning in [Step 6](#step-6-ip-whitelist-configuration-conditional). The same applies to `api-key-ip`.
+
+### api-key-ip
+
+Requires both a valid API key AND a client IP from the whitelist.
+
+### open (Development Only)
+
+!!! danger "Security Risk"
+    This mode disables all authentication. Never use in production!
+
+---
+
+## User Management
+
+`mcctl console user` manages the accounts that sign in to the web console:
+
+```bash
+mcctl console user add                                   # Add a user (interactive)
+mcctl console user list                                  # List users
+mcctl console user update operator@example.com --role admin  # Change a role
+mcctl console user reset-password operator@example.com   # Reset a password
+mcctl console user remove operator@example.com           # Remove a user
+```
+
+You cannot remove the last admin or change its role, which prevents an accidental lockout. See [CLI Commands](cli-commands.md#mcctl-console-user) for all options and output.
+
 ---
 
 ## Auto-Start on Boot
@@ -552,6 +705,8 @@ If the default ports (5000, 5001) conflict with other services, specify custom p
 mcctl console init --api-port 8001 --console-port 8000
 ```
 
+`mcctl console init` never asks for ports interactively; the `--api-port` and `--console-port` flags are the only way to set them. The defaults are `5001` for the API and `5000` for the console.
+
 The ports are written to `ecosystem.config.cjs`, and the services always start on them. To change the ports of an existing installation, reinitialize with the new values: `mcctl console init --force --api-port 8001 --console-port 8000`.
 
 ---
@@ -574,7 +729,89 @@ To reset the Console configuration (useful after major updates):
 mcctl console init --force
 ```
 
-The `--force` flag skips the confirmation prompt and cleans up existing configuration before reinitializing.
+The `--force` flag skips the confirmation prompt and cleans up existing configuration before reinitializing. Start the services again afterwards:
+
+```bash
+mcctl console service start --console
+```
+
+`--force` does not preserve your settings. It stops the PM2 services and deletes `.mcctl-admin.yml` and `ecosystem.config.cjs`, so you choose the API access mode again, the ports return to the defaults unless you pass `--api-port` and `--console-port`, and a new API key is generated for the api-key modes. The console database `data/mcctl.db` is kept: other users stay as they are. The session secret `BETTER_AUTH_SECRET` in `.env` is kept as well, so other users stay signed in. If you enter the email of an existing admin, that user is deleted (including its sessions) and created again with the password you enter now. If you enter a different email, the existing admin stays and a new admin is added.
+
+---
+
+## Upgrading
+
+### Update mcctl and Services
+
+```bash
+mcctl update
+```
+
+`mcctl update` updates the mcctl CLI and the services installed in `<root>/.services/` (`mcctl-api`, `mcctl-console` and the `shared` library) in one step. Each updated PM2 service is restarted automatically; if the output shows `Updated (restart manually)` for a service, run `mcctl console service restart`. Installations without a `.services/` directory keep the packages in `<root>/node_modules`, and `mcctl update` updates them there. When at least one service package is installed, the command also aligns the image tags of your Minecraft servers and pulls the Docker images; this is skipped with `--check` and `--cli-only`, and when no service package is installed.
+
+| Option | Description |
+|--------|-------------|
+| `--check` | Only check for updates, install nothing |
+| `--cli-only` | Update only the CLI and leave the services as they are |
+| `--yes` | Skip the confirmation prompt |
+
+`npm update -g @minecraft-docker/mcctl` updates only the CLI package and does not touch the services in `.services/`. See the [mcctl update reference](../cli/commands.md#mcctl-update) for all options.
+
+### Reinitialize After Major Update
+
+If a release has breaking changes, reinitialize the console as described in [Reinitialize Console](#reinitialize-console).
+
+---
+
+## Uninstallation
+
+To remove Management Console:
+
+```bash
+# Remove console service (interactive)
+mcctl console remove
+
+# Or force remove without confirmation
+mcctl console remove --force
+
+# Keep configuration files for later reinstall
+mcctl console remove --keep-config
+```
+
+This will:
+
+- Stop and remove PM2 processes (mcctl-api, mcctl-console)
+- Delete configuration files (`.mcctl-admin.yml`, and the legacy `users.yaml` if it exists)
+- Delete PM2 ecosystem config (`ecosystem.config.cjs`)
+
+!!! warning "Data Preservation"
+    Removing Management Console does not affect your Minecraft servers or world data.
+
+!!! note "Console database is kept"
+    `data/mcctl.db` (console users, sessions and per-user server permissions) and the packages in `.services/` are not removed. This is intentional, so accounts survive a reinstall. To run `mcctl console init` again with the same admin email you need `--force`; without it the command fails with `User '<email>' already exists`.
+
+To start completely from scratch, also delete the database:
+
+!!! danger "This cannot be undone"
+    Deleting the database removes every console user, session and per-user server permission.
+
+```bash
+rm -f ~/minecraft-servers/data/mcctl.db*
+```
+
+See [`mcctl console remove`](cli-commands.md#mcctl-console-remove) for the full list of removed and kept items.
+
+### Clean Up PM2 (Optional)
+
+If you want to completely remove PM2 configuration:
+
+```bash
+# Remove saved process list
+pm2 unstartup
+
+# Kill PM2 daemon
+pm2 kill
+```
 
 ---
 
@@ -693,6 +930,33 @@ Common causes:
 - Missing dependencies: Run `mcctl console init` again
 - Port conflicts: Use custom ports
 - Memory limit: PM2 restarts a service that grows past `max_memory_restart` (`500M` in `ecosystem.config.cjs`). Raise the value there, then apply it with `mcctl console service restart --console --force`, because a plain restart keeps the previous PM2 settings
+
+To check that the service packages are installed (they are installed in the `.services/` directory of your data directory):
+
+```bash
+cd ~/minecraft-servers/.services
+npm ls @minecraft-docker/mcctl-api @minecraft-docker/mcctl-console
+```
+
+Installations without a `.services/` directory keep the packages in `~/minecraft-servers/node_modules`; run `npm ls` in `~/minecraft-servers` instead.
+
+### API Access Issues
+
+#### API Returns 401 Unauthorized
+
+1. **Check access mode** (the running API reads it from `ecosystem.config.cjs`; `mcctl console api status` shows `api-config.json` instead):
+   ```bash
+   grep AUTH_MODE ~/minecraft-servers/ecosystem.config.cjs
+   ```
+
+2. **Verify API key (if using api-key mode):**
+   - Ensure `X-API-Key` header is included in requests
+   - The key in use is `AUTH_API_KEY` in `ecosystem.config.cjs`. To get a new one, reinitialize with `mcctl console init --force`
+
+3. **Check IP whitelist (if using ip-whitelist mode):** a client IP that is not in the list gets HTTP 403
+   ```bash
+   grep AUTH_IP_WHITELIST ~/minecraft-servers/ecosystem.config.cjs
+   ```
 
 ### Login Issues
 

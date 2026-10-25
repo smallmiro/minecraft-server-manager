@@ -176,7 +176,7 @@ After initialization, the following files are created:
 
 ## Next Steps
 
-- **[Installation Guide](installation.md)** - Detailed setup instructions
+- **[Setup Guide](setup-guide.md)** - Detailed setup instructions
 - **[CLI Commands](cli-commands.md)** - Complete CLI reference
 - **[API Reference](../api/endpoints.md)** - REST API documentation
 - **[Web Console Guide](web-console.md)** - Using the web interface
