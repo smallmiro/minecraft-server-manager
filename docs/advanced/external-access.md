@@ -128,7 +128,7 @@ You can configure playit.gg during initial platform setup or afterwards.
     mcctl init --no-playit
     ```
 
-`mcctl playit setup` saves `PLAYIT_SECRET_KEY` to your `.env` file, sets `playitEnabled` in `.mcctl.json`, and adds the `playit` service (Compose profile `playit`) to `docker-compose.yml`, which `mcctl playit start` needs. After `mcctl init --playit-key`, run `mcctl playit setup` once as well.
+`mcctl playit setup` saves `PLAYIT_SECRET_KEY` to your `.env` file, sets `playitEnabled` in `.mcctl.json`, and adds the `playit` service (Compose profile `playit`) to `docker-compose.yml`, which `mcctl playit start` needs.
 
 ### Step 3: Start the playit-agent
 
