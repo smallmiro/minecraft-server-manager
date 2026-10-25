@@ -106,6 +106,15 @@ describe('init command (#825)', () => {
       expect(env()).toContain('192.168.0.9');
     });
 
+    it('offers only the settings something reads (#828)', async () => {
+      vi.mocked(promptsModule.multiselect).mockReset().mockResolvedValueOnce([]);
+      await initCommand({ root, reconfigure: true });
+      const opts = vi.mocked(promptsModule.multiselect).mock.calls[0]![0].options as Array<{ value: string }>;
+      expect(opts.map((o) => o.value)).toEqual(['HOST_IP', 'TZ', 'RCON_PASSWORD']);
+      const text = out.join('\n');
+      expect(text).not.toMatch(/Default (Memory|Type|Version)|Auto Start|Avahi/);
+    });
+
     it('restarts the compose service "router" and tells to recreate the servers', async () => {
       await selectIps('192.168.0.9');
       vi.mocked(promptsModule.confirm).mockResolvedValue(true);
