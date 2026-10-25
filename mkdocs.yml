@@ -24,7 +24,6 @@ theme:
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.sections
-    - navigation.expand
     - navigation.top
     - navigation.indexes
     - search.suggest
@@ -48,6 +47,47 @@ plugins:
         - locale: ko
           name: 한국어
           build: true
+          nav_translations:
+            Get Started: 시작하기
+            Home: 홈
+            Overview: 개요
+            Installation: 설치
+            Quick Start: 빠른 시작
+            Guides: 가이드
+            Servers: 서버
+            Start & Stop: 시작과 중지
+            Server Types: 서버 타입
+            Configuration: 설정
+            Mods & Plugins: 모드와 플러그인
+            Direct Download: 직접 다운로드
+            Modpacks: 모드팩
+            Web Console: 웹 콘솔
+            Setup Guide: 설치 가이드
+            Using the Console: 콘솔 사용법
+            Audit Logs: 감사 로그
+            Networking: 네트워킹
+            Connecting to Servers: 서버 접속
+            External Access (playit.gg): 외부 접속 (playit.gg)
+            Operations: 운영
+            Backup: 백업
+            Upgrade Runbook: 업그레이드 런북
+            Troubleshooting: 문제 해결
+            Reference: 레퍼런스
+            CLI: CLI
+            Commands: 명령어
+            Console Commands: 콘솔 명령어
+            Audit Log: 감사 로그
+            RCON Commands: RCON 명령어
+            REST API: REST API
+            Endpoints: 엔드포인트
+            Environment Variables: 환경 변수
+            Server Definition (server.yaml): 서버 정의 (server.yaml)
+            Development: 개발
+            Git Workflow: Git 워크플로우
+            CLI Architecture: CLI 아키텍처
+            Agent Collaboration: 에이전트 협업
+            RCON Protocol: RCON 프로토콜
+            Architecture Decisions: 아키텍처 결정
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -73,59 +113,59 @@ markdown_extensions:
   - md_in_html
 
 nav:
-  - mcctl Home: https://mcctl.mirolab.dev/
-  - Home: index.md
-  - Getting Started:
+  - Get Started:
+      - Home: index.md
       - Overview: getting-started/index.md
       - Installation: getting-started/installation.md
       - Quick Start: getting-started/quickstart.md
-  - Usage Guides:
-      - Server Start & Stop: usage/server-management.md
-  - CLI Reference:
-      - Overview: cli/index.md
-      - Commands: cli/commands.md
-      - Audit Log: cli/audit-log.md
-      - RCON Commands: cli/rcon-commands.md
-  - REST API:
-      - Overview: api/index.md
-      - Endpoints: api/endpoints.md
-  - Configuration:
-      - Overview: configuration/index.md
-      - Environment Variables: configuration/environment.md
-      - Server Definition (server.yaml): configuration/server-yaml.md
-      - Server Types: configuration/server-types.md
-  - Mods & Plugins:
-      - Overview: mods-and-plugins/index.md
-      - Modrinth: mods-and-plugins/modrinth.md
-      - CurseForge: mods-and-plugins/curseforge.md
-      - Spiget (SpigotMC): mods-and-plugins/spiget.md
-      - Direct Download: mods-and-plugins/direct-download.md
-      - Modpacks: mods-and-plugins/modpacks.md
-  - Management Console:
-      - Overview: console/index.md
-      - Setup Guide: console/setup-guide.md
-      - Installation: console/installation.md
-      - CLI Commands: console/cli-commands.md
-      - Web Console: console/web-console.md
-      - Audit Logs: console/audit-log-ui.md
-  - Advanced:
-      - Overview: advanced/index.md
-      - Networking: advanced/networking.md
-      - External Access (playit.gg): advanced/external-access.md
-      - Backup: advanced/backup.md
-      - RCON: advanced/rcon.md
-      - Upgrade Runbook: advanced/upgrade-runbook.md
-  - Troubleshooting: troubleshooting/index.md
+  - Guides:
+      - Servers:
+          - Start & Stop: usage/server-management.md
+          - Server Types: configuration/server-types.md
+          - Configuration: configuration/index.md
+      - Mods & Plugins:
+          - Overview: mods-and-plugins/index.md
+          - Modrinth: mods-and-plugins/modrinth.md
+          - CurseForge: mods-and-plugins/curseforge.md
+          - Spiget (SpigotMC): mods-and-plugins/spiget.md
+          - Direct Download: mods-and-plugins/direct-download.md
+          - Modpacks: mods-and-plugins/modpacks.md
+      - Web Console:
+          - Overview: console/index.md
+          - Setup Guide: console/setup-guide.md
+          - Installation: console/installation.md
+          - Using the Console: console/web-console.md
+          - Audit Logs: console/audit-log-ui.md
+      - Networking:
+          - Connecting to Servers: advanced/networking.md
+          - External Access (playit.gg): advanced/external-access.md
+      - Operations:
+          - Backup: advanced/backup.md
+          - Upgrade Runbook: advanced/upgrade-runbook.md
+      - Troubleshooting: troubleshooting/index.md
+  - Reference:
+      - CLI:
+          - Overview: cli/index.md
+          - Commands: cli/commands.md
+          - Console Commands: console/cli-commands.md
+          - Audit Log: cli/audit-log.md
+          - RCON Commands: cli/rcon-commands.md
+      - REST API:
+          - Overview: api/index.md
+          - Endpoints: api/endpoints.md
+      - Configuration:
+          - Environment Variables: configuration/environment.md
+          - Server Definition (server.yaml): configuration/server-yaml.md
   - Development:
       - Overview: development/index.md
       - Git Workflow: development/git-workflow.md
       - CLI Architecture: development/cli-architecture.md
       - Agent Collaboration: development/agent-collaboration.md
+      - RCON Protocol: advanced/rcon.md
       - Architecture Decisions:
           - "ADR-0001: Container Runtime Ports": development/adr/0001-container-runtime-ports.md
           - "ADR-0002: World-Server Assignment": development/adr/0002-world-server-assignment.md
           - "ADR-0003: Server Spec": development/adr/0003-server-spec.md
-  - AI Assistant: https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962
 
 extra:
   alternate:
@@ -136,6 +176,9 @@ extra:
       link: /ko/
       lang: ko
   social:
+    - icon: material/robot-outline
+      link: https://notebooklm.google.com/notebook/e91b656e-0d95-45b4-a961-fb1610b13962
+      name: AI Assistant (NotebookLM)
     - icon: fontawesome/brands/github
       link: https://github.com/smallmiro/minecraft-server-manager
     - icon: material/web
