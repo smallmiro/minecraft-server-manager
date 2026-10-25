@@ -1,7 +1,7 @@
 # mcctl - Docker Minecraft Server Management CLI
 
 > **Version**: 3.0.2
-> **Last Updated**: 2026-10-24
+> **Last Updated**: 2026-10-25
 > **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
 
 ---
@@ -44,16 +44,18 @@
 | **Auto-Scale** | Servers start on client connect, stop after idle timeout |
 | **nip.io Magic DNS** | Connect via `server.<ip>.nip.io` - no client setup needed |
 | **mDNS Discovery** | Clients auto-discover servers via Bonjour/Zeroconf (.local hostnames) |
-| **Zero Resources** | Only ~40MB RAM used when servers are idle |
-| **Interactive CLI** | Guided prompts for all operations |
+| **Idle Servers Stop** | When nobody plays, only mc-router (and the console services, if installed) keep running |
+| **Interactive CLI** | Guided prompts for most operations (`mcctl create`, `mcctl delete`, `mcctl world ...`, `mcctl player`) |
 | **Management Console** | Web Console (port 5000) + REST API (port 5001) |
 | **Player Management** | Unified player command with Mojang API integration |
 | **Mod Management** | Search, add, remove mods from Modrinth, CurseForge, Spiget, direct URLs |
-| **World Management** | Shared world storage, world-server assignment via `LEVEL` (one world, one server) |
-| **GitHub Backup** | Automatic world backup to private GitHub repositories |
-| **Audit Logs** | Comprehensive activity tracking with SQLite storage and web UI |
+| **World Management** | Shared world storage (`worlds/`), world-server assignment via `LEVEL` (one world, one server) |
+| **Server Definition** | `servers/<name>/server.yaml` describes each server; `config.env` and the server compose file are generated from it |
+| **GitHub Backup** | World backup to a private GitHub repository: manual, scheduled, or when a server stops |
+| **Config Snapshots** | Snapshot, compare and restore a server's configuration files (`mcctl config-snapshot`) |
+| **Audit Logs** | Activity tracking with SQLite storage, optional auto-cleanup, and web UI |
 | **External Access** | playit.gg tunneling for internet access without port forwarding |
-| **Self Update** | `mcctl update` to update CLI and all services |
+| **Self Update** | `mcctl update` updates the CLI, the installed services and the server images |
 
 ### npm Packages (5 packages)
 
@@ -76,7 +78,8 @@
 | **Node.js** | >= 18.0.0 | 20 LTS | Required for mcctl CLI |
 | **Docker Engine** | >= 24.0.0 | Latest | Container runtime |
 | **Docker Compose** | >= 2.20.0 | Latest | `include` feature required |
-| **PM2** | >= 6.0.14 | Latest | Bundled with mcctl, for Management Console |
+| **PM2** | >= 6.0.0 | Latest | Web console only: `mcctl console init` checks for `pm2` on `PATH` (`npm install -g pm2`) |
+| **git** | >= 2.31 | Latest | GitHub world backups only |
 | **OS** | Linux, macOS | Ubuntu 22.04+ | Windows via WSL2 only |
 
 ### Ports
@@ -104,39 +107,42 @@
 # Install globally via npm
 npm install -g @minecraft-docker/mcctl
 
-# Or via pnpm
+# Or via pnpm (note: `mcctl update` reinstalls with npm, so prefer npm)
 pnpm add -g @minecraft-docker/mcctl
 
 # Verify installation
 mcctl --version
 ```
 
+`mcctl init` checks Node.js, Docker Engine and Docker Compose and stops if one is missing or too old.
+
 ### Quick Start
 
 ```bash
-# Step 1: Initialize platform (creates ~/minecraft-servers/)
+# Step 1: Initialize platform (creates ~/minecraft-servers/, asks for host IPs and playit.gg)
 mcctl init
 
-# Step 2: Create your first server
+# Step 2: Start mc-router once (mcctl init does not start it; it has restart: unless-stopped)
+mcctl router start
+
+# Step 3: Create your first server (creates and starts only this server)
 mcctl create myserver -t PAPER -v 1.21.1
 
-# Step 3: Start all infrastructure
-mcctl up
-
-# Step 4: Check status
+# Step 4: Check status (HOSTNAME column lists the server's addresses)
 mcctl status
 ```
+
+`mcctl up` starts mc-router and every server. `mcctl create` prints only `Connect via: <name>.local:25565`; the nip.io addresses are in the HOSTNAME column of `mcctl status`.
 
 ### Connection Methods
 
 | Method | Address | Requirements |
 |--------|---------|--------------|
-| **nip.io** (Recommended) | `myserver.192.168.1.100.nip.io:25565` | Internet access |
+| **nip.io** (Recommended) | `myserver.192.168.1.100.nip.io:25565` | DNS lookup of nip.io; the IP in the name must be reachable (LAN, or a VPN address in `HOST_IPS`) |
 | **mDNS** | `myserver.local:25565` | avahi-daemon/Bonjour |
-| **Direct IP** | `192.168.1.100:25565` | None (single-server fallback) |
 | **playit.gg** (External) | `xx-xx.craft.playit.gg` | playit.gg account + SECRET_KEY |
 
-Replace `192.168.1.100` with your HOST_IP from `.env`.
+Replace `192.168.1.100` with your `HOST_IP` (one nip.io name per address in `HOST_IPS`). A bare IP (`192.168.1.100:25565`) does not work: mc-router picks the server by the hostname the client sends, and mcctl configures no default route.
 For external access via playit.gg, see `mcctl playit setup`.
 
 ### Platform Directory Structure
@@ -144,16 +150,21 @@ For external access via playit.gg, see `mcctl playit setup`.
 ```
 ~/minecraft-servers/
 ├── docker-compose.yml      # Main orchestration (mc-router + server includes)
-├── .env                    # Global configuration
+├── .env                    # Platform settings (HOST_IP, RCON_PASSWORD, ...)
+├── .mcctl.json             # mcctl settings (template version, playit, install ID)
+├── .gitignore
 ├── servers/                # Server configurations
 │   ├── compose.yml         # Server include list (auto-generated)
+│   ├── global.env          # .env keys passed to every server
 │   └── _template/          # Template for new servers
 ├── worlds/                 # Shared world storage
 ├── shared/                 # Shared resources
-│   ├── plugins/            # Shared plugins (read-only mount)
-│   └── mods/               # Shared mods (read-only mount)
+│   ├── plugins/            # Mounted read-only into every server (/plugins)
+│   └── mods/               # Created, but not mounted by the server template
 └── backups/                # Backup storage
 ```
+
+The root is `~/minecraft-servers` unless `MCCTL_ROOT` is set; `--root <path>` must be passed to every command (it is not stored).
 
 ---
 
@@ -172,7 +183,7 @@ For external access via playit.gg, see `mcctl playit setup`.
     |                          |                            |
 +--------+              +--------+                   +--------+
 |mc-srv1 |              |mc-srv2 |                   |mc-srv3 |
-| :25566 |              | :25567 |                   | :25568 |
+| :25565 |              | :25565 |                   | :25565 |
 +---+----+              +---+----+                   +---+----+
     |                       |                            |
     +-----------+-----------+----------------------------+
@@ -182,6 +193,8 @@ For external access via playit.gg, see `mcctl playit setup`.
      |  (shared storage)    |
      +----------------------+
 ```
+
+Server containers publish no host ports; each listens on 25565 inside the Docker network `minecraft-net`, and mc-router forwards to `mc-<name>:25565`. mc-router finds servers through their `mc-router.host` labels, reading the Docker socket read-only. The router's management API is published on `127.0.0.1:25580` only (used by `mcctl status` for health).
 
 ### Management Console Layer
 
@@ -195,8 +208,8 @@ For external access via playit.gg, see `mcctl playit setup`.
 |  |  :5000             |      |  :5001             |          |
 |  +-------------------+      +-------------------+          |
 |         |                           |                      |
-|    Better Auth               Docker Socket + Shell          |
-|    Session Auth              Server Management              |
+|    Better Auth               Docker CLI (docker compose)    |
+|    Session Auth              files under MCCTL_ROOT         |
 +-----------------------------------------------------------+
 ```
 
@@ -220,8 +233,11 @@ After running `mcctl init`, the following directory structure is created:
 ```
 ~/minecraft-servers/                  # Platform root (MCCTL_ROOT)
 ├── .env                              # Global environment variables
-├── docker-compose.yml                # Main orchestration (mc-router)
+├── .mcctl.json                       # mcctl settings (templateVersion, playitEnabled, installId)
+├── .gitignore
+├── docker-compose.yml                # Main orchestration (mc-router; playit service after `mcctl playit setup`)
 ├── .mcctl-admin.yml                  # Management Console config (after console init)
+├── api-config.json                   # Written by `mcctl console api ...` (not read by the running mcctl-api)
 ├── ecosystem.config.cjs              # PM2 process config (after console init)
 ├── data/
 │   ├── audit.db                      # SQLite audit log database
@@ -230,12 +246,14 @@ After running `mcctl init`, the following directory structure is created:
 │
 ├── servers/
 │   ├── compose.yml                   # Auto-generated server include list
+│   ├── global.env                    # .env keys passed to every server (TZ, EXTRA_ARGS, RCON_PASSWORD, RCON_PORT)
 │   ├── _template/                    # Template for new servers
 │   │   ├── docker-compose.yml
 │   │   └── config.env
 │   └── <server-name>/               # Per-server directory
-│       ├── docker-compose.yml        # Server-specific compose
-│       ├── config.env                # Server configuration
+│       ├── server.yaml               # Server definition (config.env and docker-compose.yml are generated from it)
+│       ├── docker-compose.yml        # Server-specific compose (generated)
+│       ├── config.env                # Server configuration (generated)
 │       └── data/                     # Server container data mount
 │
 ├── worlds/                           # Shared world storage
@@ -247,10 +265,14 @@ After running `mcctl init`, the following directory structure is created:
 │       └── DIM1/                     # End dimension
 │
 ├── shared/
-│   ├── plugins/                      # Shared plugins (read-only mount)
-│   └── mods/                         # Shared mods (read-only mount)
+│   ├── plugins/                      # Mounted read-only into every server (/plugins)
+│   └── mods/                         # Created by init, not mounted by the server template
 │
-├── backups/                          # Local backup storage
+├── backups/
+│   ├── worlds/                       # Git working copy of the GitHub world backup
+│   ├── restore-previous/             # Data replaced by `mcctl backup restore` (last 3 kept)
+│   ├── servers/<server>/             # `mcctl server-backup` archives (<id>.tar.gz)
+│   └── meta/                         # backup-schedules.db, config-snapshots.db, config-snapshot-storage/
 │
 └── .services/                        # Service packages installed by console init (older installs: node_modules/ in the platform root)
     └── node_modules/
@@ -304,18 +326,18 @@ External Players → playit.gg cloud → playit-agent (host) → localhost:25565
 | `mcctl playit start` | Start the playit-agent container |
 | `mcctl playit stop` | Stop the playit-agent container |
 | `mcctl playit status` | Show agent status and registered servers |
-| `mcctl playit setup` | Configure or reconfigure SECRET_KEY |
-| `mcctl playit domain <server> <domain>` | Register playit.gg domain for a server |
+| `mcctl playit setup` | Ask for the SECRET_KEY, save it to `.env`, enable playit.gg, and add the `playit` service to `docker-compose.yml` if missing |
+| `mcctl playit domain <server> [domain]` | Set a server's playit.gg domain (`--remove` removes it; no arguments: prompts) |
 
 **Setup:**
 
 1. Create agent at https://playit.gg/account/agents/new-docker → get SECRET_KEY
-2. `mcctl playit setup` → enter SECRET_KEY
+2. `mcctl playit setup` → enter SECRET_KEY (also needed once after `mcctl init --playit-key` or answering Yes in `mcctl init`, which only save the key: the `playit` service is added by `mcctl playit setup`)
 3. `mcctl playit start` → start agent
 4. Create tunnel at https://playit.gg/account/tunnels → Minecraft Java → localhost:25565
-5. `mcctl create myserver --playit-domain xx-xx.craft.playit.gg`
+5. `mcctl create myserver --playit-domain xx-xx.craft.playit.gg`, or for an existing server `mcctl playit domain myserver xx-xx.craft.playit.gg` then `mcctl stop myserver && mcctl start myserver`
 
-**Docker Configuration:**
+**Docker Configuration** (added by `mcctl playit setup`):
 
 ```yaml
 services:
@@ -324,7 +346,7 @@ services:
     container_name: playit-agent
     network_mode: host
     environment:
-      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+      - SECRET_KEY=${PLAYIT_SECRET_KEY:?PLAYIT_SECRET_KEY must be set in .env}
     restart: unless-stopped
     profiles:
       - playit
@@ -334,18 +356,21 @@ services:
 
 #### mcctl playit domain
 
-Register a playit.gg tunnel domain for an existing server. This adds the playit domain to the server's mc-router labels so external players can connect via that hostname.
+Set the playit.gg tunnel domain of an existing server. It sets `PLAYIT_DOMAIN` for the server (in `server.yaml` / `config.env`) and adds the domain to its `mc-router.host` label.
 
 ```bash
 mcctl playit domain <server> <domain>
+mcctl playit domain <server> --remove
+mcctl playit domain                     # prompts for server and domain
 ```
 
 **Example:**
 ```bash
 mcctl playit domain survival xx-xx.craft.playit.gg
+mcctl stop survival && mcctl start survival   # or `mcctl start survival` if it is stopped
 ```
 
-This updates the server's docker-compose.yml to include the playit.gg domain in mc-router routing labels.
+A container keeps the hostnames it was created with, so the domain applies only after the container is recreated; a restart does not apply it. A domain added to the label by hand counts as a custom hostname, not as the playit domain.
 
 ### playit.gg External Access - Complete Setup Guide
 
@@ -367,9 +392,8 @@ playit.gg enables external players to connect to your Minecraft servers without 
 mcctl playit setup
 # Enter your SECRET_KEY when prompted
 
-# Or during initial setup:
-mcctl init
-# Select "Yes" when asked about playit.gg
+# Or during initial setup (`mcctl init`, answer Yes, or `mcctl init --playit-key <key>`),
+# then run `mcctl playit setup` once: init saves the key but does not add the playit service
 ```
 
 **Step 3: Start the playit agent**
@@ -392,9 +416,12 @@ mcctl playit status
 # For a new server:
 mcctl create survival --playit-domain xx-xx.craft.playit.gg
 
-# For an existing server:
+# For an existing server (then recreate it):
 mcctl playit domain survival xx-xx.craft.playit.gg
+mcctl stop survival && mcctl start survival
 ```
+
+New servers have the whitelist off; turn it on before sharing the domain (`mcctl whitelist survival on`).
 
 **Step 6: Share with friends**
 
@@ -418,11 +445,11 @@ mc-router routes based on the hostname in the Minecraft handshake packet, so eac
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| Agent won't start | Invalid SECRET_KEY | Run `mcctl playit setup` again |
+| Agent won't start | Invalid SECRET_KEY, or `no such service: playit` | Run `mcctl playit setup` again (it also adds the missing `playit` service) |
 | Can't connect externally | Tunnel not created | Create tunnel at playit.gg/account/tunnels |
-| Wrong server reached | Domain not registered | Run `mcctl playit domain <server> <domain>` |
+| Wrong server reached | Domain not registered | Run `mcctl playit domain <server> <domain>`, then `mcctl stop <server> && mcctl start <server>` |
 | Agent status "stopped" | Container crashed | Check logs with `docker logs playit-agent` |
-| "Connection refused" | mc-router not running | Run `mcctl up` or `mcctl router start` |
+| "Connection refused" | mc-router not running | Run `mcctl router start` (or `mcctl up`, which also starts every server) |
 
 #### playit.gg Environment Variables
 
@@ -441,7 +468,7 @@ services:
     container_name: playit-agent
     network_mode: host
     environment:
-      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+      - SECRET_KEY=${PLAYIT_SECRET_KEY:?PLAYIT_SECRET_KEY must be set in .env}
     restart: unless-stopped
     profiles:
       - playit
@@ -469,26 +496,38 @@ Key points:
 
 | Option | Description |
 |--------|-------------|
-| `--root <path>` | Custom data directory (default: `~/minecraft-servers`) |
-| `--json` | Output in JSON format |
-| `--help` / `-h` | Show help |
+| `--root <path>` | Data directory (default: `MCCTL_ROOT` or `~/minecraft-servers`); not stored, so pass it to every command |
+| `--json` | JSON output, for the commands that support it |
+| `--help` / `-h` | Show help (the same page for every command; there is no per-command help) |
 | `--version` | Show version |
-| `--sudo-password <pwd>` | Sudo password for mDNS operations |
+| `--sudo-password <pwd>` | Sudo password for the mDNS entry of `create` and `delete` |
 
-**Environment Variable**: `MCCTL_SUDO_PASSWORD` - Alternative to `--sudo-password`
+**Environment Variables**: `MCCTL_ROOT` (data directory), `MCCTL_SUDO_PASSWORD` (alternative to `--sudo-password`).
+
+**Argument parsing**: an option that needs a value takes it from the next word (`--seed 123`) or after `=` (`--seed=123`); a negative number is a value (`-s -123`). Switches such as `--force`, `--json` and `--yes` also accept `=true`/`=false`. Everything after `--` is passed through unchanged (`mcctl exec myserver -- say -h`). Short flags: `-t` type, `-v` version, `-s` seed, `-u` world-url, `-w` world, `-f` follow, `-n` lines, `-m` message, `-y` yes, `-a` all, `-d` detail, `-W` watch, `-h` help. Write the Minecraft version as `-v 1.21.1` or `--version=1.21.1`.
+
+**Exit codes**: `0` success, `1` error, `2` for `mcctl start`/`mcctl stop` when the server is already running/stopped. `mcctl update --check` exits 1 when a newer CLI exists; `mcctl exec` returns the RCON command's exit code.
 
 ---
 
 ### Platform Management
 
 ```bash
-mcctl init                       # Initialize platform
-mcctl init --reconfigure         # Reconfigure existing installation
-mcctl init --upgrade             # Run platform upgrade via init command
-mcctl up                         # Start all (router + servers)
-mcctl down                       # Stop all
-mcctl router start|stop|restart  # Manage mc-router only
+mcctl init                       # Initialize platform (asks for host IPs and playit.gg)
+mcctl init --reconfigure         # Change host IPs, timezone, RCON password, ... of an initialized platform
+mcctl init --playit-key <key>    # Enable playit.gg without asking (run `mcctl playit setup` once afterwards)
+mcctl init --no-playit           # Do not enable playit.gg, without asking
+mcctl init --skip-validation     # Skip the prerequisite checks
+mcctl init --skip-docker         # Do not create the minecraft-net network
+mcctl init --upgrade             # Run `mcctl upgrade` instead
+mcctl up                         # docker compose up -d: mc-router and every server
+mcctl down                       # Stop all mc-* containers, then docker compose down (removes containers; the external minecraft-net network is kept)
+mcctl router start               # docker compose up -d router (also recreates it after docker-compose.yml changes)
+mcctl router stop                # docker compose stop router
+mcctl router restart             # docker compose restart router (keeps the container's current settings)
 ```
+
+`mcctl init` writes `.env` (random 24-character `RCON_PASSWORD`, `HOST_IP`/`HOST_IPS`, `DOCKER_GID`), `.mcctl.json`, `.gitignore`, `docker-compose.yml`, `servers/compose.yml`, `servers/global.env` and `servers/_template/`, and creates the `minecraft-net` network. It does not start mc-router. On an initialized platform it changes nothing. In `--reconfigure`, choosing "Host IP(s)" and answering yes to "Update existing servers with new IP hostnames?" re-renders every server; each container keeps its old hostnames until it is recreated (`mcctl stop <s> && mcctl start <s>`).
 
 ### Platform Upgrade
 
@@ -503,7 +542,7 @@ mcctl init --upgrade                # Run upgrade via init command
 
 Upgrade platform configuration files when updating mcctl to a new version. Compares the bundled `.env.example` template with your existing `.env` file and adds any new environment variables.
 
-**Key principle**: Existing user values are NEVER modified (append-only).
+**Key principle**: Existing `.env` values are kept (new keys are appended), except `DOCKER_GID` when it is missing or the default, and the `BETTER_AUTH_*` keys moved from `ecosystem.config.cjs`.
 
 | Option | Description |
 |--------|-------------|
@@ -512,14 +551,17 @@ Upgrade platform configuration files when updating mcctl to a new version. Compa
 | `--root <path>` | Custom data directory |
 
 **What happens during upgrade:**
-1. Compares bundled `.env.example` with your `.env` file
-2. Identifies new variables added in the latest version
-3. In interactive mode, prompts for values for each new variable
-4. Appends new variables to your `.env` file (grouped by section)
-5. Detects the Docker socket group ID and writes `DOCKER_GID` to `.env` (needed by non-root mc-router 1.46+)
+1. Compares bundled `.env.example` with your `.env` file and lists the new variables
+2. In interactive mode, prompts for a value for each new variable (Enter keeps the default); `--non-interactive` writes the defaults
+3. Appends new variables to your `.env` file (grouped by section)
+4. Detects the Docker socket group ID and writes `DOCKER_GID` to `.env` when it is missing or the default (needed by non-root mc-router 1.46+)
+5. Patches the root `docker-compose.yml` `router` service (since 2.29.0): only the `image` tag and the `group_add` entry are aligned with the bundled template; other services, ports, profiles, comments, router `environment:` edits and CRLF line endings are kept. Shows a line diff and asks for confirmation (skipped with `--non-interactive`, diff only with `--dry-run`), writes a `docker-compose.yml.bak-<timestamp>` backup, restores it if validation fails, then runs `docker compose up -d router`. If this step fails, the rest still runs and the command exits 1
 6. Updates `servers/_template/` files (docker-compose.yml, config.env)
-7. Patches the root `docker-compose.yml` `router` service (since 2.29.0): only the `image` tag and the `group_add` entry are aligned with the bundled template; other services, ports, profiles, comments and CRLF line endings are kept. Shows a line diff and asks for confirmation (skipped with `--non-interactive`, diff only with `--dry-run`), writes a `docker-compose.yml.bak-<timestamp>` backup, restores it if validation fails, then runs `docker compose up -d router`
-8. Records `templateVersion` in `.mcctl.json`
+7. Creates `servers/global.env` if missing and points each server's `docker-compose.yml` at it instead of the platform `.env` (#685); existing containers keep the old environment until recreated (`mcctl stop <s> && mcctl start <s>` for each listed server)
+8. Moves `BETTER_AUTH_SECRET` / `BETTER_AUTH_BASE_URL` from `ecosystem.config.cjs` into `.env` (backup `ecosystem.config.cjs.bak-<timestamp>`); apply with `mcctl console service restart --console` (#699)
+9. Lists the servers that have no `server.yaml` yet and writes nothing; they are imported on their next change or with `mcctl migrate spec` (#675)
+10. If `<root>/scripts` exists (unused since v3.0.0), asks `Remove <path>?` in a terminal (default `N`); with `--non-interactive` or no terminal it only prints `rm -r <path>`
+11. Records `templateVersion` in `.mcctl.json` and adds `installId` if it is missing
 
 **Examples:**
 
@@ -551,38 +593,47 @@ mcctl create [name] [options]
 
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `--type` | `-t` | Server type | PAPER |
-| `--version` | `-v` | Minecraft version | LATEST |
-| `--seed` | `-s` | World seed | Random |
+| `--type` | `-t` | Server type: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH, AUTO_CURSEFORGE | PAPER |
+| `--version` | `-v` | Minecraft version: `-v 1.21.1` or `--version=1.21.1` (modpack types use the modpack's version) | LATEST |
+| `--seed` | `-s` | World seed (negative works: `-s -123`) | Random |
 | `--world-url` | `-u` | Download world from ZIP URL | - |
-| `--world` | `-w` | Use existing world from worlds/ | - |
-| `--no-start` | | Create without starting | - |
+| `--world` | `-w` | Use existing world from worlds/ (sets `LEVEL`; refused if another server uses it) | - |
+| `--modpack <slug>` | | Modpack slug; required with `-t MODRINTH` or `-t AUTO_CURSEFORGE` | - |
+| `--modpack-version <v>` | | Modpack version | latest |
+| `--mod-loader <loader>` | | `fabric`, `forge`, `neoforge`, `quilt` (omit to detect from the modpack) | - |
+| `--exclude-files <list>` | | Comma-separated files to leave out of the modpack (e.g. client-only mods) | - |
+| `--whitelist <a,b>` | | Turn on the whitelist with these players | off |
+| `--enable-whitelist` | | Turn on the whitelist, empty | off |
+| `--no-whitelist` | | Whitelist off (wins over the two above) | - |
+| `--playit-domain <domain>` | | playit.gg external domain of the server | - |
+| `--no-playit-domain` | | Do not set a playit.gg domain (also the default) | - |
+| `--no-start` | | Create without starting (no container is created) | - |
+| `--sudo-password <pwd>` | | Sudo password for registering `<name>.local` | - |
 
-**Interactive mode**: Run `mcctl create` without a name for guided prompts.
+New servers get `MEMORY=4G` (6G for modpack types) and the image `itzg/minecraft-server:java25`; change memory later with `mcctl config <name> MEMORY 6G`. Modpack example: `mcctl create cobblemon -t MODRINTH --modpack cobblemon`.
 
-**Interactive mode flow for MODRINTH type** (v1.14.0+):
+**Interactive mode**: Run `mcctl create` without a name. Prompts: server name, server type (grouped: Standard Servers / Modpack Platforms), Minecraft version (select, default `LATEST`; skipped for modpacks), world setup (new / new with seed / existing from `worlds/` / download ZIP URL), memory (default 4G, 6G for modpacks), `Enable whitelist?` (default No; then players), and `Register external domain for playit.gg?` when playit is enabled. When `/etc/avahi/hosts` exists, it first asks for the sudo password (Enter tries sudo without a password).
 
-When selecting MODRINTH as the server type in interactive mode, the flow changes:
+**Interactive flow for modpack types** (MODRINTH / AUTO_CURSEFORGE):
 
-1. **Server name** - alphanumeric, lowercase, hyphens allowed
-2. **Server type** - select MODRINTH
-3. **Modpack slug** - enter Modrinth modpack slug or URL (e.g., `cobblemon`)
-4. **Mod loader** - select from loaders supported by the modpack (dynamically fetched from Modrinth API). Options: Auto-detect, Fabric, Forge, NeoForge, Quilt (only loaders supported by the modpack are shown)
-5. **Modpack version** - specific version or leave empty for latest
-6. **Memory** - defaults to 6G for modpacks
-7. **World selection** - create new world, use existing, or download from URL
-8. **Confirmation** - review settings before creation
+1. **Server name** - lowercase letters, digits, hyphens
+2. **Server type** - choose "Modrinth Modpack" or "CurseForge Modpack"
+3. **Modpack slug** - text prompt `Modrinth modpack slug or URL:` (e.g., `cobblemon`); there is no search
+4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched)
+5. **Modpack version** - leave empty for latest
+6. **Exclude mods** - comma-separated files to leave out (e.g. client-only mods)
+7. **World setup**, **memory** (default 6G), **whitelist**, then creation (there is no separate confirmation step)
 
 > **Note**: Minecraft version is not prompted for modpack servers; it is determined by the modpack.
 
 **What happens during creation:**
-1. Server directory created at `~/minecraft-servers/servers/<name>/`
-2. `config.env` generated from template
-3. `docker-compose.yml` generated with container name `mc-<name>`
-4. Server registered in `servers/compose.yml`
-5. mDNS hostname registered via avahi-daemon (if installed)
-6. nip.io hostname configured: `<name>.<HOST_IP>.nip.io`
-7. Server container started (unless `--no-start`)
+1. Writes `servers/<name>/server.yaml` and renders `config.env`, `docker-compose.yml` (container `mc-<name>`) and the `servers/compose.yml` entry from it; `LEVEL` is the server name (world in `worlds/<name>/`) or the `--world` name
+2. Registers `<name>.local` in `/etc/avahi/hosts` with sudo when avahi-daemon is installed (first host IPv4 address; a sudo failure is only a warning)
+3. The `mc-router.host` label gets `<name>.local` and one `<name>.<ip>.nip.io` per address in `HOST_IPS` (else `HOST_IP`), plus the playit domain if given
+4. Starts the container with `docker compose up -d mc-<name>` (unless `--no-start`). If the start fails, the server stays created and the command exits 1 with the cause
+5. Prints `Connect via: <name>.local:25565` (the nip.io names are shown by `mcctl status`)
+
+New servers have the whitelist off unless `--whitelist`/`--enable-whitelist` is given. If anything fails before the server exists, nothing is left behind.
 
 #### mcctl delete
 
@@ -592,9 +643,12 @@ mcctl delete [name] [options]
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--force` | `-y` | Skip confirmation, delete even with players online |
+| `--yes` | `-y` | Skip the confirmation |
+| `--force` | | Delete even if players are online, or if they cannot be read over RCON (implies `--yes`) |
+| `--delete-world` | | Delete the world inside the server instead of moving it to `worlds/` |
+| `--sudo-password <pwd>` | | Sudo password for removing `<name>.local` from `/etc/avahi/hosts` |
 
-World data is preserved in the worlds/ directory.
+`mcctl delete` asks first; without a terminal it refuses unless `--yes` or `--force` is given. The world is kept: a world in `worlds/` stays (no longer assigned), and a world inside `servers/<name>/data/<LEVEL>` (with `_nether`/`_the_end`) is moved to `worlds/<LEVEL>`. The delete stops before removing anything if `worlds/` already has that name, if the world cannot be determined from `config.env`, or if the container cannot be stopped. Files the container wrote as root are left with a `sudo rm -rf` hint. Only one delete of a server runs at a time.
 
 #### mcctl status
 
@@ -611,37 +665,50 @@ mcctl status router             # mc-router status
 | `--interval <sec>` | | Watch refresh interval (default: 5) |
 | `--json` | | JSON output |
 
+The default view prints `=== Server Status (mc-router Managed) ===` with an INFRASTRUCTURE table (mc-router, avahi-daemon) and a MINECRAFT SERVERS table (SERVER, STATUS, HEALTH, HOSTNAME = the full `mc-router.host` list). JSON: `{router:{name,status,health,port}, avahi_daemon:{name,status,type}, servers:[{name, container, status, health, hostname}]}`.
+
 #### mcctl start / stop
 
 ```bash
-mcctl start <server>            # Start specific server
+mcctl start <server>            # docker compose up -d mc-<server> (creates the container if needed)
 mcctl stop <server>             # Stop specific server
-mcctl start --all               # Start all servers
-mcctl stop --all                # Stop all servers
+mcctl start --all               # Start all servers (not mc-router)
+mcctl stop --all                # Stop all servers (not mc-router)
 ```
+
+`start` exits 2 when the server is already running; `stop` exits 2 when it is not running (so `mcctl stop x && mcctl start x` skips the start for a stopped server). With `BACKUP_AUTO_ON_STOP=true` and a configured backup, `mcctl stop <server>` backs up the worlds afterwards (waits up to 10 minutes for a running backup; a failed backup is only a warning). `mcctl stop --all` does not back up.
 
 #### mcctl logs
 
 ```bash
-mcctl logs <server>             # View server logs
-mcctl logs <server> -f          # Follow logs
+mcctl logs <server>             # Last 50 lines (stdout and stderr)
+mcctl logs <server> -f          # Follow logs (Ctrl+C ends with exit code 0)
 mcctl logs <server> -n 100      # Last 100 lines
+mcctl logs router               # mc-router logs
+mcctl logs <server> --json      # Lines as a JSON array (not with -f)
 ```
 
-#### mcctl console (RCON)
+#### mcctl console / mcctl rcon (RCON)
 
 ```bash
 mcctl console <server>          # Interactive RCON console
+mcctl rcon <server>             # Same session
 ```
+
+Since v3.0.0 this connects over TCP to the container's IP on the Docker network with the container's `RCON_PORT`/`RCON_PASSWORD`. The server must be running, and the host must reach the container IP (Docker Desktop on macOS may not; use `mcctl exec` there). Leave with `exit`, `quit`, Ctrl+C or Ctrl+D; piped input runs line by line. `mcctl console init|service|user|api|remove` are console-management subcommands (see Console Management), so a server named like them is reached with `mcctl rcon <name>`.
 
 #### mcctl exec
 
 ```bash
-mcctl exec <server> <command>   # Execute single RCON command
+mcctl exec <server> <command>   # Execute single RCON command (docker exec mc-<server> rcon-cli -- <command>)
 mcctl exec myserver say "Hello!"
 mcctl exec myserver list
 mcctl exec myserver give Steve diamond 64
+mcctl exec myserver tp Steve -1 64 -5   # negative numbers are passed as they are
+mcctl exec myserver -- say -h           # other arguments starting with - go after --
 ```
+
+Scripts: the `list` reply is `There are N of a max of M players online: ...`; test for no players with `grep -q "There are 0 of"`.
 
 #### mcctl config
 
@@ -655,7 +722,10 @@ mcctl config <server> --pvp              # Enable PvP
 mcctl config <server> --no-pvp           # Disable PvP
 mcctl config <server> --command-block    # Enable command blocks
 mcctl config <server> --no-command-block # Disable command blocks
+mcctl config <server> --json             # JSON output (values, or {server, key, oldValue, newValue} after a change)
 ```
+
+Values are written through `server.yaml` (then rendered into `config.env`). Restart the server to apply (`mcctl stop <s> && mcctl start <s>`). `LEVEL` (and an `EXTRA_ARGS` that moves the world) follows the world assignment rules: refused while the server runs or when another server uses the world. An empty value (`""`) shows the key instead of setting it.
 
 ---
 
@@ -664,10 +734,14 @@ mcctl config <server> --no-command-block # Disable command blocks
 #### mcctl op
 
 ```bash
-mcctl op <server> list             # List operators
-mcctl op <server> add <player>     # Add operator
-mcctl op <server> remove <player>  # Remove operator
+mcctl op <server> list                       # Operators with level and role (from data/ops.json)
+mcctl op <server> add <player>               # Add operator (asks for the level in a terminal; --json uses 4)
+mcctl op <server> add <player> <level>       # Add with level 1-4 (positional word)
+mcctl op <server> set-level <player> <level> # Change level in data/ops.json (server must be running; restart to apply)
+mcctl op <server> remove <player>            # Remove operator
 ```
+
+Levels: 1 Moderator, 2 Gamemaster, 3 Admin, 4 Owner. `add`/`remove` update `OPS` in `config.env`, and run `op`/`deop` over RCON when the server is running (the level is then written to `data/ops.json`). `--json` is supported.
 
 #### mcctl whitelist
 
@@ -680,6 +754,8 @@ mcctl whitelist <server> off          # Disable whitelist
 mcctl whitelist <server> status       # Show whitelist status
 ```
 
+New servers have the whitelist off. Changes apply over RCON when the server runs, otherwise on the next start. `--json` is supported.
+
 #### mcctl ban
 
 ```bash
@@ -691,41 +767,48 @@ mcctl ban <server> ip add <ip> [reason]  # Ban IP
 mcctl ban <server> ip remove <ip>     # Unban IP
 ```
 
+The word after the server is the action (`mcctl ban myserver add Griefer "Griefing"`). `--json` is supported.
+
 #### mcctl kick
 
 ```bash
-mcctl kick <server> <player> [reason]
+mcctl kick <server> <player> [reason]   # server must be running; --json supported
 ```
 
 #### mcctl player
 
 ```bash
-mcctl player                       # Full interactive mode
+mcctl player                       # Full interactive mode (running servers only; actions run over RCON)
 mcctl player <server>              # Interactive for specific server
-mcctl player info <name>           # Player info (UUID, skin URL)
-mcctl player info <name> --offline # Offline UUID
+mcctl player info <name>           # Player info (UUID, skin URL) from the Mojang API
+mcctl player info <name> --offline # Offline-mode UUID (matches Minecraft)
+mcctl player info <name> --json    # {name, uuid, uuidNoDashes, skinUrl, source}
 mcctl player online <server>       # List online players
-mcctl player online --all          # All servers
+mcctl player online --all          # All running servers (servers with no players are left out)
 mcctl player cache stats           # Cache statistics
 mcctl player cache clear           # Clear cache
 ```
+
+Lookups are cached AES-256-GCM encrypted in `~/.mcctl/.player-cache` (UUID permanently, username 30 days, skin 1 day). `mcctl player lookup` and `mcctl player uuid` were removed in v3.0.0: they print `'mcctl player <x>' was removed. Use: mcctl player info <name> [--offline]` and exit 1.
 
 ---
 
 ### World Management
 
 ```bash
-mcctl world list                              # List worlds with assigned servers (and duplicate warnings)
+mcctl world                                   # Same as `mcctl world list`
+mcctl world list [--json]                     # List worlds with assigned servers (and duplicate warnings)
 mcctl world new [name]                        # Create new world (interactive or CLI)
 mcctl world new <name> --seed 12345           # Create with seed
-mcctl world new <name> --server <srv>         # Create and assign to a stopped server
-mcctl world new <name> --server <srv> --no-start  # Don't auto-start server
-mcctl world assign [world] [server]           # Assign world to a stopped server (sets LEVEL)
+mcctl world new <name> --server <srv>         # Create and assign to a stopped server (the server is not started)
+mcctl world assign [world] [server]           # Assign world to a stopped server (sets LEVEL), e.g. `mcctl world assign survival myserver`
 mcctl world release [world]                   # Switch the world's server back to its own default world
 mcctl world release [world] --force           # --force is accepted and ignored
 mcctl world delete [world]                    # Delete world (with confirmation)
-mcctl world delete [world] --force            # Skip the prompt (does not delete a world a server uses)
+mcctl world delete [world] --force            # Skip the prompt (does not delete a world a server uses); --json supported
 ```
+
+Servers are named by their directory under `servers/` (`myserver`), not the container name (`mc-myserver`): `mcctl world assign survival mc-myserver` fails with `Server 'mc-myserver' not found`. `mcctl world list` prints `assigned: myserver`; its JSON has `name`, `path`, `isLocked`, `lockedBy`, `size`, `lastModified`, `servers` and `dimensions`. `mcctl world new` needs at least one server (`No servers available. Create a server first.`); in interactive mode it asks for a server (must be stopped) and whether to start it (`--no-start` skips that question); with a world name it never starts the server. A server whose world is inside `servers/<name>/data` is refused for assign/release until `mcctl migrate worlds` moves it; a container in the `created` state counts as not stopped (start it once, then stop it).
 
 **World assignment rules** (#670):
 
@@ -755,6 +838,8 @@ mcctl mod remove <server> <mod>          # Remove mod
 mcctl mod sources                        # Show mod sources
 ```
 
+`mod add` validates names on Modrinth (default source), writes the source's key in `config.env` (`MODRINTH_PROJECTS`, `CURSEFORGE_FILES`, `SPIGET_RESOURCES`, or `MODS`/`PLUGINS` for URLs) and needs a restart (`mcctl stop <s> && mcctl start <s>`). Server types without mod or plugin support (e.g. VANILLA) are refused unless `--force`, which also adds names that were not found. `--json` is supported.
+
 **Automatic Dependency Download** (via `MODRINTH_DOWNLOAD_DEPENDENCIES` in config.env):
 
 | Setting | Behavior |
@@ -768,34 +853,63 @@ mcctl mod sources                        # Show mod sources
 ### Backup Management
 
 ```bash
-# World backup (GitHub)
-mcctl backup init                    # Interactive GitHub backup setup
-mcctl backup status                  # Show backup config
-mcctl backup push                    # Backup to GitHub
+# World backup (GitHub, needs git >= 2.31)
+mcctl backup init [--force]          # Interactive setup: token, repo, branch, auto-backup on stop -> .env
+mcctl backup status                  # Show backup config (`mcctl backup` alone does the same)
+mcctl backup push                    # Backup to GitHub (asks for a message)
 mcctl backup push -m "message"       # With commit message
-mcctl backup history                 # Show backup history
-mcctl backup restore [commit]        # Restore from backup
+mcctl backup push --auto             # No prompt, timestamp message, waits up to 10 min for a running backup
+mcctl backup push --allow-missing    # Accept that worlds in the last backup were deleted on purpose
+mcctl backup history [--json]        # Show backup history (latest 10 in text)
+mcctl backup restore [commit]        # Restore from backup (asks unless --force; all servers must be stopped)
+
+# Scheduled world backups (run by mcctl-api)
+mcctl backup schedule list
+mcctl backup schedule add --cron daily --name "Daily Backup" --max-count 30   # presets: hourly, daily, every-6h, every-12h, weekly
+mcctl backup schedule remove|enable|disable <id>
 
 # Server config backup
 mcctl server-backup <server>         # Backup server config
 mcctl server-backup <server> --list  # List backups
 mcctl server-backup <server> -m "msg"  # With message
 mcctl server-restore <server>        # Interactive restore
-mcctl server-restore <server> <id>   # Restore specific backup
-mcctl server-restore <server> --dry-run  # Preview changes
+mcctl server-restore <server> <id>   # Restore specific backup (asks unless --force or --json)
+mcctl server-restore <server> <id> --dry-run  # Preview changes
+
+# Config snapshots
+mcctl config-snapshot list [server] [--limit 20] [--json]
+mcctl config-snapshot create <server> [--description "..."]
+mcctl config-snapshot show <id> [--files]
+mcctl config-snapshot diff <id1> <id2> [--files-only]
+mcctl config-snapshot restore <id> [--force]
+mcctl config-snapshot delete <id> [--force]
+mcctl config-snapshot schedule list [--server <name>]
+mcctl config-snapshot schedule add --server <name> --cron "0 3 * * *" --name "Daily" [--retention 10]
+mcctl config-snapshot schedule remove|enable|disable <id>
 ```
+
+- **World backup** commits `worlds/` (and server-internal worlds in `servers/<name>/data/<LEVEL>`) to the repository. Running servers are flushed first (`save-off`, `save-all flush`, `save-on`); "no changes" is a success. Restore puts the replaced data in `backups/restore-previous/<timestamp>/`.
+- **Backup schedules** and **config snapshot schedules** are executed by mcctl-api (`mcctl console init`), which loads them when it starts: after changing them with the CLI, run `mcctl console service restart --api`. Schedule retention: `--max-count`/`--max-age-days` prune old backups from the repository history (the latest is always kept); `--retention` keeps the newest snapshots of a snapshot schedule.
+- **`server-backup`** archives `config.env`, `docker-compose.yml` and, when present, `server.yaml`, `data/ops.json`, `data/whitelist.json`, `data/banned-players.json`, `data/banned-ips.json`, `data/server.properties` to `backups/servers/<server>/<id>.tar.gz` (ID = creation time, e.g. `20260120-203357`). `server-restore` copies the current files to `backups/servers/<server>/.pre-restore/` first. No world data.
+- **Config snapshots** hold the files in `servers/<server>/` itself (not `data/`): `server.yaml`, `config.env`, `docker-compose.yml` and other `.yml`/`.yaml`/`.json`/`.properties` files up to 1 MB, stored in `backups/meta/config-snapshots.db` and `backups/meta/config-snapshot-storage/`. `list` shows 8-character IDs; the other subcommands need the full ID (from `create` or `list --json`). A restore that changes the world follows the world assignment rules.
 
 ---
 
 ### Migration
 
 ```bash
-mcctl migrate status              # Check migration status
-mcctl migrate worlds              # Interactive migration
+mcctl migrate status              # Check which servers keep their world in servers/<name>/data
+mcctl migrate worlds              # Interactive migration (`mcctl migrate` alone does the same)
 mcctl migrate worlds --all        # Migrate all servers
+mcctl migrate worlds --server <name>  # Migrate one server
 mcctl migrate worlds --dry-run    # Preview changes
 mcctl migrate worlds --backup     # Create backup before migration
+mcctl migrate worlds --force      # No confirmation; stops running servers automatically
+mcctl migrate spec <server>       # Import a server into server.yaml and render its files
+mcctl migrate spec --all [--dry-run] [--force] [--json]
 ```
+
+`migrate worlds` moves the world to `worlds/<server>`, adds `EXTRA_ARGS=--universe /worlds/` and sets `LEVEL=<server>`. `migrate spec` is idempotent (`synced` when nothing changed); `--force` re-renders from `server.yaml` over hand edits of the generated files (keeps `.bak`); a server whose world or image cannot be determined is `refused` (exit 1). Servers without `server.yaml` are also imported automatically on their first change by mcctl.
 
 ---
 
@@ -822,6 +936,8 @@ Before the prompts, init checks prerequisites (Node.js, Docker, Docker Compose, 
 7. Installs the service packages into `.services/` if they are missing
 8. Writes `BETTER_AUTH_SECRET` to `.env` if missing (an older ecosystem file's secret is moved over), then generates PM2 ecosystem.config.cjs (no auth secrets in it)
 9. Saves configuration (.mcctl-admin.yml)
+
+The chosen access mode is written to `ecosystem.config.cjs` as an `AUTH_MODE` mcctl-api recognizes: `internal` → `ip-whitelist` (loopback IPs only), `api-key` → `api-key`, `ip-whitelist` → `ip-whitelist`, `api-key-ip` → `combined`, `open` → `disabled`.
 
 **Files created after init:**
 
@@ -870,6 +986,7 @@ mcctl console service logs -f         # Follow logs in real-time
 - Console **always requires** API to be running
 - Stopping API **always stops** Console too (dependency enforcement)
 - If only one service is installed, no prompt is shown
+- With both installed and no terminal (scripts, cron), `start`/`stop`/`restart`/`logs` without `--api` or `--console` exit 1 with `No terminal to ask which services to <action>. Pass --console (API + Console) or --api.`
 
 #### User Management
 
@@ -935,26 +1052,32 @@ mcctl audit purge --dry-run            # Preview without deleting
 mcctl audit purge --force              # Skip confirmation
 ```
 
+The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest first, and `--action` takes the full name (e.g. `player.whitelist.add`). Old entries are removed only by `purge` or by the optional auto-cleanup (`AUDIT_AUTO_CLEANUP=true`, off by default; see Configuration).
+
 ---
 
 ### Self Update
 
 ```bash
-mcctl update                    # Update CLI + all installed services (default)
+mcctl update                    # Update CLI + installed services + server images (default)
 mcctl update --cli-only         # Update only the CLI binary
-mcctl update --check            # Check for updates only (CLI and services)
-mcctl update --force            # Force check (ignore cache)
-mcctl update --yes              # Auto-confirm update
+mcctl update --check            # Show available updates (CLI and services); exits 1 if a newer CLI exists or npm cannot be reached
+mcctl update --force            # Accepted for compatibility; every update checks npm without the cache
+mcctl update --yes              # Do not ask; also never recreates stopped servers
 mcctl update --all              # Deprecated alias (same as the default)
 ```
 
-By default `mcctl update` also updates mcctl-api, mcctl-console, and @minecraft-docker/shared in `~/minecraft-servers/.services/` via `npm install <pkg>@latest`, restarts their PM2 processes automatically, aligns server image tags, and pulls Docker images. `--cli-only` skips all of that.
+By default `mcctl update` reinstalls the CLI with `npm install -g` (it asks `Update mcctl to <version>?` unless `--yes`), then, also when the CLI is already current: updates mcctl-api, mcctl-console and @minecraft-docker/shared in `~/minecraft-servers/.services/` via `npm install <pkg>@latest` and restarts their PM2 processes; sets each server's image tag to the one recommended for its `VERSION` through `server.yaml`; and pulls the servers' images. A pinned tag is kept: a tag that starts with a release version (e.g. `2026.10.0-java21`) or a digest (`java21@sha256:…`) prints `pinned tag, keeping` (with a warning if its Java is older than `VERSION` needs). `--cli-only` skips everything after the CLI. It does not run `mcctl upgrade`.
+
+**Stopped servers** (v3.0.1+): mc-router auto-scale starts the existing container, so a stopped server keeps its old image until its container is recreated. After pulling, `mcctl update` lists stopped (`exited`/`created`) servers whose container does not use the pulled image (servers already on it show `up to date`) and, in a terminal, asks `Recreate the stopped servers now so they use the new image?` (default No). Yes runs `docker compose up --no-start --no-deps mc-<server>` per server and prints a rollback command (`docker tag <old image ID> <image> && docker compose up --no-start --no-deps mc-<server>`); a recreated server shows `created` until it starts. With `--yes` or no terminal nothing is recreated and the command is printed per server. Running servers keep their image until `mcctl stop <server> && mcctl start <server>`.
+
+Before every other command (except `--help`/`--version`), mcctl checks npm for a newer CLI and prints a notice; the result is cached 24 hours in `~/.mcctl-update-check.json` (a stale cache makes the command wait up to 2 seconds).
 
 ---
 
 ## 6. Server Types
 
-### mcctl Supported Types (9 types)
+### mcctl Supported Types (`mcctl create -t`)
 
 | Type | Plugins | Mods | Recommended For |
 |------|:-------:|:----:|-----------------|
@@ -967,6 +1090,11 @@ By default `mcctl update` also updates mcctl-api, mcctl-console, and @minecraft-
 | **BUKKIT** | Yes | No | Classic plugin API (legacy) |
 | **PURPUR** | Yes | No | Advanced customization (Paper fork) |
 | **QUILT** | No | Yes | Modern Fabric-compatible modding |
+| **LEAF** | Yes | No | Lightweight Paper fork |
+| **FOLIA** | Yes | No | Multi-threaded Paper server for large worlds |
+| **PUFFERFISH** | Yes | No | Paper fork for large servers |
+| **MODRINTH** | No | Yes | Modrinth modpack (`--modpack <slug>` required) |
+| **AUTO_CURSEFORGE** | No | Yes | CurseForge modpack (`--modpack <slug>` required) |
 
 ### All itzg/minecraft-server Types
 
@@ -990,23 +1118,28 @@ By default `mcctl update` also updates mcctl-api, mcctl-console, and @minecraft-
 | `KETTING` | Hybrid | Yes | Yes | Forge + Bukkit hybrid |
 | `SPONGEVANILLA` | Hybrid | Yes | No | Sponge API server |
 
+`mcctl create -t` accepts only the types in the first table. For another itzg type (the hybrids, `SPONGEVANILLA`, `FTBA`, `CUSTOM`), create the server with an accepted type and `--no-start`, set `TYPE` and the type's variables with `mcctl config <name> TYPE <type>`, then `mcctl start <name>`. `mcctl config` does not check the `TYPE` value.
+
 ### Modpack Platforms
 
 | Platform | Environment Variable | Description |
 |----------|---------------------|-------------|
-| `AUTO_CURSEFORGE` | `CF_API_KEY`, `CF_SLUG` | Automatic CurseForge modpack installation |
-| `MODRINTH` | `MODRINTH_MODPACK`, `MODRINTH_LOADER`, `MODRINTH_VERSION` | Modrinth modpack installation with dynamic loader detection |
-| `FTBA` | `FTB_MODPACK_ID` | Feed The Beast modpacks |
-| `CUSTOM` | `CUSTOM_SERVER` | Custom server JAR URL or path |
+| `AUTO_CURSEFORGE` | `CF_SLUG` (or `CF_PAGE_URL`), `CF_EXCLUDE_MODS` | CurseForge modpack: `mcctl create <name> -t AUTO_CURSEFORGE --modpack <slug>` writes `CF_SLUG` (`--exclude-files` → `CF_EXCLUDE_MODS`) |
+| `MODRINTH` | `MODRINTH_MODPACK`, `MODRINTH_VERSION`, `MODRINTH_LOADER`, `MODRINTH_EXCLUDE_FILES` | Modrinth modpack: `mcctl create <name> -t MODRINTH --modpack <slug> [--mod-loader <loader>] [--modpack-version <id>] [--exclude-files <a,b>]` |
+| `FTBA` | `FTB_MODPACK_ID` | Feed The Beast modpacks (set with `mcctl config`, see above) |
+| `CUSTOM` | `CUSTOM_SERVER` | Custom server JAR URL or path (set with `mcctl config`) |
 
-**MODRINTH Modpack Server** (v1.14.0+): When creating a MODRINTH server via interactive CLI, the system:
+`--modpack` needs `-t MODRINTH` or `-t AUTO_CURSEFORGE`. The modpack decides the Minecraft version: no `VERSION` is written unless `-v` is given. Memory defaults to `6G`.
 
-1. Prompts for **modpack slug** (e.g., `cobblemon`, `adrenaserver`)
-2. Queries Modrinth API to detect **supported loaders** dynamically (e.g., if a modpack only supports `fabric` and `quilt`, then `forge` and `neoforge` are excluded from the selection)
-3. Prompts for **mod loader** selection (auto-detect, or choose from available loaders: `forge`, `fabric`, `neoforge`, `quilt`)
-4. Prompts for **modpack version** (leave empty for latest)
-5. Skips Minecraft version prompt (determined by the modpack)
-6. Defaults memory to `6G` (modpacks are heavier than standard servers)
+**Interactive modpack flow**: `mcctl create` without a name asks for the name and type; for a modpack type it then asks for:
+
+1. The **modpack slug** or URL (e.g., `cobblemon`, `adrenaserver`; no search in the CLI)
+2. The **mod loader**: Auto-detect, or one of the loaders the modpack's versions list on Modrinth (all of `forge`, `neoforge`, `fabric`, `quilt` if the lookup fails)
+3. The **modpack version** (empty for the latest)
+4. **Mods to exclude** (comma-separated; client-only mods must be listed here in the CLI)
+5. The world, memory (`6G`) and whitelist (no Minecraft version prompt)
+
+The Web Console's Create Server dialog searches Modrinth, offers only the loader and Minecraft version pairs the modpack has, and pre-fills **Exclude mods** with the client-only mods it detects.
 
 ### Type-Specific Variables
 
@@ -1043,7 +1176,7 @@ By default `mcctl update` also updates mcctl-api, mcctl-console, and @minecraft-
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CF_API_KEY` | No | CurseForge API key (built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
+| `CF_API_KEY` | No | CurseForge API key (built in for Java 17+ images; for java8/pre-17 tags or your own key, set it per server: `mcctl config <server> CF_API_KEY '<key>'`) |
 | `CF_PAGE_URL` / `CF_SLUG` | Yes (one) | Modpack URL or slug |
 | `CF_FILE_ID` | No | Specific file/version ID |
 | `CF_EXCLUDE_MODS` | No | Mods to exclude |
@@ -1058,23 +1191,20 @@ Located at `~/minecraft-servers/.env`:
 
 ```bash
 # Network
-HOST_IP=192.168.1.100               # Your server's IP
-HOST_IPS=192.168.1.100,100.64.0.5   # Multiple IPs (VPN mesh)
+HOST_IP=192.168.1.100               # Your server's IP (set by mcctl init)
+HOST_IPS=192.168.1.100,100.64.0.5   # Multiple IPs (VPN mesh); used instead of HOST_IP when set
 MINECRAFT_NETWORK=minecraft-net
-MINECRAFT_SUBNET=172.28.0.0/16
+MINECRAFT_SUBNET=172.28.0.0/16      # not read by mcctl; mcctl init creates minecraft-net on this subnet
+DOCKER_GID=999                      # docker.sock group for mc-router (set by mcctl init / mcctl upgrade)
 
 # Defaults
-DEFAULT_MEMORY=4G
-DEFAULT_VERSION=LATEST
-TZ=UTC
+TZ=Asia/Seoul  # mcctl init copies this from the template; set your IANA zone
 RCON_PASSWORD=<random, generated by mcctl init>
+RCON_PORT=25575
 
-# mc-router Settings
-AUTO_SCALE_UP=true                   # Auto-start on connect
-AUTO_SCALE_DOWN=true                 # Auto-stop idle
-AUTO_SCALE_DOWN_AFTER=10m            # Idle timeout
-DOCKER_TIMEOUT=120s                  # Start timeout (Go time.Duration: e.g., 120s, 2m)
-AUTO_SCALE_ASLEEP_MOTD=Server is sleeping. Connect to wake up!
+# mc-router settings (AUTO_SCALE_*, DOCKER_TIMEOUT) are NOT read from .env:
+# they are in the `environment:` of the router service in docker-compose.yml
+# (apply with `mcctl router start`; see section 11)
 
 # Backup (GitHub)
 BACKUP_GITHUB_TOKEN=ghp_xxxxxxxxxxxxx
@@ -1082,21 +1212,36 @@ BACKUP_GITHUB_REPO=username/minecraft-worlds-backup
 BACKUP_GITHUB_BRANCH=main
 BACKUP_AUTO_ON_STOP=true
 
-# CurseForge (for mods)
-CF_API_KEY=your-api-key
+# External access and console
+PLAYIT_SECRET_KEY=<written by mcctl playit setup>
+LOG_LEVEL=info                      # mcctl-api
+BETTER_AUTH_SECRET=<written by mcctl console init>   # console sessions; changing it signs everyone out
+BETTER_AUTH_BASE_URL=https://mc.example.com          # optional; default http://localhost:<console port>
 
-# Audit Logs
-AUDIT_AUTO_CLEANUP=true
+# mcctl-api options (optional; apply with `mcctl console service restart --api`)
+WORLD_UPLOAD_MAX_SIZE=1073741824     # world ZIP upload, bytes (1 GiB)
+WORLD_EXTRACT_MAX_SIZE=5368709120    # uncompressed size of a world ZIP, bytes (5 GiB)
+WORLD_EXTRACT_MAX_ENTRIES=100000
+STATS_ANALYZE_TIMEOUT_MS=600000      # ore/block statistics scan (10 min)
+SWAGGER_ENABLED=true                 # serve /docs under NODE_ENV=production
+
+# Audit Logs (read by mcctl-api from this file; the CLI reads only its shell environment)
+AUDIT_AUTO_CLEANUP=true              # Default off; true deletes logs older than AUDIT_RETENTION_DAYS while logs are written
 AUDIT_RETENTION_DAYS=90
 ```
+
+- **What reaches servers**: only the keys named in `servers/global.env` (`TZ`, `EXTRA_ARGS`, `RCON_PASSWORD`, `RCON_PORT`); Compose fills them from `.env`. To pass another key to every server, add its name to `servers/global.env`. `EXTRA_ARGS` reaches only servers without `server.yaml`. A server's `config.env` overrides these. Apply with `mcctl stop <s> && mcctl start <s>` (a restart does not re-read `.env`).
+- **CF_API_KEY** in `.env` does not reach servers. When needed (java8/pre-17 tags or your own key), set it per server with `mcctl config <server> CF_API_KEY '<key>'`, or add `CF_API_KEY` to `servers/global.env` with the value in `.env` in single quotes.
+- **HOST_IP / HOST_IPS** are read whenever mcctl writes a server's files: the next create, the next mcctl change to an existing server, or `mcctl init --reconfigure` (all servers). Stop and start a server to apply.
+- **Who else reads `.env`**: mcctl-api loads the whole file at startup (`mcctl console service restart --api`); mcctl-console reads only `BETTER_AUTH_SECRET` and `BETTER_AUTH_BASE_URL` (an entry in `ecosystem.config.cjs` wins until `mcctl upgrade` moves it; apply with `mcctl console service restart --console`). `DEFAULT_MEMORY` and `DEFAULT_VERSION` from older installs are not read.
+- **Shell variables** (not `.env`): `MCCTL_ROOT` (platform directory, default `~/minecraft-servers`; `--root` overrides it per command) and `MCCTL_SUDO_PASSWORD` (sudo password for `/etc/avahi/hosts`).
 
 ### Server Configuration (config.env)
 
 Each server has a `config.env` at `servers/<name>/config.env`:
 
 ```bash
-# Required
-EULA=TRUE
+# Server (EULA=TRUE is set by the server compose, not here)
 TYPE=PAPER
 VERSION=1.21.1
 
@@ -1107,7 +1252,7 @@ MEMORY=4G
 MOTD=Welcome to my server!
 MAX_PLAYERS=20
 DIFFICULTY=normal
-GAMEMODE=survival
+MODE=survival
 PVP=true
 SPAWN_PROTECTION=0
 VIEW_DISTANCE=10
@@ -1134,7 +1279,13 @@ SPIGET_RESOURCES=9089
 USE_AIKAR_FLAGS=true
 ```
 
+mcctl writes `config.env` from `servers/<name>/server.yaml`: `TYPE`, `VERSION`, `MEMORY`, `LEVEL` and `PLAYIT_DOMAIN` from their own fields, `EXTRA_ARGS` from `world.storage` (`universe`: `--universe /worlds/`) plus `env.EXTRA_ARGS` (which must not contain `--universe`), every other key from `env`. A hand edit is taken into `server.yaml` the next time mcctl changes the server. `EULA=TRUE` comes from the server compose `environment:`, which wins over `config.env`.
+
+**Value rules** (Docker Compose env file): one `KEY=value` per line, so a value cannot span lines (a following line without `=` is not part of it); in an unquoted value a space followed by `#` starts a comment (`MOTD=Hi #1` sets `Hi`; write `MOTD='Hi #1'` or use `mcctl config`, which quotes it); the last duplicate wins; whitespace around `=` is ignored. mcctl refuses values with control characters or a leading quote, and writes values containing `$` in single quotes, so `${VAR}` stays literal (interpolation works only in lines written by hand).
+
 ### Key Environment Variables Reference
+
+Defaults in these tables are the itzg image's. `mcctl create` writes `TYPE=PAPER`, `VERSION=LATEST` (modpack types: none unless `-v`), `MEMORY=4G` (`6G` for modpacks) and `MOTD=Welcome to <name>! Your adventure begins here.`, and from the server template `DIFFICULTY=normal`, `MAX_PLAYERS=20`, `VIEW_DISTANCE=10`, `PVP=true`, `SPAWN_PROTECTION=0`, `ENABLE_RCON=true` and `MODRINTH_DOWNLOAD_DEPENDENCIES=required`.
 
 #### Essential
 
@@ -1151,7 +1302,7 @@ USE_AIKAR_FLAGS=true
 |----------|---------|-------------|
 | `MOTD` | - | Server message of the day |
 | `DIFFICULTY` | `easy` | `peaceful`, `easy`, `normal`, `hard` |
-| `MODE` / `GAMEMODE` | `survival` | `survival`, `creative`, `adventure`, `spectator` |
+| `MODE` | `survival` | `survival`, `creative`, `adventure`, `spectator` (the image does not read `GAMEMODE`) |
 | `MAX_PLAYERS` | `20` | Maximum concurrent players |
 | `PVP` | `true` | Enable PvP |
 | `LEVEL` | `world` | World save folder name; this is the server's world assignment (stopped server only, one world per server) |
@@ -1208,7 +1359,7 @@ USE_AIKAR_FLAGS=true
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ENABLE_RCON` | `true` | Enable RCON (required for mcctl exec/console) |
-| `RCON_PASSWORD` | - | RCON password (inherited from platform .env) |
+| `RCON_PASSWORD` | - | RCON password (from the platform `.env` through `servers/global.env`) |
 | `RCON_PASSWORD_FILE` | - | Read password from file (Docker Secrets) |
 | `RCON_PORT` | `25575` | RCON port |
 
@@ -1218,7 +1369,7 @@ USE_AIKAR_FLAGS=true
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MODRINTH_PROJECTS` | - | Project slugs (comma/newline separated) |
+| `MODRINTH_PROJECTS` | - | Project slugs, comma-separated on one line |
 | `MODRINTH_DOWNLOAD_DEPENDENCIES` | `none` | `required`, `optional`, `none` |
 | `MODRINTH_PROJECTS_DEFAULT_VERSION_TYPE` | `release` | `release`, `beta`, `alpha` |
 
@@ -1226,7 +1377,7 @@ USE_AIKAR_FLAGS=true
 
 | Variable | Description |
 |----------|-------------|
-| `CF_API_KEY` | CurseForge API key (optional: built in for Java 17+ images; set only for java8/pre-17 tags or your own key) |
+| `CF_API_KEY` | CurseForge API key (optional: built in for Java 17+ images; for java8/pre-17 tags or your own key, set it per server with `mcctl config <server> CF_API_KEY '<key>'`) |
 | `CURSEFORGE_FILES` | Mod slugs, IDs, or URLs |
 
 **Spiget:**
@@ -1302,148 +1453,228 @@ USE_AIKAR_FLAGS=true
 
 ## 8. REST API Reference
 
-Management Console provides a REST API on port 5001.
+mcctl-api is the Fastify REST API behind the Web Console: port `5001` (`PORT`), listening on `HOST` (default `0.0.0.0`), run on the host by PM2 as `mcctl-api` (not in Docker). Full reference: `docs/api/index.md` (authentication, errors, SSE, Swagger) and `docs/api/endpoints.md` (every route with bodies, responses and status codes). Paths below are complete; only the legacy `/servers/:id/console/exec` lacks `/api`. `:name` and body fields `serverName` take the server name without `mc-` (`survival`, not `mc-survival`).
 
 ### Authentication
 
-```bash
-# API Key (recommended)
-curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers
+`AUTH_MODE` and its settings are environment variables of the `mcctl-api` app in `<root>/ecosystem.config.cjs`, written by `mcctl console init`:
 
-# Basic Auth
-curl -u admin:password http://localhost:5001/api/servers
+| `AUTH_MODE` | Requirement | Request header | `mcctl console init` mode |
+|-------------|-------------|----------------|---------------------------|
+| `disabled` | none | - | `open` |
+| `api-key` | `AUTH_API_KEY` | `X-API-Key: <key>` | `api-key` (key printed once) |
+| `ip-whitelist` | client address in `AUTH_IP_WHITELIST` (IPs or CIDR, comma-separated) | - | `internal` (default; `127.0.0.1,::1,::ffff:127.0.0.1`) or `ip-whitelist` |
+| `basic` | user in `AUTH_USERS` (JSON `[{"username","passwordHash"}]`, bcrypt) | `Authorization: Basic <base64>` | not offered |
+| `combined` | API key and IP whitelist | `X-API-Key: <key>` | `api-key-ip` |
+
+```bash
+curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers   # api-key / combined
+curl -u admin:password http://localhost:5001/api/servers            # basic
 ```
 
-**5 Authentication Modes:**
-
-| Mode | Description | Use Case |
-|------|-------------|----------|
-| `internal` | Internal access only, no external exposure (default) | Home/local deployment |
-| `api-key` | X-API-Key header required | Automation, scripts |
-| `ip-whitelist` | IP-based access control | Known client IPs |
-| `api-key-ip` | Both API key AND IP required | Maximum security |
-| `open` | No authentication | Development only |
-
-> **Note**: `internal`, `api-key-ip` and `open` are not in mcctl-api's list of recognised `AUTH_MODE` values yet (it recognises `disabled`, `api-key`, `ip-whitelist`, `basic`, `combined`), so do not rely on them to behave as described. Use `api-key` or `ip-whitelist`. Tracked in #633.
+- Unset or unknown `AUTH_MODE`: `api-key` when `NODE_ENV=production`, else `disabled`. mcctl-api does not start when the mode's required variable is missing. `AUTH_EXCLUDE_PATHS` (default `/health,/health/`) skip authentication.
+- The key is read only from `X-API-Key`; `Authorization: Bearer` gets 401. Failures: 401 `{"error":"AuthenticationError","message":"Missing X-API-Key header"}` (also `Invalid API key`, `Invalid credentials`), 403 `AuthenticationError` `IP address not allowed`.
+- `X-Role: admin` is required by `DELETE /api/audit-logs`, `GET /api/platform-settings` and `PUT /api/platform-settings` (403 `Forbidden` otherwise). `X-User` becomes the audit actor `api:<user>` for the file routes and `PUT /api/platform-settings` (other routes record `api:console`) and is required by `GET /api/auth/me`. The console adds both headers when it forwards requests that need them.
+- Change the mode or key with `mcctl console init --force`; `mcctl console api ...` only edits `api-config.json`, which mcctl-api does not read (#633).
+- Swagger UI `/docs` and the spec `/docs/json` are served only when `NODE_ENV` is not `production` or `SWAGGER_ENABLED=true`; they need the same authentication as other routes.
 
 ### All Endpoints
 
-**Health:**
+105 routes, one line each (details in `docs/api/endpoints.md`).
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Health check |
+**Health**
 
-**Servers:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/health` | `{status: "ok", timestamp}`; always 200; no auth by default |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers` | List all servers (`?include=summary` adds type, version, memory, players, stats per server and `totals`; RCON ~2 s timeout, cached ~10 s) |
-| POST | `/api/servers` | Create new server |
-| GET | `/api/servers/:name` | Get server details |
-| DELETE | `/api/servers/:name` | Delete server |
-| POST | `/api/servers/:name/start` | Start server |
-| POST | `/api/servers/:name/stop` | Stop server |
-| POST | `/api/servers/:name/restart` | Restart server |
-| POST | `/api/servers/:name/exec` | Execute RCON command |
-| GET | `/api/servers/:name/logs` | Get logs (supports SSE with `?stream=true`) |
-| GET | `/api/servers/:name/config` | Get server configuration |
-| PUT | `/api/servers/:name/config` | Update server configuration |
-| POST | `/api/servers/:name/world/reset` | Reset server world |
+**Servers**
 
-**SSE (Server-Sent Events):**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers` | `servers/` dirs with `config.env` + `mc-*` containers: `{servers: [{name, container, status, health, hostname}], total}`. `?include=summary` adds `type`, `version`, `memory`, `players` (`null` on RCON failure), `stats {memoryUsage, memoryLimit}` and `totals {playersOnline, playersMax, running}` (RCON ~2 s, stats ~3 s, cached ~10 s); other `include` values → 400 |
+| GET | `/api/servers/:name` | `{server}`: list fields + `type`, `version`, `memory`, `uptime`, `uptimeSeconds`, `players {online, max, players[]}`, `stats {memoryUsage, memoryLimit, memoryPercent, cpuPercent}`, `worldName`, `worldSize`, `playitDomain`; no container → `status: "not_created"` from `config.env` |
+| GET | `/api/servers-status` | `[{serverName, status, health, timestamp}]` (status: running/exited/created/stopped/unknown); `?follow=true&interval=` → SSE `server-status` per server |
+| GET | `/api/servers/:name/status` | Same object for one server; SSE with `follow` |
+| POST | `/api/servers` | Create; 201 `{success, server {name, container, status: "starting" or "created"}, warning?}`; `?follow=true` → SSE `server-create` / `server-create-log` messages; 400 validation, 409 exists or world in use |
+| DELETE | `/api/servers/:name` | Delete; world inside the server moved to `worlds/` (`?deleteWorld=true` deletes it); optional body `{sudoPassword}`; reply may add `warning`; 409 refusals, 500 Docker failures |
+| POST | `/api/servers/:name/start` | `docker compose up -d mc-<name>` → `{success, server, action, timestamp, message}` (`message` = compose stdout, may be empty); failure 500 `{success: false, error, message}` |
+| POST | `/api/servers/:name/stop` | `docker compose stop mc-<name>`; with `BACKUP_AUTO_ON_STOP=true` also a background world backup |
+| POST | `/api/servers/:name/restart` | `docker compose restart mc-<name>` |
+| POST | `/api/servers/:name/exec` | `{command}` (1-1024 chars) → `docker exec mc-<name> rcon-cli -- <command>` → `{success, output}` (stdout only; `success` is true whenever the container exists) |
+| GET | `/api/servers/:name/logs` | `?lines=` (1-10000, default 100) → `{logs, lines}`; `?follow=true` → SSE `data: {"type":"server-log","data":{"log":"..."}}`, then `connection-closed`; 404 without a container |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/sse/servers-status` | Stream all server statuses (real-time) |
+**Server configuration**
 
-**Router:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers/:name/config` | `{config}`: camelCase fields for `config.env` variables present (61 fields, e.g. `maxPlayers` = `MAX_PLAYERS`, `gameMode` = `GAMEMODE`, `motd`, `memory`, `level`) |
+| PATCH | `/api/servers/:name/config` | Any subset → `{success, config, restartRequired, changedFields}`; a changed `level` is a world assignment (stopped server, R1); 409 on refused `server.yaml` writes |
+| POST | `/api/servers/:name/world/reset` | Empties `worlds/<LEVEL>` (keeps `.meta`); 409 unless the container is stopped, and for internal or shared worlds |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/router/status` | Get mc-router status and routes. Router adds optional `image`, `autoScale { up, down, downAfter?, asleepMotd? }`, `resolver { hostIp?, hostIps[] }`; each route adds `autoScaleUp`, `autoScaleDown`, `discoveredByRouter` (absent when mc-router or its management API `127.0.0.1:25580/routes` is unreadable; stopped routes are not judged while global `AUTO_SCALE_UP` is off) |
-| POST | `/api/router/restart` | Restart mc-router (`docker compose restart router`); no body; 200 `{ success, message }`, 500 `{ error, message }`; audit action `router.restart`; admin-only in the console |
-| GET | `/api/router/status/stream` | SSE: `router-status` (same payload as `/status`; sent on connect, then only on change, `uptimeSeconds` ignored), `router-status-error` `{ timestamp }`; `?interval=` 1000..60000 ms (default 5000); heartbeat every 30s |
-| GET | `/api/router/logs/stream` | SSE: `connected`, `router-log` (`{ ts?, kind: connect/wake/error/info, hostname?, target?, player?, raw }`), `end` `{ code, error? }`; `?tail=` 1..500 (default 100); heartbeat every 30s |
+**Hostnames**
 
-**Players:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers/:name/hostnames` | `{serverName, hostnames[], systemHostnames [{hostname, type, description}], customHostnames[]}`; system = `<server>.local`, `<server>.<ip>.nip.io` |
+| PUT | `/api/servers/:name/hostnames` | `{customHostnames: []}` replaces all custom hostnames; reply adds `success`, `recreateRequired: true`, `playitDomain`; applies after stop + start |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers/:name/players` | Online (RCON) + known (files) player roster; works while stopped; `?follow=true` for SSE (v2.27.0+) |
-| GET | `/api/servers/:name/players/:uuid` | Single known player; `?include=stats,nbt,sessions` (v2.27.0+) |
-| GET | `/api/players/:username` | Get player info from Mojang |
+**Mods** (source `modrinth`, stored in `MODRINTH_PROJECTS`)
 
-**Whitelist:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers/:name/mods` | `{mods: {modrinth: [slugs]}}` |
+| POST | `/api/servers/:name/mods` | `{slugs: [], source?}` → `{success, added, mods}` |
+| DELETE | `/api/servers/:name/mods/:slug` | `{success, removed}`; 404 if not listed |
+| GET | `/api/servers/:name/mods/installed` | `{mods: [{filename, excluded}]}` from `data/mods/*.jar` |
+| PATCH | `/api/servers/:name/mods/installed/:filename/exclude` | `{excluded}` toggles the name in `MODRINTH_EXCLUDE_FILES` (`CF_EXCLUDE_MODS` for `AUTO_CURSEFORGE`) → `{success, filename, excluded, excludeList, restartRequired}` |
+| GET | `/api/mods/search` | `?q=&limit=10&offset=0&type=modpack` → `{hits, totalHits, offset, limit}` |
+| GET | `/api/mods/projects` | `?slugs=a,b&source=` → `{projects: {<slug>: {...} or null}}` |
+| GET | `/api/mods/:slug/versions` | `{slug, loaders, byLoader: {<loader>: {gameVersions, recommended}}}`; 404 when none |
+| GET | `/api/mods/:slug/client-only` | `?version=` → `{slug, clientOnly: []}` (partial file names for `excludeFiles`); 502 on failure |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers/:name/whitelist` | Get whitelist |
-| POST | `/api/servers/:name/whitelist` | Add to whitelist |
-| DELETE | `/api/servers/:name/whitelist/:player` | Remove from whitelist |
+**Files** (inside `servers/<name>/data`; `path` relative to it; leaving it, also via symlinks, → 403; audited as `api:<X-User>`)
 
-**Bans:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers/:name/files` | `?path=/` → `{path, files: [{name, type, size, modifiedAt}]}` (dot entries hidden) |
+| GET | `/api/servers/:name/files/read` | `?path=` → `{path, content, size, modifiedAt}`; 413 over 5 MB |
+| PUT | `/api/servers/:name/files/write` | `?path=` + `{content}` (5 MB max) → `{success, path, size, modifiedAt}` |
+| DELETE | `/api/servers/:name/files` | `?path=` (not `/`): file or directory |
+| POST | `/api/servers/:name/files/mkdir` | `?path=`; 409 if it exists |
+| POST | `/api/servers/:name/files/rename` | `{oldPath, newPath}`; 409 if the target exists |
+| POST | `/api/servers/:name/files/upload` | `?path=` (existing dir) + multipart; 100 MB per file (413) → `{success, path, files[]}` |
+| GET | `/api/servers/:name/files/download` | `?path=` → `application/octet-stream` attachment |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers/:name/bans` | Get banned players |
-| POST | `/api/servers/:name/bans` | Ban player |
-| DELETE | `/api/servers/:name/bans/:player` | Unban player |
+**Players and access lists** (changes, ban/op lists and kick need a container, else 404)
 
-**Operators:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers/:name/players` | `{serverName, running, online, max, players[], roster [{uuid, name, lastSeen, isOp, isBanned, isWhitelisted, online}]}`; works while stopped; `?follow=true` → SSE `players` |
+| GET | `/api/servers/:name/players/:uuid` | One known player; `?include=stats,nbt,sessions` adds `stats`, `data` + `livePosition`, `sessions` (unknown value 400, unknown player 404) |
+| GET | `/api/servers/:name/players/live` | `{players: [{uuid, name?, x, y, z, dimension, online, health?, food?, xpLevel?}]}` over RCON; empty when stopped; SSE `players-live` |
+| GET | `/api/players/:username` | Mojang lookup → `{username, uuid, skinUrl}` |
+| GET | `/api/servers/:name/whitelist` | `{players: [{name, uuid}], total, source: rcon/file/config, enabled}` |
+| POST | `/api/servers/:name/whitelist` | `{player}` → `{success, message, source}`: RCON when running, else `whitelist.json` |
+| DELETE | `/api/servers/:name/whitelist/:player` | Same handling as add |
+| GET | `/api/servers/:name/whitelist/status` | `{enabled, source: "config"}` (`ENABLE_WHITELIST`) |
+| PUT | `/api/servers/:name/whitelist/status` | `{enabled}` writes `ENABLE_WHITELIST` (+ RCON `whitelist on/off` while running) |
+| GET | `/api/servers/:name/bans` | `{players: [{name, uuid, reason, created, source, expires}], total, source: "file"}` |
+| POST | `/api/servers/:name/bans` | `{player, reason?}`: RCON `ban` when running, else `banned-players.json` |
+| DELETE | `/api/servers/:name/bans/:player` | RCON `pardon` or the file |
+| GET | `/api/servers/:name/ops` | `{operators: [{name, uuid, level, role, bypassesPlayerLimit}], count, source: "file"}` (role: Moderator 1, Gamemaster 2, Admin 3, Owner 4) |
+| POST | `/api/servers/:name/ops` | `{player, level?}` (1-4, default 4) → `{success, operator, source}`; edits `ops.json` only; 404 when Mojang has no UUID |
+| PATCH | `/api/servers/:name/ops/:player` | `{level}` (1-4); 404 if not an operator |
+| DELETE | `/api/servers/:name/ops/:player` | Removes from `ops.json`; 404 if not an operator |
+| POST | `/api/servers/:name/kick` | `{player, reason?}` via RCON; 400 when not running |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers/:name/ops` | Get operators |
-| POST | `/api/servers/:name/ops` | Add operator |
-| DELETE | `/api/servers/:name/ops/:player` | Remove operator |
+**Worlds** (World assignment rules: §5 World Management; 400 invalid name, 404 unknown server or world, 409 refused)
 
-**Kick:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/worlds` | `{worlds: [{name, path, isLocked, lockedBy, servers[], size, lastModified, dimensions {nether, end}}], total, assignmentWarnings[]}`; `<w>_nether`/`<w>_the_end` folded into `<w>` |
+| GET | `/api/worlds/:name` | `{world}`; any directory right under `worlds/` incl. legacy names (`My%20World`); `.`-prefixed → 400, not a directory → 404 |
+| POST | `/api/worlds` | `{name, seed?, serverName?, autoStart?}` → 201 `{success, worldName, seed, serverName, started}`; creates `worlds/<name>/.meta`; 400 if no server exists at all or the name is taken |
+| POST | `/api/worlds/upload` | `?name=` + multipart `.zip` containing `level.dat` → 201; 409 exists; 413 over `WORLD_UPLOAD_MAX_SIZE` (1 GiB) |
+| POST | `/api/worlds/:name/assign` | `{serverName}`: sets `LEVEL` of a stopped server; 409 if another server uses the world |
+| POST | `/api/worlds/:name/release` | Server goes back to its own world `<server>` → `{success, worldName, previousServer, fallbackWorld, fallbackExists}` |
+| DELETE | `/api/worlds/:name` | Deletes `worlds/<name>` + `<name>_nether`/`<name>_the_end`; 409 while a server uses it |
+| GET | `/api/worlds/:name/info` | `{info: {name, level {seed, spawn, gameMode, difficulty, versionName, worldBorder, gameRules, ...}, dimensions, sizeBytes, regionCount, lastModified}}` |
+| GET | `/api/worlds/:name/players` | Last saved player positions from player data |
+| GET | `/api/worlds/:name/map/status` | `{rendered, maps[], lastModified?}` |
+| POST | `/api/worlds/:name/map/render` | BlueMap CLI in Docker (2 GB limit) → `maps/<name>/web`; `{dimensions?, force?}`; `?follow=true` → SSE `progress`, `done`, `error` |
+| GET | `/api/worlds/:name/map/web/*` | Rendered map files (`<file>.gz` served decompressed) |
+| POST | `/api/worlds/:name/map/markers` | Structure markers → `{counts, total}`; 409 before a render |
+| GET | `/api/worlds/:name/stats` | Cached block statistics (`stats/<name>.json`); 404 before the first analysis |
+| POST | `/api/worlds/:name/stats/analyze` | Full region scan; `?follow=true` → SSE `progress`, `done`, `cancelled`, `error`; stops after `STATS_ANALYZE_TIMEOUT_MS` (10 min) or on disconnect |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/servers/:name/kick` | Kick player |
+**Router**
 
-**Worlds:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/router/status` | `{router {name, status, health, port, uptime?, uptimeSeconds?, mode: "--in-docker (auto-discovery)", routes [{hostname, target, serverStatus, serverType?, serverVersion?, autoScaleUp?, autoScaleDown?, discoveredByRouter?}], image?, autoScale? {up, down, downAfter?, asleepMotd?}, resolver? {hostIp?, hostIps}}, avahi, playit?}`; `discoveredByRouter` is absent when mc-router or its management API `127.0.0.1:25580/routes` is unreadable, and for stopped routes while global `AUTO_SCALE_UP` is off |
+| GET | `/api/router/status/stream` | SSE `router-status` (on connect, then only on change; `uptimeSeconds` ignored), `router-status-error {timestamp}`; `?interval=` 1000-60000 (5000) |
+| GET | `/api/router/logs/stream` | SSE `connected`, `router-log {ts?, kind: connect/wake/error/info, hostname?, target?, player?, raw}`, `end {code, error?}`; `?tail=` 1-500 (100) |
+| POST | `/api/router/restart` | `docker compose restart router` → `{success, message}`; 500 `{error, message}`; audit `router.restart`; the console shows the button to admins only |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/worlds` | List all worlds |
-| POST | `/api/worlds` | Create world |
-| GET | `/api/worlds/:name` | Get world details |
-| DELETE | `/api/worlds/:name` | Delete world |
-| POST | `/api/worlds/:name/assign` | Assign world to a stopped server (409 if another server uses it) |
-| POST | `/api/worlds/:name/release` | Switch the world's server back to its own default world (response adds `fallbackWorld`, `fallbackExists`) |
+**Backups** (GitHub repo from `BACKUP_GITHUB_TOKEN`, `BACKUP_GITHUB_REPO`, `BACKUP_GITHUB_BRANCH` in `.env`)
 
-**Backup:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/backup/status` | `{configured, repository?, branch, lastBackup?}` (`branch` defaults to `main`) |
+| POST | `/api/backup/push` | `{message?, allowMissing?}` → `{success, commitHash?, message}` (`No changes to backup` counts as success); running servers flushed via RCON first; 400 not configured or missing worlds, 409 another backup or unfinished restore, 503 Docker unreachable |
+| GET | `/api/backup/history` | Last 20 commits `{commits: [{hash, message, date, author}], total}`; 400 when not configured |
+| POST | `/api/backup/restore` | `{commitHash}` (7+ chars); all servers stopped; previous data kept in `backups/restore-previous/<timestamp>/` (last 3); 409 / 404 / 503 |
+| GET | `/api/backup/schedules` | `{schedules: [{id, name, cronExpression, cronHumanReadable, retentionPolicy {maxCount?, maxAgeDays?}, enabled, lastRunAt, lastRunStatus, lastRunMessage, createdAt, updatedAt}], total}` |
+| POST | `/api/backup/schedules` | `{name, cron, maxCount?, maxAgeDays?, enabled?}` → 201 |
+| GET | `/api/backup/schedules/:id` | One schedule |
+| PUT | `/api/backup/schedules/:id` | Update `name`, `cron`, `maxCount`, `maxAgeDays` |
+| PATCH | `/api/backup/schedules/:id/toggle` | `{enabled}` |
+| DELETE | `/api/backup/schedules/:id` | `{success, message}` |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/backup/status` | Get backup config status |
-| POST | `/api/backup/push` | Push backup to GitHub |
-| GET | `/api/backup/history` | Get backup history |
-| POST | `/api/backup/restore` | Restore from backup |
+**Config snapshots** (copies of `server.yaml`, `config.env`, `docker-compose.yml` and other `.yml`/`.yaml`/`.json`/`.properties` files directly in `servers/<name>/`, up to 1 MB each)
 
-**Audit:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/servers/:name/config-snapshots` | `?limit=20&offset=0` → `{snapshots: [{id, serverName, createdAt, description, files [{path, hash, size}], scheduleId?}], total}` |
+| POST | `/api/servers/:name/config-snapshots` | `{description?}` → 201 snapshot |
+| GET | `/api/servers/:name/config-snapshots/:id` | One snapshot (404 if it belongs to another server) |
+| DELETE | `/api/servers/:name/config-snapshots/:id` | 204 |
+| POST | `/api/servers/:name/config-snapshots/:id/restore` | `{createSnapshotBeforeRestore = true, force = false}` → `{restored, safetySnapshot?}`; 409 while running (without `force`) or on a world assignment conflict |
+| GET | `/api/config-snapshots/:id1/diff/:id2` | `{baseSnapshotId, compareSnapshotId, changes [{path, status: added/modified/deleted, ...}], summary, hasChanges}` |
+| GET | `/api/config-snapshot-schedules` | `?serverName=` → `{schedules: []}` |
+| POST | `/api/config-snapshot-schedules` | `{serverName, name, cronExpression, retentionCount? (1-100, default 10), enabled?}` → 201 |
+| GET | `/api/config-snapshot-schedules/:id` | One schedule |
+| PUT | `/api/config-snapshot-schedules/:id` | Update `name`, `cronExpression`, `retentionCount` |
+| PATCH | `/api/config-snapshot-schedules/:id/toggle` | `{enabled}` |
+| DELETE | `/api/config-snapshot-schedules/:id` | 204; its snapshots are kept |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/audit` | List audit logs (with filtering) |
-| GET | `/api/audit/stats` | Audit log statistics |
-| GET | `/api/audit/:id` | Get audit log detail |
-| DELETE | `/api/audit` | Purge old audit logs |
-| GET | `/api/audit/stream` | SSE stream: real-time audit events |
+**playit.gg**
 
-**Swagger:**
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/playit/status` | `{enabled, agentRunning, secretKeyConfigured, containerStatus, uptime?, uptimeSeconds?, servers [{serverName, playitDomain, lanHostname}]}` |
+| POST | `/api/playit/start` | Start `playit-agent` → `{success, message}`; audit `playit.start` |
+| POST | `/api/playit/stop` | Stop `playit-agent`; audit `playit.stop` |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/docs` | OpenAPI/Swagger documentation |
+**Platform Settings** (`<root>/.env`; both need `X-Role: admin`; 404 before `mcctl init`)
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/platform-settings` | `{revision, settings [{key, label, group, type, status, source, editable, secret, value? or configured?, restartScope, ...}], runtime []}`; secrets return only `configured` |
+| PUT | `/api/platform-settings` | `{revision, set: {}, remove: []}` → `{revision, changedKeys, removedKeys, restartScopes}`; blank secret = keep; 400 `errors[]`, 409 stale `revision` (`currentRevision`) or world-location change (`servers`); audit by key name only |
+
+**Audit logs** (`data/audit.db`, shared with the CLI)
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/api/audit-logs` | `?action=&actor=&targetType=&targetName=&status=&from=&to=&limit=&offset=&sort=` → `{logs, total, limit, offset, filters}`; `limit` 1-200 (50); exact-match filters; only the first of several comma-separated actions applies |
+| GET | `/api/audit-logs/stats` | No parameters → `{total, byAction, byStatus, byActor (newest 1000 entries), recentActivity (10), oldestEntry, newestEntry}` |
+| GET | `/api/audit-logs/:id` | `{log, relatedLogs: {sameTarget, sameActor}}` (up to 10 each) |
+| GET | `/api/audit-logs/stream` | SSE `connected`, `audit-log`, `heartbeat`; only entries written by this mcctl-api process (not CLI writes); no filters |
+| DELETE | `/api/audit-logs` | Needs `X-Role: admin`; body `{before, dryRun?}` → `{deleted, dryRun, message}` |
+
+**Legacy**
+
+| Method | Path | Notes |
+|--------|------|-------|
+| POST | `/api/auth/login` | Checks `<root>/users.yaml`, which current mcctl does not create (console accounts are in the console DB, `mcctl console user`), so it answers 401 on new installs |
+| GET | `/api/auth/me` | `{username, role}` from `X-User` / `X-Role` (`role` defaults to `user`); 401 without `X-User` |
+| POST | `/servers/:id/console/exec` | No `/api` prefix; `{command}` → `{output, exitCode}`; does not check that the server exists |
+
+### Conventions
+
+- **Errors** are `{"error": "<Name>", "message": "..."}`: `BadRequest` (route) or `Bad Request` (schema; some routes add `statusCode` and `code: "FST_ERR_VALIDATION"`) 400, `AuthenticationError` 401/403, `Forbidden` 403, `NotFound` 404 (unknown route: `{"message":"Route GET:/x not found","error":"Not Found","statusCode":404}`), `Conflict` 409, `PayloadTooLarge` 413, `InternalServerError` 500, `BadGateway` 502, `ServiceUnavailable` 503. Start/stop/restart failures use `{success: false, server, action, timestamp, error, message}`.
+- **Status codes**: 201 for creates (server, world, upload, snapshot, schedules), 204 for snapshot and snapshot-schedule deletes.
+- **Writes through `server.yaml`**: config, whitelist on/off, hostnames, mods and world assignment update `servers/<name>/server.yaml` and render `config.env` and the compose file; a refused write (e.g. hand-edited compose) is 409. Values written to `config.env` may not contain control characters or start with a quote (400).
+- **Create and delete** run one at a time inside mcctl-api.
+- **SSE**: named events (`event:` + `data:`) for status, players, router, audit, map render and stats; typed messages (`data: {"type": ..., "data": {...}}`) for logs and create. `: heartbeat` every 30 s (audit: `event: heartbeat`); polling streams take `interval` 1000-60000 ms (default 5000). The browser `EventSource` cannot send `X-API-Key`: use `curl -N`, `fetch` with a stream reader, or the console, which proxies `/api/sse/<path>` to mcctl-api `/api/<path>?follow=true` for signed-in users.
 
 ### Example: List Servers
 
 ```bash
 curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers
+curl -H "X-API-Key: mctk_xxx" "http://localhost:5001/api/servers?include=summary"
 ```
 
 ### Example: Execute Command
@@ -1453,6 +1684,7 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
   -H "Content-Type: application/json" \
   -d '{"command": "list"}' \
   http://localhost:5001/api/servers/survival/exec
+# {"success":true,"output":"There are 3 of a max of 20 players online: ..."}
 ```
 
 ### Example: Create Server
@@ -1464,17 +1696,10 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
   -d '{"name": "survival", "type": "PAPER", "version": "1.21.1", "memory": "4G"}' \
   http://localhost:5001/api/servers
 
-# MODRINTH modpack server (v1.14.0+)
+# MODRINTH modpack server
 curl -X POST -H "X-API-Key: mctk_xxx" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "cobblemon",
-    "type": "MODRINTH",
-    "memory": "6G",
-    "modpack": "cobblemon-modpack",
-    "modLoader": "fabric",
-    "modpackVersion": ""
-  }' \
+  -d '{"name": "cobblemon", "type": "MODRINTH", "modpack": "cobblemon-modpack", "modLoader": "fabric"}' \
   http://localhost:5001/api/servers
 ```
 
@@ -1482,18 +1707,19 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Server name |
-| `type` | string | No | Server type (default: `PAPER`). Use `MODRINTH` for modpacks |
-| `version` | string | No | Minecraft version (default: `LATEST`) |
-| `memory` | string | No | Memory allocation (default: `4G`) |
-| `modpack` | string | No | Modrinth modpack slug, ID, or URL (required for `MODRINTH` type) |
-| `modpackVersion` | string | No | Specific modpack version ID (empty for latest) |
-| `modLoader` | string | No | Mod loader override: `forge`, `fabric`, `neoforge`, `quilt` (empty for auto-detect) |
-| `seed` | string | No | World seed |
-| `worldUrl` | string | No | Download world from a ZIP URL |
-| `worldName` | string | No | Use existing world from worlds/ |
-| `autoStart` | boolean | No | Start server after creation (default: `true`) |
-| `sudoPassword` | string | No | Sudo password for mDNS registration |
+| `name` | string | Yes | 2-32 chars: lowercase letter first, then lowercase letters, digits, single hyphens; `router` reserved |
+| `type` | string | No | `PAPER` (default), `VANILLA`, `FORGE`, `FABRIC`, `SPIGOT`, `NEOFORGE`, `MODRINTH`, `AUTO_CURSEFORGE` |
+| `version` | string | No | Default `LATEST`; for `MODRINTH`/`AUTO_CURSEFORGE` no `VERSION` is written unless given |
+| `memory` | string | No | `^\d+[MG]$`; default `4G` (`6G` for modpack types) |
+| `seed` / `worldUrl` / `worldName` | string | No | At most one (400 otherwise); `worldName` must exist in `worlds/` |
+| `autoStart` | boolean | No | Default `true` |
+| `sudoPassword` | string | No | For adding `<name>.local` to `/etc/avahi/hosts` (write-only) |
+| `modpack` | string | For `MODRINTH`/`AUTO_CURSEFORGE` | Modrinth modpack slug, ID or URL |
+| `modpackVersion` | string | No | Modpack version (max 128) |
+| `modLoader` | string | No | `forge`, `fabric`, `neoforge`, `quilt`; with `version`, an incompatible pair is 400 when Modrinth answers |
+| `excludeFiles` | string[] | No | Up to 100 mods to leave out (`MODRINTH_EXCLUDE_FILES` / `CF_EXCLUDE_MODS`) |
+
+The JSON reply waits at most 120 s for the container start; after that, or when the first start fails, it is still 201 with `status: "created"` and a `warning`.
 
 ### Example: Start/Stop/Restart Server
 
@@ -1506,45 +1732,36 @@ curl -X POST -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers/survival
 ### Example: Get Server Logs
 
 ```bash
-# Static logs (last N lines)
+# Last N lines (JSON)
 curl -H "X-API-Key: mctk_xxx" "http://localhost:5001/api/servers/survival/logs?lines=50"
 
 # SSE streaming logs
-curl -N -H "X-API-Key: mctk_xxx" "http://localhost:5001/api/servers/survival/logs?stream=true"
+curl -N -H "X-API-Key: mctk_xxx" "http://localhost:5001/api/servers/survival/logs?follow=true"
+# data: {"type":"server-log","data":{"log":"[10:30:15] [Server thread/INFO]: Player1 joined the game"}}
 ```
 
 ### Example: Player Management via API
 
 ```bash
-# Get online players
+# Roster (online + known players)
 curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers/survival/players
 
-# Whitelist operations
-curl -X POST -H "X-API-Key: mctk_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{"player": "Steve"}' \
-  http://localhost:5001/api/servers/survival/whitelist
+# Whitelist add / remove
+curl -X POST -H "X-API-Key: mctk_xxx" -H "Content-Type: application/json" \
+  -d '{"player": "Steve"}' http://localhost:5001/api/servers/survival/whitelist
+curl -X DELETE -H "X-API-Key: mctk_xxx" http://localhost:5001/api/servers/survival/whitelist/Steve
 
-curl -X DELETE -H "X-API-Key: mctk_xxx" \
-  http://localhost:5001/api/servers/survival/whitelist/Steve
+# Ban, kick (kick needs a running server)
+curl -X POST -H "X-API-Key: mctk_xxx" -H "Content-Type: application/json" \
+  -d '{"player": "Griefer", "reason": "Griefing"}' http://localhost:5001/api/servers/survival/bans
+curl -X POST -H "X-API-Key: mctk_xxx" -H "Content-Type: application/json" \
+  -d '{"player": "Troublemaker", "reason": "Breaking rules"}' http://localhost:5001/api/servers/survival/kick
 
-# Ban/Unban
-curl -X POST -H "X-API-Key: mctk_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{"player": "Griefer", "reason": "Griefing"}' \
-  http://localhost:5001/api/servers/survival/bans
-
-# Kick
-curl -X POST -H "X-API-Key: mctk_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{"player": "Troublemaker", "reason": "Breaking rules"}' \
-  http://localhost:5001/api/servers/survival/kick
-
-# Operator management
-curl -X POST -H "X-API-Key: mctk_xxx" \
-  -H "Content-Type: application/json" \
-  -d '{"player": "TrustedPlayer"}' \
-  http://localhost:5001/api/servers/survival/ops
+# Operator with level (1-4, default 4), then change the level
+curl -X POST -H "X-API-Key: mctk_xxx" -H "Content-Type: application/json" \
+  -d '{"player": "TrustedPlayer", "level": 3}' http://localhost:5001/api/servers/survival/ops
+curl -X PATCH -H "X-API-Key: mctk_xxx" -H "Content-Type: application/json" \
+  -d '{"level": 2}' http://localhost:5001/api/servers/survival/ops/TrustedPlayer
 ```
 
 ### Example: World Management via API
@@ -1559,7 +1776,7 @@ curl -X POST -H "X-API-Key: mctk_xxx" \
   -d '{"name": "newworld", "seed": "12345"}' \
   http://localhost:5001/api/worlds
 
-# Assign world to server
+# Assign world to the stopped server "survival"
 curl -X POST -H "X-API-Key: mctk_xxx" \
   -H "Content-Type: application/json" \
   -d '{"serverName": "survival"}' \
@@ -1577,11 +1794,12 @@ curl -X DELETE -H "X-API-Key: mctk_xxx" \
 ### Example: SSE Real-time Status
 
 ```bash
-# Stream all server statuses (Server-Sent Events)
-curl -N -H "X-API-Key: mctk_xxx" http://localhost:5001/api/sse/servers-status
+# Stream all server statuses
+curl -N -H "X-API-Key: mctk_xxx" "http://localhost:5001/api/servers-status?follow=true&interval=5000"
 
-# Output format:
-# data: {"servers":[{"name":"survival","status":"running","players":3,"maxPlayers":20},...]}
+# Output format (one event per server every interval, plus ": heartbeat" every 30 s):
+# event: server-status
+# data: {"serverName":"survival","status":"running","health":"healthy","timestamp":"2026-10-25T10:30:00.000Z"}
 ```
 
 ### Example: Audit Logs via API
@@ -1589,13 +1807,20 @@ curl -N -H "X-API-Key: mctk_xxx" http://localhost:5001/api/sse/servers-status
 ```bash
 # List audit logs with filtering
 curl -H "X-API-Key: mctk_xxx" \
-  "http://localhost:5001/api/audit?action=server.create&limit=20"
+  "http://localhost:5001/api/audit-logs?action=server.create&limit=20"
 
-# Get audit statistics
-curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/audit/stats
+# Statistics and one entry
+curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/audit-logs/stats
+curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/audit-logs/<id>
 
-# Stream real-time audit events
-curl -N -H "X-API-Key: mctk_xxx" http://localhost:5001/api/audit/stream
+# Stream new entries (events: connected, audit-log, heartbeat)
+curl -N -H "X-API-Key: mctk_xxx" http://localhost:5001/api/audit-logs/stream
+
+# Purge entries older than a date (admin only)
+curl -X DELETE -H "X-API-Key: mctk_xxx" -H "X-Role: admin" \
+  -H "Content-Type: application/json" \
+  -d '{"before": "2025-11-07T00:00:00.000Z", "dryRun": true}' \
+  http://localhost:5001/api/audit-logs
 ```
 
 ### Example: Backup via API
@@ -1616,32 +1841,34 @@ curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/backup/history
 
 ### API Response Formats
 
-**Server Object:**
+**Server object** (`GET /api/servers` items; `GET /api/servers/:name` adds the detail fields):
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Server name |
-| `type` | string | Server type (PAPER, FORGE, etc.) |
-| `version` | string | Minecraft version |
-| `status` | string | `running`, `stopped`, `starting`, `not_created` |
-| `players` | number | Online player count |
-| `maxPlayers` | number | Maximum players |
-| `memory` | string | Allocated memory |
-| `hostname` | string | Connection hostname |
-| `uptime` | string | Container uptime |
-| `health` | string | `healthy`, `unhealthy`, `starting` |
+| `name` | string | Server name (no `mc-` prefix) |
+| `container` | string | `mc-<name>` |
+| `status` | string | `running`, `exited`, `created`, `paused`, `restarting`, `dead`, `not_created` (directory without a container) |
+| `health` | string | `healthy`, `unhealthy`, `starting`, `none`, `unknown` |
+| `hostname` | string | The `mc-router.host` label (comma-separated when several), `-` when none |
+| `type`, `version`, `memory` | string | From `config.env` (summary and detail) |
+| `players` | object | `{online, max, players: string[]}` (summary: `null` when RCON fails) |
+| `stats` | object | Summary: `{memoryUsage, memoryLimit}` bytes; detail adds `memoryPercent`, `cpuPercent` |
+| `uptime`, `uptimeSeconds` | string, number | Detail, only while running |
+| `worldName`, `worldSize`, `playitDomain` | string | Detail only |
 
-**Audit Log Object:**
+**Audit log entry:**
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string | UUID |
-| `action` | string | e.g., `server.create`, `player.whitelist.add` |
-| `actor` | string | e.g., `cli:local`, `api:admin` |
-| `target` | string | Server or player name |
+| `action` | string | e.g. `server.create`, `player.whitelist.add` (49 actions, see the audit FAQ) |
+| `actor` | string | `api:console` (most API routes), `api:<user>` (file routes, Platform Settings), `cli:local` (CLI), `scheduler` (retention cleanup after a scheduled backup) |
+| `targetType` | string | `server`, `world`, `player`, `service`, `system`, `platform`, `backup`, `backup-schedule`, `config-snapshot-schedule`, `audit` |
+| `targetName` | string | Server, world, service or schedule name |
+| `details` | object or null | Context; fields depend on the action |
 | `status` | string | `success`, `failure` |
-| `details` | object | Additional context |
-| `createdAt` | string | ISO 8601 timestamp |
+| `errorMessage` | string or null | Error of a failed action |
+| `timestamp` | string | ISO 8601 |
 
 ---
 
@@ -1649,14 +1876,16 @@ curl -H "X-API-Key: mctk_xxx" http://localhost:5001/api/backup/history
 
 ### Overview
 
-mcctl-console is a Next.js web application providing a modern UI for managing Minecraft servers.
+mcctl-console is a Next.js web application for managing servers, worlds, players, backups, routing and the audit log from a browser (default `http://localhost:5000`). It needs mcctl-api: `mcctl console service start --console` starts both under PM2.
 
 **Key Technologies:**
-- Next.js 14+ (App Router)
-- React 18+ with MUI 5.x (Material UI)
-- Better Auth for session-based authentication
-- React Query for data fetching and caching
-- SSE (Server-Sent Events) for real-time updates
+- Next.js 14 (App Router)
+- React 18 with MUI 5 (dark theme only)
+- Better Auth: sessions stored in the console database `data/mcctl.db` (SQLite) behind a session cookie; a session lasts 7 days and is extended at most once a day while used
+- React Query 5 for data fetching and caching
+- SSE (Server-Sent Events) for server status, logs, players, router status and log, and audit log updates
+
+**Roles**: **Admin** or **User**. Accounts made on the sign-up page get **User** and see only servers they were granted on a server's **Access** tab (per-server **Viewer**, **Operator**, **Owner**); a User who creates a server becomes its Owner. Admin only: Platform Settings, the Users page, **Restart mc-router**, purging audit logs (API). Users are added and changed with `mcctl console user`.
 
 ### BFF Proxy Architecture
 
@@ -1672,134 +1901,166 @@ mcctl-console is a Next.js web application providing a modern UI for managing Mi
 
 **Why BFF Proxy?**
 1. API keys stay server-side, never exposed to browser
-2. Better Auth handles user sessions securely
+2. Each BFF route checks the Better Auth session before calling mcctl-api
 3. Type-safe shared TypeScript interfaces
 4. React Query provides optimistic updates and caching
 
+There is no generic `/api` pass-through: each mcctl-api call has its own App Router route under `app/api/`, except SSE (`/api/sse/<path>`, below).
+
 ### Pages and Features
 
-#### Dashboard (`/`)
+**Navigation**: top bar **Dashboard** (`/dashboard`; `/` sends signed-in users there, others to `/login`), **Servers** (`/servers`), **Worlds** (`/worlds`), **Players** (`/players`), **Audit** (`/audit-logs`), **Backups** (`/backups`), **Routing** (`/routing`); user menu **Users** (`/admin/users`, admins, read-only), **Settings** (`/settings`), **Logout**. `/signup` creates a User account (no email verification).
 
-- Server cards showing: name, type, version, status, players, hostname
-- Quick action buttons: Start / Stop / Restart per server
-- Real-time status via SSE (no polling)
-- Create Server dialog with type, version, memory, world options (supports Standard and Modpack modes)
-  - **Standard mode**: Select server type (PAPER, FORGE, etc.), version, memory
-  - **Modpack mode** (v1.14.0+): Enter Modrinth modpack slug, select mod loader (forge/fabric/neoforge/quilt), specify version
-- Recent Activity Feed from audit logs
-- Changelog Feed from GitHub releases
+#### Dashboard (`/dashboard`)
 
-**Status indicators:**
+- Status hero: servers online, "All systems operational" or "N servers need attention", **Live** / **Reconnecting** (SSE); **Create Server** opens `/servers?create=1`
+- Cards: **Total Servers** (running / stopped), **Online Players** (`online / max` over running servers), **Worlds** (assigned / free), **mc-router** (`:<port>`, status, health, routes; red when down or unhealthy)
+- Servers panel: **All / Running / Stopped** filter, up to five rows with status and health chips, primary hostname (the LAN nip.io address first) with copy, players, memory, `TYPE · version`; **Console** (opens `/servers/<name>/console`), **Restart** / **Stop** (confirmed) or **Start**
+- **External Access** (playit.gg agent status, up to three server addresses), **Recent Activity** (audit log; web console actions show the actor `console`), **Recent Updates** (latest release in `CHANGELOG.md` on `main`, fetched by the console server through `GET /api/changelog` and cached 1 hour; **Update available** when newer than the installed console)
 
-| Color | Meaning |
-|-------|---------|
-| Green | Running, healthy |
-| Yellow | Starting, health check in progress |
-| Red | Stopped, unhealthy |
-| Gray | Not created, unknown |
+**Status colors:**
+
+| Color | Status chip | Health chip |
+|-------|-------------|-------------|
+| Green | running | healthy |
+| Amber | created (container never started) | starting |
+| Red | stopped, exited (server cards: also Not Created) | unhealthy |
+| Gray | other or unknown | no health check (**Unknown**) |
+
+#### Servers (`/servers`)
+
+- Server cards (status, primary hostname with `+N`, container name, Start/Stop), **ALL / RUNNING / STOPPED** filter, name search
+- **Create Server** dialog: name (2-32 characters of lowercase letters, digits and hyphens, starting with a letter, no trailing hyphen or `--`; `router` is reserved); **Standard Server** (VANILLA, PAPER, FABRIC, FORGE or NEOFORGE plus a Minecraft version; defaults VANILLA and `LATEST`) or **Modpack** (Modrinth search, then a loader and Minecraft version the pack supports; detected client-only mods pre-fill **Exclude mods**); world (default, seed, or an unassigned existing world); memory (`4G`, `6G` for modpacks); optional **Sudo Password** for the avahi entry; **Auto-start after creation**
+- The dialog waits for `POST /api/servers`, then steps through its stages and ends with **Server Created Successfully**, **Server Created with a Warning** (the server exists but its first start failed or is still running; the reason is shown) or **Creation Failed**
 
 #### Server Detail (`/servers/:name`)
 
-- **Overview Tab**: Container info, uptime, memory, world name/size
-- **Players Tab** (v2.27.0+): Unified online (RCON) + offline (usercache/playerdata/ops/whitelist/banned files) roster, shown even when the server is stopped; real-time via SSE. Avatars (`mc-heads.net`), badges (Online/Offline, OP, Banned, Whitelisted), per-row menu: Details, Kick, Ban/Unban, Make OP/Remove OP, Add/Remove Whitelist
-  - **Player Detail Modal**: Statistics (play time, deaths, mob/player kills, distance, blocks mined, items crafted, advancements; from `stats/`+`advancements/`), Position & Status (XYZ, dimension, health, food, XP level, game mode, inventory summary; from `playerdata/<uuid>.dat`, live position via RCON polled every 5s while online), Session History (visits, total playtime, last seen, recent 20 sessions)
-  - Session history exists only from when the mcctl-api v2.27.0+ collector first runs (first pass backfills up to 24h of container logs)
-- **Console Tab**: RCON command execution with output display
-- **Logs Tab**: Real-time server logs viewer
-- **Mods Tab** (v2.4.0+): View configured mods (Modrinth, CurseForge, Spiget, URL)
-- **Options Tab** (v1.11+): Server configuration editing via web UI
-- **Activity Tab** (v1.10+): Per-server audit log history
-- **Delete**: MoreVert menu with delete confirmation dialog
+- Header: **Switch server** menu; chips for state, health, type, version (and **Reconnecting**); hostname with copy, uptime; **Start**, or **Stop** and **Restart**; ⋮ **Delete Server** (type the name; keep the world, moved to `worlds/` (default), or delete the server's own world; optional **Sudo Password** to remove `<name>.local`; a partial failure shows **Server deleted** with the warning)
+- Cards above the tabs: **CPU usage** (**High** from 70%, **Critical** from 90%), **Memory usage** (`used / allocated`, same marks), **World size**
+- Ten tabs; `?tab=<Tab>` opens one (e.g. `?tab=Options`):
+  - **Overview**: live log console with a `>` prompt, **Send**, chips `/list` `/tps` `/save-all` `/say` `/whitelist list`, **Jump to latest**, **Download logs**, **Clear console (screen only)**, **Expand console** (level filter, Auto-scroll, Hide RCON, quick commands, ↑/↓ history). The RCON reply is not shown, only what the server writes to its log. Panels: **Settings** (container, memory allocation, world), **Players** (online players with OP / Whitelisted badges), **Connection** (every address with port 25565, labeled LAN, Tailscale / VPN, nip.io, External or mDNS, and the playit.gg address)
+  - **Players** (v2.27.0+, online count on the tab): unified online (RCON) + offline (usercache/playerdata/ops/whitelist/banned files) roster, shown even when the server is stopped; real-time via SSE. Avatars (`mc-heads.net`), badges (Online/Offline, OP, Banned, Whitelisted), per-row menu: Details, Kick, Ban/Unban, Make OP/Remove OP, Add/Remove Whitelist
+    - **Player Detail Modal**: Statistics (play time, deaths, mob/player kills, distance, blocks mined, items crafted, advancements; from `stats/`+`advancements/`), Position & Status (XYZ, dimension, health, food, XP level, game mode, inventory summary; from `playerdata/<uuid>.dat`, live position via RCON polled every 5s while online), Session History (visits, total playtime, last seen, recent 20 sessions)
+    - Session history exists only from when the mcctl-api v2.27.0+ collector first runs (first pass backfills up to 24h of container logs)
+  - **World**: info cards (seed, spawn, game mode, difficulty, day, version, size, border, regions, weather), BlueMap **Render map** / **Re-render**, **Analyze** ore and block statistics, player positions
+  - **Activity**: this server's audit entries (Action filter, status toggle, **View Full History**)
+  - **Mods** (installed-jar count on the tab): search, add and remove Modrinth mods; for modpack servers, **Installed Jar Files** with an Included / Excluded switch per jar; restart the server to apply
+  - **Files**: browse, upload, create folders, edit, rename, delete, download; form editor for `server.properties` (edits are lost when the container is recreated; use Options for lasting settings) and a player editor for `whitelist.json`, `ops.json`, `banned-players.json`
+  - **Config History**: config snapshot timeline with diff, compare, restore (safety snapshot by default) and delete
+  - **Backups**: Config Snapshots and World Backups sub-tabs
+  - **Access**: grant, change or remove Viewer / Operator / Owner per user (admins and Owners; the last Owner cannot be removed)
+  - **Options**: **Hostnames / Domains** (system hostnames read-only; custom domains, including the playit.gg domain; applied after **Stop** then **Start**, not Restart), settings cards with advanced fields, **Save Changes** or **Save & Restart**, **Danger Zone** › **Reset World** (server stopped, type `RESET`)
+- `/servers/:name/console`: full-page console (Connected / Connecting / Disconnected (Retry N), breadcrumb, the expanded console's controls)
 
-#### Worlds Page (`/worlds`)
+#### Worlds (`/worlds`)
 
-- World list with: name, size, assignment status, assigned server(s); warning alert for duplicate assignments, "Assigned to N servers" chip on affected cards
-- Create new world with seed option
-- Assign world to server (running servers are listed but cannot be selected)
-- Release world (the server goes back to its own default world)
-- Delete world with confirmation
-- World reset functionality with safety checks
+- World cards: size with Overworld / Nether / End chips, Available or Assigned, the server using it; a warning alert and an "Assigned to N servers" chip for duplicate assignments left by older installs; ALL / AVAILABLE / ASSIGNED filter and search
+- **+ Create World**: name (letters, digits, hyphens, underscores) and optional seed, or **Upload world .zip** to import one
+- **Assign** (stopped servers only; sets the server's `LEVEL`), **Release** (the server goes back to its own default world), **Delete** (type the name; refused while a server uses the world); a card opens **World Details** (the World tab panel)
 
-#### Audit Logs Page (`/audit-logs`)
+#### Players (`/players`)
 
-- Filterable audit log table: action, actor, target, status, date
-- Statistics overview (total events, actions breakdown)
-- Detail view for individual entries
-- Export functionality
-- SSE real-time streaming of new events
+Server dropdown; tabs **Online Players** (all servers, Kick), **Whitelist** (on/off switch, add, bulk add, remove), **Operators** (levels 1-4), **Ban List** (ban with reason, pardon). For a stopped server the lists are read from its files and changes apply on the next start.
 
-#### Routing Page (`/routing`) (v1.13+)
+#### Audit (`/audit-logs`)
 
-- Avahi mDNS monitoring
-- Hostname routing configuration
+- **Live** / **Disconnected** chip (reconnects every 3 s); new entries raise a "N new logs available - Click to refresh" banner (the list does not reload by itself)
+- Cards: Total Logs, Success Rate, Failures, Active Users (refreshed every 30 s)
+- Filters (applied at once, kept in the URL): From/To (UTC days), Action (Create, Delete, Start, Stop, Restart, Whitelist Add/Remove, Ban, Unban, Op, Deop, Kick, Purge, Platform Settings), Target type (All / Server / Player), Status, Target Name, Actor (exact, e.g. `api:console`)
+- Table: Timestamp, Action, Actor, Target, Status; 25/50/100 rows; failed rows start expanded; a row opens a drawer with the details and **Related Logs** (same target, same actor)
+- **Export** CSV or JSON with the current filters (at most 5,000 rows). No purge control: use `mcctl audit purge` or `DELETE /api/audit-logs` (Admin)
+- Actor: `console` for web console actions (recorded as `api:console`), the user for Platform Settings changes and file operations (`api:<user>`), `local` for the CLI (`cli:local`). Web console player actions are recorded with the server as the target and the player in the details
+
+#### Backups (`/backups`)
+
+- **World Backups**: status, **Push Backup** (commit message; check **Remove worlds I deleted on purpose from the backup** when a world from the last backup is gone on purpose, like `mcctl backup push --allow-missing`), schedules (cron, retention, last run), history with restore (refused while any server runs)
+- **Config Snapshots**: a card per server, **Create Snapshot**, **Manage Schedules** (cron preset or expression, retention count)
+
+#### Routing (`/routing`)
+
+- Header: router status, "N servers · M hostnames", admin-only **Restart mc-router** (confirmation; players connected through mc-router are disconnected, running servers keep running)
+- **Routing Table**: a row per server with the primary address (type badge, copy, `+N`), status (e.g. **Sleeping · wakes on connect**), **N not routed** when mc-router lacks some of its hostnames, **Wake** / **Start**, **Edit hostnames**, **Open server**; expand a row for every hostname; search matches server names and hostnames
+- **Routing Flow** diagram; **Live Router Log** (CONNECT / WAKE / ERROR / INFO lines, last 500, Auto-scroll, Clear); **mc-router Gateway** (status, health, port, active routes, container, mode, uptime, image, auto-scale values, asleep MOTD); **Hostname Resolver** (host IPs with **Primary**, a nip.io example, mDNS (Avahi) status); **External Access (playit.gg)** (start/stop the agent, server domains)
+
+#### Settings (`/settings`)
+
+Account cards (name, read-only email, role, password change). Admins also get **Platform Settings**, an editor for the platform `.env`: typed fields in cards (Network & Routing, Server Runtime, RCON, Backup, External Access, Console & Logging), write-only secrets (`RCON_PASSWORD`, `BACKUP_GITHUB_TOKEN`, `PLAYIT_SECRET_KEY`, `BETTER_AUTH_SECRET`), a read-only Runtime (PM2) card, Advanced Environment for unknown keys, and Legacy / Unused keys. Saving only writes `.env` (409 when the file changed since it was loaded) and then lists what to restart: servers (stop, then start), `mcctl router start`, playit (stop, then start), `mcctl console service restart --api` or `--console`.
 
 ### BFF Proxy Routes
 
+Examples (the full list is under `platform/services/mcctl-console/src/app/api/`):
+
 | Console Route | Method | mcctl-api Route | Description |
 |---------------|--------|-----------------|-------------|
-| `/api/servers` | GET | `/api/servers` | List servers |
-| `/api/servers` | POST | `/api/servers` | Create server |
-| `/api/servers/:name` | GET | `/api/servers/:name` | Server details |
-| `/api/servers/:name` | DELETE | `/api/servers/:name` | Delete server |
-| `/api/servers/:name/start` | POST | `/api/servers/:name/start` | Start |
-| `/api/servers/:name/stop` | POST | `/api/servers/:name/stop` | Stop |
-| `/api/servers/:name/restart` | POST | `/api/servers/:name/restart` | Restart |
-| `/api/servers/:name/exec` | POST | `/api/servers/:name/exec` | RCON exec |
-| `/api/servers/:name/logs` | GET | `/api/servers/:name/logs` | Logs |
-| `/api/servers/:name/config` | GET/PUT | `/api/servers/:name/config` | Config |
+| `/api/servers` | GET/POST | `/api/servers` | List / create servers |
+| `/api/servers/:name` | GET/DELETE | `/api/servers/:name` | Server details / delete |
+| `/api/servers/:name/start`, `/stop`, `/restart`, `/exec` | POST | same path | Lifecycle, RCON exec |
+| `/api/servers/:name/logs` | GET | `/api/servers/:name/logs` | Logs (JSON) |
+| `/api/servers/:name/config` | GET/PATCH | `/api/servers/:name/config` | Config |
 | `/api/servers/:name/world/reset` | POST | `/api/servers/:name/world/reset` | Reset world |
 | `/api/servers/:name/players` | GET | `/api/servers/:name/players` | Player roster (JSON or SSE with `follow=true`) |
 | `/api/servers/:name/players/:uuid` | GET | `/api/servers/:name/players/:uuid` | Player detail (`include` forwarded; unknown values dropped, not 400) |
 | `/api/worlds` | GET/POST | `/api/worlds` | List/Create worlds |
+| `/api/worlds/upload` | POST | `/api/worlds/upload` | Import a world ZIP |
 | `/api/worlds/:name` | GET/DELETE | `/api/worlds/:name` | World detail/delete |
-| `/api/worlds/:name/assign` | POST | `/api/worlds/:name/assign` | Assign world |
-| `/api/worlds/:name/release` | POST | `/api/worlds/:name/release` | Release world |
-| `/api/audit` | GET | `/api/audit` | Audit logs |
-| `/api/audit/stats` | GET | `/api/audit/stats` | Audit stats |
-| `/api/sse/servers-status` | GET | `/api/sse/servers-status` | SSE status |
+| `/api/worlds/:name/assign`, `/release` | POST | same path | Assign / release world |
+| `/api/audit-logs` | GET/DELETE | `/api/audit-logs` | List / purge (purge: Admin) |
+| `/api/audit-logs/stats`, `/stream`, `/:id` | GET | same path | Stats, SSE, one entry |
+| `/api/audit-logs/export` | GET | `/api/audit-logs` | CSV/JSON built by the console |
+| `/api/changelog` | GET | - | `CHANGELOG.md` from GitHub `main`, cached 1 hour |
+| `/api/sse/<path>` | GET | `/api/<path>?follow=true` | SSE proxy: `servers-status`, `servers/:name/status`, `servers/:name/logs`, `router/status/stream`, `router/logs/stream` |
+
+Other routes cover backups and their schedules, config snapshots and schedules, mods, files, hostnames, player lists (whitelist, ops, bans, kick), playit, router status and restart, platform settings, users and per-user server access, and world info, map and stats.
 
 ### React Query Hooks
 
 ```typescript
-// Server hooks
-useServers()                    // List all servers (auto-refresh 10s)
-useServer(name)                 // Get server details (auto-refresh 5s)
+// Server hooks (hooks/useMcctl.ts unless noted)
+useServers()                    // List servers (refetch 60s; live status comes over SSE)
+useServer(name)                 // Server details (refetch 30s)
 useCreateServer()               // Create server mutation
 useDeleteServer()               // Delete server mutation
 useStartServer()                // Start server mutation
 useStopServer()                 // Stop server mutation
 useRestartServer()              // Restart server mutation
-useExecCommand()                // Execute RCON command
-useServerLogs(name, lines)      // Get server logs (auto-refresh 3s)
-useServersSSE()                 // SSE real-time server status stream
-useServerStatus(name)           // Individual server SSE status
+useExecCommand()                // Execute RCON command (the console UI does not show the reply)
+useServersSSE()                 // hooks/useServersSSE.ts: /api/sse/servers-status
+useServerStatus({serverName})   // hooks/useServerStatus.ts: /api/sse/servers/:name/status
+useServerLogs({serverName})     // hooks/useServerLogs.ts: /api/sse/servers/:name/logs (keeps 500 lines)
 useServerPlayers({serverName})  // SSE player roster (online + offline)
 usePlayerDetail(server, uuid)   // Player detail (?include=stats,nbt,sessions; refetch 5s while online)
+useRouterStatus()               // /api/router/status (refetch 30s while the router status stream is down)
+useRouterLogStream()            // hooks/useRouterLogStream.ts: /api/sse/router/logs/stream (last 500 events)
 
 // World hooks
-useWorlds()                     // List all worlds (auto-refresh 30s)
+useWorlds()                     // List all worlds (refetch 30s)
 useWorld(name)                  // Get world details
 useCreateWorld()                // Create world mutation
+useCreateWorldWithZip()         // Import a world ZIP
 useAssignWorld()                // Assign world mutation
 useReleaseWorld()               // Release world mutation
 useDeleteWorld()                // Delete world mutation
 
-// Audit hooks
-useAuditLogs(filters)           // List audit logs with filtering
-useAuditStats()                 // Audit log statistics
+// Audit hooks (hooks/useAuditLogs.ts)
+useAuditLogs(params)            // List with filters (no polling; reloaded from the new-logs banner)
+useAuditLogStats()              // Statistics (refetch 30s)
+useRecentActivity(limit)        // Dashboard Recent Activity
 ```
 
 ### Web Console Environment Variables
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MCCTL_API_URL` | mcctl-api URL (internal) | `http://localhost:5001` |
-| `MCCTL_API_KEY` | API key for authentication | Required |
-| `BETTER_AUTH_SECRET` | Session encryption secret, read from `<MCCTL_ROOT>/.env` (wins over the PM2 env) | Written by `mcctl console init` |
-| `BETTER_AUTH_BASE_URL` | Console URL for auth, read from `<MCCTL_ROOT>/.env` (wins over the PM2 env) | `http://localhost:<PORT>` |
-| `PORT` | Console listening port | `5000` |
+| `MCCTL_API_URL` | mcctl-api URL used by the BFF | `http://localhost:<api port>` (written by `mcctl console init`) |
+| `MCCTL_API_KEY` | Sent to mcctl-api as `X-API-Key` | Written by `mcctl console init` for the `api-key` and `api-key-ip` modes only |
+| `BETTER_AUTH_SECRET` | Session secret, read from `<MCCTL_ROOT>/.env` at startup; while `ecosystem.config.cjs` still defines it, the ecosystem value wins (`mcctl upgrade` moves it to `.env`) | Written to `.env` by `mcctl console init` |
+| `BETTER_AUTH_BASE_URL` | Console URL: a trusted sign-in origin, and secure cookies when it starts with `https://`; same source rules as the secret | `http://localhost:<PORT>` |
+| `PORT` | Console listening port | `5000` (`mcctl console init --console-port`) |
 | `HOSTNAME` | Console listening host | `0.0.0.0` |
 | `MCCTL_ROOT` | Platform root directory | `~/minecraft-servers` |
+| `DO_NOT_TRACK` | `1` or `true` turns off the anonymous usage analytics (as does `"telemetry": false` in `.mcctl.json`) | - |
+
+Sign-in is accepted from `localhost`, `127.0.0.1`, `::1`, private addresses (`10.x`, `172.16-31.x`, `192.168.x`), `.local` names, `BETTER_AUTH_BASE_URL` and `NEXT_PUBLIC_APP_URL`. From any other origin (a Tailscale `100.x` address, a domain, an HTTPS reverse proxy), set `BETTER_AUTH_BASE_URL` to that URL in `.env` and run `mcctl console service restart --console`.
 
 ---
 
@@ -1856,11 +2117,12 @@ Version specifiers: `mod-slug`, `mod-slug:version_id`, `mod-slug:beta`, `mod-slu
 **CurseForge:**
 
 ```env
-CF_API_KEY=${CF_API_KEY}
 CURSEFORGE_FILES=jei,journeymap,jade
 ```
 
 Formats: slug (`jei`), ID (`238222`), slug:FileID (`jei:4593548`), URL
+
+`CF_API_KEY` is only needed on java8/pre-17 tags or for your own key; set it with `mcctl config <server> CF_API_KEY '<key>'`.
 
 **Spiget:**
 
@@ -1887,7 +2149,7 @@ MODS_FILE=/data/mods.txt
 
 | Minecraft Version | Minimum Java | Recommended Image Tag |
 |-------------------|-------------|----------------------|
-| 26+ | Java 25 | `java25` or `latest` |
+| 26+ | Java 25 | `java25` |
 | 1.21 - 1.21.x | Java 21 | `java21` |
 | 1.20.5 - 1.20.6 | Java 21 | `java21` |
 | 1.18 - 1.20.4 | Java 17 | `java17` or `java21` |
@@ -1904,15 +2166,18 @@ MODS_FILE=/data/mods.txt
 | Forge 1.17.x | Java 16/17 | `java17` |
 | **Forge 1.16.5 and below** | **Java 8** | `java8` **(required, higher fails)** |
 
+New servers start on `itzg/minecraft-server:java25` whatever `VERSION` is. `mcctl update` sets each unpinned `itzg/minecraft-server` tag to the tag for its `VERSION` (`java8` up to 1.16.5, `java17` for 1.17-1.20.4, `java21` for 1.20.5-1.21.x, `java25` for 26.x/`LATEST`) and keeps pinned tags: a release tag such as `2026.10.0-java21`, or a digest. To change a server's image yourself, set `image:` in `servers/<name>/server.yaml`, run `mcctl migrate spec <name>`, then stop and start the server.
+
 **Available Image Tags:**
 
 | Tag | Java Version | amd64 | arm64 | armv7 |
 |-----|-------------|:-----:|:-----:|:-----:|
 | `latest`, `stable` | Java 25 | Yes | Yes | No |
+| `java25` | Java 25 | Yes | Yes | No |
 | `java21` | Java 21 | Yes | Yes | No |
-| `java17` | Java 17 | Yes | Yes | Yes |
-| `java11` | Java 11 | Yes | Yes | No |
-| `java8` | Java 8 | Yes | Yes | No |
+| `java17` | Java 17 | Yes | Yes | No |
+| `java11` | Java 11 | Yes | Yes | Yes |
+| `java8` | Java 8 | Yes | Yes | Yes |
 | `java21-graalvm` | GraalVM 21 | Yes | Yes | No |
 | `java17-graalvm` | GraalVM 17 | Yes | Yes | No |
 
@@ -1924,6 +2189,8 @@ MODS_FILE=/data/mods.txt
 | `/plugins` | Plugin JARs (Paper/Spigot) | Optional - `:ro` for read-only |
 | `/mods` | Mod JARs (Forge/Fabric) | Optional - `:ro` for read-only |
 | `/config` | Mod configuration files | Optional |
+
+mcctl server containers mount `./data:/data`, `./logs:/data/logs`, `../../worlds:/worlds` and `../../shared/plugins:/plugins:ro` (paths relative to `servers/<name>/`). `shared/mods` is not mounted: put mod jars in `servers/<name>/data/mods/` or list them in `MODS`.
 
 **/data Directory Structure:**
 
@@ -1968,6 +2235,8 @@ MODS_FILE=/data/mods.txt
 | Forge / Fabric | 3m | 10s | 30 |
 | Large Modpacks | 5m | 15s | 40 |
 
+mcctl's server template sets no `healthcheck:`, so the image's built-in check applies. Adding one to `servers/<name>/docker-compose.yml` is a hand edit outside `image` and the `mc-router.*` labels: mcctl keeps it, but a later change that has to rewrite the file stops with `compose_edited` (`mcctl migrate spec <name> --force` re-renders it and keeps `docker-compose.yml.bak`).
+
 ---
 
 ## 11. mc-router Reference
@@ -1993,9 +2262,16 @@ mc-router is a connection multiplexer enabling multiple Minecraft servers to sha
     v                      v                     v
 +--------+           +--------+           +--------+
 |Server1 |           |Server2 |           |Server3 |
-| :25566 |           | :25567 |           | :25568 |
+| :25565 |           | :25565 |           | :25565 |
 +--------+           +--------+           +--------+
 ```
+
+**In mcctl**, the `router` service of `<root>/docker-compose.yml` runs `itzg/mc-router:1.47.1` (container `mc-router`) with `IN_DOCKER: "true"` (label discovery through the read-only Docker socket), the auto-scale values below as literal `environment:` entries, `API_BINDING: ":8080"` published as `127.0.0.1:25580` (management API used by `mcctl status`), and `group_add: ["${DOCKER_GID:-999}"]` (mc-router 1.46+ runs as non-root). There is no default route, so a client must send a known hostname.
+
+- **Change router settings**: edit the `router` service `environment:` in `<root>/docker-compose.yml` (not `.env`), then `mcctl router start` (`docker compose up -d router` recreates the container). `mcctl router restart` (`docker compose restart router`) keeps the old values. `mcctl upgrade` patches only the router `image` and `group_add`, so edits survive.
+- **Per server**: `routing.autoScale.up` / `routing.autoScale.down` in `servers/<name>/server.yaml` become the `mc-router.auto-scale-up/down` labels (`mcctl migrate spec <name>`, then recreate the container).
+- **Hostnames** (`mc-router.host`): `<name>.local`, one `<name>.<ip>.nip.io` per address in `HOST_IPS` (else `HOST_IP`), the playit domain and custom hostnames. A container keeps the labels it was created with: apply changes with `mcctl stop <s> && mcctl start <s>` (or `mcctl start <s>` when stopped).
+- **Auto-start needs a container**: after `mcctl create --no-start` or `mcctl down` (which removes containers), run `mcctl start <s>` (or `mcctl up`) once.
 
 ### Routing Methods
 
@@ -2048,16 +2324,18 @@ Uses annotations on services.
 | `mc-router.port` | Backend port (default: 25565) |
 | `mc-router.auto-scale-up` | Per-container override for auto-scale-up |
 | `mc-router.auto-scale-down` | Per-container override for auto-scale-down |
+| `mc-router.auto-scale-asleep-motd` / `mc-router.auto-scale-loading-motd` | Per-container MOTDs while stopped / starting (mcctl adds a loading MOTD label) |
+| `mc-router.default` | Truthy: this container is the default route (still needs `mc-router.host`). mcctl does not set it |
 
 ### Auto-Scaling Configuration
 
-| Flag | Environment Variable | Default | Description |
-|------|---------------------|---------|-------------|
-| `-auto-scale-up` | `AUTO_SCALE_UP` | `false` | Start stopped containers on connect |
-| `-auto-scale-down` | `AUTO_SCALE_DOWN` | `false` | Stop idle containers |
-| `-auto-scale-down-after` | `AUTO_SCALE_DOWN_AFTER` | `10m` | Idle timeout before stopping |
-| `-docker-timeout` | `DOCKER_TIMEOUT` | `60` | Seconds to wait for container start |
-| `-auto-scale-asleep-motd` | `AUTO_SCALE_ASLEEP_MOTD` | `Server is sleeping...` | MOTD for sleeping servers |
+| Flag | Environment Variable | mcctl value | Description |
+|------|---------------------|-------------|-------------|
+| `-auto-scale-up` | `AUTO_SCALE_UP` | `"true"` | Start stopped containers on connect |
+| `-auto-scale-down` | `AUTO_SCALE_DOWN` | `"true"` | Stop idle containers |
+| `-auto-scale-down-after` | `AUTO_SCALE_DOWN_AFTER` | `"10m"` | Idle timeout before stopping |
+| `-docker-timeout` | `DOCKER_TIMEOUT` | `"120s"` | Wait for container start (Go duration such as `120s`, `2m`; bare integers fail) |
+| `-auto-scale-asleep-motd` | `AUTO_SCALE_ASLEEP_MOTD` | `"§e§lServer is sleeping§r\n§7Connect to wake up!"` | MOTD of a stopped server |
 
 **Player Allow/Deny Lists:**
 
@@ -2090,6 +2368,8 @@ Uses annotations on services.
 ---
 
 ## 12. docker-compose.yml Examples
+
+These are standalone examples. The files mcctl generates differ: its router service sets the auto-scale options as `environment:` entries (see section 11), and each server's `docker-compose.yml` is generated from `servers/<name>/server.yaml`.
 
 ### Basic Paper Server with mc-router
 
@@ -2181,12 +2461,14 @@ services:
 
 ```bash
 mcctl init
+mcctl router start
 mcctl create survival -t PAPER -v 1.21.1
 mcctl config survival MOTD "Welcome friends!"
 mcctl config survival DIFFICULTY hard
 mcctl config survival MAX_PLAYERS 10
-mcctl op survival add YourName
-# Connect: survival.<HOST_IP>.nip.io:25565
+mcctl op survival add YourName 4
+mcctl stop survival && mcctl start survival   # apply the config changes
+# Connect: survival.<HOST_IP>.nip.io:25565 (whitelist is off; `mcctl whitelist survival on` to restrict)
 ```
 
 ### 2. Set Up Modded Forge Server
@@ -2215,7 +2497,7 @@ mcctl world list
 mcctl stop oldserver
 mcctl world release myworld
 mcctl stop newserver
-mcctl world assign myworld mc-newserver
+mcctl world assign myworld newserver
 mcctl start newserver
 ```
 
@@ -2232,9 +2514,11 @@ mcctl backup restore abc1234
 ### 6. Remote Access via VPN (Tailscale/ZeroTier)
 
 ```bash
-# Edit .env:
-HOST_IPS=192.168.1.100,100.64.0.5  # LAN IP + Tailscale IP
-mcctl router restart
+mcctl init --reconfigure
+# Choose "Host IP(s)", select the LAN and the VPN address
+# (writes HOST_IP=192.168.1.100 and HOST_IPS=192.168.1.100,100.64.0.5),
+# answer yes to "Update existing servers with new IP hostnames?"
+mcctl stop myserver && mcctl start myserver   # recreate so the container gets the new hostname
 # Friends connect: myserver.100.64.0.5.nip.io:25565
 ```
 
@@ -2264,11 +2548,10 @@ mcctl console init
 # Select: [mcctl-api, mcctl-console]
 # Enter admin email, name, and password
 # Choose API access mode
-mcctl console service start
-# Select: "API + Console"
+mcctl console service start --console   # mcctl-api + mcctl-console (without the flag it asks)
 # Web Console: http://localhost:5000
 # REST API: http://localhost:5001
-# Swagger Docs: http://localhost:5001/docs
+# Swagger UI (/docs) only with SWAGGER_ENABLED=true in .env
 ```
 
 ### 10. Use REST API
@@ -2302,11 +2585,15 @@ pm2 save
 ### 13. Updating Services
 
 ```bash
-# Update everything (CLI + API + Console + shared)
-mcctl update --yes
+# Update everything (CLI + API + Console + shared + server images)
+mcctl update            # in a terminal it also offers to recreate stopped servers on an old image
+mcctl update --yes      # no questions; prints the recreate commands instead
 
 # Or update only the CLI (services in .services/ stay as they are)
 mcctl update --cli-only --yes
+
+# Then sync the platform files
+mcctl upgrade
 ```
 
 ### 14. Set Up External Access with playit.gg
@@ -2319,8 +2606,9 @@ mcctl playit start
 # Create tunnel at https://playit.gg/account/tunnels
 # Get your address: xx-xx.craft.playit.gg
 
-# Register with server
+# Register with server, then recreate it so mc-router sees the domain
 mcctl playit domain survival xx-xx.craft.playit.gg
+mcctl stop survival && mcctl start survival
 
 # Share with friends: xx-xx.craft.playit.gg (no port forwarding needed!)
 
@@ -2332,7 +2620,7 @@ mcctl playit status
 
 ```bash
 # After updating mcctl:
-npm update -g @minecraft-docker/mcctl
+mcctl update
 
 # Check what changed:
 mcctl upgrade --dry-run
@@ -2361,7 +2649,7 @@ mcctl init
 
 #### Docker Not Running
 
-**Error:** `Docker is not installed or not running`
+**Error:** `mcctl status` prints `Docker is not available`; `mcctl init` prints a prerequisite table and `Docker is not installed` (or a version below 24.0.0)
 
 **Solution:**
 ```bash
@@ -2378,23 +2666,29 @@ Check logs first: `mcctl logs <server> -n 100`
 | EULA not accepted | Server exits immediately | Should be automatic with mcctl |
 | Wrong Java version | `class file version` error | Use correct image tag (see Java matrix) |
 | Insufficient memory | OutOfMemoryError | Increase MEMORY setting |
-| Port conflict | Address already in use | Check if another service uses the port |
+| Port 25565 in use (mc-router) | mc-router does not start, `Address already in use` | See Port Conflicts below (server containers publish no host ports) |
 
 #### Can't Connect to Server
 
 ```bash
-# 1. Check mc-router is running
+# 1. Check mc-router is running (mcctl init does not start it)
 mcctl status
-# mc-router should show "running" and "healthy"
+# mc-router should show "running" and "healthy"; if not:
+mcctl router start
 
-# 2. Check server status
+# 2. Check server status and its hostnames (HOSTNAME column)
 mcctl status myserver
 
-# 3. Try different connection methods
-# nip.io: server.192.168.1.100.nip.io:25565
+# 3. Try the server's hostnames
+# nip.io: server.192.168.1.100.nip.io:25565  (the IP must be reachable from the client)
 # mDNS:   server.local:25565
-# Direct: 192.168.1.100:25565
 ```
+
+A bare IP (`192.168.1.100:25565`) never works: mc-router routes by hostname and mcctl sets no default route. Auto-start on connect needs an existing container: after `mcctl create --no-start` or `mcctl down`, run `mcctl start <server>` once. New or changed hostnames reach mc-router only after the container is recreated (`mcctl stop <s> && mcctl start <s>`).
+
+#### mc-router Cannot Read the Docker Socket
+
+`mcctl logs router` shows `permission denied` for `/var/run/docker.sock` and nothing is routed. mc-router 1.46+ runs as non-root and reads the socket through `group_add: ["${DOCKER_GID:-999}"]`; `DOCKER_GID` in `.env` must match `stat -c %g /var/run/docker.sock`. Run `mcctl upgrade` (sets `DOCKER_GID` and patches the router service), then `mcctl router start`.
 
 #### mDNS Not Working
 
@@ -2406,20 +2700,22 @@ sudo systemctl enable --now avahi-daemon
 
 **Windows:** Install Bonjour Print Services from Apple
 
+`mcctl create` registers `<name>.local` in `/etc/avahi/hosts` with sudo (`--sudo-password`, `MCCTL_SUDO_PASSWORD`, the prompt, or sudoers `NOPASSWD` for `tee -a /etc/avahi/hosts`, `sed -i * /etc/avahi/hosts`, `systemctl restart avahi-daemon`). If sudo failed, the server was still created with a warning: add `<ip> <name>.local` to `/etc/avahi/hosts` and restart avahi-daemon.
+
 **Fallback:** Use nip.io hostname instead of .local
 
 #### World Already Assigned
 
-**Error:** `World 'myworld' is assigned to 'mc-otherserver'; assign another world to 'mc-otherserver' or delete it first` (API: 409)
+**Error:** `World 'myworld' is assigned to 'otherserver'; assign another world to 'otherserver' or delete it first` (API: 409)
 
 ```bash
 mcctl stop otherserver
 mcctl world release myworld
 mcctl stop myserver
-mcctl world assign myworld mc-myserver
+mcctl world assign myworld myserver
 ```
 
-If the error mentions an unreadable world assignment, fix the `LEVEL` line in that server's `config.env` (plain `LEVEL=<name>`); every assignment change is refused until then.
+If the error mentions an unreadable world assignment, fix the `LEVEL` line in that server's `config.env` (plain `LEVEL=<name>`); every assignment change is refused until then. If the server keeps its world inside `servers/<name>/data`, stop it and run `mcctl migrate worlds --server <name>` first. A container in the `created` state (for example after `mcctl update` recreated it) counts as not stopped, and `mcctl stop` does not change it: run `mcctl start <name> && mcctl stop <name>`.
 
 #### Out of Memory
 
@@ -2436,11 +2732,12 @@ If the error mentions an unreadable world assignment, fix the `LEVEL` line in th
 
 #### Console service won't start
 
-- Check prerequisites: `mcctl console init` validates Node.js, PM2, Docker
+- Check prerequisites: `mcctl console init` checks Node.js >= 18, Docker, Docker Compose and a `pm2` >= 6.0.0 on `PATH` (`npm install -g pm2`)
 - Verify PM2: `pm2 --version`
 - Check ecosystem config: `ls ~/minecraft-servers/ecosystem.config.cjs`
 - View PM2 logs: `pm2 logs mcctl-api` or `pm2 logs mcctl-console`
-- Check port conflicts: `netstat -tlnp | grep -E "5000|5001"`
+- Check port conflicts: `netstat -tlnp | grep -E "5000|5001"`. Ports are set only by `mcctl console init --api-port/--console-port` (written to `PORT` in `ecosystem.config.cjs`)
+- `mcctl console service start` and `restart` wait up to 15 s for the health checks and exit 1 if a service is not healthy. `mcctl console service status` checks `GET /health` on mcctl-api (2xx) and `/api/auth/get-session` on mcctl-console (below 500), prints `Health: HTTP 500` or `Health: unreachable` for a failed check, and then exits 1 ("Some services need attention")
 
 #### mcctl-console shows "not installed (skipping)"
 
@@ -2451,29 +2748,34 @@ If the error mentions an unreadable world assignment, fix the `LEVEL` line in th
 #### API connection issues
 
 - Check service: `mcctl console service status`
-- Verify API key (shown only once during init)
-- Test health: `curl http://localhost:5001/health`
+- Verify API key (shown only once during init; prefix `mctk_`). The key in use is `AUTH_API_KEY` in `ecosystem.config.cjs`; get a new one with `mcctl console init --force`
+- Test health: `curl http://localhost:5001/health` returns `{"status":"ok","timestamp":"..."}`
 - Check access mode: `grep AUTH_MODE ~/minecraft-servers/ecosystem.config.cjs` (`mcctl console api status` shows `api-config.json`, not the running API's settings; see #633)
+- Web console requests fail with 403 under `ip-whitelist` or `api-key-ip`: the console calls mcctl-api from the same host, so the list must contain `127.0.0.1` (an entry `localhost` matches nothing). Re-run `mcctl console init --force` to change the list
 
 #### Can't log in to Web Console
 
 - Verify user: `mcctl console user list`
 - Reset password: `mcctl console user reset-password admin@example.com`
-- Check Better Auth config in ecosystem config
+- Signing in from an origin other than `localhost`, a private LAN address or a `.local` name (a Tailscale `100.x` address, a domain, an HTTPS reverse proxy) fails until `BETTER_AUTH_BASE_URL=<that URL>` is set in `~/minecraft-servers/.env`; then `mcctl console service restart --console`. If `ecosystem.config.cjs` still defines `BETTER_AUTH_*`, run `mcctl upgrade` first (until then the ecosystem value wins)
 - View logs: `mcctl console service logs -f`
 
 #### PM2 process keeps restarting
 
 - Check crashes: `pm2 logs mcctl-api --lines 100`
-- Verify dependencies: `cd ~/minecraft-servers && npm ls @minecraft-docker/mcctl-api`
-- PM2 restarts at 500MB by default
-- Force restart: `mcctl console service restart --force`
+- Verify dependencies: `cd ~/minecraft-servers/.services 2>/dev/null || cd ~/minecraft-servers; npm ls @minecraft-docker/mcctl-api`
+- PM2 restarts a service that grows past `max_memory_restart` (`500M`): raise it in `ecosystem.config.cjs`
+- A plain `mcctl console service restart` keeps the env and options PM2 already has. After editing `ecosystem.config.cjs`, use `mcctl console service restart --force` (deletes the processes, kills the PM2 daemon and starts the selected services from the file); `.env` changes need only a plain restart
+
+#### Console returns 500 after a Node.js change
+
+`pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`: the native `better-sqlite3` module was built for another Node.js version than the PM2 daemon runs. `mcctl console service status` prints the steps: `pm2 kill`, switch to the Node.js version mcctl was installed with (e.g. `nvm use 22`), then `mcctl console service start --console`.
 
 #### SSE not working (real-time updates)
 
 - Ensure mcctl-api is running
 - Check if proxy/firewall blocks SSE connections
-- Verify: `curl -N http://localhost:5001/api/sse/servers-status`
+- Verify the stream on mcctl-api: `curl -N 'http://localhost:5001/api/servers-status?follow=true'` (add `-H 'X-API-Key: <key>'` in the api-key modes). `/api/sse/servers-status` is the console's proxy path, not an mcctl-api route
 
 #### World management issues
 
@@ -2506,7 +2808,7 @@ For Fabric servers, always include `fabric-api` in MODRINTH_PROJECTS.
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `class file version 69.0` | Java 25 required | Use `java25` or `latest` image tag (MC 26+) |
+| `class file version 69.0` | Java 25 required | Use the `java25` image tag (MC 26+) |
 | `class file version 65.0` | Java 21 required | Use `java21` image tag |
 | `Unsupported class file major version` | Java too high for Forge | Use `java8` for Forge 1.16.5 and below |
 | Mods fail to load | Version mismatch | Check mod docs for Java requirements |
@@ -2518,9 +2820,10 @@ mcctl logs <server>
 ```
 
 **Fix steps:**
-1. Check the Java version matrix in Section 10
-2. Edit the server's docker-compose.yml to use the correct image tag
-3. For Forge 1.16.5 and below, you **must** use `java8`
+1. Check the Java version matrix in Section 10 (26.x / `LATEST`: Java 25; 1.20.5-1.21.x: Java 21; 1.17-1.20.4: Java 17; 1.16.5 and older: Java 8)
+2. New servers start on `itzg/minecraft-server:java25` whatever `VERSION` is. Change `image` in `servers/<name>/server.yaml` and run `mcctl migrate spec <name>` (or edit the image in `servers/<name>/docker-compose.yml`; mcctl takes it into `server.yaml`), then `mcctl stop <name> && mcctl start <name>`
+3. `mcctl update` moves an unpinned `java*` tag to the one `VERSION` needs; a release-version tag (e.g. `2026.10.0-java21`) or digest is kept
+4. For Forge 1.16.5 and below, you **must** use `java8`
 
 ### RCON Connection Issues
 
@@ -2538,9 +2841,11 @@ mcctl config <server> ENABLE_RCON
 # 2. Verify the server is running and healthy
 mcctl status <server> -d
 
-# 3. Check RCON password is set
+# 3. Check RCON password is set (servers get it through servers/global.env)
 grep RCON_PASSWORD ~/minecraft-servers/.env
 ```
+
+`mcctl console` / `mcctl rcon` connect over TCP to the container's IP on the Docker network (the server must be fully started; Docker Desktop on macOS may not expose that IP). `mcctl exec` and the player commands run `rcon-cli` inside the container with `docker exec`, so use `mcctl exec <server> <command>` when the TCP session cannot connect.
 
 **Fix:**
 ```bash
@@ -2572,7 +2877,7 @@ mcctl stop <server> && mcctl start <server>
 mcctl logs <server>
 ```
 
-**Note:** In mcctl, auto-scaling is handled by mc-router (not autopause/autostop). Use mc-router's AUTO_SCALE_UP/DOWN for automatic start/stop.
+**Note:** In mcctl, auto-scaling is handled by mc-router (not autopause/autostop). Its `AUTO_SCALE_UP`/`AUTO_SCALE_DOWN` are set in the router service `environment:` of `docker-compose.yml` (apply with `mcctl router start`); per server, use `routing.autoScale` in `server.yaml`.
 
 ### CurseForge Mod Download Failures
 
@@ -2582,22 +2887,27 @@ mcctl logs <server>
 - 403 Forbidden errors
 
 **Fix:** (Java 17+ images have a built-in key; this applies to java8/pre-17 tags or a custom key)
-1. Set `CF_API_KEY` in `~/minecraft-servers/.env`:
+1. Get a key from [CurseForge for Studios](https://console.curseforge.com/)
+2. Set it per server (do not escape `$`; mcctl quotes the value), then recreate the server:
    ```bash
-   CF_API_KEY=your-curseforge-api-key
+   mcctl config <server> CF_API_KEY '<key>'
+   mcctl stop <server> && mcctl start <server>
    ```
-2. Get a key from [CurseForge for Studios](https://console.curseforge.com/)
+   For every server instead, add a `CF_API_KEY` line to `servers/global.env` and put the value in `.env` in single quotes. A key only in `.env` does not reach servers.
 3. Some mods are restricted from third-party downloads; use manual download
 
 ### Common config.env Mistakes
 
 | Mistake | Symptom | Fix |
 |---------|---------|-----|
-| Missing `EULA=TRUE` | Server exits immediately | Should be automatic with mcctl |
-| `TYPE` misspelled | Server starts as Vanilla | Check type name (case sensitive) |
-| Quotes around values | Unexpected behavior | In config.env, **do not** wrap values in quotes |
-| Spaces around `=` | Variable not read | Use `KEY=value` not `KEY = value` |
-| Forgetting `EXTRA_ARGS=--universe /worlds/` | Worlds in wrong directory | Set for shared world storage |
+| `GAMEMODE=creative` | Game mode unchanged | The image reads `MODE`: `mcctl config <server> MODE creative` |
+| Unquoted ` #` in a value | Value cut at the `#` (`MOTD=Hi #1` sets `Hi`) | Quote it (`MOTD='Hi #1'`), or set it with `mcctl config`, which quotes it |
+| A list continued on the next line | Only the first line is the value | One comma-separated line (`MODRINTH_PROJECTS=fabric-api,lithium,sodium`) |
+| A value that starts with a quote set through mcctl | Refused | Pass the value without surrounding quotes; mcctl quotes what needs it |
+| `CF_API_KEY` (or another key) only in `.env` | Not in the container | `mcctl config <server> CF_API_KEY '<key>'`, or add the name to `servers/global.env` |
+| `TYPE` misspelled | The server does not run as the intended type | `mcctl config` does not check `TYPE`; use a name from Section 6 |
+
+`EULA=TRUE` is set by each server's compose `environment:`, and `EXTRA_ARGS` (`--universe /worlds/`) is written from `world.storage` in `server.yaml`, so neither needs to be added by hand.
 
 ### nip.io DNS Not Resolving
 
@@ -2643,30 +2953,30 @@ A: A CLI tool for managing Docker-based Minecraft Java Edition servers with host
 A: Java Edition only. Bedrock Edition is not supported.
 
 **Q: Where is data stored?**
-A: Default: `~/minecraft-servers/`. Use `--root` to change.
+A: Default: `~/minecraft-servers/`. Set `MCCTL_ROOT`, or pass `--root <path>` to every command (it is not stored).
 
 **Q: How many servers can I run?**
 A: Unlimited, limited only by system resources.
 
 **Q: What are the system requirements?**
-A: Node.js >= 18.0.0, Docker Engine >= 24.0.0, Docker Compose >= 2.20.0. PM2 is bundled with mcctl.
+A: Node.js >= 18.0.0, Docker Engine >= 24.0.0, Docker Compose >= 2.20.0 (`mcctl init` checks these). git >= 2.31 for GitHub backups; `pm2` >= 6 on `PATH` for the web console (`npm install -g pm2`).
 
 ### Server
 
 **Q: What server types are supported?**
-A: PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT. Plus itzg supports PUFFERFISH, FOLIA, LEAF, MOHIST, ARCLIGHT, MAGMA_MAINTAINED, KETTING, SPONGEVANILLA, AUTO_CURSEFORGE, MODRINTH, FTBA, CUSTOM.
+A: `mcctl create -t` accepts PAPER, VANILLA, FORGE, NEOFORGE, FABRIC, SPIGOT, BUKKIT, PURPUR, QUILT, LEAF, FOLIA, PUFFERFISH, MODRINTH and AUTO_CURSEFORGE (the last two with `--modpack <slug>`). itzg also supports MOHIST, ARCLIGHT, MAGMA_MAINTAINED, KETTING, SPONGEVANILLA, FTBA, CUSTOM (set `TYPE` with `mcctl config`).
 
 **Q: What's the default server type?**
-A: PAPER - a high-performance fork with plugin support.
+A: PAPER - a high-performance fork with plugin support. Defaults of `mcctl create`: version `LATEST`, memory 4G (6G for modpacks), image `itzg/minecraft-server:java25`, whitelist off.
 
 **Q: How do I change Minecraft version?**
-A: `mcctl config myserver VERSION 1.20.4` then restart.
+A: `mcctl config myserver VERSION 1.20.4`, then `mcctl stop myserver && mcctl start myserver`. Check that the image's Java fits the version (older versions need e.g. `java17`).
 
 **Q: Do servers auto-start?**
-A: Yes, with mc-router auto-scaling, servers start when a player connects.
+A: Yes, with mc-router auto-scaling, a stopped server starts when a player connects, if mc-router runs (`mcctl router start`) and the server's container exists (after `mcctl create --no-start` or `mcctl down`, run `mcctl start <server>` once).
 
 **Q: Do servers auto-stop?**
-A: Yes, after 10 minutes of no players (configurable via `AUTO_SCALE_DOWN_AFTER`).
+A: Yes, after 10 minutes of no players. Change `AUTO_SCALE_DOWN_AFTER` in the router service `environment:` of `<root>/docker-compose.yml` and apply it with `mcctl router start` (not `.env`, not `mcctl router restart`).
 
 ### Connection
 
@@ -2691,7 +3001,7 @@ A: `mcctl mod add <server> <mod-name>`. Default source is Modrinth. Use `--curse
 A: Modrinth (default), CurseForge, Spiget (SpigotMC), and direct URLs.
 
 **Q: Do I need an API key for CurseForge?**
-A: No on Java 17+ images (key built in). Set `CF_API_KEY` in .env (key from console.curseforge.com) only for java8/pre-17 tags or to use your own key.
+A: No on Java 17+ images (key built in). Only java8/pre-17 tags or your own key need `CF_API_KEY` (key from console.curseforge.com): set it per server with `mcctl config <server> CF_API_KEY '<key>'`. A key only in `.env` does not reach servers.
 
 **Q: Where are mods stored?**
 A: Downloaded automatically by the server container based on config.env settings.
@@ -2711,7 +3021,7 @@ A: `required` (default, recommended), `optional` (required + optional deps), `no
 A: The `worlds/` directory with all world data.
 
 **Q: What does server-backup include?**
-A: Server configuration files (config.env, docker-compose.yml), not world data.
+A: Server configuration files: `config.env`, `docker-compose.yml` and, when present, `server.yaml`, `data/ops.json`, `data/whitelist.json`, `data/banned-players.json`, `data/banned-ips.json`, `data/server.properties`. Not world data.
 
 **Q: Is a GitHub account required for backups?**
 A: Only for the GitHub backup feature. Manual backups don't require it.
@@ -2722,7 +3032,7 @@ A: Only for the GitHub backup feature. Manual backups don't require it.
 A: No. One world is used by one server. To move a world, stop both servers, run `mcctl world release <world>` (the old server goes back to its own default world), then `mcctl world assign <world> <server>`.
 
 **Q: What happens when I delete a server?**
-A: World data is preserved in the worlds/ directory.
+A: `mcctl delete` asks first (`-y` skips; `--force` also deletes with players online). The world is kept: a world inside the server folder is moved to `worlds/`, unless `--delete-world`.
 
 **Q: How do I import an existing world?**
 A: Place it in `~/minecraft-servers/worlds/` and use `mcctl create --world <name>`.
@@ -2739,19 +3049,19 @@ A: mcctl-api (REST API on port 5001) + mcctl-console (Web UI on port 5000).
 A: Lower overhead, faster startup, easier debugging, automatic process recovery.
 
 **Q: How do I start the web console?**
-A: `mcctl console init` then `mcctl console service start`.
+A: `mcctl console init` then `mcctl console service start --console` (without `--console` it asks which services).
 
 **Q: What access modes are available?**
-A: `internal` (default), `api-key`, `ip-whitelist`, `api-key-ip`, `open`. Only `api-key` and `ip-whitelist` are recognised by mcctl-api today; see #633.
+A: `internal` (default), `api-key`, `ip-whitelist`, `api-key-ip`, `open`. `mcctl console init` writes them as mcctl-api `AUTH_MODE` values: `internal` → `ip-whitelist` (loopback only), `api-key-ip` → `combined`, `open` → `disabled`, the others unchanged.
 
 **Q: Where is the API documentation?**
-A: `http://localhost:5001/docs` (Swagger/OpenAPI).
+A: `docs/api/endpoints.md`. The Swagger UI at `http://localhost:5001/docs` is served only when mcctl-api does not run with `NODE_ENV=production` (the PM2 setup does) or when `SWAGGER_ENABLED=true` is set in `.env` (apply with `mcctl console service restart --api`). It needs the same authentication as the other routes (`X-API-Key` in the api-key modes).
 
 **Q: Can I run just the API without the Web Console?**
 A: Yes. During `mcctl console init`, select only `mcctl-api`. Or use `mcctl console service start --api`.
 
 **Q: How does service selection work?**
-A: Since v1.13.0, `mcctl console service start/stop/restart` shows interactive prompt when both services are installed. Console always requires API. Use `--api` or `--console` flags to skip prompt.
+A: Since v1.13.0, `mcctl console service start/stop/restart` shows interactive prompt when both services are installed. Console always requires API. Use `--api` or `--console` flags to skip prompt; without a terminal the command exits 1 unless one of them is given.
 
 **Q: How do I check if the console is running?**
 A: `mcctl console service status`
@@ -2766,7 +3076,7 @@ A: Session history (v2.27.0+) is collected by mcctl-api from Docker logs (`joine
 A: Yes (v2.27.0+). `GET /api/servers/:name/players` returns the file-based `roster` with `running: false`; `online`/`max`/`players` are 0/empty.
 
 **Q: How does SSE work in the Web Console?**
-A: Server-Sent Events provide real-time status updates without polling. Endpoint: `GET /api/sse/servers-status`.
+A: The browser opens Server-Sent Events streams to the console, which checks the session and proxies `/api/sse/<path>` to mcctl-api `/api/<path>?follow=true`. Server status comes from `GET /api/servers-status?follow=true`: mcctl-api checks Docker every 5 seconds and sends a `server-status` event per server, plus a heartbeat every 30 seconds. Logs, a single server's status and the router status and log use the same proxy; the player roster (`/api/servers/:name/players?follow=true`) and the audit log (`/api/audit-logs/stream`) have their own routes.
 
 ### Performance
 
@@ -2779,13 +3089,13 @@ A: Recommended JVM garbage collection tuning for Minecraft. Reduces GC pause tim
 ### Audit Log
 
 **Q: What are audit logs?**
-A: Track all operations (create, delete, start, stop, player management). View with `mcctl audit list` or in Web Console. Auto-cleanup removes logs older than 90 days.
+A: A record of operations from the CLI, mcctl-api and the web console (servers, players, worlds, mods, playit, router, settings, files, schedules). View with `mcctl audit list` or in Web Console. Logs are kept until `mcctl audit purge` or the optional auto-cleanup removes them.
 
 **Q: How do I configure audit retention?**
-A: Set `AUDIT_RETENTION_DAYS` (default: 90) and `AUDIT_AUTO_CLEANUP` (default: true) in .env.
+A: `AUDIT_AUTO_CLEANUP=true` (default off) and `AUDIT_RETENTION_DAYS` (default 90) in `.env`, read by mcctl-api (the CLI reads only its shell environment). Cleanup runs while logs are written (every 100 entries or 24 hours). Or run `mcctl audit purge --days <n>`.
 
 **Q: What actions are tracked?**
-A: `server.create`, `server.delete`, `server.start`, `server.stop`, `server.restart`, `player.whitelist.add`, `player.whitelist.remove`, `player.ban.add`, `player.ban.remove`, `player.op.add`, `player.op.remove`, `player.kick`, `world.create`, `world.assign`, `world.release`, `world.delete`, `backup.push`, `backup.restore`, `console.init`, `console.user.add`, `console.user.remove`.
+A: `server.` create, delete, start, stop, restart, config, hostname; `player.` whitelist.add, whitelist.remove, whitelist.toggle, ban, unban, op, op.level, deop, kick; `world.` create, delete, assign, release, map.render; `mod.` add, remove; `playit.` start, stop; `router.restart`; `platform.settings.update`; `file.` read, write, delete, mkdir, rename, upload, download; `backup.schedule.` create, update, delete, enable, disable, run; `config.snapshot.` create, delete, restore; `config.snapshot.schedule.` create, update, delete, enable, disable; `audit.purge`. Filter with the full name, e.g. `mcctl audit list --action player.ban`.
 
 **Q: Where is the audit database stored?**
 A: SQLite database at `~/minecraft-servers/data/audit.db` using WAL mode for concurrent read/write.
@@ -2813,19 +3123,19 @@ A: Docker Compose `include` allows composing multiple compose files together. mc
 ### Networking
 
 **Q: Can friends outside my network connect?**
-A: Yes, via VPN (Tailscale, ZeroTier) or port forwarding. Set HOST_IPS with your VPN IP.
+A: Yes, via playit.gg (`mcctl playit`), a VPN (Tailscale, ZeroTier) with the VPN IP in `HOST_IPS`, or port forwarding.
 
 **Q: How does Tailscale/ZeroTier work with mcctl?**
-A: Add your VPN IP to HOST_IPS in .env, restart router. Friends connect via `server.<vpn-ip>.nip.io:25565`.
+A: Run `mcctl init --reconfigure`, choose "Host IP(s)", select the LAN and VPN addresses (written to `HOST_IPS`), answer yes to updating existing servers, then recreate each server (`mcctl stop <s> && mcctl start <s>`). Friends connect via `server.<vpn-ip>.nip.io:25565`.
 
 **Q: Can I use a custom domain instead of nip.io?**
-A: Yes. Point your domain's DNS A record to the server IP, then set the hostname in mc-router labels.
+A: Yes. Point your domain's DNS A record to the server IP, then add the domain as a custom hostname: web console > server > Hostnames / Domains > Custom Domains, or `routing.customHostnames` in `servers/<name>/server.yaml` followed by `mcctl migrate spec <name>`. Recreate the container to apply (`mcctl stop <s> && mcctl start <s>`).
 
 **Q: Why is nip.io recommended over mDNS?**
 A: nip.io works everywhere without client setup. mDNS requires avahi-daemon (Linux) or Bonjour (macOS/Windows) on both server and client.
 
 **Q: Can I have a default server (no hostname needed)?**
-A: Configure mc-router with `--default-server` flag or set the `DEFAULT_SERVER` environment variable pointing to a backend server.
+A: mcctl configures none, so a client that sends a hostname without a route (or a bare IP) gets no server. mc-router (1.47.1) has two options: the `DEFAULT` environment variable (flag `-default`, the `host:port` of the server used when no mapping matches), for example `DEFAULT: "mc-survival:25565"` in the router `environment:` of `<root>/docker-compose.yml` followed by `mcctl router start`; or the container label `mc-router.default: "true"` on one server, which still needs its `mc-router.host` label. mcctl renders the server labels from `server.yaml`, which has no field for this one, so a hand-added `mc-router.default` label is dropped the next time mcctl changes that server.
 
 ### External Access (playit.gg)
 
@@ -2833,7 +3143,7 @@ A: Configure mc-router with `--default-server` flag or set the `DEFAULT_SERVER` 
 A: A free tunneling service that lets external players connect to your server without port forwarding or a static IP.
 
 **Q: How do I set up playit.gg?**
-A: Run `mcctl playit setup` with your SECRET_KEY, then `mcctl playit start`, create a tunnel at playit.gg, and register it with `mcctl playit domain <server> <domain>`.
+A: Run `mcctl playit setup` with your SECRET_KEY (also after `mcctl init --playit-key`, since only `setup` adds the `playit` service), then `mcctl playit start`, create a tunnel at playit.gg, register it with `mcctl playit domain <server> <domain>`, and recreate the server (`mcctl stop <s> && mcctl start <s>`). Turn on the whitelist before sharing the domain.
 
 **Q: Can multiple servers use playit.gg?**
 A: Yes. Each server needs its own tunnel domain. mc-router routes connections to the correct server based on hostname.
@@ -2842,7 +3152,7 @@ A: Yes. Each server needs its own tunnel domain. mc-router routes connections to
 A: Yes, the basic plan is free and supports Minecraft Java tunneling. Premium plans offer custom domains and more tunnels.
 
 **Q: How do I add a playit domain to an existing server?**
-A: `mcctl playit domain <server-name> <your-playit-domain>`. This updates the server's mc-router labels.
+A: `mcctl playit domain <server-name> <your-playit-domain>`. This sets `PLAYIT_DOMAIN` and the server's `mc-router.host` label; it applies after `mcctl stop <server-name> && mcctl start <server-name>` (a restart does not apply it). `--remove` removes it.
 
 ### Migration and Updates
 
@@ -2853,19 +3163,19 @@ A: `mcctl update --yes` updates the CLI and the installed services. To update on
 A: `mcctl update --yes`. This updates mcctl, mcctl-api, mcctl-console, and shared packages (and pulls Docker images). `--all` is a deprecated alias for this default behavior.
 
 **Q: Do I need to stop servers before updating?**
-A: No. Minecraft server containers are independent of mcctl. Only Management Console services are restarted during a full update.
+A: No. Minecraft server containers are independent of mcctl; only Management Console services are restarted. `mcctl update` pulls new server images: running servers keep their image until `mcctl stop <s> && mcctl start <s>`, and in a terminal it offers to recreate stopped servers that still use an old image (default No).
 
 **Q: How do I migrate from an old version?**
-A: `mcctl migrate status` to check, then `mcctl migrate worlds --all` to fix known issues.
+A: Follow the Upgrade Runbook (`docs/advanced/upgrade-runbook.md`; from v2.x use `upgrade-v3.sh`). `mcctl migrate status` / `mcctl migrate worlds --all` move worlds out of server folders; `mcctl migrate spec --all` imports servers into `server.yaml`.
 
 **Q: What is `mcctl upgrade`?**
-A: A command that detects new environment variables added in newer mcctl versions and appends them to your `.env` file (it never modifies existing values), syncs `servers/_template/`, and (since 2.29.0) updates only the `router` service's `image` and `group_add` in your root `docker-compose.yml`, with a diff, confirmation and timestamped `.bak` backup.
+A: A command that appends new environment variables from the bundled `.env.example` to your `.env` (existing values are kept), sets `DOCKER_GID`, syncs `servers/_template/`, updates only the `router` service's `image` and `group_add` in your root `docker-compose.yml` (diff, confirmation, timestamped `.bak`), creates `servers/global.env` and points servers at it, moves `BETTER_AUTH_*` from `ecosystem.config.cjs` into `.env`, lists servers without `server.yaml`, and offers to delete a leftover `<root>/scripts`.
 
 **Q: When should I run `mcctl upgrade`?**
 A: After updating mcctl to a new version via `mcctl update` or `npm update -g @minecraft-docker/mcctl`.
 
 **Q: Is `mcctl upgrade` safe?**
-A: Yes. It only appends new `.env` variables and never modifies existing ones; the root `docker-compose.yml` patch is limited to `router.image` and `group_add`, is backed up first, and is restored if validation fails. Use `--dry-run` to preview changes first.
+A: Yes. It appends new `.env` variables and keeps existing values (except `DOCKER_GID` when missing or the default, and the moved `BETTER_AUTH_*` keys); the root `docker-compose.yml` patch is limited to `router.image` and `group_add`, is backed up first, and is restored if validation fails; `ecosystem.config.cjs` is backed up before the auth keys move. Use `--dry-run` to preview changes first.
 
 **Q: What is the difference between `mcctl update` and `mcctl upgrade`?**
 A: `mcctl update` updates the CLI and service packages to newer versions. `mcctl upgrade` updates your platform configuration files (.env, templates) to match the new version's template.
@@ -3205,7 +3515,7 @@ No product behavior changes; documentation and contributor workflow only.
 - Admin user management Console UI - list, detail, role management (#189)
 - OP Level domain model with levels 1-4 and semantic descriptions (#284)
 - OP Level CLI commands: `mcctl op set <player> --level <1-4>` with interactive mode (#285)
-- OP Level REST API: `PUT /api/servers/:name/ops/:player/level` (#286)
+- OP Level REST API: `PATCH /api/servers/:name/ops/:player` with `{level}` (#286)
 - OP Level Console Web UI: OpLevelBadge, OpLevelSelector, OpManager integration (#287)
 - Offline player management support (#288, #289)
 - User profile settings page with password change (#265, #266)
@@ -3241,7 +3551,7 @@ No product behavior changes; documentation and contributor workflow only.
 ### Version 1.12.0 ~ 1.12.1 (2026-02-06~07)
 
 **Added:**
-- All-Servers SSE Status Endpoint (`GET /api/sse/servers-status`)
+- All-Servers SSE Status Endpoint (`GET /api/servers-status?follow=true`; the console proxies it as `/api/sse/servers-status`)
 - Server Detail Delete Menu with confirmation dialog
 - API Audit Logging for server CRUD and actions
 
@@ -3255,7 +3565,7 @@ No product behavior changes; documentation and contributor workflow only.
 - World Management UI in Web Console (list, create, assign, release, delete, reset)
 - Server Options Tab (config management via web UI)
 - SSE Real-time Server Status (replaced polling)
-- Server Config API (`GET/PUT /api/servers/:name/config`)
+- Server Config API (`GET/PATCH /api/servers/:name/config`)
 - World Reset API (`POST /api/servers/:name/world/reset`)
 
 **Fixed:**
@@ -3367,7 +3677,7 @@ No product behavior changes; documentation and contributor workflow only.
 | **SSE** | Server-Sent Events for real-time streaming (server status, audit logs) |
 | **Better Auth** | Authentication library used by mcctl-console for session management |
 | **playit.gg** | Free tunneling service for external access without port forwarding |
-| **mcctl upgrade** | Platform configuration migration command (append-only .env updates) |
+| **mcctl upgrade** | Platform configuration migration command (appends new .env keys, patches the router service, moves servers to `servers/global.env`) |
 | **templateVersion** | Version tracking field in `.mcctl.json` to track which template version was last applied |
 
 ---
@@ -3393,4 +3703,4 @@ No product behavior changes; documentation and contributor workflow only.
 
 ---
 
-*This document was generated as a comprehensive knowledge base for LLM agent consumption. Version 2.4.0, last updated 2026-02-14.*
+*This document was generated as a comprehensive knowledge base for LLM agent consumption. Version 3.0.2, last updated 2026-10-25.*
