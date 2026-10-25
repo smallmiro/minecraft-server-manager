@@ -86,7 +86,13 @@ vi.mock('@minecraft-docker/shared', () => ({
   Paths: vi.fn().mockImplementation(() => ({
     platform: '/tmp/test-platform',
     root: '/tmp/test-root',
+    servers: '/tmp/test-root/servers',
   })),
+}));
+
+vi.mock('../../../src/lib/server-config.js', () => ({
+  serverSpecRepository: vi.fn(() => ({})),
+  updateServer: vi.fn(),
 }));
 
 // Mock node:fs
