@@ -580,37 +580,6 @@ describe('create command - MODRINTH modpack support', () => {
         }), expect.anything());
     });
 
-    it('should pass noPlayitDomain when --no-playit-domain is provided', async () => {
-      // ARRANGE
-      const options: CreateCommandOptions = {
-        name: 'myserver',
-        type: 'PAPER',
-        noPlayitDomain: true,
-        noStart: false,
-      };
-
-      const mockServer = {
-        name: { value: 'myserver', hostname: 'myserver.local' },
-        containerName: 'mc-myserver',
-        type: { label: 'Paper', isModpack: false },
-        version: { value: '1.21.1' },
-        memory: { value: '4G' },
-      };
-
-      mockCreateServerUseCase.executeWithConfig.mockResolvedValue(mockServer);
-
-      // ACT
-      const exitCode = await createCommand(options);
-
-      // ASSERT
-      expect(exitCode).toBe(0);
-      expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'myserver',
-          noPlayitDomain: true,
-        }), expect.anything());
-    });
-
     it('should not pass playit options when neither flag is provided', async () => {
       // ARRANGE
       const options: CreateCommandOptions = {
@@ -637,7 +606,6 @@ describe('create command - MODRINTH modpack support', () => {
       expect(mockCreateServerUseCase.executeWithConfig).toHaveBeenCalledWith(
         expect.not.objectContaining({
           playitDomain: expect.anything(),
-          noPlayitDomain: expect.anything(),
         }), expect.anything());
     });
   });

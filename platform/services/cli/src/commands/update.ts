@@ -382,7 +382,6 @@ const LIBRARY_PACKAGES = {
  */
 export interface UpdateCommandOptions {
   check?: boolean;
-  force?: boolean;
   yes?: boolean;
   /**
    * Backward-compatible alias. Updating CLI + services is now the default,

@@ -606,7 +606,6 @@ mcctl create [name] [options]
 | `--enable-whitelist` | | Turn on the whitelist, empty | off |
 | `--no-whitelist` | | Whitelist off (wins over the two above) | - |
 | `--playit-domain <domain>` | | playit.gg external domain of the server | - |
-| `--no-playit-domain` | | Do not set a playit.gg domain (also the default) | - |
 | `--no-start` | | Create without starting (no container is created) | - |
 | `--sudo-password <pwd>` | | Sudo password for registering `<name>.local` | - |
 
@@ -618,8 +617,8 @@ New servers get `MEMORY=4G` (6G for modpack types) and the image tag their `VERS
 
 1. **Server name** - lowercase letters, digits, hyphens
 2. **Server type** - choose "Modrinth Modpack" or "CurseForge Modpack"
-3. **Modpack slug** - text prompt `Modrinth modpack slug or URL:` (e.g., `cobblemon`); there is no search
-4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched); a CurseForge modpack's answer is not written
+3. **Modpack slug** - text prompt `Modrinth modpack slug or URL:` or `CurseForge modpack slug or URL:`, by the chosen platform (e.g., `cobblemon`); there is no search
+4. **Mod loader** - Auto-detect, or Fabric / Forge / NeoForge / Quilt (filtered to the loaders the modpack's Modrinth versions support when they can be fetched); for a CurseForge modpack the question is skipped (it has no loader variable)
 5. **Modpack version** - leave empty for latest
 6. **Exclude mods** - comma-separated files to leave out (e.g. client-only mods)
 7. **World setup**, **memory** (default 6G), **whitelist**, then creation (there is no separate confirmation step)
@@ -892,7 +891,7 @@ mcctl config-snapshot schedule remove|enable|disable <id>
 - **World backup** commits `worlds/` (and server-internal worlds in `servers/<name>/data/<LEVEL>`) to the repository. Running servers are flushed first (`save-off`, `save-all flush`, `save-on`); "no changes" is a success. Restore puts the replaced data in `backups/restore-previous/<timestamp>/`.
 - **Backup schedules** and **config snapshot schedules** are executed by mcctl-api (`mcctl console init`), which compares its cron tasks with the schedule DBs every minute: a schedule changed with the CLI applies within a minute, without a restart. Schedule retention: `--max-count`/`--max-age-days` prune old backups from the repository history (the latest is always kept); `--retention` keeps the newest snapshots of a snapshot schedule.
 - **`server-backup`** archives `config.env`, `docker-compose.yml` and, when present, `server.yaml`, `data/ops.json`, `data/whitelist.json`, `data/banned-players.json`, `data/banned-ips.json`, `data/server.properties` to `backups/servers/<server>/<id>.tar.gz` (ID = creation time, e.g. `20260120-203357`). `server-restore` copies the current files to `backups/servers/<server>/.pre-restore/` first. No world data.
-- **Config snapshots** hold the files in `servers/<server>/` itself (not `data/`): `server.yaml`, `config.env`, `docker-compose.yml` and other `.yml`/`.yaml`/`.json`/`.properties` files up to 1 MB, stored in `backups/meta/config-snapshots.db` and `backups/meta/config-snapshot-storage/`. `list` shows 8-character IDs; the other subcommands need the full ID (from `create` or `list --json`). A restore that changes the world follows the world assignment rules.
+- **Config snapshots** hold the files in `servers/<server>/` itself (not `data/`): `server.yaml`, `config.env`, `docker-compose.yml` and other `.yml`/`.yaml`/`.json`/`.properties` files up to 1 MB, stored in `backups/meta/config-snapshots.db` and `backups/meta/config-snapshot-storage/`. The other subcommands need the full ID, which `list`, `create` and `list --json` print. A restore that changes the world follows the world assignment rules.
 
 ---
 
@@ -1063,7 +1062,6 @@ The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest f
 mcctl update                    # Update CLI + installed services + server images (default)
 mcctl update --cli-only         # Update only the CLI binary
 mcctl update --check            # Show available updates (CLI and services); exits 1 if a newer CLI exists or npm cannot be reached
-mcctl update --force            # Accepted for compatibility; every update checks npm without the cache
 mcctl update --yes              # Do not ask; also never recreates stopped servers
 mcctl update --all              # Deprecated alias (same as the default)
 ```
@@ -1135,7 +1133,7 @@ Before every other command (except `--help`/`--version`), mcctl checks npm for a
 **Interactive modpack flow**: `mcctl create` without a name asks for the name and type; for a modpack type it then asks for:
 
 1. The **modpack slug** or URL (e.g., `cobblemon`, `adrenaserver`; no search in the CLI)
-2. The **mod loader**: Auto-detect, or one of the loaders the modpack's versions list on Modrinth (all of `forge`, `neoforge`, `fabric`, `quilt` if the lookup fails)
+2. The **mod loader** (Modrinth only; CurseForge skips it): Auto-detect, or one of the loaders the modpack's versions list on Modrinth (all of `forge`, `neoforge`, `fabric`, `quilt` if the lookup fails)
 3. The **modpack version** (empty for the latest)
 4. **Mods to exclude** (comma-separated; client-only mods must be listed here in the CLI)
 5. The world, memory (`6G`) and whitelist (no Minecraft version prompt)

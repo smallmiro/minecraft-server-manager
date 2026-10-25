@@ -557,13 +557,14 @@ export class ClackPromptAdapter implements IPromptPort {
     return value.split(',').map((p) => p.trim()).filter(Boolean);
   }
 
-  async promptModpackSlug(): Promise<string> {
+  async promptModpackSlug(type?: ServerType): Promise<string> {
+    const platform = type?.value === 'AUTO_CURSEFORGE' ? 'CurseForge' : 'Modrinth';
     const result = await p.text({
-      message: 'Modrinth modpack slug or URL:',
-      placeholder: 'cobblemon',
+      message: `${platform} modpack slug or URL:`,
+      placeholder: platform === 'CurseForge' ? 'all-the-mods-10' : 'cobblemon',
       validate: (value) => {
         if (!value.trim()) {
-          return 'Modpack slug is required for Modrinth servers';
+          return `Modpack slug is required for ${platform} servers`;
         }
         return undefined;
       },

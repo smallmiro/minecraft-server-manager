@@ -43,7 +43,6 @@ export interface CreateServerConfig {
   enableWhitelist?: boolean;
   whitelistPlayers?: string[];
   playitDomain?: string;
-  noPlayitDomain?: boolean;
 }
 
 /**

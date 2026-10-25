@@ -129,7 +129,7 @@ describe('update command', () => {
 
   describe('default (no flag) = full update', () => {
     it('should call checkServiceAvailability by default (services included)', async () => {
-      await updateCommand({ check: false, force: false, yes: true });
+      await updateCommand({ check: false, yes: true });
 
       expect(mockCheckServiceAvailability).toHaveBeenCalled();
     });

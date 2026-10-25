@@ -49,7 +49,6 @@ interface CreateServerOptions {
   enableWhitelist?: boolean;
   whitelistPlayers?: string[];
   playitDomain?: string;
-  noPlayitDomain?: boolean;
 }
 
 /** What TypeScript provisioning needs (#675, ADR-0003 §5). */
@@ -180,7 +179,6 @@ function parseConfigValues(config: CreateServerConfig) {
     enableWhitelist,
     whitelistPlayers: config.whitelistPlayers,
     playitDomain: config.playitDomain,
-    noPlayitDomain: config.noPlayitDomain,
   };
   return { name, type, version, memory, worldOptions, enableWhitelist, server, createOptions, versionToWrite };
 }
@@ -305,11 +303,12 @@ export class CreateServerUseCase implements ICreateServerUseCase {
       let modpackExcludeFiles: string[] | undefined;
 
       if (type.isModpack) {
-        modpackSlug = await this.prompt.promptModpackSlug();
+        modpackSlug = await this.prompt.promptModpackSlug(type);
 
-        // Fetch supported loaders from mod source API
+        // Fetch supported loaders from mod source API (Modrinth only)
+        const isCurseForge = type.value === 'AUTO_CURSEFORGE';
         let availableLoaders: string[] | undefined;
-        if (this.modSource && modpackSlug) {
+        if (this.modSource && modpackSlug && !isCurseForge) {
           try {
             const versions = await this.modSource.getVersions(modpackSlug);
             const loaderSet = new Set<string>();
@@ -326,7 +325,10 @@ export class CreateServerUseCase implements ICreateServerUseCase {
           }
         }
 
-        modLoader = await this.prompt.promptModpackLoader(availableLoaders);
+        // CurseForge has no loader variable: the pack decides
+        if (!isCurseForge) {
+          modLoader = await this.prompt.promptModpackLoader(availableLoaders);
+        }
         modpackVersion = await this.prompt.promptModpackVersion();
         modpackExcludeFiles = await this.prompt.promptModpackExcludeFiles();
       }

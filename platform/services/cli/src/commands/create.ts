@@ -28,7 +28,6 @@ export interface CreateCommandOptions {
   modLoader?: string;
   excludeFiles?: string;
   playitDomain?: string;
-  noPlayitDomain?: boolean;
 }
 
 /**
@@ -110,7 +109,6 @@ async function createWithArguments(
       enableWhitelist,
       whitelistPlayers,
       playitDomain: options.playitDomain,
-      noPlayitDomain: options.noPlayitDomain,
     }, {
       onProgress: (_stage, message) => console.log(colors.dim(`  ${message}`)),
       onLog: (line) => log.warn(line),

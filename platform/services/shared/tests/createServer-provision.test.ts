@@ -224,4 +224,20 @@ describe('CreateServerUseCase.execute (interactive) with provisioning', () => {
     await useCase({ prompt: prompt as unknown as IPromptPort }).execute();
     expect(parseEnvDocument(readFileSync(file('beta', 'config.env'), 'utf-8')).values.has('VERSION')).toBe(false);
   });
+
+  it('asks the modpack slug for the chosen platform and skips the loader for CurseForge (#828)', async () => {
+    const promptModpackSlug = vi.fn(async () => 'all-the-mods');
+    const promptModpackLoader = vi.fn(async () => undefined);
+    const prompt = {
+      ...interactivePrompt(),
+      promptServerType: async () => ServerType.create('AUTO_CURSEFORGE'),
+      promptModpackSlug,
+      promptModpackLoader,
+      promptModpackVersion: async () => undefined,
+      promptModpackExcludeFiles: async () => undefined,
+    };
+    await useCase({ prompt: prompt as unknown as IPromptPort }).execute();
+    expect(promptModpackSlug).toHaveBeenCalledWith(expect.objectContaining({ value: 'AUTO_CURSEFORGE' }));
+    expect(promptModpackLoader).not.toHaveBeenCalled();
+  });
 });

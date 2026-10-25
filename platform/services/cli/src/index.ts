@@ -204,7 +204,8 @@ ${colors.cyan('Mod Add Options:')}
 ${colors.cyan('World New Options:')}
   --seed <seed>              World seed (optional, random if empty)
   --server <name>            Server to assign world to
-  --no-start                 Don't start server after creation
+  --no-start                 Interactive only: skip the "start server?" question
+                             (world new never starts the server; use mcctl start <server>)
 
 ${colors.cyan('Player Management (Interactive):')}
   ${colors.bold('player')}                     Interactive mode: server → player → action
@@ -283,7 +284,6 @@ ${colors.cyan('Self Update:')}
   ${colors.bold('update')}                     Update CLI and all installed services (default)
   ${colors.bold('update')} --cli-only          Update only the mcctl CLI binary
   ${colors.bold('update')} --check             Check for updates only (no install)
-  ${colors.bold('update')} --force             Force check (ignore cache)
   ${colors.bold('update')} --yes               Auto-confirm update
   ${colors.bold('update')} --all               Deprecated alias (same as default)
 
@@ -334,7 +334,6 @@ ${colors.cyan('Create Options:')}
   --mod-loader LOADER        Mod loader (auto/fabric/forge/quilt, default: auto; Modrinth only)
   --exclude-files LIST       Mods to exclude from modpack, comma-separated (e.g. client-only mods)
   --playit-domain DOMAIN     Register playit.gg external domain (e.g., aa.example.com)
-  --no-playit-domain         Skip playit domain registration (explicit)
 
 ${colors.cyan('Status Options:')}
   --detail, -d               Show detailed info (memory, CPU, players)
@@ -488,7 +487,6 @@ async function main(): Promise<void> {
           modLoader: flags['mod-loader'] as string | undefined,
           excludeFiles: flags['exclude-files'] as string | undefined,
           playitDomain: flags['playit-domain'] as string | undefined,
-          noPlayitDomain: flags['no-playit-domain'] === true,
         });
         break;
       }
@@ -884,7 +882,6 @@ async function main(): Promise<void> {
       case 'update': {
         exitCode = await updateCommand({
           check: flags['check'] === true,
-          force: flags['force'] === true,
           yes: flags['yes'] === true,
           all: flags['all'] === true,
           cliOnly: flags['cli-only'] === true,

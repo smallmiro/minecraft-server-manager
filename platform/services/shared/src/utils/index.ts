@@ -313,14 +313,18 @@ export * from './atomic-write.js';
 /**
  * Console output utilities with colors
  */
+const paint = (code: number) => (s: string) =>
+  // no-color.org: a non-empty NO_COLOR turns color off
+  process.env['NO_COLOR'] ? s : `\x1b[${code}m${s}\x1b[0m`;
+
 export const colors = {
-  red: (s: string) => `\x1b[31m${s}\x1b[0m`,
-  green: (s: string) => `\x1b[32m${s}\x1b[0m`,
-  yellow: (s: string) => `\x1b[33m${s}\x1b[0m`,
-  blue: (s: string) => `\x1b[34m${s}\x1b[0m`,
-  cyan: (s: string) => `\x1b[36m${s}\x1b[0m`,
-  bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
-  dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
+  red: paint(31),
+  green: paint(32),
+  yellow: paint(33),
+  blue: paint(34),
+  cyan: paint(36),
+  bold: paint(1),
+  dim: paint(2),
 };
 
 export const log = {

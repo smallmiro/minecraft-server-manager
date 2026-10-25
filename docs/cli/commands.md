@@ -324,7 +324,6 @@ mcctl update [options]
 | `--cli-only` | Update only the mcctl CLI binary (opt out of the full update) |
 | `--check` | Show the available updates for the CLI and the installed services; install nothing |
 | `--yes` | Do not ask before updating, and do not recreate stopped servers (see **Stopped servers** below) |
-| `--force` | Accepted for compatibility; every `mcctl update` checks npm without using the cache |
 | `--all` | Deprecated alias — same as the default (kept for backward compatibility) |
 
 By default `mcctl update` updates the CLI, the installed services (mcctl-api, mcctl-console, `shared`) and the server images. `--cli-only` updates just the CLI binary.
@@ -505,7 +504,6 @@ mcctl create [name] [options]
 | `--enable-whitelist` | | Enable whitelist without initial players |
 | `--no-whitelist` | | Disable whitelist (default; overrides the two options above) |
 | `--playit-domain <domain>` | | playit.gg external domain of the server (e.g. `aa.example.com`) |
-| `--no-playit-domain` | | Do not set a playit.gg domain (also the default without `--playit-domain`) |
 | `--sudo-password` | | Sudo password for mDNS registration (automation) |
 
 New servers get 4G of memory (6G for modpack types) and the `itzg/minecraft-server` tag their `VERSION` needs, for example `java8` for 1.16.5 and `java21` for 1.21.1 (`java25` for `LATEST`, a modpack without `-v` and snapshots; see [Java Versions and Image Tags](../configuration/server-types.md#java-versions-and-image-tags)). Interactive `mcctl create` asks for the memory; afterwards change it with `mcctl config <name> MEMORY <size>`. For modpack details see [Modpacks](../mods-and-plugins/modpacks.md).
@@ -573,7 +571,7 @@ New servers get 4G of memory (6G for modpack types) and the `itzg/minecraft-serv
     mcctl create mypack -t AUTO_CURSEFORGE --modpack <slug>
     ```
 
-    For a guided setup, run `mcctl create` without a name and choose **Modrinth Modpack** or **CurseForge Modpack** under "Modpack Platforms". It then asks for the modpack slug, the mod loader, the modpack version and the files to exclude.
+    For a guided setup, run `mcctl create` without a name and choose **Modrinth Modpack** or **CurseForge Modpack** under "Modpack Platforms". It then asks for the modpack slug, the mod loader (Modrinth only; CurseForge has no loader variable and skips the question), the modpack version and the files to exclude.
 
 === "Automation (CI/CD)"
     ```bash
@@ -1066,7 +1064,7 @@ mcctl config-snapshot <list|create|show|diff|restore|delete> [args] [options]
 | `restore <id>` | Write the snapshot's files back to `servers/<server>/`; asks first unless `--force` |
 | `delete <id>` | Delete a snapshot; asks first unless `--force` |
 
-`list` shows only the first 8 characters of each ID; the other commands need the full ID, printed by `create` and by `list --json`. A restore that changes the server's world follows the [World Assignment Rules](#world-assignment-rules). Restart the server to apply restored files.
+The other commands need the full snapshot ID, which `list`, `create` and `list --json` print. A restore that changes the server's world follows the [World Assignment Rules](#world-assignment-rules). Restart the server to apply restored files.
 
 **Examples:**
 
@@ -1350,7 +1348,7 @@ A world is assigned to a server by the server's `LEVEL` in `servers/<name>/confi
 
 ### mcctl world new
 
-Create a new world directory with optional seed configuration.
+Create a new world directory with optional seed configuration. The command never starts a server: with `--server` it only assigns the world (sets `LEVEL`); run `mcctl start <server>` afterwards. Only the interactive form asks whether to start the server.
 
 ```bash
 mcctl world new [name] [options]
@@ -1539,7 +1537,6 @@ mcctl world release [world] [options]
 
 | Option | Description |
 |--------|-------------|
-| `--force` | Accepted and ignored (a running server is never released) |
 
 **Examples:**
 
@@ -2551,6 +2548,10 @@ An option that needs a value takes it from the next word (`--seed 123`) or after
 ## Environment Variables
 
 Environment variables for automation and CI/CD pipelines.
+
+### NO_COLOR
+
+When `NO_COLOR` is set to a non-empty value, mcctl prints no ANSI color codes (see [no-color.org](https://no-color.org)). An empty value is ignored.
 
 ### MCCTL_SUDO_PASSWORD
 

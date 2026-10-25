@@ -324,7 +324,6 @@ mcctl update [options]
 | `--cli-only` | mcctl CLI 바이너리만 업데이트 (전체 업데이트 opt-out) |
 | `--check` | CLI와 설치된 서비스의 업데이트를 보여 주기만 하고 아무것도 설치하지 않음 |
 | `--yes` | 업데이트 전에 묻지 않고, 중지된 서버도 다시 만들지 않음 (아래 **중지된 서버** 참조) |
-| `--force` | 호환용으로 받음. `mcctl update`는 항상 캐시 없이 npm을 확인 |
 | `--all` | Deprecated 별칭 — 기본 동작과 동일 (하위 호환용) |
 
 기본적으로 `mcctl update`는 CLI, 설치된 서비스(mcctl-api, mcctl-console, `shared`), 서버 이미지를 업데이트합니다. `--cli-only`는 CLI 바이너리만 업데이트합니다.
@@ -505,7 +504,6 @@ mcctl create [name] [options]
 | `--enable-whitelist` | | 초기 플레이어 없이 화이트리스트 활성화 |
 | `--no-whitelist` | | 화이트리스트 비활성화 (기본값, 위 두 옵션보다 우선) |
 | `--playit-domain <domain>` | | 서버의 playit.gg 외부 도메인 (예: `aa.example.com`) |
-| `--no-playit-domain` | | playit.gg 도메인을 설정하지 않음 (`--playit-domain`이 없을 때의 기본 동작과 같음) |
 | `--sudo-password` | | mDNS 등록용 sudo 비밀번호 (자동화용) |
 
 새 서버는 메모리 4G(모드팩 타입은 6G)와 `VERSION`에 맞는 `itzg/minecraft-server` 태그로 만들어집니다. 예를 들어 1.16.5는 `java8`, 1.21.1은 `java21`이고, `LATEST`, `-v` 없는 모드팩, 스냅샷은 `java25`입니다([Java 버전과 이미지 태그](../configuration/server-types.ko.md#java-버전과-이미지-태그) 참고). 대화형 `mcctl create`는 메모리를 묻고, 생성 후에는 `mcctl config <name> MEMORY <size>`로 바꿉니다. 모드팩에 대한 자세한 내용은 [모드팩](../mods-and-plugins/modpacks.ko.md)에 있습니다.
@@ -573,7 +571,7 @@ mcctl create [name] [options]
     mcctl create mypack -t AUTO_CURSEFORGE --modpack <slug>
     ```
 
-    안내에 따라 만들려면 이름 없이 `mcctl create`를 실행하고 "Modpack Platforms"에서 **Modrinth Modpack** 또는 **CurseForge Modpack**을 고릅니다. 그러면 모드팩 slug, 모드 로더, 모드팩 버전, 제외할 파일을 차례로 묻습니다.
+    안내에 따라 만들려면 이름 없이 `mcctl create`를 실행하고 "Modpack Platforms"에서 **Modrinth Modpack** 또는 **CurseForge Modpack**을 고릅니다. 그러면 모드팩 slug, 모드 로더(Modrinth만, CurseForge는 로더 변수가 없어 묻지 않음), 모드팩 버전, 제외할 파일을 차례로 묻습니다.
 
 === "자동화 (CI/CD)"
     ```bash
@@ -1066,7 +1064,7 @@ mcctl config-snapshot <list|create|show|diff|restore|delete> [args] [options]
 | `restore <id>` | 스냅샷의 파일을 `servers/<server>/`에 다시 씀. `--force`가 없으면 먼저 확인 |
 | `delete <id>` | 스냅샷 삭제. `--force`가 없으면 먼저 확인 |
 
-`list`는 ID의 앞 8자만 보여 줍니다. 나머지 명령에는 전체 ID가 필요하며, 전체 ID는 `create`와 `list --json`이 출력합니다. 서버의 월드를 바꾸는 복원은 [월드 할당 규칙](#world-assignment-rules)을 따릅니다. 복원한 파일을 적용하려면 서버를 재시작합니다.
+나머지 명령에는 전체 ID가 필요하며, `list`, `create`, `list --json`이 전체 ID를 출력합니다. 서버의 월드를 바꾸는 복원은 [월드 할당 규칙](#world-assignment-rules)을 따릅니다. 복원한 파일을 적용하려면 서버를 재시작합니다.
 
 **예제:**
 
@@ -1350,7 +1348,7 @@ mcctl player online --all
 
 ### mcctl world new
 
-선택적 시드 설정으로 새 월드 디렉토리를 생성합니다.
+선택적 시드 설정으로 새 월드 디렉토리를 생성합니다. 이 명령은 서버를 시작하지 않습니다. `--server`는 월드를 배정(`LEVEL` 설정)할 뿐이므로 이후 `mcctl start <server>`로 시작하세요. 대화형 모드만 서버 시작 여부를 묻습니다.
 
 ```bash
 mcctl world new [name] [options]
@@ -2551,6 +2549,10 @@ mcctl audit <list|stats|purge> [options]
 ## 환경 변수
 
 자동화 및 CI/CD 파이프라인을 위한 환경 변수입니다.
+
+### NO_COLOR
+
+`NO_COLOR`가 비어 있지 않은 값으로 설정되면 mcctl은 ANSI 색 코드를 출력하지 않습니다([no-color.org](https://no-color.org) 참고). 빈 값은 무시합니다.
 
 ### MCCTL_SUDO_PASSWORD
 
