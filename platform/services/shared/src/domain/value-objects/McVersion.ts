@@ -28,6 +28,11 @@ export class McVersion {
     return this._patch;
   }
 
+  /** 1.20.5 and later 1.x releases (Java 21). */
+  private get isJava21Era(): boolean {
+    return this._major === 1 && (this._minor > 20 || (this._minor === 20 && this._patch >= 5));
+  }
+
   /**
    * Returns the recommended Java version for this Minecraft version
    */
@@ -36,11 +41,11 @@ export class McVersion {
     if (this._major >= 26) {
       return 25;
     }
-    // Minecraft 1.21+ requires Java 21
-    if (this._major >= 1 && this._minor >= 21) {
+    // Minecraft 1.20.5+ requires Java 21
+    if (this.isJava21Era) {
       return 21;
     }
-    // Minecraft 1.18-1.20.x requires Java 17
+    // Minecraft 1.18-1.20.4 requires Java 17
     if (this._major >= 1 && this._minor >= 18) {
       return 17;
     }
@@ -62,11 +67,11 @@ export class McVersion {
     if (this._major >= 26) {
       return 'java25';
     }
-    // Minecraft 1.21+ requires Java 21
-    if (this._major >= 1 && this._minor >= 21) {
+    // Minecraft 1.20.5+ requires Java 21
+    if (this.isJava21Era) {
       return 'java21';
     }
-    // Minecraft 1.17-1.20.x requires Java 17
+    // Minecraft 1.17-1.20.4 requires Java 17
     if (this._major >= 1 && this._minor >= 17) {
       return 'java17';
     }
