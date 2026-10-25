@@ -135,13 +135,26 @@ SPAWN_PROTECTION=32
     it('should parse difficulty and gameMode enums', () => {
       mockedExistsSync.mockReturnValue(true);
       mockedReadFileSync.mockReturnValue(`DIFFICULTY=hard
-GAMEMODE=creative
+MODE=creative
 `);
 
       const config = configService.getConfig('testserver');
 
       expect(config.difficulty).toBe('hard');
       expect(config.gameMode).toBe('creative');
+    });
+
+    // The image reads MODE; mcctl wrote GAMEMODE before #826
+    it('shows a GAMEMODE-only server its GAMEMODE value', () => {
+      mockedExistsSync.mockReturnValue(true);
+      mockedReadFileSync.mockReturnValue('GAMEMODE=creative\n');
+      expect(configService.getConfig('testserver').gameMode).toBe('creative');
+    });
+
+    it('prefers MODE over GAMEMODE', () => {
+      mockedExistsSync.mockReturnValue(true);
+      mockedReadFileSync.mockReturnValue('GAMEMODE=creative\nMODE=adventure\n');
+      expect(configService.getConfig('testserver').gameMode).toBe('adventure');
     });
 
     it('should handle invalid numeric values gracefully', () => {
@@ -304,8 +317,45 @@ USE_AIKAR_FLAGS=false
         gameMode: 'creative',
       });
       expect(mockedWriteServerConfig).toHaveBeenCalledWith('/test/platform', 'testserver', {
-        set: { PVP: 'false', USE_AIKAR_FLAGS: 'true', DIFFICULTY: 'hard', GAMEMODE: 'creative' },
+        set: { PVP: 'false', USE_AIKAR_FLAGS: 'true', DIFFICULTY: 'hard', MODE: 'creative' },
       });
+    });
+
+    it('writes the game mode to MODE and drops the GAMEMODE line (#826)', async () => {
+      const written = setupUpdateTest(`${initialConfigContent}GAMEMODE=survival\n`);
+      const result = await configService.updateConfig('testserver', { gameMode: 'creative' });
+      expect(mockedWriteServerConfig).toHaveBeenCalledWith('/test/platform', 'testserver', {
+        set: { MODE: 'creative' },
+        remove: ['GAMEMODE'],
+      });
+      expect(written()).toContain('MODE=creative');
+      expect(written()).not.toContain('GAMEMODE');
+      expect(result.config.gameMode).toBe('creative');
+    });
+
+    it('moves an unchanged GAMEMODE value to MODE when the game mode is saved', async () => {
+      setupUpdateTest(`${initialConfigContent}GAMEMODE=creative\n`);
+      const result = await configService.updateConfig('testserver', { gameMode: 'creative', motd: 'Original Server' });
+      expect(result.changedFields).toEqual(['gameMode']);
+      expect(mockedWriteServerConfig).toHaveBeenCalledWith('/test/platform', 'testserver', {
+        set: { MODE: 'creative' },
+        remove: ['GAMEMODE'],
+      });
+    });
+
+    it('leaves GAMEMODE alone when the game mode is not saved', async () => {
+      setupUpdateTest(`${initialConfigContent}GAMEMODE=creative\n`);
+      await configService.updateConfig('testserver', { motd: 'Changed' });
+      expect(mockedWriteServerConfig).toHaveBeenCalledWith('/test/platform', 'testserver', {
+        set: { MOTD: 'Changed' },
+      });
+    });
+
+    it('writes nothing when MODE already holds the saved game mode', async () => {
+      setupUpdateTest(`${initialConfigContent}MODE=creative\n`);
+      const result = await configService.updateConfig('testserver', { gameMode: 'creative' });
+      expect(result.changedFields).toEqual([]);
+      expect(mockedWriteServerConfig).not.toHaveBeenCalled();
     });
 
     it('should throw when config file does not exist', async () => {

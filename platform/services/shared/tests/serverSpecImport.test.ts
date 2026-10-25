@@ -71,7 +71,7 @@ describe('importDockerServer: a template-created server', () => {
         loadingMotd: '§a§lServer is starting...§r\n§7Please wait!',
       },
       env: {
-        GAMEMODE: 'survival',
+        MODE: 'survival',
         DIFFICULTY: 'normal',
         MAX_PLAYERS: '20',
         VIEW_DISTANCE: '10',
@@ -83,7 +83,7 @@ describe('importDockerServer: a template-created server', () => {
       },
     });
     expect(Object.keys(result.document!.env)).toEqual([
-      'GAMEMODE', 'DIFFICULTY', 'MAX_PLAYERS', 'VIEW_DISTANCE', 'PVP', 'SPAWN_PROTECTION', 'ENABLE_RCON', 'MOTD',
+      'MODE', 'DIFFICULTY', 'MAX_PLAYERS', 'VIEW_DISTANCE', 'PVP', 'SPAWN_PROTECTION', 'ENABLE_RCON', 'MOTD',
       'MODRINTH_DOWNLOAD_DEPENDENCIES',
     ]);
   });
