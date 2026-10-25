@@ -127,7 +127,7 @@ ${colors.cyan('Usage:')}
   mcctl <command> [options]
 
 ${colors.cyan('Commands:')}
-  ${colors.bold('init')} [options]              Initialize platform (~/.minecraft-servers)
+  ${colors.bold('init')} [options]              Initialize platform (~/minecraft-servers)
     --reconfigure             Reconfigure existing platform
     --playit-key <key>        Enable playit.gg with SECRET_KEY
     --no-playit               Explicitly disable playit.gg
@@ -182,24 +182,11 @@ ${colors.cyan('Ban Actions:')}
   ip remove <ip>          Unban IP
 
 ${colors.cyan('World Management:')}
-  ${colors.bold('world list')} [--json]        List worlds and lock status
+  ${colors.bold('world list')} [--json]        List worlds and their server assignment
   ${colors.bold('world new')} [name] [options] Create new world with seed
-  ${colors.bold('world assign')} <world> <srv> Lock world to server
-  ${colors.bold('world release')} <world>      Release world lock
+  ${colors.bold('world assign')} <world> <srv> Assign world to server (sets LEVEL)
+  ${colors.bold('world release')} <world>      Release world from its server
   ${colors.bold('world delete')} <world> [--force|-y]  Delete world permanently
-
-${colors.cyan('Mod Management:')}
-  ${colors.bold('mod search')} <query>         Search mods on Modrinth
-  ${colors.bold('mod add')} <srv> <mod...>     Add mods to server
-  ${colors.bold('mod list')} <server>          List configured mods
-  ${colors.bold('mod remove')} <srv> <mod...>  Remove mods from server
-  ${colors.bold('mod sources')}                Show available mod sources
-
-${colors.cyan('Mod Add Options:')}
-  --modrinth                 Use Modrinth (default)
-  --curseforge               Use CurseForge (CF_API_KEY built into Java 17+ images)
-  --spiget                   Use Spiget (SpigotMC plugins)
-  --url                      Direct JAR URL download
 
 ${colors.cyan('Mod Management:')}
   ${colors.bold('mod search')} <query>         Search mods on Modrinth
@@ -317,7 +304,7 @@ ${colors.cyan('Console Management:')}
     --api-port <port>            API server port (default: 5001)
     --console-port <port>        Console server port (default: 5000)
   ${colors.bold('console user')} <action> [email] Manage console users (list, add, update, remove, reset-password)
-  ${colors.bold('console api')} <action>         Manage API settings (status, config, key)
+  ${colors.bold('console api')} <action>         Manage API settings (status, key regenerate, mode, whitelist)
   ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
     --force                      Kill PM2 daemon and restart fresh (stop, restart)
   ${colors.bold('console remove')} [options]     Remove console service (keeps user DB)
@@ -337,7 +324,7 @@ ${colors.cyan('Create Options:')}
   -v, --version VERSION      Minecraft version (e.g., 1.21.1)
   -s, --seed NUMBER          World seed
   -u, --world-url URL        Download world from ZIP URL
-  -w, --world NAME           Use existing world (symlink)
+  -w, --world NAME           Use existing world (sets LEVEL)
   --no-start                 Create without starting
   --whitelist PLAYERS        Enable whitelist with initial players (comma-separated)
   --enable-whitelist         Enable whitelist without initial players
