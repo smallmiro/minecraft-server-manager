@@ -310,6 +310,6 @@ mcctl audit list --action player.whitelist.add --actor web:admin
 
 ## See Also
 
-- [Management Console - Audit Log API](../console/audit-log-api.md)
+- [REST API - Audit logs](../api/endpoints.md#audit-logs)
 - [Web Console - Audit Log UI](../console/audit-log-ui.md)
 - [Troubleshooting](../troubleshooting/index.md)

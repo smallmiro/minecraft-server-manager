@@ -1,145 +1,94 @@
 # REST API Overview
 
-The mcctl-api provides a RESTful interface for managing Docker Minecraft servers. It enables external integrations, automation, and serves as the backend for the Web Console.
+mcctl-api is the REST API behind the Web Console. It manages servers, worlds, players, backups and mc-router with the same code as the `mcctl` CLI, and you can call it directly from scripts and other tools.
 
-## System Architecture
+- **Endpoints:** [API Endpoints](endpoints.md) documents every route.
+- **Base URL:** `http://<host>:5001`. mcctl-api listens on `HOST` (default `0.0.0.0`) and `PORT` (default `5001`).
+
+## Architecture { #architecture }
+
+mcctl-api and the Web Console run on the host as the PM2 processes `mcctl-api` and `mcctl-console`; they are not containers. mcctl-api reads and writes the files under `MCCTL_ROOT` (default `~/minecraft-servers`) and controls containers with the `docker` and `docker compose` commands. Minecraft server containers publish no ports: players connect to mc-router on port `25565`, which routes each connection by hostname.
 
 ```mermaid
-flowchart TB
+flowchart LR
     subgraph Clients["Clients"]
-        subgraph MC["Minecraft Clients"]
-            P1[Player1]
-            P2[Player2]
+        P["Minecraft clients"]
+        B["Browser"]
+        R["REST clients<br/>curl, scripts"]
+    end
+
+    subgraph Host["Host"]
+        subgraph PM2["PM2"]
+            CON["mcctl-console :5000"]
+            API["mcctl-api :5001"]
         end
-        subgraph API["REST API Clients"]
-            CURL[curl]
-            PY[Python]
-            WEB[Web Console]
+        FILES[("MCCTL_ROOT<br/>servers/ worlds/ backups/ data/")]
+        subgraph Docker["Docker network minecraft-net"]
+            ROUTER["mc-router :25565"]
+            S1["mc-survival"]
+            S2["mc-creative"]
         end
     end
 
-    subgraph Docker["Docker Network (minecraft-net)"]
-        subgraph Router["mc-router :25565"]
-            R[Hostname Routing<br/>Auto-scale up/down]
-        end
-
-        subgraph MCAPI["mcctl-api :5001"]
-            F[Fastify REST API]
-        end
-
-        subgraph Servers["Minecraft Servers"]
-            S1[mc-survival :25566]
-            S2[mc-creative :25567]
-            S3[mc-modded :25568]
-        end
-
-        WORLDS[("/worlds/<br/>(shared storage)")]
-    end
-
-    P1 & P2 --> Router
-    CURL & PY & WEB --> MCAPI
-
-    MCAPI --> Router
-    Router --> Servers
-    MCAPI --> Servers
-
-    Servers --> WORLDS
+    P -->|":25565"| ROUTER
+    ROUTER --> S1 & S2
+    B --> CON
+    CON -->|"HTTP with X-User, X-Role"| API
+    R -->|"HTTP"| API
+    API -->|"docker, docker compose"| Docker
+    API --> FILES
 ```
 
-## mcctl-api Internal Architecture
+### Request flows { #request-flows }
 
-```mermaid
-flowchart TB
-    subgraph Plugins["Plugins Layer"]
-        CORS[CORS]
-        Helmet[Helmet]
-        Auth[Auth]
-        Swagger[Swagger]
-    end
-
-    subgraph AuthModes["Authentication Modes"]
-        APIKey[API Key]
-        Basic[Basic Auth]
-        IPWhite[IP Whitelist]
-    end
-
-    subgraph Routes["Routes Layer"]
-        Health["GET /health"]
-        AuthRoute["POST /api/auth"]
-        ServersRoute["GET/POST /api/servers"]
-        WorldsRoute["GET/POST /api/worlds"]
-    end
-
-    subgraph Services["Services Layer"]
-        Shared["@minecraft-docker/shared"]
-        DockerUtils["Docker Compose Utils"]
-    end
-
-    subgraph External["External Systems"]
-        FS[("File System")]
-        DockerEngine[("Docker Engine")]
-    end
-
-    Auth --> AuthModes
-    Plugins --> Routes
-    Routes --> Services
-    Services --> FS
-    Services --> DockerEngine
-```
-
-## Request Flow Sequence
-
-### Server Start Request
+**Start a server**
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant A as mcctl-api
-    participant D as Docker Engine
+    participant D as Docker
 
     C->>A: POST /api/servers/survival/start
-    A->>A: Auth Plugin
-    A->>A: Validate Server Name
+    A->>A: Authenticate, check the server name
     A->>D: docker compose up -d mc-survival
-    D-->>A: success
-    A-->>C: { success: true, action: "start" }
+    D-->>A: exit code 0
+    A-->>C: { success: true, action: "start", ... }
 ```
 
-### RCON Command Execution
+**Run an RCON command**
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant A as mcctl-api
-    participant MC as MC Container
+    participant MC as mc-survival
 
     C->>A: POST /api/servers/survival/exec<br/>{ command: "list" }
-    A->>A: Auth Plugin
-    A->>MC: docker exec mc-survival rcon-cli list
-    MC-->>A: "3 players online..."
-    A-->>C: { success: true, output: "3 players online..." }
+    A->>MC: docker exec mc-survival rcon-cli -- list
+    MC-->>A: "There are 3 of a max of 20 players online: ..."
+    A-->>C: { success: true, output: "There are 3 ..." }
 ```
 
-### World Assignment Flow
+**Assign a world**
 
 ```mermaid
 sequenceDiagram
     participant C as Client
     participant A as mcctl-api
-    participant W as WorldManagement UseCase
+    participant W as WorldManagementUseCase
 
-    C->>A: POST /api/worlds/survival/assign<br/>{ serverName: "mc-myserver" }
-    A->>A: Auth Plugin
-    A->>W: assignWorldByName()
-    W->>W: 1. Check world exists
-    W->>W: 2. Check not locked
-    W->>W: 3. Create lock file
-    W->>W: 4. Update server config
-    W-->>A: { success: true }
-    A-->>C: { success: true, worldName: "survival", serverName: "mc-myserver" }
+    C->>A: POST /api/worlds/survival/assign<br/>{ serverName: "myserver" }
+    A->>W: assignWorldByName("survival", "myserver")
+    W->>W: 1. Check the world name and that worlds/survival exists
+    W->>W: 2. Read every server's LEVEL; refuse if another server uses the world
+    W->>W: 3. Refuse unless mc-myserver is stopped
+    W->>W: 4. Write LEVEL=survival (server.yaml and config.env)
+    W-->>A: success
+    A-->>C: { success: true, worldName: "survival", serverName: "myserver" }
 ```
 
-### SSE Log Streaming
+**Follow server logs (SSE)**
 
 ```mermaid
 sequenceDiagram
@@ -148,120 +97,87 @@ sequenceDiagram
     participant D as Docker
 
     C->>A: GET /api/servers/survival/logs?follow=true
-    A-->>C: Content-Type: text/event-stream
-    A->>D: docker logs -f mc-survival
-    loop Log Streaming
+    A-->>C: 200 text/event-stream
+    A-->>C: data: {"type":"server-log","data":{"log":"..."}} (last 100 lines)
+    A->>D: docker logs -f --tail 0 mc-survival
+    loop Each new line
         D-->>A: log line
-        A-->>C: data: {"log": "..."}
+        A-->>C: data: {"type":"server-log","data":{"log":"..."}}
     end
-    loop Heartbeat
-        A-->>C: : heartbeat (every 30s)
+    loop Every 30 seconds
+        A-->>C: : heartbeat
     end
 ```
 
-## Base URL
+## Authentication { #authentication }
 
-```
-http://localhost:5001
-```
+mcctl-api checks every request except the paths in `AUTH_EXCLUDE_PATHS` (default `/health`). The mode is set with `AUTH_MODE`:
 
-## Authentication
-
-The API supports 5 authentication modes:
-
-| Mode | Description | Header |
-|------|-------------|--------|
-| `disabled` | No authentication (dev only) | - |
-| `api-key` | API key in header | `X-API-Key: mctk_xxx` |
-| `ip-whitelist` | IP-based access control | - |
-| `basic` | HTTP Basic Auth | `Authorization: Basic xxx` |
-| `combined` | API key + IP whitelist | Both required |
-
-### API Key Authentication
+| Mode | Requirement | Request header |
+|------|-------------|----------------|
+| `disabled` | None (development only) | - |
+| `api-key` | `AUTH_API_KEY` | `X-API-Key: <key>` |
+| `ip-whitelist` | The client address is in `AUTH_IP_WHITELIST` | - |
+| `basic` | A user in `AUTH_USERS` | `Authorization: Basic <base64 of user:password>` |
+| `combined` | API key and IP whitelist, both checked | `X-API-Key: <key>` |
 
 ```bash
+# api-key or combined mode
 curl -H "X-API-Key: mctk_your_key_here" http://localhost:5001/api/servers
-```
 
-### Basic Authentication
-
-```bash
+# basic mode
 curl -u admin:password http://localhost:5001/api/servers
 ```
 
-## Quick Start
+The API key is read only from `X-API-Key`; an `Authorization: Bearer` header is not accepted.
 
-```bash
-# 1. Initialize console service
-mcctl console init
+### Configuration { #auth-configuration }
 
-# 2. Start API service
-mcctl console api start
+These are environment variables of the `mcctl-api` process. `mcctl console init` writes them to the `env` block of the `mcctl-api` app in `<MCCTL_ROOT>/ecosystem.config.cjs`.
 
-# 3. Test connection
-curl http://localhost:5001/health
+| Variable | Description |
+|----------|-------------|
+| `AUTH_MODE` | One of the modes above. When unset or unknown: `api-key` if `NODE_ENV=production`, otherwise `disabled` |
+| `AUTH_API_KEY` | Key compared with `X-API-Key`. Required for `api-key` and `combined` |
+| `AUTH_IP_WHITELIST` | Comma-separated addresses or CIDR ranges, for example `127.0.0.1,192.168.1.0/24`. Required for `ip-whitelist` and `combined` |
+| `AUTH_USERS` | JSON array of `{"username": "...", "passwordHash": "<bcrypt hash>"}`. Required for `basic` |
+| `AUTH_EXCLUDE_PATHS` | Comma-separated paths that skip authentication. Default `/health,/health/` |
 
-# 4. List servers (with API key)
-curl -H "X-API-Key: $(cat ~/minecraft-servers/api.key)" \
-  http://localhost:5001/api/servers
-```
+mcctl-api does not start when the selected mode lacks its required variable.
 
-## API Endpoint Groups
+`mcctl console init` asks for an access mode and writes it as follows ([Access Modes](../console/installation.md#access-modes)):
 
-### Health Check
+| `mcctl console init` mode | `AUTH_MODE` written |
+|---------------------------|---------------------|
+| `internal` (default) | `ip-whitelist` with `127.0.0.1,::1,::ffff:127.0.0.1`: only clients on the host itself, such as the Web Console |
+| `api-key` | `api-key` with a generated key, printed once |
+| `ip-whitelist` | `ip-whitelist` with the addresses you enter |
+| `api-key-ip` | `combined` with a generated key and the addresses you enter |
+| `open` | `disabled` |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/health` | Service health status |
+To change the mode or the key later, run `mcctl console init --force`. The `mcctl console api` commands only update `api-config.json`, which the running API does not read.
 
-### Server Management
+Authentication failures:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/servers` | List all servers (`?include=summary` adds players, stats, totals) |
-| GET | `/api/servers/:name` | Get server details |
-| GET | `/api/servers/:name/logs` | Get server logs (supports SSE) |
-| POST | `/api/servers/:name/exec` | Execute RCON command |
-| POST | `/api/servers/:name/start` | Start server |
-| POST | `/api/servers/:name/stop` | Stop server |
-| POST | `/api/servers/:name/restart` | Restart server |
+| Status | Body |
+|--------|------|
+| `401` | `{"error": "AuthenticationError", "message": "Missing X-API-Key header"}` (also `Invalid API key`, `Missing or invalid Authorization header`, `Invalid credentials`) |
+| `403` | `{"error": "AuthenticationError", "message": "IP address not allowed"}` |
 
-### World Management
+### User and role headers { #user-headers }
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/worlds` | List all worlds |
-| GET | `/api/worlds/:name` | Get world details |
-| POST | `/api/worlds` | Create new world |
-| POST | `/api/worlds/:name/assign` | Assign world to server |
-| POST | `/api/worlds/:name/release` | Release world lock |
-| DELETE | `/api/worlds/:name` | Delete world |
+When the Web Console forwards a request that needs them, it adds the signed-in user's name and role as `X-User` and `X-Role`. Other clients send the same headers to use these routes:
 
-### Authentication
+| Header | Used by |
+|--------|---------|
+| `X-Role` | `DELETE /api/audit-logs`, `GET /api/platform-settings` and `PUT /api/platform-settings` answer `403` with `error: "Forbidden"` unless the value is `admin`. `GET /api/auth/me` returns it as `role` |
+| `X-User` | Audit log actor `api:<user>` for the file routes and `PUT /api/platform-settings` (other routes record `api:console`). Required by `GET /api/auth/me` |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/login` | User login |
-| GET | `/api/auth/me` | Get current user |
+In the Web Console, more actions are limited to administrators by the console itself, for example restarting mc-router.
 
-### Console Commands
+## Errors { #errors }
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/servers/:id/console/exec` | Execute RCON command (alternative) |
-
-## Response Format
-
-### Success Response
-
-```json
-{
-  "servers": [...],
-  "total": 2
-}
-```
-
-### Error Response
+Errors use one JSON shape:
 
 ```json
 {
@@ -270,49 +186,121 @@ curl -H "X-API-Key: $(cat ~/minecraft-servers/api.key)" \
 }
 ```
 
-### HTTP Status Codes
+| `error` | Status | Meaning |
+|---------|--------|---------|
+| `BadRequest` | 400 | The route refused the input, for example two world options at once |
+| `Bad Request` | 400 | The request does not match the route's schema (type, range, pattern, required field) |
+| `AuthenticationError` | 401, 403 | See [Authentication](#authentication) |
+| `Forbidden` | 403 | The route needs `X-Role: admin`, or a path leaves the allowed directory (file and map routes) |
+| `NotFound` | 404 | Server, world, player, file, schedule or entry not found |
+| `Not Found` | 404 | Unknown route |
+| `Conflict` | 409 | Refused because of the current state: the server exists or is running, the world is used by another server, another operation holds a lock |
+| `PayloadTooLarge` | 413 | File or upload over the size limit |
+| `InternalServerError` | 500 | The operation failed; `message` says why |
+| `BadGateway` | 502 | Client-only mod detection failed (`GET /api/mods/:slug/client-only`) |
+| `ServiceUnavailable` | 503 | Docker could not be queried (backup routes) |
 
-| Code | Description |
-|------|-------------|
+A few routes use other names (the legacy routes, block statistics, server actions); their sections say so.
+
+Schema violations name the field in `message`. Some routes also return `statusCode` and `code`:
+
+```json
+{
+  "statusCode": 400,
+  "code": "FST_ERR_VALIDATION",
+  "error": "Bad Request",
+  "message": "querystring/limit must be <= 200"
+}
+```
+
+An unknown route answers `404` with `{"message": "Route GET:/api/unknown not found", "error": "Not Found", "statusCode": 404}`.
+
+### Status codes { #status-codes }
+
+| Code | Meaning |
+|------|---------|
 | 200 | Success |
-| 201 | Created |
-| 400 | Bad Request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
-| 404 | Not Found |
-| 409 | Conflict |
-| 500 | Internal Server Error |
+| 201 | Created (server, world, world upload, config snapshot, backup or snapshot schedule) |
+| 204 | Deleted, no body (config snapshot, config snapshot schedule) |
+| 400 | Invalid request |
+| 401 | Not authenticated |
+| 403 | Address not allowed, admin role required, or path outside the allowed directory |
+| 404 | Not found |
+| 409 | Conflict with the current state |
+| 413 | Too large |
+| 500 | Operation failed |
+| 502 | Upstream mod source failed |
+| 503 | Docker could not be queried |
 
-## Real-time Log Streaming (SSE)
+## Server-Sent Events { #sse }
 
-The logs endpoint supports Server-Sent Events for real-time log streaming:
+Routes that stream use `Content-Type: text/event-stream`. There are two message styles:
+
+| Style | Wire format | Routes |
+|-------|-------------|--------|
+| Named events | `event: <name>` and `data: <JSON>` | Server status, player roster and live positions, router status and logs, audit logs, map render, block statistics |
+| Typed messages | `data: {"type": "<type>", "data": {...}}` without an `event:` line | Server logs (`server-log`, `connection-closed`), server create (`server-create`, `server-create-log`) |
+
+- **Heartbeat.** Long-lived streams send the comment line `: heartbeat` every 30 seconds. The audit log stream sends `event: heartbeat` with `{"timestamp": "..."}` instead. The map render and block statistics streams end with their job and send no heartbeat.
+- **Polling interval.** Streams that poll take `interval` in milliseconds (1000 to 60000, default 5000): server status, player roster, live player positions and router status.
+- **Disconnect.** Closing the connection stops the polling or the `docker logs` process behind it. A server create keeps running after the client disconnects; a block statistics analysis is cancelled.
+- **Browsers.** The browser `EventSource` API cannot add request headers, so it cannot send `X-API-Key`. Use it only when the API needs no header (`disabled` or `ip-whitelist`); otherwise read the stream with a client that sets headers, such as `curl -N` or `fetch` with a stream reader. The Web Console relays the streams to signed-in users through its own routes.
 
 ```bash
-curl -H "Accept: text/event-stream" \
-  "http://localhost:5001/api/servers/survival/logs?follow=true"
+curl -N -H "X-API-Key: mctk_your_key_here" \
+  "http://localhost:5001/api/servers/survival/logs?follow=true&lines=50"
 ```
 
-```
-data: {"log": "[10:30:15] Player joined"}
-data: {"log": "[10:30:20] Player left"}
-: heartbeat
+## Quick Start { #quick-start }
+
+```bash
+# 1. Set up mcctl-api and the Web Console.
+#    Choose the API access mode; the api-key modes print the key once.
+mcctl console init
+
+# 2. Start mcctl-api
+mcctl console service start --api
+
+# 3. Health check (no authentication)
+curl http://localhost:5001/health
+
+# 4. List servers. In the default internal mode, requests from the host itself need no key
+curl http://localhost:5001/api/servers
+
+# In api-key or api-key-ip mode, send the key
+curl -H "X-API-Key: <key>" http://localhost:5001/api/servers
 ```
 
-## OpenAPI/Swagger
+The key is also stored as `AUTH_API_KEY` in the `mcctl-api` `env` block of `ecosystem.config.cjs`.
 
-Interactive API documentation is available at:
+## OpenAPI and Swagger UI { #swagger }
 
-```
-http://localhost:5001/docs
-```
+Swagger UI (`/docs`) and the OpenAPI document (`/docs/json`) are served only when `NODE_ENV` is not `production` or when `SWAGGER_ENABLED=true`. `mcctl console init` sets `NODE_ENV=production` for installed packages, so a normal install does not serve them. To enable them, add `SWAGGER_ENABLED: 'true'` to the `env` block of the `mcctl-api` app in `ecosystem.config.cjs` and run `mcctl console service restart --api --force`, which starts mcctl-api again from that file ([what `--force` stops](../console/cli-commands.md#mcctl-console-service-restart)).
 
-This provides:
-- Interactive endpoint testing
-- Request/response schema documentation
-- Authentication testing
+Both paths use the same authentication as the other routes. In `api-key` mode a browser cannot open `/docs` directly; fetch the document with `curl -H "X-API-Key: <key>" http://localhost:5001/docs/json` and open it in an OpenAPI viewer.
+
+## Endpoint groups { #endpoint-groups }
+
+| Group | Routes |
+|-------|--------|
+| [Health](endpoints.md#health) | `GET /health` |
+| [Servers](endpoints.md#servers) | List, detail, status streams, create, delete, start/stop/restart, RCON, logs |
+| [Server configuration](endpoints.md#server-configuration) | `config.env` settings, world reset |
+| [Hostnames](endpoints.md#hostnames) | Custom hostnames of a server |
+| [Mods](endpoints.md#mods) | Server mods, installed jars, Modrinth search |
+| [Files](endpoints.md#files) | File manager for `servers/<name>/data` |
+| [Players and access lists](endpoints.md#players) | Roster, player detail, live positions, whitelist, bans, operators, kick |
+| [Worlds](endpoints.md#worlds) | List, create, upload, assign, release, delete, world info, map, block statistics |
+| [Router](endpoints.md#router) | mc-router status, streams, restart |
+| [Backups](endpoints.md#backups) | GitHub world backups and backup schedules |
+| [Config snapshots](endpoints.md#config-snapshots) | Snapshots of server configuration files, diff, schedules |
+| [playit.gg](endpoints.md#playit) | playit-agent status, start, stop |
+| [Platform Settings](endpoints.md#platform-settings) | The platform `.env` |
+| [Audit logs](endpoints.md#audit-logs) | Query, statistics, stream, purge |
+| [Legacy](endpoints.md#legacy) | `/api/auth/login`, `/api/auth/me`, `/servers/:id/console/exec` |
 
 ## Next Steps
 
-- **[Endpoints Reference](endpoints.md)** - Detailed endpoint documentation
-- **[Installation](../console/installation.md)** - Setup guide
-- **[CLI Commands](../console/cli-commands.md)** - mcctl console commands
+- **[API Endpoints](endpoints.md)**: every route
+- **[Installation](../console/installation.md)**: set up mcctl-api and the Web Console
+- **[CLI Commands](../console/cli-commands.md)**: `mcctl console` commands
