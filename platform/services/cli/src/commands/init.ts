@@ -433,15 +433,6 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
   console.log(`    HOST_IP(s):        ${colors.yellow(displayIPs)}`);
   console.log(`    Timezone:          ${colors.yellow(envConfig.TZ || 'system default')}`);
   console.log('');
-  console.log('  Defaults:');
-  console.log(`    Default Memory:    ${colors.yellow(envConfig.DEFAULT_MEMORY || '4G')}`);
-  console.log(`    Default Type:      ${colors.yellow(mcctlConfig.defaultType)}`);
-  console.log(`    Default Version:   ${colors.yellow(mcctlConfig.defaultVersion)}`);
-  console.log('');
-  console.log('  Behavior:');
-  console.log(`    Auto Start:        ${colors.yellow(String(mcctlConfig.autoStart))}`);
-  console.log(`    Avahi Enabled:     ${colors.yellow(String(mcctlConfig.avahiEnabled))}`);
-  console.log('');
   console.log('  Security:');
   console.log(`    RCON Password:     ${colors.yellow(envConfig.RCON_PASSWORD ? '********' : 'not set')}`);
   console.log('');
@@ -456,66 +447,11 @@ async function reconfigureCommand(paths: Paths, config: Config): Promise<number>
       type: 'ip',
     },
     {
-      key: 'DEFAULT_MEMORY',
-      label: 'Default Memory',
-      source: 'env',
-      currentValue: envConfig.DEFAULT_MEMORY || '4G',
-      type: 'text',
-      validate: (value) => {
-        if (!/^\d+[MG]$/i.test(value)) {
-          return 'Invalid format. Use format like 4G or 2048M';
-        }
-        return undefined;
-      },
-    },
-    {
       key: 'TZ',
       label: 'Timezone',
       source: 'env',
       currentValue: envConfig.TZ || 'system default',
       type: 'text',
-    },
-    {
-      key: 'defaultType',
-      label: 'Default Server Type',
-      source: 'config',
-      currentValue: mcctlConfig.defaultType,
-      type: 'select',
-      options: [
-        { value: 'PAPER', label: 'Paper (Recommended)' },
-        { value: 'VANILLA', label: 'Vanilla' },
-        { value: 'FORGE', label: 'Forge' },
-        { value: 'FABRIC', label: 'Fabric' },
-        { value: 'SPIGOT', label: 'Spigot' },
-        { value: 'BUKKIT', label: 'Bukkit' },
-      ],
-    },
-    {
-      key: 'defaultVersion',
-      label: 'Default MC Version',
-      source: 'config',
-      currentValue: mcctlConfig.defaultVersion,
-      type: 'text',
-      validate: (value) => {
-        if (!/^\d+\.\d+(\.\d+)?$/.test(value)) {
-          return 'Invalid version format. Use format like 26.1.1';
-        }
-        return undefined;
-      },
-    },
-    {
-      key: 'autoStart',
-      label: 'Auto Start Servers',
-      source: 'config',
-      currentValue: String(mcctlConfig.autoStart),
-      type: 'confirm',
-    },
-    {
-      key: 'avahiEnabled',
-      label: 'Avahi/mDNS Enabled',
-      source: 'config',
-      currentValue: String(mcctlConfig.avahiEnabled),
-      type: 'confirm',
     },
     {
       key: 'RCON_PASSWORD',
