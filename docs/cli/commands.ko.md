@@ -1573,7 +1573,10 @@ mcctl world delete [world] [options]
 | 옵션 | 단축 | 설명 |
 |--------|-------|-------------|
 | `--force` | | 확인 건너뛰기 (서버가 사용 중인 월드는 삭제하지 않음) |
-| `--json` | | JSON 형식으로 출력 |
+| `--yes` | `-y` | 확인 건너뛰기 (`--force`와 동일) |
+| `--json` | | JSON 형식으로 출력 (삭제하려면 `--force` 또는 `-y`도 필요) |
+
+`-f`는 `--follow`이며 `--force`가 아닙니다.
 
 !!! danger "영구 삭제"
     이 명령어는 다음을 포함한 모든 월드 데이터를 영구적으로 삭제합니다:
@@ -1595,19 +1598,20 @@ mcctl world delete [world] [options]
 
 === "CLI 모드"
     ```bash
-    # 확인 프롬프트와 함께 삭제
+    # 확인 프롬프트와 함께 삭제 (기본값 No, 터미널 필요)
     mcctl world delete old-world
 
-    # 확인 없이 강제 삭제
+    # 확인 없이 삭제 (스크립트, CI)
     mcctl world delete old-world --force
+    mcctl world delete old-world -y
     ```
 
 **안전 기능:**
 
 - **할당 확인**: 서버가 사용 중인 월드는 실행 여부와 관계없이 삭제할 수 없으며 `--force`로도 우회할 수 없음. 먼저 서버에 다른 월드를 할당하세요. 월드를 `servers/<name>/data` 안에 두는 서버(`EXTRA_ARGS=--universe /worlds/` 없음)는 `worlds/<world>` 삭제를 막지 않음
 - **안전 우선(fail-closed)**: 어떤 서버의 `config.env`를 읽거나 해석할 수 없으면 거부됨([월드 할당 규칙](#world-assignment-rules) 참고)
-- **확인 프롬프트**: `--force`가 없으면 삭제 전에 확인(yes/no)을 묻습니다
-- **크기**: 대화형 모드는 확인 전에 월드 크기를 보여 주고, 삭제 후에는 확보된 크기를 출력합니다
+- **확인 프롬프트**: `--force`나 `-y`가 없으면 삭제 전에 확인(yes/no, 기본값 No)을 묻습니다. 터미널이 없고(스크립트, 파이프) `--force`/`-y`도 없으면 거부하고 exit 1로 끝나며, `--json`만으로도 삭제하지 않습니다. REST API `DELETE /api/worlds/:name`은 영향이 없습니다
+- **크기**: 확인 시 월드 이름과 크기를 보여 주고, 삭제 후에는 확보된 크기를 출력합니다
 
 ---
 

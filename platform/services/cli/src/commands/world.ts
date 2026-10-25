@@ -13,6 +13,8 @@ export interface WorldCommandOptions {
   autoStart?: boolean;
   json?: boolean;
   force?: boolean;
+  /** Skip the confirmation question (-y/--yes). */
+  yes?: boolean;
 }
 
 /**
@@ -273,6 +275,29 @@ async function worldDelete(
   try {
     // If world name provided, use direct deletion
     if (options.worldName) {
+      const yes = options.yes === true || options.force === true;
+      // Nobody can answer the question (no terminal, or --json output): refuse rather than delete unasked.
+      if (!yes && (!process.stdin.isTTY || options.json)) {
+        const error = 'Refusing to delete without confirmation in a non-interactive shell. Pass --force to confirm.';
+        if (options.json) {
+          console.log(JSON.stringify({ success: false, worldName: options.worldName, error }, null, 2));
+        } else {
+          log.error(error);
+        }
+        return 1;
+      }
+      if (!yes) {
+        const info = (await useCase.listWorlds()).find((w) => w.name === options.worldName);
+        const confirmed = await container.promptPort.confirm({
+          message: `Delete world '${options.worldName}'${info ? ` (${info.size})` : ''}? This action cannot be undone!`,
+          initialValue: false,
+        });
+        if (container.promptPort.isCancel(confirmed) || !confirmed) {
+          console.log(colors.dim('Cancelled. Nothing was deleted.'));
+          return 1;
+        }
+      }
+
       const result = await useCase.deleteWorldByName(
         options.worldName,
         options.force ?? false
