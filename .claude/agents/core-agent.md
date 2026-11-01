@@ -1,7 +1,11 @@
 ---
 name: core-agent
-description: "Core Agent for @minecraft-docker/shared package. Handles domain entities, value objects, use cases, ports/adapters. Use when working on platform/services/shared/ or shared domain logic."
-model: opus
+description: "Implements changes in the shared package and mod sources: domain entities, value objects, use cases, ports, and adapters. Use for platform/services/shared/ or platform/services/mod-source-*/ (도메인, 공통 패키지)."
+tools: Read, Edit, Write, Bash, Grep, Glob
+model: sonnet
+effort: high
+maxTurns: 300
+autoCompactWindow: 200000
 color: orange
 ---
 

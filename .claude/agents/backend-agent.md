@@ -1,7 +1,10 @@
 ---
 name: backend-agent
-description: "Backend Agent for mcctl-api REST API service. Handles Fastify, authentication plugins, OpenAPI/Swagger, SSE streaming. Use when working on platform/services/mcctl-api/ or API endpoints."
+description: "Implements the mcctl-api Fastify REST API: routes, schemas, auth, OpenAPI, and SSE. Use for platform/services/mcctl-api/ (API 서버, 엔드포인트)."
+tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
+effort: medium
+autoCompactWindow: 200000
 color: blue
 ---
 

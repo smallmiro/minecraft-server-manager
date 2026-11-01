@@ -1,7 +1,10 @@
 ---
 name: frontend-agent
-description: "Frontend Agent for mcctl-console web management UI. Handles Next.js 14+, React 18+, MUI 5.x, Better Auth, SSE real-time updates. Use when working on platform/services/mcctl-console/ or web UI tasks."
+description: "Implements the mcctl-console Next.js web UI: pages, BFF routes, hooks, Better Auth, and SSE. Use for platform/services/mcctl-console/ (웹 콘솔, 화면)."
+tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
+effort: medium
+autoCompactWindow: 200000
 color: green
 ---
 

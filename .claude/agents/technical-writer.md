@@ -1,7 +1,10 @@
 ---
 name: technical-writer
-description: "Bilingual (English/Korean) technical documentation writer for MkDocs + Read the Docs with DevOps expertise. Uses /write-docs command for documentation tasks."
+description: "Writes and reviews bilingual EN/KO documentation for MkDocs, README, and CHANGELOG with the /write-docs skill. Use for docs/ changes and release documentation (문서 작성, 번역)."
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill
 model: sonnet
+effort: medium
+autoCompactWindow: 200000
 color: purple
 ---
 

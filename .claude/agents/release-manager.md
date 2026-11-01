@@ -1,7 +1,9 @@
 ---
 name: release-manager
-description: "Release & deployment manager. Use for version bumps, git tags, GitHub releases, and post-release verification (릴리즈, 배포, 버전, 태깅)."
+description: "Runs releases: version bump, tags, GitHub releases, and post-release verification. Use when the user asks to release or deploy (릴리즈, 배포, 버전, 태깅)."
+tools: Read, Edit, Write, Bash, Grep, Glob, Agent
 model: sonnet
+effort: medium
 color: cyan
 ---
 

@@ -1,7 +1,10 @@
 ---
 name: cli-agent
-description: "CLI Agent for @minecraft-docker/mcctl CLI package. Handles interactive prompts with @clack/prompts, commands. Use when working on platform/services/cli/ or CLI features."
+description: "Implements mcctl CLI commands, prompts, and init templates. Use for platform/services/cli/ (CLI 명령어, 프롬프트, 템플릿)."
+tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
+effort: medium
+autoCompactWindow: 200000
 color: yellow
 ---
 

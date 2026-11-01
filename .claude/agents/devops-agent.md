@@ -1,7 +1,10 @@
 ---
 name: devops-agent
-description: "DevOps Agent for Docker integration and E2E testing. Handles docker-compose, Dockerfiles, Playwright tests, CI/CD. Use when working on platform/, e2e/, or deployment tasks."
+description: "Maintains docker-compose, E2E tests, CI workflows, and Claude hooks. Use for platform/ outside services, e2e/, .github/workflows/, or .claude/hooks/ (도커, CI, E2E)."
+tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
+effort: medium
+autoCompactWindow: 200000
 color: red
 ---
 
