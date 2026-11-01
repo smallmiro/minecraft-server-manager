@@ -196,7 +196,6 @@ This repository ships Claude Code configuration. Run `claude` from the repositor
 - Install Claude Code and sign in.
 - Run `gh auth login` (used for issues and PRs), then `gh repo set-default smallmiro/minecraft-server-manager` so `gh` reads issues from and sends PRs to the original repository.
 - `/work` uses `/code-review:code-review` for code review. Install the `code-review` plugin.
-- Optional: set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` to run subagents as a team in parallel. Without it you can still parallelize with the `Agent` tool and git worktrees.
 
 ### 7.2 Commands
 
