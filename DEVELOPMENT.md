@@ -215,8 +215,8 @@ Specialized subagents are defined in `.claude/agents/`. Models are assigned by t
 
 | Agent | Responsibility | Model |
 |-------|----------------|-------|
-| `orchestrator-agent` | Entry point for all work. Analyzes the request, delegates to specialists, and coordinates them. | opus |
-| `core-agent` | Domain design in `platform/services/shared/` | opus |
+| `orchestrator-agent` | Coordinates work across three or more modules. | opus |
+| `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` | sonnet |
 | `cli-agent` | `platform/services/cli/` | sonnet |
 | `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet |
 | `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React) | sonnet |
@@ -226,9 +226,9 @@ Specialized subagents are defined in `.claude/agents/`. Models are assigned by t
 
 ### 7.4 Recommended flow
 
-1. Describe what you want in conversation. By this repository's rules, requests are first received by `orchestrator-agent`, which analyzes them and delegates to specialists. No code is modified at this stage.
+1. Describe what you want in conversation. The main session analyzes the request and delegates analysis to specialists when needed. No code is modified at this stage.
 2. Create an issue from the analysis.
-3. Plan with `/plan-work --issue <N>` and review the plan (`orchestrator-agent` runs it first on intake; inside `/work` it runs only for T4 work spanning 3+ modules).
+3. Plan with `/plan-work --issue <N>` and review the plan (inside `/work` it runs only for T4 work spanning 3+ modules).
 4. Once you agree with the plan, run `/work --issue <N>`.
 5. When the PR is open, read through the changes yourself and review them.
 
