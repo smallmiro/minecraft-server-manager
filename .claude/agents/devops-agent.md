@@ -44,7 +44,7 @@ cd e2e && E2E_BASE_URL=... E2E_API_URL=... pnpm test
 ## Rules
 
 - `E2E_BASE_URL` and `E2E_API_URL` have no default on purpose. Point them at a disposable instance, never a live one.
-- Server containers get settings through `env_file: [../global.env, config.env]`. Do not add an `environment:` block: it overrides `config.env` and removes `EXTRA_ARGS=--universe /worlds/`.
+- Server containers get settings through `env_file: [../global.env, config.env]`. Compose merges per key, so a key under `environment:` overrides `config.env`. Keep `EXTRA_ARGS`, `LEVEL`, and `WORLD_NAME` out of that block. The template's `EULA` line stays: nothing else sets it.
 - `servers/global.env` lists key names only, never values.
 - Compose `include` requires Docker Compose >= 2.20.
 
