@@ -193,28 +193,15 @@ Claude가 멈추려 할 때마다 hook이 실제 GitHub와 git 상태를 확인�
 
 기여자용 절차는 저장소 루트의 `DEVELOPMENT.md`(7.6절)를 참조하세요.
 
-## 핸드오프 규약
+## 핸드오프
 
-일부 에이전트 프롬프트는 마크다운 제목을 핸드오프 규약으로 사용합니다. 이는 프롬프트 규약일 뿐 프로토콜이 아니며, 이를 파싱하는 코드는 없습니다.
+에이전트는 서로의 컨텍스트를 보지 못합니다. 메인 세션이나 `orchestrator-agent`가 앞 에이전트의 산출물을 다음 에이전트의 위임 프롬프트에 담아 전달하고, 각 에이전트는 최종 보고(커밋 SHA, 테스트 결과, 완료 항목)를 반환합니다. `orchestrator-agent`는 세 가지 동기화 포인트를 추적합니다.
 
-| 규약 | 사용하는 에이전트 | 의미 |
-|------|-------------------|------|
-| `DEPENDENCY_NEEDED` | core, cli | 다른 에이전트의 산출물이 필요해 막힘 |
-| `DEPENDENCY_READY` | backend, orchestrator | 공유 산출물(타입, API 스펙)을 사용할 수 있음 |
-| `WORK_COMPLETE` | core, cli, frontend | 에이전트의 작업이 끝남 |
-| `BLOCKER_DETECTED` | orchestrator | 블로커와 선택한 해결 방안 |
-| `PROGRESS_REPORT` | orchestrator | 전체 및 에이전트별 진행 상황 |
-| `STATUS_REQUEST` | orchestrator | 응답 없는 에이전트에게 상태 요청 |
-
-완료 보고 예시입니다.
-
-```markdown
-## WORK_COMPLETE
-Task: Mod domain entities (#42)
-Commits: a1b2c3d, e4f5a6b
-Tests: shared package, all passing
-Ready for: cli-agent, backend-agent
-```
+| 동기화 포인트 | 보내는 쪽 | 받는 쪽 | 목적 |
+|---------------|-----------|---------|------|
+| Interface ready | `core-agent` | 전체 | 공유 타입과 포트를 사용할 수 있음 |
+| API ready | `backend-agent` | `frontend-agent` | BFF 라우트를 구현할 수 있음 |
+| Services ready | `backend-agent`, `frontend-agent` | `devops-agent` | E2E 테스트를 실행할 수 있음 |
 
 ## 커맨드
 

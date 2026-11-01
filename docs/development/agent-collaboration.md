@@ -193,28 +193,15 @@ For people without write access to the original repository. It turns on with `--
 
 See `DEVELOPMENT.md` (section 7.6) in the repository root for the contributor-facing steps.
 
-## Handoff Conventions
+## Handoffs
 
-Some agent prompts use markdown headings as handoff conventions. They are prompt conventions, not a protocol: nothing parses them.
+Agents do not see each other's context. The main session or `orchestrator-agent` passes what one agent produced to the next one in the delegation prompt, and each agent returns its final report (commit SHAs, test results, completed items). `orchestrator-agent` tracks three sync points:
 
-| Convention | Used by | Meaning |
-|------------|---------|---------|
-| `DEPENDENCY_NEEDED` | core, cli | The agent is blocked on another agent's output |
-| `DEPENDENCY_READY` | backend, orchestrator | A shared artifact (type, API spec) is available |
-| `WORK_COMPLETE` | core, cli, frontend | The agent's task is finished |
-| `BLOCKER_DETECTED` | orchestrator | A blocker and the chosen resolution |
-| `PROGRESS_REPORT` | orchestrator | Overall and per-agent status |
-| `STATUS_REQUEST` | orchestrator | Ask an unresponsive agent for status |
-
-Example of a completion report:
-
-```markdown
-## WORK_COMPLETE
-Task: Mod domain entities (#42)
-Commits: a1b2c3d, e4f5a6b
-Tests: shared package, all passing
-Ready for: cli-agent, backend-agent
-```
+| Sync point | From | To | Purpose |
+|------------|------|----|---------|
+| Interface ready | `core-agent` | all | Shared types and ports can be used |
+| API ready | `backend-agent` | `frontend-agent` | BFF routes can be built |
+| Services ready | `backend-agent`, `frontend-agent` | `devops-agent` | E2E tests can run |
 
 ## Commands
 
