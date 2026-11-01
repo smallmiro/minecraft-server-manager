@@ -1,49 +1,48 @@
 # Agent Collaboration
 
-This page describes how the Claude Code subagents and slash commands in `.claude/` work together on this repository: who owns what, how work is planned, how `/work` routes it, and how completion is enforced.
+This page describes how the Claude Code subagents and skills (slash commands) in `.claude/` work together on this repository: who owns what, how work is planned, how `/work` routes it, and how completion is enforced.
 
 !!! note "Source of truth"
-    The behavior described here is defined by the files in `.claude/agents/`, `.claude/commands/`, and `.claude/hooks/`, plus `CLAUDE.md` and `DEVELOPMENT.md` in the repository root. If this page and those files disagree, the files win.
+    The behavior described here is defined by the files in `.claude/agents/`, `.claude/skills/`, and `.claude/hooks/`, plus `CLAUDE.md` and `DEVELOPMENT.md` in the repository root. If this page and those files disagree, the files win.
 
 ## Overview and Principles
 
 - **Issue-driven.** Every change starts from a GitHub Issue. One issue = one branch = one PR. See [Git Workflow](git-workflow.md).
 - **Plan first, then execute.** `/plan-work` produces a plan and does not change code. `/work` executes.
-- **Specialists own modules.** Each agent owns a set of paths. The main session routes work to the owner.
-- **No message bus.** Agents do not exchange messages through a runtime protocol. Work is handed over through the `Agent` tool call (the prompt in, the agent's final report out) or, in a team, through `SendMessage`.
+- **Specialists own modules.** Each agent owns a set of paths. The main session receives requests and routes work to the owner.
+- **No message bus.** Agents do not exchange messages through a runtime protocol. Work is handed over through the `Agent` tool call: the prompt in, the agent's final report out.
 - **Progress lives in Git and GitHub.** Local progress is written to `task.md` (gitignored). Issue checkboxes track completed items.
 
 ## Agents
 
-All agent definitions are in `.claude/agents/`. Agents have no `tools:` restriction; they inherit all tools. Model names are aliases (`opus`, `sonnet`) so files do not need editing when a new model ships.
+All agent definitions are in `.claude/agents/`. Each agent declares a `tools` allowlist and an `effort` level. Every agent except `orchestrator-agent` and `release-manager` sets `autoCompactWindow: 200000`, and `core-agent` also sets `maxTurns: 300`. Model names are aliases (`opus`, `sonnet`) so files do not need editing when a new model ships.
 
-| Agent | Owns | Model | Label |
-|-------|------|-------|-------|
-| `orchestrator-agent` | Entry point for requests. Analyzes, plans, delegates, coordinates. Does not write code. | opus | `agent:orchestrator` |
-| `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (domain entities, value objects, use cases, ports/adapters) | opus | `agent:core` |
-| `cli-agent` | `platform/services/cli/` | sonnet | `agent:cli` |
-| `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | `agent:backend` |
-| `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | `agent:frontend` |
-| `devops-agent` | Docker files and the rest of `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | `agent:devops` |
-| `technical-writer` | `docs/`, `README*`, `CHANGELOG.md` (English and Korean) | sonnet | `agent:docs` |
-| `release-manager` | Version bumps, `v*` tags, GitHub releases, post-release verification | sonnet | `agent:release` |
+| Agent | Owns | Model | Effort | Label |
+|-------|------|-------|--------|-------|
+| `orchestrator-agent` | Coordinates work that spans three or more modules: plans, delegates, integrates. Does not write code. | opus | high | `agent:orchestrator` |
+| `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (domain entities, value objects, use cases, ports/adapters) | sonnet | high | `agent:core` |
+| `cli-agent` | `platform/services/cli/` | sonnet | medium | `agent:cli` |
+| `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | medium | `agent:backend` |
+| `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | medium | `agent:frontend` |
+| `devops-agent` | Docker files and the rest of `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | medium | `agent:devops` |
+| `technical-writer` | `docs/`, `README*`, `CHANGELOG.md` (English and Korean) | sonnet | medium | `agent:docs` |
+| `release-manager` | Version bumps, `v*` tags, GitHub releases, post-release verification | sonnet | medium | `agent:release` |
 
-The commands `/plan-work` and `/build-kb` also run on `opus`; `/work`, `/write-docs`, `/sync-docs`, and `/update-docs` run on `sonnet`.
+The skills `/plan-work` and `/build-kb` also run on `opus`; `/work`, `/write-docs`, `/sync-docs`, and `/update-docs` run on `sonnet`. `/work` switches a single delegation to `opus` at tier T2 (see Routing tiers).
 
 Notes on specific agents:
 
 - `mcctl-console` runs natively under PM2, not in Docker.
 - `release-manager` handles npm packages, not Docker images. Pushing a `v*` tag triggers `.github/workflows/release.yml`, which publishes five packages (`shared`, `mod-source-modrinth`, `mcctl-api`, `mcctl-console`, `mcctl`) and creates the GitHub Release.
-- The `agent:*` values in the Label column are the label each agent definition declares in its Identity table.
-
-!!! warning "Architect agents are not part of this repository"
-    `orchestrator-agent.md` and `/plan-work` mention `system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`, and `quality-engineer`. These are **optional user-level agents** and are not shipped in `.claude/agents/`. The workflow does not depend on them: without them, the main session or the owner agent does the design step.
+- The `agent:*` values in the Label column are the GitHub labels for each area.
+- `orchestrator-agent` has no `Edit` or `Write` tool. It has `Agent` to dispatch the owner agents and `Skill` to run `/plan-work`. `technical-writer` has `Skill` for `/write-docs`, and `release-manager` has `Agent`.
+- Design is done by the main session or the owner agent of the affected module. For UI and UX design, use the `frontend-design` skill before `frontend-agent` starts.
 
 ## Workflow
 
 ```mermaid
 flowchart LR
-    A[Request] --> B[orchestrator-agent<br/>intake and analysis]
+    A[Request] --> B[Main session<br/>intake and analysis]
     B --> C[GitHub Issue]
     C --> D["/plan-work<br/>plan only"]
     D --> E{Plan approved?}
@@ -52,9 +51,9 @@ flowchart LR
     F --> G[Done: Stop hook verifies]
 ```
 
-1. **Intake.** By the repository rules in `CLAUDE.md`, a request is received by `orchestrator-agent`, which analyzes it and delegates analysis to specialists. No code is modified in this phase.
+1. **Intake.** By the repository rules in `CLAUDE.md`, the main session receives a request using the orchestrator protocol: it analyzes the request, identifies the affected modules, and delegates analysis to the owner agents. `orchestrator-agent` is only for coordinating work across three or more modules. No code is modified in this phase.
 2. **Issue.** The analysis becomes a GitHub Issue (summary, root cause or requirements, plan, files to modify, branch strategy, acceptance criteria).
-3. **Plan.** `/plan-work` produces a plan: work breakdown, dependencies, parallel groups, agent assignment, and an execution proposal (Teams or sequential sub-agents). It never edits code or creates branches.
+3. **Plan.** `/plan-work` produces a plan: work breakdown, dependencies, parallel groups, agent assignment, and an execution proposal (parallel `Agent` runs in worktrees, or sequential sub-agents). It never edits code or creates branches.
 4. **Approval.** You review the plan.
 5. **Execute.** `/work` carries the work through to completion. Invoking `/work` is the approval to branch, commit, open the PR, run the review, and merge.
 
@@ -69,7 +68,7 @@ flowchart LR
 
 ### How "plan first" applies
 
-- When a request comes in through `orchestrator-agent`, planning with `/plan-work` comes first, then `/work`.
+- The main session analyzes a request and plans it with `/plan-work` before delegating. `orchestrator-agent` runs `/plan-work` first and does not dispatch before the plan is approved.
 - Inside `/work`, the main session routes by tier (below). It runs `/plan-work` itself only at tier T4. Smaller tiers use the issue's `Files to Modify` and go straight to implementation.
 
 ## `/work` Modes and Routing
@@ -111,7 +110,7 @@ The main session acts as the orchestrator. The most specific path wins.
 | `platform/services/mcctl-console/**` | frontend-agent |
 | rest of `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` | devops-agent |
 | `docs/**`, `README*`, `CHANGELOG.md` | technical-writer |
-| `.claude/commands/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md`, prose only | handled directly by the main session |
+| `.claude/skills/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md`, prose only | handled directly by the main session |
 
 If prose files change together with logic files, the logic owner handles both.
 
@@ -121,9 +120,9 @@ If prose files change together with logic files, the logic owner handles both.
 |------|-----------|----------|
 | T0 direct | One module, 2 files or fewer, no new public interface, confirmed root cause; or typo/comment/instruction prose only | Main session. The PR body gets one line noting the direct handling. |
 | T1 single | One module, 3-8 files, confirmed root cause | One owner agent, default model |
-| T2 hardened | Shared domain change, unconfirmed root cause, `security` label, data-loss risk, or 9+ files | Owner agent (analysis first if the cause is unconfirmed), `model: opus`, `effort: high` |
+| T2 hardened | New or changed entity, value object, or port in shared; unconfirmed root cause; `security` label; data-loss risk; or 9+ files | Owner agent (analysis first if the cause is unconfirmed), `model: opus`, `effort: high` |
 | T3 multi-module | Two modules | Delegate per module, core first, independent parts in parallel (worktrees) |
-| T4 design | Three or more modules, or architecture change | `/plan-work` plus an architect if available, then T3 |
+| T4 design | Three or more modules, or architecture change | `/plan-work`, then T3 |
 
 `model` and `effort` are set on the delegation only when the tier gives a value that differs from the agent's default.
 
@@ -152,9 +151,8 @@ Delegated agents run in the background. If the Stop hook blocks the main session
 |-----------|------|-------|
 | Single agent | One owner for the issue | Works directly on the feature branch. **No worktree.** |
 | `Agent` tool + `isolation: "worktree"` | Parallel delegation (T3, or `--parallel` in milestone mode) | Each agent gets its own worktree. Merge the branches into the feature branch before the PR. |
-| Claude Code Teams | Larger parallel plans | Needs `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`. Provides `TeamCreate`, `TaskCreate`/`TaskUpdate` (dependencies), and `SendMessage`. |
 
-If the Teams tools are not available, parallelize with the `Agent` tool and worktrees only.
+Parallel work is parallel `Agent` runs, each with `isolation: "worktree"`, integrated one at a time: merge a branch, re-run the tests, then merge the next. Dependencies between tasks come from the plan (`/plan-work`), and the main session or `orchestrator-agent` passes each agent's result on to the next one.
 
 Worktrees are for parallel delegation, not for every agent. Separately, concurrent `/work` **sessions** share one checkout's branch and working tree, so run them in separate `git worktree` folders.
 
@@ -195,41 +193,32 @@ For people without write access to the original repository. It turns on with `--
 
 See `DEVELOPMENT.md` (section 7.6) in the repository root for the contributor-facing steps.
 
-## Handoff Conventions
+## Handoffs
 
-Some agent prompts use markdown headings as handoff conventions. They are prompt conventions, not a protocol: nothing parses them.
+Agents do not see each other's context. The main session or `orchestrator-agent` passes what one agent produced to the next one in the delegation prompt, and each agent returns its final report (commit SHAs, test results, completed items). `orchestrator-agent` tracks three sync points:
 
-| Convention | Used by | Meaning |
-|------------|---------|---------|
-| `DEPENDENCY_NEEDED` | core, cli | The agent is blocked on another agent's output |
-| `DEPENDENCY_READY` | backend, orchestrator | A shared artifact (type, API spec) is available |
-| `WORK_COMPLETE` | core, cli, frontend | The agent's task is finished |
-| `BLOCKER_DETECTED` | orchestrator | A blocker and the chosen resolution |
-| `PROGRESS_REPORT` | orchestrator | Overall and per-agent status |
-| `STATUS_REQUEST` | orchestrator | Ask an unresponsive agent for status |
-
-Example of a completion report:
-
-```markdown
-## WORK_COMPLETE
-Task: Mod domain entities (#42)
-Commits: a1b2c3d, e4f5a6b
-Tests: shared package, all passing
-Ready for: cli-agent, backend-agent
-```
+| Sync point | From | To | Purpose |
+|------------|------|----|---------|
+| Interface ready | `core-agent` | all | Shared types and ports can be used |
+| API ready | `backend-agent` | `frontend-agent` | BFF routes can be built |
+| Services ready | `backend-agent`, `frontend-agent` | `devops-agent` | E2E tests can run |
 
 ## Commands
 
-| Command | Purpose |
-|---------|---------|
-| `/plan-work` | Plan before starting (`--issue`, `--milestone`, `--issues`). Plans only. |
-| `/work` | Run an issue or milestone through to completion: branch, TDD, PR, code review, merge. |
-| `/write-docs` | Write bilingual (English/Korean) technical documentation. |
-| `/sync-docs` | Sync `CLAUDE.md`, `README.md`, and other docs with the code. |
-| `/update-docs` | Refresh `docs/itzg-reference/` from the official documentation. |
-| `/build-kb` | Analyze the source in depth and build an LLM knowledge base. |
+Slash commands are skills: each one is defined in `.claude/skills/<name>/SKILL.md`.
 
-Command definitions are in `.claude/commands/`. The contributor-facing description is in `DEVELOPMENT.md` (section 7). For the surrounding development rules, see the [Development Guide](index.md).
+| Command | Purpose | Started by |
+|---------|---------|------------|
+| `/plan-work` | Plan before starting (`--issue`, `--milestone`, `--issues`). Plans only. | You or an agent |
+| `/work` | Run an issue or milestone through to completion: branch, TDD, PR, code review, merge. | You only |
+| `/write-docs` | Write bilingual (English/Korean) technical documentation. | You or an agent |
+| `/sync-docs` | Sync `CLAUDE.md`, `README.md`, and other docs with the code. | You only |
+| `/update-docs` | Refresh `docs/itzg-reference/` from the official documentation. | You only |
+| `/build-kb` | Analyze the source in depth and build an LLM knowledge base. | You only |
+
+`/work`, `/build-kb`, `/sync-docs`, and `/update-docs` set `disable-model-invocation: true`, so the model cannot start them on its own. `/plan-work` and `/write-docs` stay available to agents because `orchestrator-agent` runs `/plan-work` and `technical-writer` runs `/write-docs`.
+
+The contributor-facing description is in `DEVELOPMENT.md` (section 7). For the surrounding development rules, see the [Development Guide](index.md).
 
 ## Agent Prompt Files
 

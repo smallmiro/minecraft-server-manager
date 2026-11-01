@@ -4,121 +4,19 @@ This project is a DevOps project for building and operating multiple Minecraft J
 
 ## Project Structure
 
-> pnpm monorepo. 상세 구조는 파일시스템 탐색 또는 `docs/documentforllmagent.md` 참조.
+pnpm monorepo. 패키지는 `platform/services/` 아래에 있고, 상세 구조는 파일시스템 탐색 또는 `docs/documentforllmagent.md` 참조.
 
-| Directory | Description |
-|-----------|-------------|
-| `platform/` | Docker platform runtime (docker-compose, .env, servers/, worlds/, shared/) |
-| `platform/services/shared/` | `@minecraft-docker/shared` - Domain entities, value objects, use cases, ports/adapters |
-| `platform/services/cli/` | `@minecraft-docker/mcctl` - npm CLI (Hexagonal Architecture). `prepack` runs `sync-docker`, which copies `docker/bluemap` into the package; there is no `scripts/` |
-| `platform/services/mcctl-api/` | `@minecraft-docker/mcctl-api` - Fastify REST API (:5001) |
-| `platform/services/mcctl-console/` | `@minecraft-docker/mcctl-console` - Next.js Web UI (:5000) |
-| `platform/services/mod-source-modrinth/` | `@minecraft-docker/mod-source-modrinth` - Modrinth adapter |
-| `platform/backups/` | Backup storage (worlds/, meta/) |
-| `platform/services/cli/templates/` | Single source of the npm package templates for `mcctl init` (`platform/docker-compose.yml`, `platform/servers/_template` etc. are symlinks to it) |
-| `docs/` | MkDocs documentation (EN/KO), LLM Knowledge Base |
-| `e2e/` | Playwright E2E tests |
-| `.claude/agents/` | Multi-agent definitions (orchestrator, core, cli, backend, frontend, devops, etc.) |
-| `.claude/commands/` | Custom slash commands (work, update-docs, sync-docs, write-docs, build-kb) |
-
-## Custom Commands
-
-> **Note**: Commands are invoked as `/command-name` (not `/project:command-name`)
-
-| Command | Description |
-|---------|-------------|
-| `/plan-work` | 작업 착수 전 계획 수립 (orchestrator 접수 시 필수 선행 단계, `/work` 내부에서는 T4만. 실행은 `/work`) |
-| `/work` | Execute development work based on GitHub Issues/Milestones to completion (a Stop hook enforces the completion conditions) |
-| `/update-docs` | Update docs/itzg-reference/ from official documentation |
-| `/sync-docs` | Sync project documentation (CLAUDE.md, README.md) with codebase |
-| `/write-docs` | Bilingual (EN/KO) technical documentation writer |
-| `/build-kb` | Deep source code analysis to build comprehensive LLM Knowledge Base (2,500-3,000 lines) |
-
-See `.claude/commands/` for detailed command specifications.
+- `platform/services/cli/templates/` is the single source of the templates for `mcctl init`. `platform/docker-compose.yml`, `platform/servers/_template`, and similar paths are symlinks to it.
+- The CLI's `prepack` runs `sync-docker`, which copies `docker/bluemap` into the package. There is no `scripts/`.
+- mcctl-api (:5001) and mcctl-console (:5000) run natively under PM2. Minecraft servers and mc-router (:25565) run in Docker.
+- Agents are in `.claude/agents/`. Skills are in `.claude/skills/` and run as `/name`: `/plan-work` plans before work starts (inside `/work`, only at T4) and `/work` executes.
 
 ## System Requirements
 
-### Runtime (Production)
-
-| Component | Minimum Version | Notes |
-|-----------|-----------------|-------|
-| **Node.js** | >= 18.0.0 | All packages |
-| **Docker Engine** | >= 24.0.0 | Minecraft server containers |
-| **Docker Compose** | >= 2.20.0 | `include` feature required |
-| **PM2** | >= 6.0.0 | mcctl-api, mcctl-console process management (`npm install -g pm2`) |
-
-**OS**: Linux, macOS only
-
-**Ports**:
-
-| Service | Port |
-|---------|------|
-| mcctl-api | 5001 |
-| mcctl-console | 5000 |
-| mc-router | 25565 |
-
-**Notes**:
-- `mcctl console init` requires PM2 >= 6.0.0 on `PATH` (`npm install -g pm2`) and stops otherwise (`shared/src/prerequisite/PrerequisiteChecker.ts`). The `pm2` dependency bundled with `mcctl` is used only by `mcctl console service` (`cli/src/infrastructure/pm2-cli.ts`)
-- `better-sqlite3` (mcctl-console dependency) is a native module; build toolchain (gcc, make, python) may be required on some environments
-
-### Development Only
-
-| Component | Minimum Version | Notes |
-|-----------|-----------------|-------|
-| **pnpm** | >= 8.0.0 | Monorepo workspace management |
-| **TypeScript** | >= 5.3.0 | Build time |
-
-## Quick Start
-
-```bash
-# Install CLI globally
-npm install -g @minecraft-docker/mcctl
-
-# Initialize platform
-mcctl init
-
-# Create a server
-mcctl create myserver -t PAPER -v 1.21.1
-
-# Start all infrastructure
-mcctl up
-
-# Check status
-mcctl status
-```
-
-For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
-
-## Architecture Overview
-
-### Multi-Server with mc-router
-
-```
-┌──────────────────────┐  ┌────────────────────┐  ┌─────────────────────┐
-│  mc-router (:25565)  │  │  avahi-daemon      │  │  playit-agent       │
-│  hostname routing    │  │  (system service)  │  │  (optional)         │
-│  auto-scale up/down  │  │  mDNS broadcast    │  │  external access    │
-├──────────────────────┤  ├────────────────────┤  ├─────────────────────┤
-│ <server>.local ─→    │  │ /etc/avahi/hosts:  │  │ playit.gg cloud ─→  │
-│  mc-<server>         │  │  <server>.local    │  │  localhost:25565    │
-└──────────────────────┘  └────────────────────┘  └─────────────────────┘
-```
-
-**Key Features**:
-- Single port (25565) for all servers via hostname routing
-- Auto-scale: servers start on client connect, stop after idle timeout
-- **nip.io** (Recommended): `<server>.<HOST_IP>.nip.io:25565`
-- **mDNS**: `<server>.local:25565` (requires avahi/Bonjour)
-- **playit.gg** (External): `xx-xx.craft.playit.gg` (no port forwarding needed)
-
-## Required Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `EULA` | **Required** | `TRUE` - Minecraft EULA agreement |
-| `TYPE` | Recommended | Server type (PAPER, FORGE, NEOFORGE, FABRIC) |
-| `VERSION` | Recommended | Minecraft version |
-| `MEMORY` | Recommended | JVM memory (e.g., `4G`) |
+- **Runtime**: Node.js >= 18, Docker Engine >= 24, Docker Compose >= 2.20 (`include` required), PM2 >= 6. Linux and macOS only.
+- **Development**: pnpm >= 8, TypeScript >= 5.3.
+- `mcctl console init` requires PM2 on `PATH` and stops otherwise (`shared/src/prerequisite/PrerequisiteChecker.ts`). The `pm2` dependency bundled with `mcctl` is used only by `mcctl console service` (`cli/src/infrastructure/pm2-cli.ts`).
+- `better-sqlite3` is a native module, so a build toolchain (gcc, make, python) may be required.
 
 ## Development Philosophy
 
@@ -126,124 +24,56 @@ For full CLI reference, see [docs/cli/commands.md](docs/cli/commands.md).
 
 > 아래 방식은 모든 코드 기여에 적용한다. TDD는 회귀를 막고, Tidy First는 리뷰와 롤백 단위를 깨끗하게 유지하기 위해서다.
 
-#### Required Practices
-
-| Practice | Description | Enforcement |
-|----------|-------------|-------------|
-| **TDD** | Test-Driven Development: Red → Green → Refactor | All new features MUST have tests written BEFORE implementation |
-| **Tidy First** | Never mix structural and behavioral changes | Separate commits for refactoring vs features |
-| **DDD** | Domain-Driven Design | Use domain entities, value objects, aggregates |
-| **Clean Architecture** | Dependency inversion, use cases, ports/adapters | Business logic independent of frameworks |
-| **Hexagonal Architecture** | Ports & Adapters pattern | All external dependencies behind interfaces |
-
-#### TDD
-
-```
-❌ WRONG: Write code first, add tests later (or skip tests)
-✅ RIGHT: Write failing test → Write minimal code → Refactor
-```
-
-Every new command, feature, or bug fix follows the TDD cycle:
-1. **Red**: Write a failing test that defines the expected behavior
-2. **Green**: Write the minimum code to make the test pass
-3. **Refactor**: Clean up while keeping tests green
+| Practice | Enforcement |
+|----------|-------------|
+| **TDD** | Every new feature or bug fix follows Red → Green → Refactor. Tests come BEFORE implementation |
+| **Tidy First** | Structural and behavioral changes go in separate commits |
+| **DDD** | Use domain entities, value objects, aggregates |
+| **Clean Architecture** | Dependency inversion, use cases, ports/adapters. Business logic stays independent of frameworks |
+| **Hexagonal Architecture** | All external dependencies sit behind interfaces |
 
 #### Architecture Enforcement
 
-All TypeScript code MUST follow this layered architecture:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Presentation Layer                    │
-│              (CLI commands, API routes)                  │
-├─────────────────────────────────────────────────────────┤
-│                    Application Layer                     │
-│           (Use cases, application services)              │
-├─────────────────────────────────────────────────────────┤
-│                      Domain Layer                        │
-│    (Entities, Value Objects, Domain Services, Ports)     │
-├─────────────────────────────────────────────────────────┤
-│                   Infrastructure Layer                   │
-│       (Adapters: DB, External APIs, File System)         │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Key Rules**:
-- Domain layer has NO external dependencies
-- Use cases orchestrate domain logic
-- All I/O operations go through adapters
-- Dependency injection for testability
-
-### XP (Extreme Programming) Methodology
-
-This project follows **XP (Extreme Programming)** practices as the core development methodology.
-
-**Core Practices**:
-- **TDD (Test-Driven Development)**: Red → Green → Refactor cycle (see [TDD](#tdd))
-- **Tidy First**: Never mix structural and behavioral changes (see [Tidy First](#tidy-first))
-- **Pair Programming**: For complex features and architecture decisions
-- **Continuous Integration**: All PRs must pass lint, type-check, test, build
-- **Small Releases**: Frequent, incremental deployments
-
-**XP Values**:
-
-| Value | Application |
-|-------|-------------|
-| Communication | PR reviews, pair programming, documentation |
-| Simplicity | YAGNI, minimal code to solve the problem |
-| Feedback | TDD, CI/CD, code reviews |
-| Courage | Refactoring, addressing technical debt |
-| Respect | Code review etiquette, team collaboration |
+- The domain layer has NO external dependencies.
+- Use cases orchestrate domain logic.
+- All I/O operations go through adapters.
+- Dependencies are injected for testability.
 
 ### CLI-First, Web-Ready
 
-All features are implemented via CLI first, with Web Management UI available.
-
-- **Phase 1**: CLI with Interactive Mode (`platform/services/cli`)
-- **Phase 2**: Management Console - REST API + Web Console
-  - `mcctl-api`: Fastify REST API on port 5001
-  - `mcctl-console`: Next.js Web UI on port 5000
-
-### CLI Architecture
-
-The CLI uses **Hexagonal Architecture** (Ports & Adapters) with **Clean Architecture** principles. Apply it to all CLI code.
-
-See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for details.
+All features are implemented via CLI first, with the Web Management UI following. See [docs/development/cli-architecture.md](docs/development/cli-architecture.md) for the CLI's Hexagonal Architecture.
 
 ### Multi-Agent Collaboration
 
-This project uses a **Multi-Agent Collaboration** system where specialized agents are responsible for different modules.
+Specialized agents own each module. 메인 세션이 orchestrator 프로토콜로 작업을 접수하고 담당 에이전트에게 위임한다. 3개 이상 모듈에 걸친 작업은 `orchestrator-agent`에 조율을 맡길 수 있다.
 
-> 모든 작업은 **Orchestrator Agent**를 통해 시작합니다. 사용자의 요청을 직접 처리하지 말고, 먼저 `orchestrator-agent`로 작업을 접수하여 적절한 전문 에이전트에게 분석/구현을 위임하세요.
+| Agent | Module |
+|-------|--------|
+| 🎯 **Orchestrator** | Coordinates work across three or more modules |
+| 🔧 **Core** | `platform/services/shared/`, `platform/services/mod-source-*/` |
+| 💻 **CLI** | `platform/services/cli/` |
+| 🖥️ **Backend** | `platform/services/mcctl-api/` |
+| 🎨 **Frontend** | `platform/services/mcctl-console/` |
+| 🐳 **DevOps** | `platform/` outside services, `e2e/`, `.github/workflows/`, `.claude/hooks/` |
+| 📝 **Technical Writer** | `docs/`, `README*`, `CHANGELOG.md` |
+| 🚀 **Release Manager** | Version tagging, CHANGELOG, deployment |
 
-| Agent | Module | Role |
-|-------|--------|------|
-| 🎯 **Orchestrator** | All modules | **Entry point for ALL tasks**. 작업 분배, 의존성 추적, 에이전트 간 동기화 조율 |
-| 🔧 **Core** | `platform/services/shared/` | Domain entities, value objects, use cases, ports/adapters |
-| 💻 **CLI** | `platform/services/cli/` | CLI commands, interactive prompts |
-| 🖥️ **Backend** | `platform/services/mcctl-api/` | Fastify REST API, authentication, OpenAPI/Swagger |
-| 🎨 **Frontend** | `platform/services/mcctl-console/` | Next.js Web UI, React components, hooks |
-| 🐳 **DevOps** | `platform/`, `e2e/` | Docker, docker-compose, Playwright E2E tests |
-| 📝 **Technical Writer** | `docs/` | MkDocs documentation, bilingual (EN/KO) |
-| 🚀 **Release Manager** | Git tags, Docker | Version tagging, CHANGELOG, deployment |
-
-#### Orchestrator-First Workflow
+#### Intake Workflow
 
 ```
 ❌ WRONG: 사용자 요청 → 바로 코드 수정
-✅ RIGHT: 사용자 요청 → Orchestrator 접수 → 분석 에이전트 위임 → 결과 종합 → 실행
+✅ RIGHT: 사용자 요청 → 분석 → `/plan-work` 계획 → 담당 에이전트 위임 → 결과 종합
 ```
 
-`/work` 단일 이슈 모드에서는 메인 세션이 orchestrator 프로토콜로 접수하고 담당 에이전트에게 직접 위임한다(경로 매핑·난이도 등급은 `.claude/commands/work.md`).
+메인 세션의 역할:
 
-**Orchestrator Agent의 역할**:
-1. **작업 접수**: 사용자의 요청/문제를 분석하여 관련 모듈 식별
-2. **에이전트 위임**: 적절한 전문 에이전트에게 분석/구현 작업 할당
-3. **의존성 관리**: 에이전트 간 작업 순서와 의존성 추적
-4. **병렬 실행**: 독립적인 작업을 병렬로 처리하여 효율 극대화
+1. **작업 접수**: 요청을 분석하여 관련 모듈 식별
+2. **에이전트 위임**: 담당 에이전트에게 분석/구현 작업 할당 (경로 매핑·난이도 등급은 `.claude/skills/work/SKILL.md`)
+3. **의존성 관리**: 작업 순서와 의존성 추적
+4. **병렬 실행**: 독립적인 작업을 worktree로 병렬 처리
 5. **동기화 조율**: 에이전트 간 핸드오프와 통합 관리
 
-See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) and [`.claude/agents/orchestrator-agent.md`](.claude/agents/orchestrator-agent.md) for the complete collaboration guide, and [docs/orchestrator-workflow.md](docs/orchestrator-workflow.md) for the orchestrator's step-by-step workflow (intake → `/plan-work` → execution mode → `/work` tier routing → completion).
+See [docs/development/agent-collaboration.md](docs/development/agent-collaboration.md) for the collaboration guide and [docs/orchestrator-workflow.md](docs/orchestrator-workflow.md) for the step-by-step workflow.
 
 #### Model Assignment
 
@@ -251,8 +81,10 @@ See [docs/development/agent-collaboration.md](docs/development/agent-collaborati
 
 | 모델 | 대상 | 이유 |
 |------|------|------|
-| `opus` | orchestrator-agent, core-agent, `/plan-work`, `/build-kb` | 작업 분해, 도메인 설계, 대규모 코드 분석 |
-| `sonnet` | backend/cli/frontend/devops-agent, release-manager, technical-writer, `/work`, `/sync-docs`, `/write-docs`, `/update-docs` | 범위가 정해진 구현, 절차형 작업, 문서 작성 |
+| `opus` | orchestrator-agent, `/plan-work`, `/build-kb` | 작업 분해, 대규모 코드 분석 |
+| `sonnet` | core/backend/cli/frontend/devops-agent, release-manager, technical-writer, `/work`, `/sync-docs`, `/write-docs`, `/update-docs` | 범위가 정해진 구현, 절차형 작업, 문서 작성 |
+
+`/work`는 도메인 타입 변경, 미확정 원인, 보안, 데이터 손실 위험이 있는 작업(T2)에서 호출별로 `opus`를 지정한다.
 
 ### Git-Flow Workflow
 
@@ -276,32 +108,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
-#### TDD (Test-Driven Development)
-
-Every feature, bug fix, or enhancement follows TDD.
-
-Follow the **Red → Green → Refactor** cycle:
-1. **Red**: Write a failing test first
-2. **Green**: Write minimal code to make the test pass
-3. **Refactor**: Clean up while keeping tests green
-
-**PRs without tests will be rejected** unless:
-- Documentation-only changes
-- Configuration changes with no code logic
-
-```bash
-# Example TDD workflow for a new command
-# 1. RED: Write failing test
-pnpm test -- --watch src/commands/newcmd.test.ts
-
-# 2. GREEN: Implement minimal code
-# 3. REFACTOR: Clean up, then commit
-git commit -m "feat(cli): add newcmd command (#123)"
-```
+**PRs without tests will be rejected** unless they are documentation-only changes or configuration changes with no code logic.
 
 #### Tidy First
-
-Structural and behavioral changes go in separate commits.
 
 **Never mix structural and behavioral changes in the same commit.**
 
@@ -314,25 +123,9 @@ git commit -m "feat: add world existence check (#7)"
 git commit -m "feat: add validation with new helper function"
 ```
 
-**Why this matters**:
-- Easier code review (reviewers can focus on one type of change)
-- Safer rollbacks (can revert behavior without losing refactoring)
-- Cleaner git history
-
 #### Task Checkpoint (task.md)
 
-Use `task.md` (gitignored) for local work-in-progress tracking:
-
-```markdown
-## Working On
-- [ ] Implementing lock.sh (#5)
-
-## Context
-- Branch: feature/5-world-locking
-
-## Notes
-- lock file format: <server>:<timestamp>:<pid>
-```
+Use `task.md` (gitignored) for local work-in-progress tracking.
 
 See [docs/development/git-workflow.md](docs/development/git-workflow.md) for complete details.
 
@@ -347,19 +140,14 @@ See [docs/development/git-workflow.md](docs/development/git-workflow.md) for com
 
 **Phase 1: 분석 (Analysis)** - 코드 수정 금지
 
-1. `orchestrator-agent`가 문제/요청을 접수하고, 필요 시 전문 에이전트에게 분석을 위임합니다
-   - `core-agent`: shared 패키지 관련
-   - `cli-agent`: CLI/스크립트 관련
-   - `backend-agent`: mcctl-api 관련
-   - `frontend-agent`: mcctl-console 관련
-   - `devops-agent`: Docker/배포 관련
+1. 메인 세션이 문제/요청을 접수하고, 필요 시 담당 에이전트에게 분석을 위임합니다
 2. 버그: 근본 원인(Root Cause)과 해결 방안을 도출합니다
 3. 기능 요청: 요구사항 분석, 영향 범위, 구현 방안을 도출합니다
 4. **이 단계에서 코드 수정은 절대 금지합니다**
 
 **Phase 2: 이슈 생성 (Issue Creation)**
 
-1. `technical-writer`가 분석 결과를 바탕으로 GitHub Issue를 생성합니다
+1. 분석 결과를 바탕으로 GitHub Issue를 생성합니다
 2. 이슈에 반드시 포함할 내용:
    - **Summary**: 문제/기능 요약
    - **Root Cause** (버그) 또는 **Requirements** (기능): 분석 결과
@@ -397,9 +185,3 @@ See [docs/development/git-workflow.md](docs/development/git-workflow.md) for com
 | Git Workflow | [docs/development/git-workflow.md](docs/development/git-workflow.md) |
 | itzg Reference | [docs/itzg-reference/](docs/itzg-reference/) |
 | Troubleshooting | [docs/troubleshooting/index.md](docs/troubleshooting/index.md) |
-
-## External Resources
-
-- **Official Docs**: https://docker-minecraft-server.readthedocs.io/
-- **GitHub**: https://github.com/itzg/docker-minecraft-server
-- **Docker Hub**: https://hub.docker.com/r/itzg/minecraft-server/

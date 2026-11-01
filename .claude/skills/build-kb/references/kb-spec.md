@@ -1,29 +1,13 @@
----
-model: opus
----
+# Knowledge Base Specification
 
-# Build LLM Knowledge Base (Deep)
+## Contents
 
-Build the comprehensive LLM Knowledge Base (`docs/documentforllmagent.md`) through deep source code analysis. This produces a 2,500-3,000 line document covering all 18 sections with maximum depth.
+- 18-section structure
+- Analysis targets
+- Gap analysis
+- Writing rules
 
-> **This is NOT `/sync-docs`**. `/sync-docs` generates a lightweight (~400 line) KB from docs/ files only. `/build-kb` performs deep source code analysis to build a comprehensive knowledge base.
-
-## Comparison
-
-| Aspect | `/sync-docs` | `/build-kb` (this) |
-|--------|-------------|---------------------|
-| Purpose | Sync project docs (CLAUDE.md, README, etc.) | Deep LLM KB build only |
-| Analysis | docs/ files only | Source code + docs + config + infra |
-| Output Size | ~400 lines | 2,500-3,000 lines |
-| Agents | None (direct execution) | orchestrator + technical-writer |
-| Target | Multiple files | `docs/documentforllmagent.md` only |
-| Use When | Quick docs refresh | Major version release, deep rebuild |
-
-## Output File
-
-`docs/documentforllmagent.md` - Single comprehensive knowledge base document
-
-## 18-Section Structure
+## 18-section structure
 
 The output MUST contain all 18 sections in this order:
 
@@ -48,15 +32,7 @@ The output MUST contain all 18 sections in this order:
 | 17 | Glossary | Domain-specific terms |
 | 18 | External Resources & Links | GitHub, docs, Docker Hub, itzg docs |
 
----
-
-## 3-Step Workflow
-
-### Step 1: Deep Source Code Analysis (orchestrator-agent)
-
-Use `orchestrator-agent` to launch parallel analysis agents. Each agent reads specific source paths and extracts structured data.
-
-**Analysis Targets (run in parallel where possible):**
+## Analysis targets
 
 #### 1a. CLI Commands Analysis
 - **Path**: `platform/services/cli/src/commands/**/*.ts`
@@ -100,7 +76,7 @@ Use `orchestrator-agent` to launch parallel analysis agents. Each agent reads sp
 - **Also read**: `docs/itzg-reference/**/*.md`
 - **Extract**: All itzg environment variables, server types, Java options, mod loaders
 
-### Step 2: Gap Analysis (technical-writer agent)
+## Gap analysis
 
 Use `technical-writer` agent to compare Step 1 analysis results against the current `docs/documentforllmagent.md`.
 
@@ -120,14 +96,7 @@ Use `technical-writer` agent to compare Step 1 analysis results against the curr
    - `docs/advanced/backup.md`
 4. Produce a gap report listing exactly what needs to be added, updated, or expanded
 
-### Step 3: Full Document Generation (technical-writer agent)
-
-Use `technical-writer` agent to write the complete `docs/documentforllmagent.md` using:
-- Step 1 deep analysis data
-- Step 2 gap report
-- Existing document as baseline (preserve good content, fix gaps)
-
-**Writing Rules:**
+## Writing rules
 
 #### Header
 ```markdown
@@ -161,117 +130,3 @@ Use `technical-writer` agent to write the complete `docs/documentforllmagent.md`
 | 15. FAQ | 200+ | 50+ categorized Q&A pairs |
 
 ---
-
-## Execution Procedure
-
-When `/build-kb` is invoked:
-
-### Phase 1: Preparation
-```bash
-# Get current version
-cat platform/services/cli/package.json | jq -r '.version'
-
-# Get current date
-date +%Y-%m-%d
-
-# Count current KB lines
-wc -l docs/documentforllmagent.md
-```
-
-### Phase 2: Deep Analysis (Step 1)
-Launch orchestrator-agent with parallel analysis tasks (1a through 1g).
-
-Each analysis task should output structured findings like:
-```
-## CLI Command: create
-- Description: Create a new Minecraft server
-- Options:
-  - --name, -n (string): Server name [required]
-  - --type, -t (ServerType): Server type [default: VANILLA]
-  - ...
-- Subcommands: none
-- Example: mcctl create myserver -t PAPER -v 1.21.1
-```
-
-### Phase 3: Gap Analysis (Step 2)
-Launch technical-writer agent to compare analysis results with current document.
-
-### Phase 4: Document Generation (Step 3)
-Launch technical-writer agent to produce the final document.
-
-### Phase 5: Verification
-```bash
-# Line count check (target: 2,500-3,000)
-wc -l docs/documentforllmagent.md
-
-# Section count check (must be >= 18)
-grep -c "^## " docs/documentforllmagent.md
-
-# Verify all 18 sections exist
-for section in \
-  "Overview" \
-  "System Requirements" \
-  "Installation" \
-  "Architecture" \
-  "CLI Command" \
-  "Server Types" \
-  "Configuration" \
-  "REST API" \
-  "Web Console" \
-  "itzg" \
-  "mc-router" \
-  "docker-compose" \
-  "Common Use Cases" \
-  "Troubleshooting" \
-  "FAQ" \
-  "Version History" \
-  "Glossary" \
-  "External Resources"; do
-  if grep -qi "$section" docs/documentforllmagent.md; then
-    echo "OK: $section"
-  else
-    echo "MISSING: $section"
-  fi
-done
-
-# Verify no placeholder content
-grep -n "TODO\|PLACEHOLDER\|TBD\|FIXME" docs/documentforllmagent.md && echo "FAIL: Placeholders found" || echo "OK: No placeholders"
-```
-
----
-
-## Quality Checklist
-
-- [ ] Version matches `platform/services/cli/package.json`
-- [ ] Date is today's date
-- [ ] All 18 sections present with substantive content
-- [ ] Line count is 2,500-3,000
-- [ ] Every CLI command from source code is documented
-- [ ] Every REST API endpoint from source code is documented
-- [ ] Web Console pages and features documented
-- [ ] All environment variables documented with defaults
-- [ ] Server types include comparison table
-- [ ] FAQ has 50+ Q&A entries
-- [ ] All code examples use proper code blocks
-- [ ] No TODO/PLACEHOLDER/TBD content
-- [ ] Table of Contents matches actual sections
-- [ ] Internal consistency (command names, flags match throughout)
-
-## Error Handling
-
-| Situation | Action |
-|-----------|--------|
-| Source file not found | Skip and note in gap report |
-| Section too short | Expand with examples and details |
-| Line count < 2,500 | Add more examples, FAQ entries, troubleshooting |
-| Line count > 3,000 | Consolidate verbose sections, remove redundancy |
-| Missing CLI command | Re-read command files, ensure complete coverage |
-| Verification fails | Fix and re-verify before completion |
-
-## Important Notes
-
-- **This command replaces the entire file** - It writes a complete new version of `docs/documentforllmagent.md`
-- **Run after major releases** - Best used when significant features have been added
-- **For quick updates use `/sync-docs`** - If only docs/ content changed, `/sync-docs` is faster
-- **English only** - The KB file is English-only for maximum LLM compatibility
-- **Agents handle the heavy lifting** - The orchestrator parallelizes analysis, technical-writer handles writing
