@@ -14,7 +14,7 @@
 - **대상**: Issue #<N> / Milestone #<N>
 - **목표**: <목표 설명>
 - **영향 모듈**: <모듈 목록>
-- **예상 실행 방식**: Teams / Sub-agent / `/work` (T0는 메인 세션)
+- **예상 실행 방식**: 병렬 서브에이전트 / 순차 서브에이전트 / `/work` (T0는 메인 세션)
 
 ## 작업 분해 (WBS)
 
@@ -42,21 +42,21 @@ Task 1 ─┬→ Task 2 ─┐
 
 ## 실행 구성안
 
-### Option A: Claude Code Teams (권장)
-<팀 구성 상세>
+### Option A: 병렬 서브에이전트 (권장)
+<그룹별 에이전트, worktree 사용 여부, 통합 순서>
 
 ### Option B: 순차 서브에이전트
 <순차 실행 상세>
 
 ## 설계 필요 사항
-- [ ] <설계가 필요한 항목과 담당 Architect 에이전트 (없으면 담당 구현 에이전트)>
+- [ ] <설계가 필요한 항목과 설계 담당>
 
 ## 브랜치 전략
 - Base: `develop`
 - Branch: `feature/<issue>-<description>` 또는 `bugfix/<issue>-<description>`
 
 ## 다음 단계
-계획 승인 후 `/work --issue <N>` 또는 Teams 구성으로 실행
+계획 승인 후 `/work --issue <N>` 또는 병렬 구성으로 실행
 ```
 
 ## 작성 예시
@@ -74,7 +74,7 @@ Task 1 ─┬→ Task 2 ─┐
 - **대상**: Milestone #8 "v2.1.0 - Mod Management"
 - **목표**: 모드 검색, 설치, 관리 기능 추가
 - **영향 모듈**: shared, cli, mcctl-api, mcctl-console
-- **예상 실행 방식**: Claude Code Teams (4개 모듈 병렬)
+- **예상 실행 방식**: 병렬 서브에이전트 (4개 모듈, `orchestrator-agent` 조율)
 
 ## 작업 분해 (WBS)
 
@@ -104,20 +104,18 @@ Task 1 → Task 2 ─┬→ Task 3 (CLI)
 
 ## 실행 구성안
 
-### Option A: Claude Code Teams (권장)
-- Team Name: `milestone-8-mod-management`
-- Member 1: cli-agent (Task 3, worktree)
-- Member 2: backend-agent (Task 4, worktree)
-- Member 3: frontend-agent (Task 5, worktree)
-- SYNC: Task 4 완료 → Member 3에 API 스펙 공유
+### Option A: 병렬 서브에이전트 (권장)
+- P2: cli-agent (Task 3, worktree), backend-agent (Task 4, worktree)
+- P3: frontend-agent (Task 5, worktree)
+- SYNC: Task 4 완료 후 API 스펙을 frontend-agent 위임 프롬프트에 포함
 
 ### Option B: 순차 서브에이전트
 - core-agent → cli-agent → backend-agent → frontend-agent → devops-agent
 
 ## 설계 필요 사항
-- [ ] Mod 도메인 모델 설계 → system-architect (없으면 core-agent)
+- [ ] Mod 도메인 모델 설계 → core-agent
 - [ ] Mod 관리 UI 디자인 → frontend-design skill
 
 ## 다음 단계
-계획 승인 후 Teams 구성으로 P1부터 실행 시작
+계획 승인 후 P1부터 실행 시작
 ```

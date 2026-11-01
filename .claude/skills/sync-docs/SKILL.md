@@ -23,9 +23,8 @@ This command analyzes the codebase and updates project documentation to reflect 
 ## Procedure
 
 1. **Analyze Codebase**:
-   - Read `docker-compose.yml` and extract current configuration
-   - Check `data/`, `config/`, `secrets/` directory structure
-   - Identify any new files or directories
+   - Read `platform/docker-compose.yml` and `platform/services/cli/templates/` for the current configuration
+   - Identify new packages, commands, or directories
    - Check for new environment variables in use
 
 2. **Generate docs/documentforllmagent.md** (LLM Knowledge Base):
@@ -36,11 +35,8 @@ This command analyzes the codebase and updates project documentation to reflect 
    - Update version and date in header
 
 3. **Update CLAUDE.md**:
-   - Verify project structure section matches actual directory layout
-   - Update environment variables table if new ones are used
-   - Add new common tasks if patterns are found
-   - Update troubleshooting section based on any issues encountered
-   - Keep checklists current with project state
+   - Fix rules, gotchas, and pointers that no longer match the code
+   - Add only what a session cannot learn by reading the code. Every subagent loads this file, so skip directory listings, dependency lists, and standard commands
 
 4. **Update README.md**:
    - Sync quick start example with actual docker-compose.yml
@@ -68,7 +64,7 @@ This command analyzes the codebase and updates project documentation to reflect 
 
 ## Analysis Checklist
 
-- [ ] Read docker-compose.yml for current configuration
+- [ ] Read `platform/docker-compose.yml` for current configuration
 - [ ] List all environment variables in use
 - [ ] Check directory structure changes
 - [ ] Identify new mods/plugins configured

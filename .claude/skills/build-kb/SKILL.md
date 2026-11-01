@@ -17,7 +17,7 @@ Build the comprehensive LLM Knowledge Base (`docs/documentforllmagent.md`) throu
 | Purpose | Sync project docs (CLAUDE.md, README, etc.) | Deep LLM KB build only |
 | Analysis | docs/ files only | Source code + docs + config + infra |
 | Output Size | ~400 lines | 2,500-3,000 lines |
-| Agents | None (direct execution) | orchestrator + technical-writer |
+| Agents | None (direct execution) | Parallel analysis agents + technical-writer |
 | Target | Multiple files | `docs/documentforllmagent.md` only |
 | Use When | Quick docs refresh | Major version release, deep rebuild |
 
@@ -28,7 +28,7 @@ Build the comprehensive LLM Knowledge Base (`docs/documentforllmagent.md`) throu
 ## Procedure
 
 1. **Prepare**: read the version from `platform/services/cli/package.json`, today's date, and the current `wc -l docs/documentforllmagent.md`.
-2. **Deep analysis**: `orchestrator-agent` runs the parallel analysis tasks 1a through 1g. Each task reports structured findings:
+2. **Deep analysis**: run analysis tasks 1a through 1g as parallel `general-purpose` agents with `model: sonnet`. Each task reports structured findings:
    ```
    ## CLI Command: create
    - Description: Create a new Minecraft server
@@ -78,4 +78,4 @@ The section list, analysis targets, gap analysis tasks, and writing rules are in
 - **Run after major releases** - Best used when significant features have been added
 - **For quick updates use `/sync-docs`** - If only docs/ content changed, `/sync-docs` is faster
 - **English only** - The KB file is English-only for maximum LLM compatibility
-- **Agents handle the heavy lifting** - The orchestrator parallelizes analysis, technical-writer handles writing
+- **Agents handle the heavy lifting** - Parallel agents analyze, technical-writer writes

@@ -78,15 +78,15 @@ Applies to Single Issue Mode step 3 (Milestone Mode inherits it per issue). Most
 | `platform/services/mcctl-console/**` | frontend-agent |
 | rest of `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` (hook logic and its tests) | devops-agent |
 | `docs/**`, `README*`, `CHANGELOG.md` | technical-writer |
-| `.claude/commands/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md`, prose only | handle directly; if they change together with logic files, the logic owner handles them too |
+| `.claude/skills/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md`, prose only | handle directly; if they change together with logic files, the logic owner handles them too |
 
 | Tier | Condition | Handling | `model` | `effort` |
 |------|-----------|----------|---------|----------|
 | T0 direct | 1 module, ≤2 files, no new public interface, bug has confirmed root cause; or typo/comment/instruction prose only | main session | - | - |
 | T1 single | 1 module, 3-8 files, root cause confirmed | one owner agent | agent default | omit |
-| T2 hardened | shared domain change, unconfirmed root cause, `security` label, data-loss risk, 9+ files | owner agent (analysis first if unconfirmed) | `opus` | `high` |
+| T2 hardened | new or changed entity, value object, or port in shared; unconfirmed root cause; `security` label; data-loss risk; 9+ files | owner agent (analysis first if unconfirmed) | `opus` | `high` |
 | T3 multi-module | 2 modules | delegate per module, core first, independent ones in parallel (worktree) | per module T1/T2 | per module T1/T2 |
-| T4 design | 3+ modules, architecture change | `/plan-work` + architect, then T3 | architect `opus` | `high` |
+| T4 design | 3+ modules, architecture change | `/plan-work`, then T3 | per module T1/T2 | per module T1/T2 |
 
 Set `model` (aliases only) and `effort` only when the table gives a value that differs from the agent default.
 
