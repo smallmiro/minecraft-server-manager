@@ -34,7 +34,7 @@ Notes on specific agents:
 
 - `mcctl-console` runs natively under PM2, not in Docker.
 - `release-manager` handles npm packages, not Docker images. Pushing a `v*` tag triggers `.github/workflows/release.yml`, which publishes five packages (`shared`, `mod-source-modrinth`, `mcctl-api`, `mcctl-console`, `mcctl`) and creates the GitHub Release.
-- The `agent:*` values in the Label column are the label each agent definition declares in its Identity table.
+- The `agent:*` values in the Label column are the GitHub labels for each area.
 - `orchestrator-agent` has no `Edit` or `Write` tool. It has `Agent` to dispatch the owner agents and `Skill` to run `/plan-work`. `technical-writer` has `Skill` for `/write-docs`, and `release-manager` has `Agent`.
 - Design is done by the main session or the owner agent of the affected module. For UI and UX design, use the `frontend-design` skill before `frontend-agent` starts.
 
@@ -68,7 +68,7 @@ flowchart LR
 
 ### How "plan first" applies
 
-- The main session analyzes a request, then plans it with `/plan-work` or turns it into an issue before delegating. `orchestrator-agent` runs `/plan-work` first and does not dispatch before the plan is approved.
+- The main session analyzes a request and plans it with `/plan-work` before delegating. `orchestrator-agent` runs `/plan-work` first and does not dispatch before the plan is approved.
 - Inside `/work`, the main session routes by tier (below). It runs `/plan-work` itself only at tier T4. Smaller tiers use the issue's `Files to Modify` and go straight to implementation.
 
 ## `/work` Modes and Routing

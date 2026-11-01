@@ -9,7 +9,7 @@ pnpm monorepo. 패키지는 `platform/services/` 아래에 있고, 상세 구조
 - `platform/services/cli/templates/` is the single source of the templates for `mcctl init`. `platform/docker-compose.yml`, `platform/servers/_template`, and similar paths are symlinks to it.
 - The CLI's `prepack` runs `sync-docker`, which copies `docker/bluemap` into the package. There is no `scripts/`.
 - mcctl-api (:5001) and mcctl-console (:5000) run natively under PM2. Minecraft servers and mc-router (:25565) run in Docker.
-- Agents are in `.claude/agents/`. Skills are in `.claude/skills/` and run as `/name`: `/plan-work` plans and `/work` executes.
+- Agents are in `.claude/agents/`. Skills are in `.claude/skills/` and run as `/name`: `/plan-work` plans before work starts (inside `/work`, only at T4) and `/work` executes.
 
 ## System Requirements
 
@@ -62,7 +62,7 @@ Specialized agents own each module. 메인 세션이 orchestrator 프로토콜�
 
 ```
 ❌ WRONG: 사용자 요청 → 바로 코드 수정
-✅ RIGHT: 사용자 요청 → 분석 → 계획 또는 이슈 → 담당 에이전트 위임 → 결과 종합
+✅ RIGHT: 사용자 요청 → 분석 → `/plan-work` 계획 → 담당 에이전트 위임 → 결과 종합
 ```
 
 메인 세션의 역할:

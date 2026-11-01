@@ -34,7 +34,7 @@
 
 - `mcctl-console`은 Docker가 아니라 PM2로 네이티브 실행됩니다.
 - `release-manager`는 Docker 이미지가 아니라 npm 패키지를 다룹니다. `v*` 태그를 push하면 `.github/workflows/release.yml`이 5개 패키지(`shared`, `mod-source-modrinth`, `mcctl-api`, `mcctl-console`, `mcctl`)를 발행하고 GitHub Release를 만듭니다.
-- 레이블 열의 `agent:*` 값은 각 에이전트 정의의 Identity 표에 선언된 레이블입니다.
+- 레이블 열의 `agent:*` 값은 영역별 GitHub 레이블입니다.
 - `orchestrator-agent`에는 `Edit`, `Write` 도구가 없습니다. 담당 에이전트에게 위임하는 `Agent`와 `/plan-work`를 실행하는 `Skill`을 가집니다. `technical-writer`는 `/write-docs`를 위해 `Skill`을, `release-manager`는 `Agent`를 가집니다.
 - 설계는 메인 세션이나 영향받는 모듈의 담당 에이전트가 처리합니다. UI/UX 설계는 `frontend-agent`가 시작하기 전에 `frontend-design` 스킬을 사용합니다.
 
@@ -68,7 +68,7 @@ flowchart LR
 
 ### "계획 먼저"의 적용 방식
 
-- 메인 세션은 요청을 분석한 뒤 `/plan-work`로 계획하거나 이슈로 정리한 다음 위임합니다. `orchestrator-agent`는 `/plan-work`를 먼저 실행하며 계획이 승인되기 전에는 위임하지 않습니다.
+- 메인 세션은 요청을 분석하고 `/plan-work`로 계획한 다음 위임합니다. `orchestrator-agent`는 `/plan-work`를 먼저 실행하며 계획이 승인되기 전에는 위임하지 않습니다.
 - `/work` 안에서는 메인 세션이 티어(아래 참조)로 라우팅합니다. `/plan-work`를 직접 실행하는 것은 T4일 때뿐입니다. 더 낮은 티어는 이슈의 `Files to Modify`를 기준으로 바로 구현합니다.
 
 ## `/work` 모드와 라우팅
