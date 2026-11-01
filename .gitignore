@@ -13,6 +13,7 @@ platform/.env
 task.md
 .claude/work-state
 .claude/work-state.*
+.claude/settings.local.json
 mapplan.md
 user.md
 
