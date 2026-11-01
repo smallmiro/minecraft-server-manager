@@ -8,6 +8,10 @@ lines=$(wc -l < "$KB")
 echo "Lines: $lines (target 2500-3000)"
 (( lines >= 2500 && lines <= 3000 )) || fail=1
 
+sections=$(grep -c '^## ' "$KB")
+echo "Sections: $sections (minimum 18)"
+(( sections >= 18 )) || fail=1
+
 for section in "Overview" "System Requirements" "Installation" "Architecture" "CLI Command" \
   "Server Types" "Configuration" "REST API" "Web Console" "itzg" "mc-router" "docker-compose" \
   "Common Use Cases" "Troubleshooting" "FAQ" "Version History" "Glossary" "External Resources"; do
