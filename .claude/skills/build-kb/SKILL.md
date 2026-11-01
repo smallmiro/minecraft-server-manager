@@ -25,222 +25,24 @@ Build the comprehensive LLM Knowledge Base (`docs/documentforllmagent.md`) throu
 
 `docs/documentforllmagent.md` - Single comprehensive knowledge base document
 
-## 18-Section Structure
+## Procedure
 
-The output MUST contain all 18 sections in this order:
+1. **Prepare**: read the version from `platform/services/cli/package.json`, today's date, and the current `wc -l docs/documentforllmagent.md`.
+2. **Deep analysis**: `orchestrator-agent` runs the parallel analysis tasks 1a through 1g. Each task reports structured findings:
+   ```
+   ## CLI Command: create
+   - Description: Create a new Minecraft server
+   - Options:
+     - --name, -n (string): Server name [required]
+     - --type, -t (ServerType): Server type [default: VANILLA]
+   - Subcommands: none
+   - Example: mcctl create myserver -t PAPER -v 1.21.1
+   ```
+3. **Gap analysis**: `technical-writer` compares the findings with the current document and reports what to add, update, or expand.
+4. **Generate**: `technical-writer` writes the complete document from the findings, the gap report, and the existing document.
+5. **Verify**: run `bash "${CLAUDE_SKILL_DIR}/scripts/verify-kb.sh"` from the repo root, fix what it reports, and run it again.
 
-| # | Section | Key Sources |
-|---|---------|-------------|
-| 1 | Overview | README.md, docs/getting-started/index.md |
-| 2 | System Requirements | CLAUDE.md, package.json engines |
-| 3 | Installation & Quick Start | docs/getting-started/installation.md, quickstart.md |
-| 4 | Architecture | docker-compose.yml, directory tree, connection flow |
-| 5 | Complete CLI Command Reference | `cli/src/commands/**/*.ts` (ALL commands, options, examples) |
-| 6 | Server Types | docs/configuration/server-types.md, shared domain |
-| 7 | Configuration | .env.example, config.env, environment variables |
-| 8 | REST API Reference | `mcctl-api/src/routes/**/*.ts` (ALL endpoints, curl examples) |
-| 9 | Web Console | `mcctl-console/src/app/**/*` (pages, components, SSE) |
-| 10 | itzg/minecraft-server Reference | docs/itzg-reference/, docs/configuration/server-types.md |
-| 11 | mc-router Reference | docker-compose.yml mc-router config, docs |
-| 12 | docker-compose.yml Examples | Server type templates, compose patterns |
-| 13 | Common Use Cases | Step-by-step workflows from actual features |
-| 14 | Troubleshooting | Symptom-diagnosis-solution format |
-| 15 | FAQ | 50+ Q&A, categorized |
-| 16 | Version History | CHANGELOG.md, git tags |
-| 17 | Glossary | Domain-specific terms |
-| 18 | External Resources & Links | GitHub, docs, Docker Hub, itzg docs |
-
----
-
-## 3-Step Workflow
-
-### Step 1: Deep Source Code Analysis (orchestrator-agent)
-
-Use `orchestrator-agent` to launch parallel analysis agents. Each agent reads specific source paths and extracts structured data.
-
-**Analysis Targets (run in parallel where possible):**
-
-#### 1a. CLI Commands Analysis
-- **Path**: `platform/services/cli/src/commands/**/*.ts`
-- **Extract**: Command name, description, all options/flags with types and defaults, subcommands, examples
-- **Depth**: Read every command file, document every option including hidden ones
-- **Cross-reference**: `platform/services/cli/src/index.ts` for command registration
-
-#### 1b. REST API Endpoints Analysis
-- **Path**: `platform/services/mcctl-api/src/routes/**/*.ts`
-- **Extract**: HTTP method, path, query params, request body schema, response schema, auth requirements
-- **Also read**: `platform/services/mcctl-api/src/plugins/auth.ts` for auth modes
-- **Also read**: `platform/services/mcctl-api/src/plugins/swagger.ts` for OpenAPI spec
-
-#### 1c. Web Console Pages Analysis
-- **Path**: `platform/services/mcctl-console/src/app/**/*`
-- **Extract**: Page routes, components used, SSE connections, API calls, features per page
-- **Also read**: `platform/services/mcctl-console/src/components/**/*`
-- **Also read**: `platform/services/mcctl-console/src/hooks/**/*`
-
-#### 1d. Domain Model Analysis
-- **Path**: `platform/services/shared/src/domain/**/*.ts`
-- **Extract**: Entities (Server, World, AuditLog), Value Objects (ServerName, ServerType, AuditAction), ports/interfaces
-- **Also read**: `platform/services/shared/src/application/use-cases/**/*.ts`
-- **Also read**: `platform/services/shared/src/application/ports/**/*.ts`
-
-#### 1e. Infrastructure & Config Analysis
-- **Path**: `platform/docker-compose.yml`
-- **Also read**: `platform/.env.example`
-- **Also read**: `platform/servers/_template/config.env`
-- **Also read**: `platform/servers/_template/docker-compose.yml`
-- **Extract**: Service definitions, environment variables, volume mounts, network config
-
-#### 1f. Version & Changelog
-- **Path**: `platform/services/cli/package.json` (version)
-- **Also read**: `CHANGELOG.md`
-- **Also read**: Git tags via `git tag --sort=-version:refname | head -20`
-- **Extract**: Current version, full release history with dates and changes
-
-#### 1g. Server Configuration Reference
-- **Path**: `docs/configuration/server-types.md`, `docs/configuration/environment.md`, `docs/configuration/server-yaml.md`
-- **Also read**: `docs/itzg-reference/**/*.md`
-- **Extract**: All itzg environment variables, server types, Java options, mod loaders
-
-### Step 2: Gap Analysis (technical-writer agent)
-
-Use `technical-writer` agent to compare Step 1 analysis results against the current `docs/documentforllmagent.md`.
-
-**Tasks:**
-1. Read current `docs/documentforllmagent.md` in full
-2. For each of the 18 sections, identify:
-   - Missing content (new commands, new API endpoints, new features)
-   - Outdated content (changed options, removed features, version mismatch)
-   - Incomplete content (missing examples, missing options, shallow coverage)
-3. Read supplementary docs for context:
-   - `docs/console/api-reference.md`
-   - `docs/console/web-console.md`
-   - `docs/cli/commands.md`
-   - `docs/configuration/server-types.md`
-   - `docs/configuration/environment.md`
-   - `docs/advanced/networking.md`
-   - `docs/advanced/backup.md`
-4. Produce a gap report listing exactly what needs to be added, updated, or expanded
-
-### Step 3: Full Document Generation (technical-writer agent)
-
-Use `technical-writer` agent to write the complete `docs/documentforllmagent.md` using:
-- Step 1 deep analysis data
-- Step 2 gap report
-- Existing document as baseline (preserve good content, fix gaps)
-
-**Writing Rules:**
-
-#### Header
-```markdown
-# mcctl - Docker Minecraft Server Management CLI
-
-> **Version**: [from cli/package.json]
-> **Last Updated**: [today's date YYYY-MM-DD]
-> **Purpose**: Comprehensive knowledge base for LLM agents (ChatGPT, Gemini, Claude, NotebookLM) to answer all mcctl questions
-```
-
-#### Content Rules
-1. **All 18 sections required** - Every section must have substantive content
-2. **2,500-3,000 lines target** - Aim for maximum depth within this range
-3. **Every CLI command documented** - ALL options, ALL flags, with examples
-4. **Every API endpoint documented** - Method, path, params, request/response, curl example
-5. **Code blocks for all commands** - Never describe a command without showing it
-6. **Practical examples** - Show real-world usage, not just syntax
-7. **Tables for structured data** - Environment variables, options, server types
-8. **FAQ: 50+ Q&A minimum** - Categorized by topic (Installation, Configuration, Server Types, Mods, Networking, Troubleshooting)
-9. **English only** - This is for LLM consumption, English maximizes compatibility
-10. **No TODOs, no placeholders** - Every section must be complete
-
-#### Section Depth Guidelines
-
-| Section | Min Lines | Key Content |
-|---------|-----------|-------------|
-| 5. CLI Commands | 400+ | Every command with all options and examples |
-| 7. Configuration | 200+ | Every env var with description and defaults |
-| 8. REST API | 200+ | Every endpoint with curl examples and response schemas |
-| 10. itzg Reference | 200+ | Autopause, mods, Java, volumes, healthcheck |
-| 15. FAQ | 200+ | 50+ categorized Q&A pairs |
-
----
-
-## Execution Procedure
-
-When `/build-kb` is invoked:
-
-### Phase 1: Preparation
-```bash
-# Get current version
-cat platform/services/cli/package.json | jq -r '.version'
-
-# Get current date
-date +%Y-%m-%d
-
-# Count current KB lines
-wc -l docs/documentforllmagent.md
-```
-
-### Phase 2: Deep Analysis (Step 1)
-Launch orchestrator-agent with parallel analysis tasks (1a through 1g).
-
-Each analysis task should output structured findings like:
-```
-## CLI Command: create
-- Description: Create a new Minecraft server
-- Options:
-  - --name, -n (string): Server name [required]
-  - --type, -t (ServerType): Server type [default: VANILLA]
-  - ...
-- Subcommands: none
-- Example: mcctl create myserver -t PAPER -v 1.21.1
-```
-
-### Phase 3: Gap Analysis (Step 2)
-Launch technical-writer agent to compare analysis results with current document.
-
-### Phase 4: Document Generation (Step 3)
-Launch technical-writer agent to produce the final document.
-
-### Phase 5: Verification
-```bash
-# Line count check (target: 2,500-3,000)
-wc -l docs/documentforllmagent.md
-
-# Section count check (must be >= 18)
-grep -c "^## " docs/documentforllmagent.md
-
-# Verify all 18 sections exist
-for section in \
-  "Overview" \
-  "System Requirements" \
-  "Installation" \
-  "Architecture" \
-  "CLI Command" \
-  "Server Types" \
-  "Configuration" \
-  "REST API" \
-  "Web Console" \
-  "itzg" \
-  "mc-router" \
-  "docker-compose" \
-  "Common Use Cases" \
-  "Troubleshooting" \
-  "FAQ" \
-  "Version History" \
-  "Glossary" \
-  "External Resources"; do
-  if grep -qi "$section" docs/documentforllmagent.md; then
-    echo "OK: $section"
-  else
-    echo "MISSING: $section"
-  fi
-done
-
-# Verify no placeholder content
-grep -n "TODO\|PLACEHOLDER\|TBD\|FIXME" docs/documentforllmagent.md && echo "FAIL: Placeholders found" || echo "OK: No placeholders"
-```
-
----
+The section list, analysis targets, gap analysis tasks, and writing rules are in [references/kb-spec.md](references/kb-spec.md). Read it before step 2.
 
 ## Quality Checklist
 

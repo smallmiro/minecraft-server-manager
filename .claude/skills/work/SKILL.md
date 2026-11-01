@@ -16,12 +16,6 @@ hooks:
 
 ## Usage
 
-```bash
-/work                         # Context mode: create issue from conversation and execute
-/work --issue <number>        # Single issue implementation
-/work --milestone <number>    # All issues in milestone
-```
-
 | Option | Description |
 |--------|-------------|
 | (none) | **Context Mode**: Analyze conversation, create GitHub issue, then execute |
@@ -36,63 +30,19 @@ hooks:
 
 ## Completion Contract
 
-A Stop hook (`.claude/hooks/work-done-check.sh`, declared in this file's frontmatter) checks the real GitHub/git state every time you try to stop, and sends you back to work with the list of unmet conditions. It reads `.claude/work-state.${CLAUDE_SESSION_ID}` (gitignored), one file per session, so concurrent sessions never block each other. **Write it before starting work** (skip for `--dry-run`):
+A Stop hook (`.claude/hooks/work-done-check.sh`, declared in this file's frontmatter) checks the real GitHub/git state every time you try to stop, and sends you back to work with the list of unmet conditions. It reads `.claude/work-state.${CLAUDE_SESSION_ID}` (gitignored), one file per session. **Write it before starting work** (skip for `--dry-run`; contributor and milestone variants are in their sections):
 
 ```bash
-# Single issue (also used by Context mode, after the issue is created)
 printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
-# Contributor (no write access): add ROLE=contributor
-printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\nROLE=contributor\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
-# Milestone
-printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
 ```
 
-| Mode | Work is complete when |
-|------|-----------------------|
-| issue | Issue body has no unchecked `- [ ]`, a PR for the issue is merged, `REVIEW` is `done` or `skipped`, no uncommitted changes |
-| issue, `ROLE=contributor` | A non-closed PR for the issue exists in the origin repo, `REVIEW` is `done` or `skipped`, no uncommitted changes (issue boxes and merge not required) |
-| milestone | The milestone has no open issues, no uncommitted changes |
+Work is complete when the issue body has no unchecked `- [ ]`, a PR for the issue is merged, `REVIEW` is `done` or `skipped`, and no tracked file has uncommitted changes.
 
 After the code review passes, record it: `sed -i.bak 's/^REVIEW=.*/REVIEW=done/' .claude/work-state.${CLAUDE_SESSION_ID} && rm .claude/work-state.${CLAUDE_SESSION_ID}.bak`.
 
 The hook deletes the state file when the conditions are met. It gives up after 30 blocked stops and skips verification if `gh` fails. If you hit a blocker you cannot resolve (failing tests you cannot fix, a merge conflict needing a human decision), say so, delete `.claude/work-state.${CLAUDE_SESSION_ID}`, and stop.
 
-**Concurrent sessions**: state is per session, but the checkout (branch, working tree) is still shared. Run parallel `/work` sessions in separate `git worktree` folders, not in one folder.
-
----
-
-## Contributor Mode
-
-Contributor mode is on with `--contributor`, or automatically when
-`gh repo view --json viewerPermission -q .viewerPermission` is not `WRITE`, `MAINTAIN` or `ADMIN`. Write `ROLE=contributor` to the state file, then follow Single Issue Mode with these changes:
-
-- Step 2: sync the fork's `develop` first (`git fetch upstream && git checkout develop && git merge --ff-only upstream/develop && git push origin develop`), then branch.
-- Step 5: update issue checkboxes only if you can edit the issue; otherwise skip and list the completed items in the PR body.
-- Step 7: push the branch to the fork and run `gh pr create --repo <origin> --base develop --head <user>:<branch> ...`.
-- Step 9: do not merge. Done once the PR is open and the review is `done`.
-
----
-
-## Context Mode (no options)
-
-1. Review the conversation and extract the task, requirements and acceptance criteria.
-2. Create the issue:
-   ```bash
-   gh issue create --title "<type>(<scope>): <description>" --body "$(cat <<'EOF'
-   ## Summary
-   ## Requirements
-   - [ ] <requirement>
-   ## Acceptance Criteria
-   - [ ] <criterion>
-   ## Technical Notes
-   ## Files to Modify
-   ---
-   *Auto-generated from conversation context*
-   EOF
-   )"
-   ```
-   Title prefixes: `feat`, `fix`, `refactor`, `docs`.
-3. Continue with Single Issue Mode using the new issue number.
+**Concurrent sessions**: state is per session, but the checkout is shared. Run parallel `/work` sessions in separate `git worktree` folders.
 
 ---
 
@@ -150,14 +100,57 @@ Set `model` (aliases only) and `effort` only when the table gives a value that d
 
 ---
 
+## Contributor Mode
+
+Contributor mode is on with `--contributor`, or automatically when
+`gh repo view --json viewerPermission -q .viewerPermission` is not `WRITE`, `MAINTAIN` or `ADMIN`. Write `ROLE=contributor` to the state file, then follow Single Issue Mode with these changes:
+
+```bash
+printf 'MODE=issue\nISSUE=%s\nREVIEW=pending\nROLE=contributor\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}
+```
+
+- Step 2: sync the fork's `develop` first (`git fetch upstream && git checkout develop && git merge --ff-only upstream/develop && git push origin develop`), then branch.
+- Step 5: update issue checkboxes only if you can edit the issue; otherwise skip and list the completed items in the PR body.
+- Step 7: push the branch to the fork and run `gh pr create --repo <origin> --base develop --head <user>:<branch> ...`.
+- Step 9: do not merge. Done once the PR is open and the review is `done`.
+
+Done means a non-closed PR for the issue exists in the origin repo, `REVIEW` is `done` or `skipped`, and no tracked file has uncommitted changes. Issue boxes and merge are not required.
+
+---
+
+## Context Mode (no options)
+
+1. Review the conversation and extract the task, requirements and acceptance criteria.
+2. Create the issue:
+   ```bash
+   gh issue create --title "<type>(<scope>): <description>" --body "$(cat <<'EOF'
+   ## Summary
+   ## Requirements
+   - [ ] <requirement>
+   ## Acceptance Criteria
+   - [ ] <criterion>
+   ## Technical Notes
+   ## Files to Modify
+   ---
+   *Auto-generated from conversation context*
+   EOF
+   )"
+   ```
+   Title prefixes: `feat`, `fix`, `refactor`, `docs`.
+3. Continue with Single Issue Mode using the new issue number.
+
+---
+
 ## Milestone Mode
 
-1. **Load context**: `gh api repos/{owner}/{repo}/milestones/<N>` and `gh issue list --milestone <N> --state open --json number,title,body,labels`. Keep the milestone goal in mind; every implementation must serve it. Write the state file.
+1. **Load context**: `gh api repos/{owner}/{repo}/milestones/<N>` and `gh issue list --milestone <N> --state open --json number,title,body,labels`. Keep the milestone goal in mind; every implementation must serve it. Write the state file: `printf 'MODE=milestone\nMILESTONE=%s\n' <N> > .claude/work-state.${CLAUDE_SESSION_ID}`.
 2. **Order the issues**. Sequential: "depends on #N"/"blocked by #N", `blocked` label, same files, phase order. Parallel-capable: different files or directories with no dependency.
 3. **Process each issue** with the Single Issue workflow, in order. Do not overwrite the milestone state file: skip the state-file steps (write, `REVIEW=done`) of the single-issue workflow; each issue still gets its own review.
 4. **Blocked issue**: note it in `task.md`, continue with the others, return when its dependency is merged.
 
 `--parallel`: dispatch the parallel-capable issues as separate Agents with `isolation: "worktree"`, then merge them one at a time and re-run tests after each.
+
+Done means the milestone has no open issues and no tracked file has uncommitted changes.
 
 ---
 
