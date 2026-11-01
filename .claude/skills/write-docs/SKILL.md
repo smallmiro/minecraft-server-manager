@@ -1,4 +1,6 @@
 ---
+description: "Creates, translates, reviews, and syncs bilingual EN/KO MkDocs pages and the GitHub Wiki. Use for documentation under docs/ (문서 작성, 번역)."
+argument-hint: "<create|translate|review|sync|wiki-sync> [path] [options]"
 model: sonnet
 ---
 

@@ -1,4 +1,6 @@
 ---
+description: "Syncs CLAUDE.md, README.md, prd.md, and the lightweight LLM knowledge base with the current codebase (문서 동기화)."
+disable-model-invocation: true
 model: sonnet
 ---
 

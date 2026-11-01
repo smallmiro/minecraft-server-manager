@@ -1,4 +1,6 @@
 ---
+description: "Builds an execution plan with task breakdown, dependencies, parallel groups, and agent assignments, without changing code. Use before multi-module or design-heavy work (작업 계획, 업무 계획 수립)."
+argument-hint: "[--issue <N> | --milestone <N> | --issues <N1,N2,...>]"
 model: opus
 ---
 

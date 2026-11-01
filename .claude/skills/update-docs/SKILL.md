@@ -1,4 +1,6 @@
 ---
+description: "Refreshes docs/itzg-reference/ from the official itzg/docker-minecraft-server documentation (itzg 레퍼런스 갱신)."
+disable-model-invocation: true
 model: sonnet
 ---
 

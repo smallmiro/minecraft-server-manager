@@ -1,4 +1,7 @@
 ---
+description: "Implements a GitHub issue or milestone end to end: branch, TDD, PR, code review, and merge (이슈 실행, 마일스톤 작업)."
+argument-hint: "[--issue <N> | --milestone <N>] [--dry-run] [--contributor] [--skip-review] [--parallel]"
+disable-model-invocation: true
 model: sonnet
 hooks:
   Stop:

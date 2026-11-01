@@ -1,4 +1,6 @@
 ---
+description: "Rebuilds docs/documentforllmagent.md through deep source analysis (2,500-3,000 lines). Use after major releases (LLM 지식 베이스 재구축)."
+disable-model-invocation: true
 model: opus
 ---
 
