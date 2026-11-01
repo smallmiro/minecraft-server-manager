@@ -1,49 +1,48 @@
 # 에이전트 협업
 
-이 문서는 `.claude/`의 Claude Code 서브에이전트와 슬래시 커맨드가 이 저장소에서 어떻게 함께 동작하는지 설명합니다. 누가 무엇을 담당하는지, 작업을 어떻게 계획하는지, `/work`가 작업을 어떻게 라우팅하는지, 완료를 어떻게 강제하는지를 다룹니다.
+이 문서는 `.claude/`의 Claude Code 서브에이전트와 스킬(슬래시 커맨드)이 이 저장소에서 어떻게 함께 동작하는지 설명합니다. 누가 무엇을 담당하는지, 작업을 어떻게 계획하는지, `/work`가 작업을 어떻게 라우팅하는지, 완료를 어떻게 강제하는지를 다룹니다.
 
 !!! note "기준 문서"
-    여기에 설명된 동작은 `.claude/agents/`, `.claude/commands/`, `.claude/hooks/`의 파일과 저장소 루트의 `CLAUDE.md`, `DEVELOPMENT.md`에서 정의합니다. 이 문서와 해당 파일의 내용이 다르면 해당 파일이 우선합니다.
+    여기에 설명된 동작은 `.claude/agents/`, `.claude/skills/`, `.claude/hooks/`의 파일과 저장소 루트의 `CLAUDE.md`, `DEVELOPMENT.md`에서 정의합니다. 이 문서와 해당 파일의 내용이 다르면 해당 파일이 우선합니다.
 
 ## 개요와 원칙
 
 - **이슈 기반.** 모든 변경은 GitHub Issue에서 시작합니다. 이슈 1개 = 브랜치 1개 = PR 1개입니다. [Git 워크플로우](git-workflow.md)를 참조하세요.
 - **계획 후 실행.** `/plan-work`는 계획만 만들고 코드를 수정하지 않습니다. 실행은 `/work`가 합니다.
-- **전문 에이전트가 모듈을 담당.** 각 에이전트는 정해진 경로를 담당하며, 메인 세션이 담당 에이전트에게 작업을 라우팅합니다.
-- **메시지 버스 없음.** 에이전트는 런타임 프로토콜로 메시지를 주고받지 않습니다. 작업 전달은 `Agent` tool 호출(프롬프트 입력, 에이전트의 최종 보고 출력)로 이루어지며, 팀 구성 시에는 `SendMessage`를 사용합니다.
+- **전문 에이전트가 모듈을 담당.** 각 에이전트는 정해진 경로를 담당하며, 메인 세션이 요청을 접수하고 담당 에이전트에게 작업을 라우팅합니다.
+- **메시지 버스 없음.** 에이전트는 런타임 프로토콜로 메시지를 주고받지 않습니다. 작업 전달은 `Agent` tool 호출(프롬프트 입력, 에이전트의 최종 보고 출력)로 이루어집니다.
 - **진행 상황은 Git과 GitHub에 기록.** 로컬 진행 기록은 `task.md`(gitignore 대상)에, 완료 항목은 이슈 체크박스에 남깁니다.
 
 ## 에이전트
 
-모든 에이전트 정의는 `.claude/agents/`에 있습니다. 에이전트에는 `tools:` 제한이 없으며 모든 도구를 상속합니다. 모델은 별칭(`opus`, `sonnet`)으로만 지정하므로 새 모델이 나와도 파일을 수정할 필요가 없습니다.
+모든 에이전트 정의는 `.claude/agents/`에 있습니다. 각 에이전트는 `tools` 허용 목록과 `effort` 수준을 선언합니다. `orchestrator-agent`와 `release-manager`를 제외한 모든 에이전트는 `autoCompactWindow: 200000`을 지정하며, `core-agent`는 `maxTurns: 300`도 지정합니다. 모델은 별칭(`opus`, `sonnet`)으로만 지정하므로 새 모델이 나와도 파일을 수정할 필요가 없습니다.
 
-| 에이전트 | 담당 | 모델 | 레이블 |
-|----------|------|------|--------|
-| `orchestrator-agent` | 요청의 진입점. 분석, 계획, 위임, 조율을 수행하며 코드를 작성하지 않습니다. | opus | `agent:orchestrator` |
-| `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (도메인 엔티티, 값 객체, 유스케이스, 포트/어댑터) | opus | `agent:core` |
-| `cli-agent` | `platform/services/cli/` | sonnet | `agent:cli` |
-| `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | `agent:backend` |
-| `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | `agent:frontend` |
-| `devops-agent` | Docker 관련 파일과 나머지 `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | `agent:devops` |
-| `technical-writer` | `docs/`, `README*`, `CHANGELOG.md` (영어/한국어) | sonnet | `agent:docs` |
-| `release-manager` | 버전 올리기, `v*` 태그, GitHub Release, 릴리즈 후 검증 | sonnet | `agent:release` |
+| 에이전트 | 담당 | 모델 | Effort | 레이블 |
+|----------|------|------|--------|--------|
+| `orchestrator-agent` | 3개 이상 모듈에 걸친 작업을 조율합니다. 계획, 위임, 통합을 수행하며 코드를 작성하지 않습니다. | opus | high | `agent:orchestrator` |
+| `core-agent` | `platform/services/shared/`, `platform/services/mod-source-*/` (도메인 엔티티, 값 객체, 유스케이스, 포트/어댑터) | sonnet | high | `agent:core` |
+| `cli-agent` | `platform/services/cli/` | sonnet | medium | `agent:cli` |
+| `backend-agent` | `platform/services/mcctl-api/` (Fastify, OpenAPI) | sonnet | medium | `agent:backend` |
+| `frontend-agent` | `platform/services/mcctl-console/` (Next.js, React, MUI 5.x, Better Auth) | sonnet | medium | `agent:frontend` |
+| `devops-agent` | Docker 관련 파일과 나머지 `platform/`, `e2e/`, `.github/workflows/`, `.claude/hooks/` | sonnet | medium | `agent:devops` |
+| `technical-writer` | `docs/`, `README*`, `CHANGELOG.md` (영어/한국어) | sonnet | medium | `agent:docs` |
+| `release-manager` | 버전 올리기, `v*` 태그, GitHub Release, 릴리즈 후 검증 | sonnet | medium | `agent:release` |
 
-`/plan-work`와 `/build-kb` 커맨드도 `opus`로 실행되며, `/work`, `/write-docs`, `/sync-docs`, `/update-docs`는 `sonnet`으로 실행됩니다.
+`/plan-work`와 `/build-kb` 스킬도 `opus`로 실행되며, `/work`, `/write-docs`, `/sync-docs`, `/update-docs`는 `sonnet`으로 실행됩니다. `/work`는 T2 티어에서 위임 한 건에 한해 `opus`로 바꿉니다(라우팅 티어 참조).
 
 에이전트별 참고 사항입니다.
 
 - `mcctl-console`은 Docker가 아니라 PM2로 네이티브 실행됩니다.
 - `release-manager`는 Docker 이미지가 아니라 npm 패키지를 다룹니다. `v*` 태그를 push하면 `.github/workflows/release.yml`이 5개 패키지(`shared`, `mod-source-modrinth`, `mcctl-api`, `mcctl-console`, `mcctl`)를 발행하고 GitHub Release를 만듭니다.
 - 레이블 열의 `agent:*` 값은 각 에이전트 정의의 Identity 표에 선언된 레이블입니다.
-
-!!! warning "Architect 에이전트는 이 저장소에 포함되어 있지 않습니다"
-    `orchestrator-agent.md`와 `/plan-work`는 `system-architect`, `backend-architect`, `frontend-architect`, `devops-architect`, `quality-engineer`를 언급합니다. 이들은 **선택 사항인 사용자 레벨 에이전트**이며 `.claude/agents/`에 포함되어 있지 않습니다. 워크플로우는 이들에 의존하지 않습니다. 없으면 메인 세션이나 담당 에이전트가 설계 단계를 처리합니다.
+- `orchestrator-agent`에는 `Edit`, `Write` 도구가 없습니다. 담당 에이전트에게 위임하는 `Agent`와 `/plan-work`를 실행하는 `Skill`을 가집니다. `technical-writer`는 `/write-docs`를 위해 `Skill`을, `release-manager`는 `Agent`를 가집니다.
+- 설계는 메인 세션이나 영향받는 모듈의 담당 에이전트가 처리합니다. UI/UX 설계는 `frontend-agent`가 시작하기 전에 `frontend-design` 스킬을 사용합니다.
 
 ## 워크플로우
 
 ```mermaid
 flowchart LR
-    A[요청] --> B[orchestrator-agent<br/>접수 및 분석]
+    A[요청] --> B[메인 세션<br/>접수 및 분석]
     B --> C[GitHub Issue]
     C --> D["/plan-work<br/>계획만 수립"]
     D --> E{계획 승인?}
@@ -52,9 +51,9 @@ flowchart LR
     F --> G[완료: Stop hook이 검증]
 ```
 
-1. **접수.** `CLAUDE.md`의 저장소 규칙에 따라 요청은 `orchestrator-agent`가 접수하고, 분석하여 전문 에이전트에게 분석을 위임합니다. 이 단계에서는 코드를 수정하지 않습니다.
+1. **접수.** `CLAUDE.md`의 저장소 규칙에 따라 메인 세션이 orchestrator 프로토콜로 요청을 접수합니다. 요청을 분석해 관련 모듈을 식별하고, 담당 에이전트에게 분석을 위임합니다. `orchestrator-agent`는 3개 이상 모듈에 걸친 작업을 조율할 때만 사용합니다. 이 단계에서는 코드를 수정하지 않습니다.
 2. **이슈.** 분석 결과를 GitHub Issue로 만듭니다(요약, 근본 원인 또는 요구사항, 계획, 수정 대상 파일, 브랜치 전략, 완료 조건).
-3. **계획.** `/plan-work`가 작업 분해, 의존성, 병렬 그룹, 에이전트 배정, 실행 구성안(Teams 또는 순차 서브에이전트)을 만듭니다. 코드 수정이나 브랜치 생성은 하지 않습니다.
+3. **계획.** `/plan-work`가 작업 분해, 의존성, 병렬 그룹, 에이전트 배정, 실행 구성안(worktree에서 `Agent` 병렬 실행 또는 순차 서브에이전트)을 만듭니다. 코드 수정이나 브랜치 생성은 하지 않습니다.
 4. **승인.** 계획을 검토합니다.
 5. **실행.** `/work`가 작업을 완료까지 진행합니다. `/work`를 호출하는 것이 브랜치 생성, 커밋, PR 생성, 리뷰, 머지에 대한 승인입니다.
 
@@ -69,7 +68,7 @@ flowchart LR
 
 ### "계획 먼저"의 적용 방식
 
-- 요청이 `orchestrator-agent`를 통해 접수되면 `/plan-work`로 계획을 먼저 세우고 그다음 `/work`를 실행합니다.
+- 메인 세션은 요청을 분석한 뒤 `/plan-work`로 계획하거나 이슈로 정리한 다음 위임합니다. `orchestrator-agent`는 `/plan-work`를 먼저 실행하며 계획이 승인되기 전에는 위임하지 않습니다.
 - `/work` 안에서는 메인 세션이 티어(아래 참조)로 라우팅합니다. `/plan-work`를 직접 실행하는 것은 T4일 때뿐입니다. 더 낮은 티어는 이슈의 `Files to Modify`를 기준으로 바로 구현합니다.
 
 ## `/work` 모드와 라우팅
@@ -111,7 +110,7 @@ flowchart LR
 | `platform/services/mcctl-console/**` | frontend-agent |
 | 나머지 `platform/**`, `e2e/**`, `.github/workflows/**`, `.claude/hooks/**` | devops-agent |
 | `docs/**`, `README*`, `CHANGELOG.md` | technical-writer |
-| `.claude/commands/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md` (문서 내용만 변경) | 메인 세션이 직접 처리 |
+| `.claude/skills/**`, `.claude/agents/**`, `CLAUDE.md`, `DEVELOPMENT.md` (문서 내용만 변경) | 메인 세션이 직접 처리 |
 
 문서 파일이 로직 파일과 함께 바뀌면 로직 담당 에이전트가 둘 다 처리합니다.
 
@@ -121,9 +120,9 @@ flowchart LR
 |------|------|-----------|
 | T0 직접 | 1개 모듈, 2개 파일 이하, 새 public 인터페이스 없음, 근본 원인 확정. 또는 오타/주석/지침 문서만 변경 | 메인 세션. PR 본문에 직접 처리했다는 한 줄을 남깁니다. |
 | T1 단일 | 1개 모듈, 3~8개 파일, 근본 원인 확정 | 담당 에이전트 1개, 기본 모델 |
-| T2 강화 | shared 도메인 변경, 근본 원인 미확정, `security` 레이블, 데이터 손실 위험, 9개 이상 파일 | 담당 에이전트(원인이 미확정이면 분석 먼저), `model: opus`, `effort: high` |
+| T2 강화 | shared의 엔티티·값 객체·포트 신규/변경, 근본 원인 미확정, `security` 레이블, 데이터 손실 위험, 9개 이상 파일 | 담당 에이전트(원인이 미확정이면 분석 먼저), `model: opus`, `effort: high` |
 | T3 다중 모듈 | 2개 모듈 | 모듈별로 위임하며 core를 먼저, 독립적인 부분은 병렬(worktree) |
-| T4 설계 | 3개 이상 모듈 또는 아키텍처 변경 | `/plan-work`와 (있다면) architect, 이후 T3 |
+| T4 설계 | 3개 이상 모듈 또는 아키텍처 변경 | `/plan-work`, 이후 T3 |
 
 `model`과 `effort`는 티어가 에이전트 기본값과 다른 값을 지정할 때만 위임에 설정합니다.
 
@@ -152,9 +151,8 @@ flowchart LR
 |------|-----------|------|
 | 단일 에이전트 | 이슈의 담당자가 하나일 때 | feature 브랜치에서 직접 작업합니다. **worktree를 쓰지 않습니다.** |
 | `Agent` tool + `isolation: "worktree"` | 병렬 위임(T3, 또는 마일스톤 모드의 `--parallel`) | 각 에이전트가 자신의 worktree를 갖습니다. PR 전에 브랜치를 feature 브랜치로 병합합니다. |
-| Claude Code Teams | 큰 규모의 병렬 계획 | `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`이 필요합니다. `TeamCreate`, `TaskCreate`/`TaskUpdate`(의존성), `SendMessage`를 제공합니다. |
 
-Teams 도구가 보이지 않으면 `Agent` tool과 worktree만으로 병렬 처리합니다.
+병렬 작업은 각각 `isolation: "worktree"`를 지정한 `Agent`를 병렬로 실행하고, 하나씩 통합하는 방식입니다. 브랜치를 병합하고 테스트를 다시 실행한 뒤 다음 브랜치를 병합합니다. 작업 간 의존성은 계획(`/plan-work`)에서 정하며, 한 에이전트의 결과는 메인 세션이나 `orchestrator-agent`가 다음 에이전트에게 전달합니다.
 
 worktree는 모든 에이전트가 아니라 병렬 위임에만 사용합니다. 별개로, 동시에 실행되는 `/work` **세션**은 하나의 체크아웃에 있는 브랜치와 작업 트리를 공유하므로 별도의 `git worktree` 폴더에서 실행하세요.
 
@@ -220,16 +218,20 @@ Ready for: cli-agent, backend-agent
 
 ## 커맨드
 
-| 커맨드 | 용도 |
-|--------|------|
-| `/plan-work` | 시작 전 계획 수립(`--issue`, `--milestone`, `--issues`). 계획만 수립합니다. |
-| `/work` | 이슈나 마일스톤을 완료까지 진행: 브랜치, TDD, PR, 코드 리뷰, 머지. |
-| `/write-docs` | 이중 언어(영어/한국어) 기술 문서를 작성합니다. |
-| `/sync-docs` | `CLAUDE.md`, `README.md` 등의 문서를 코드와 동기화합니다. |
-| `/update-docs` | 공식 문서를 기준으로 `docs/itzg-reference/`를 갱신합니다. |
-| `/build-kb` | 소스를 깊이 분석해 LLM 지식 베이스를 만듭니다. |
+슬래시 커맨드는 스킬입니다. 각 커맨드는 `.claude/skills/<name>/SKILL.md`에 정의되어 있습니다.
 
-커맨드 정의는 `.claude/commands/`에 있습니다. 기여자용 설명은 `DEVELOPMENT.md`(7절)에 있습니다. 개발 규칙 전반은 [개발 가이드](index.md)를 참조하세요.
+| 커맨드 | 용도 | 시작 주체 |
+|--------|------|-----------|
+| `/plan-work` | 시작 전 계획 수립(`--issue`, `--milestone`, `--issues`). 계획만 수립합니다. | 사용자 또는 에이전트 |
+| `/work` | 이슈나 마일스톤을 완료까지 진행: 브랜치, TDD, PR, 코드 리뷰, 머지. | 사용자만 |
+| `/write-docs` | 이중 언어(영어/한국어) 기술 문서를 작성합니다. | 사용자 또는 에이전트 |
+| `/sync-docs` | `CLAUDE.md`, `README.md` 등의 문서를 코드와 동기화합니다. | 사용자만 |
+| `/update-docs` | 공식 문서를 기준으로 `docs/itzg-reference/`를 갱신합니다. | 사용자만 |
+| `/build-kb` | 소스를 깊이 분석해 LLM 지식 베이스를 만듭니다. | 사용자만 |
+
+`/work`, `/build-kb`, `/sync-docs`, `/update-docs`는 `disable-model-invocation: true`를 지정하므로 모델이 스스로 시작할 수 없습니다. `/plan-work`는 `orchestrator-agent`가, `/write-docs`는 `technical-writer`가 실행하므로 에이전트가 쓸 수 있도록 열어 둡니다.
+
+기여자용 설명은 `DEVELOPMENT.md`(7절)에 있습니다. 개발 규칙 전반은 [개발 가이드](index.md)를 참조하세요.
 
 ## 에이전트 프롬프트 파일
 
