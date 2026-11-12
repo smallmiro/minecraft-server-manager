@@ -17,7 +17,7 @@ vi.mock('node:child_process', () => ({
 
 import { spawnSync, execFileSync, execFile } from 'node:child_process';
 import { getServerDetailedInfo, getPlayitAgentStatus } from '../src/docker/index.js';
-import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+import { RuntimeQueryTimeoutError, RuntimeUnavailableError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 
 const STARTED = new Date(Date.now() - 125_000).toISOString();
 
@@ -91,9 +91,9 @@ describe('getServerDetailedInfo (#672)', () => {
     expect(vi.mocked(execFile).mock.calls.map(([, args]) => (args as string[])[0])).toEqual(['ps', 'ps']);
   });
 
-  it('falls back to config like the sync path when docker fails without a timeout', async () => {
+  it('rejects when docker fails instead of reporting the server as not created (#669)', async () => {
     fakeExecFile(() => null);
-    expect(await getServerDetailedInfo('alpha', serversDir, worldsDir)).toMatchObject({ status: 'not_created' });
+    await expect(getServerDetailedInfo('alpha', serversDir, worldsDir)).rejects.toBeInstanceOf(RuntimeUnavailableError);
   });
 
   it('rejects when docker hangs instead of reporting the server as not created', async () => {

@@ -410,6 +410,23 @@ describe('Config Snapshot Routes', () => {
       expect(response.statusCode).toBe(404);
     });
 
+    it('returns 503 and restores nothing when the runtime cannot tell whether the server runs (#669)', async () => {
+      const snapshot = createMockSnapshot('testserver', 'To restore');
+      const { isServerRunning, restoreSnapshot } = await import('../src/services/config-snapshot-service.js');
+      const { RuntimeUnavailableError } = await import('@minecraft-docker/shared');
+      vi.mocked(isServerRunning).mockRejectedValueOnce(new RuntimeUnavailableError('docker ps failed: daemon down'));
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/servers/testserver/config-snapshots/${snapshot.id}/restore`,
+        payload: { createSnapshotBeforeRestore: false },
+      });
+
+      expect(response.statusCode).toBe(503);
+      expect(JSON.parse(response.body)).toMatchObject({ error: 'ServiceUnavailable' });
+      expect(restoreSnapshot).not.toHaveBeenCalled();
+    });
+
     it('returns 409 when the restored config.env breaks a world assignment rule (#670)', async () => {
       const snapshot = createMockSnapshot('testserver', 'Old world');
       const { restoreSnapshot } = await import('../src/services/config-snapshot-service.js');

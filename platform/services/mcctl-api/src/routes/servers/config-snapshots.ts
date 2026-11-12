@@ -28,6 +28,7 @@ import {
   isServerRunning,
 } from '../../services/config-snapshot-service.js';
 import { writeAuditLog } from '../../services/audit-log-service.js';
+import { sendRuntimeUnavailable } from '../../lib/runtime-unavailable.js';
 
 // Route generic interfaces
 interface ListRoute {
@@ -282,6 +283,7 @@ const configSnapshotsPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
         404: ErrorResponseSchema,
         409: ErrorResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<RestoreRoute>, reply: FastifyReply) => {
@@ -367,7 +369,7 @@ const configSnapshotsPlugin: FastifyPluginAsync = async (fastify: FastifyInstanc
         return reply.code(409).send({ error: 'Conflict', message: error.message });
       }
       fastify.log.error(error, 'Failed to restore config snapshot');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to restore config snapshot',
       });

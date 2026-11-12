@@ -6,6 +6,7 @@ import authPlugin from './plugins/auth.js';
 import swaggerPlugin from './plugins/swagger.js';
 import containerPlugin, { type ApiContainer } from './plugins/container.js';
 import { endSseStreams } from './lib/sse.js';
+import { sendRuntimeUnavailable } from './lib/runtime-unavailable.js';
 import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import serverConfigRoutes from './routes/servers/config.js';
@@ -72,6 +73,15 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       routePrefix: '/docs',
     });
   }
+
+  // A runtime that cannot be asked (#669) is 503 wherever a route lets the error
+  // escape; every other error keeps Fastify's default answer (validation 400 included).
+  // Set before the routes so their plugin contexts inherit it.
+  const defaultErrorHandler = app.errorHandler;
+  app.setErrorHandler((error, request, reply) => {
+    if (!sendRuntimeUnavailable(reply, error)) return defaultErrorHandler(error, request, reply);
+    request.log.warn(error, 'Container runtime unavailable');
+  });
 
   // Composition root: routes take adapters and use cases from fastify.container.
   // Registered before the routes so its onClose (closing databases) runs after theirs.

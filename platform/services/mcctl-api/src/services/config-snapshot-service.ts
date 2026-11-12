@@ -90,13 +90,9 @@ export async function checkServerExists(serverName: string): Promise<boolean> {
 }
 
 /**
- * Check if a server container is running
+ * Check if a server container is running. Rejects (RuntimeUnavailableError)
+ * when the runtime cannot be asked: "cannot tell" is not "stopped" (#669).
  */
 export async function isServerRunning(serverName: string): Promise<boolean> {
-  try {
-    const status = await getContainerStatusAsync(`mc-${serverName}`);
-    return status === 'running';
-  } catch {
-    return false;
-  }
+  return (await getContainerStatusAsync(`mc-${serverName}`)) === 'running';
 }

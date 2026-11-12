@@ -22,7 +22,7 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-e2e-migrate-'));
   const bin = join(root, 'bin');
   mkdirSync(bin);
-  // Logs every call; says mc-alpha exists; notes whether the world was still in data/ when it was removed
+  // Logs every call; says mc-alpha exists and is stopped; notes whether the world was still in data/ when it was removed
   writeFileSync(
     join(bin, 'docker'),
     `#!/bin/sh
@@ -30,6 +30,7 @@ echo "$*" >> "${root}/docker.log"
 case "$*" in
   *"rm -f"*) [ -d "${data('alpha')}" ] && echo before-move >> "${root}/docker.log" ;;
   "ps -a"*|"compose ps"*) echo mc-alpha ;;
+  inspect*) echo exited ;;
 esac
 exit 0
 `,
@@ -84,6 +85,17 @@ describe('mcctl migrate worlds (#655)', () => {
     expect(log()).toContain('compose rm -f mc-alpha');
     expect(log()).toContain('before-move');
     expect(log()).not.toMatch(/\bup\b|\bstart\b/);
+  });
+
+  it('stops with nothing moved when Docker cannot be asked (#669)', async () => {
+    writeFileSync(join(root, 'bin', 'docker'), '#!/bin/sh\necho "Cannot connect to the Docker daemon" >&2\nexit 1\n', { mode: 0o755 });
+
+    const r = await runCli(['migrate', 'worlds', '--server', 'alpha', '--force', '--root', root], { env });
+
+    expect(r.exitCode).not.toBe(0);
+    expect(existsSync(data('alpha', 'level.dat'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'alpha'))).toBe(false);
+    expect(configEnv()).toBe('TYPE=PAPER\nLEVEL=alpha\n');
   });
 
   it('stops with nothing changed when worlds/<LEVEL> already exists', async () => {

@@ -25,6 +25,7 @@ import { resolveInside } from '../../lib/safe-path.js';
 import { createConfigService } from '../../services/ConfigService.js';
 import { worldFailure } from '../../lib/world-use-case.js';
 import { serverSpecFailure } from '../../lib/server-spec.js';
+import { sendRuntimeUnavailable } from '../../lib/runtime-unavailable.js';
 
 // ============================================================
 // Types
@@ -243,6 +244,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         404: ErrorResponseSchema,
         409: ErrorResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<WorldResetRoute>, reply: FastifyReply) => {
@@ -335,7 +337,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
       fastify.log.error(error, 'Failed to reset world');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to reset world',
       });

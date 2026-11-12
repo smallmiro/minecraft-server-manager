@@ -2,7 +2,8 @@
  * Server routes on a fake container (#667): the use cases and ports come from
  * buildApp({ container }), so no child_process mock is needed. The only
  * docker call left is the module-level serverExistsAsync() check; a `docker` on
- * PATH that always fails makes it read config.env from the temp root.
+ * PATH that lists no containers makes it read config.env from the temp root
+ * (a failing one is "cannot tell", not "absent", since #669).
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -42,7 +43,7 @@ describe('server routes with a fake container (#667)', () => {
 
   beforeAll(async () => {
     const docker = join(BIN, 'docker');
-    writeFileSync(docker, '#!/bin/sh\nexit 1\n');
+    writeFileSync(docker, '#!/bin/sh\n[ "$1" = ps ] && exit 0\nexit 1\n');
     chmodSync(docker, 0o755);
     process.env.PATH = `${BIN}${delimiter}${savedPath}`;
     app = await buildApp({ logger: false, container });

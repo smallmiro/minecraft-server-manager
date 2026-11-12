@@ -18,7 +18,7 @@ vi.mock('node:child_process', () => ({
 
 import { spawnSync, execFile } from 'node:child_process';
 import { getRouterDetailInfo, getRouterDetailInfoAsync } from '../src/docker/index.js';
-import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+import { RuntimeQueryTimeoutError, RuntimeUnavailableError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import type { IMcRouterApiPort, McRouterRoute } from '../src/application/ports/outbound/IMcRouterApiPort.js';
 
 const exited = (status: number, stdout = '') => ({ status, stdout, stderr: '', error: undefined }) as never;
@@ -277,11 +277,11 @@ describe('getRouterDetailInfoAsync (#768)', () => {
     expect(await getRouterDetailInfoAsync({ routerApi: api({}) })).toMatchObject({ status: 'not_found', health: 'unknown' });
   });
 
-  it('reports a failed docker like the sync path: router not found, no routes (#672)', async () => {
+  it('rejects when docker fails instead of reporting an empty router (#669)', async () => {
     vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
       (args[args.length - 1] as (err: Error) => void)(Object.assign(new Error('daemon down'), { code: 1 }));
     }) as never);
-    expect(await getRouterDetailInfoAsync({ routerApi: api({}) })).toMatchObject({ status: 'not_found', routes: [] });
+    await expect(getRouterDetailInfoAsync({ routerApi: api({}) })).rejects.toBeInstanceOf(RuntimeUnavailableError);
   });
 
   it('rejects when docker hangs instead of reporting an empty router (#672)', async () => {

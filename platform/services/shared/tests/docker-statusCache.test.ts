@@ -26,7 +26,10 @@ import {
   invalidateContainerStates,
   serverExistsAsync,
 } from '../src/docker/index.js';
-import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+import {
+  RuntimeQueryTimeoutError,
+  RuntimeUnavailableError,
+} from '../src/application/ports/outbound/IContainerRuntimePort.js';
 
 const PS =
   // discovery columns first (#674): name, io.mcctl.role, compose project, compose service
@@ -111,9 +114,16 @@ describe('cached docker status snapshot (#672)', () => {
     expect(await getContainerStatusAsync('mc-alpha')).toBe('running');
   });
 
-  it('reads a failed docker as no containers, as the sync path does', async () => {
+  it('rejects on a failed docker instead of reading it as no containers, and does not cache it (#669)', async () => {
     fakeExecFile(() => null);
-    expect(await getContainerStatusAsync('mc-alpha')).toBe('not_found');
+    await expect(getContainerStatusAsync('mc-alpha')).rejects.toBeInstanceOf(RuntimeUnavailableError);
+    await expect(getServerInfoFromConfigAsync('alpha')).rejects.toBeInstanceOf(RuntimeUnavailableError);
+    await expect(getAllServersAsync(serversDir)).rejects.toBeInstanceOf(RuntimeUnavailableError);
+    // A configured server still answers without docker
+    expect(await serverExistsAsync('alpha', serversDir)).toBe(true);
+    await expect(serverExistsAsync('nope', serversDir)).rejects.toBeInstanceOf(RuntimeUnavailableError);
+    fakeExecFile(() => PS);
+    expect(await getContainerStatusAsync('mc-alpha')).toBe('running');
   });
 
   it('builds server info and the merged server list from the snapshot', async () => {
