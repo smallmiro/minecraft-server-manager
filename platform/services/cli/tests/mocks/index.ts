@@ -1,5 +1,10 @@
 export { MockPromptAdapter, MockCancelError, type MockPromptValues } from './MockPromptAdapter.js';
-export { MockServerRepository, type MockServerData } from './MockServerRepository.js';
-export { MockWorldRepository, type MockWorldData } from './MockWorldRepository.js';
-export { MockWorldAssignmentPort } from './MockWorldAssignmentPort.js';
+// The in-memory repositories are shared test doubles (#666); the old names stay for the CLI tests.
+export {
+  InMemoryServerRepository as MockServerRepository,
+  InMemoryWorldRepository as MockWorldRepository,
+  InMemoryWorldAssignmentPort as MockWorldAssignmentPort,
+  type InMemoryServerData as MockServerData,
+  type InMemoryWorldData as MockWorldData,
+} from '@minecraft-docker/shared/testing';
 export { createMockContainerRuntime } from './MockContainerRuntime.js';

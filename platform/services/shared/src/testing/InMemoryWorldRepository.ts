@@ -2,13 +2,11 @@ import type {
   IWorldRepository,
   WorldWithServerStatus,
   ServerInternalWorld,
-} from '@minecraft-docker/shared';
-import { World } from '@minecraft-docker/shared';
+} from '../application/ports/outbound/IWorldRepository.js';
+import { World } from '../domain/index.js';
 
-/**
- * Mock world data for testing
- */
-export interface MockWorldData {
+/** One world of an InMemoryWorldRepository. */
+export interface InMemoryWorldData {
   name: string;
   path?: string;
   isLocked?: boolean;
@@ -16,13 +14,11 @@ export interface MockWorldData {
   size?: number;
 }
 
-/**
- * Mock World Repository for testing
- */
-export class MockWorldRepository implements IWorldRepository {
+/** In-memory IWorldRepository: worlds by name, locks as given. */
+export class InMemoryWorldRepository implements IWorldRepository {
   private worlds: Map<string, World> = new Map();
 
-  constructor(initialWorlds: MockWorldData[] = []) {
+  constructor(initialWorlds: InMemoryWorldData[] = []) {
     for (const data of initialWorlds) {
       this.addWorld(data);
     }
@@ -32,7 +28,7 @@ export class MockWorldRepository implements IWorldRepository {
   // Testing Helpers
   // ========================================
 
-  addWorld(data: MockWorldData): void {
+  addWorld(data: InMemoryWorldData): void {
     const path = data.path ?? `/worlds/${data.name}`;
     let world: World;
 
