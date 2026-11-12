@@ -180,7 +180,7 @@ describe.skipIf(!gnuSed)('sudo password (#682)', () => {
   it('an empty password is no password (register and unregister)', async () => {
     vi.stubEnv('FAKE_SUDO_MODE', 'nopasswd');
     const adapter = registrar('');
-    vi.spyOn(adapter, 'getStatus').mockReturnValue('running');
+    vi.spyOn(adapter, 'getStatusAsync').mockResolvedValue('running');
     expect((await adapter.unregister('wood.local')).status).toBe('changed');
     expect((await adapter.register('new.local', '192.168.1.10')).status).toBe('changed');
     expect(sudoCalls().some((c) => c.startsWith('-S'))).toBe(false);

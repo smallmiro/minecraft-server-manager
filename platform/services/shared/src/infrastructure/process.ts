@@ -23,16 +23,18 @@ export function execCommand(command: string, args: string[]): string {
 /**
  * Execute a command asynchronously and return result
  * For docker commands that need async/await pattern
+ * `timeout` (ms) kills the child when it passes; it then closes with a non-zero code.
  */
 export function execCommandAsync(
   command: string,
   args: string[],
-  options?: { cwd?: string }
+  options?: { cwd?: string; timeout?: number }
 ): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
     const child = spawn(command, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       cwd: options?.cwd,
+      ...(options?.timeout !== undefined ? { timeout: options.timeout } : {}),
     });
 
     let stdout = '';

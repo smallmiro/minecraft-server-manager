@@ -11,7 +11,12 @@ import { resolveMcctlRoot } from '../../utils/index.js';
 import { execCommand, execCommandAsync } from '../process.js';
 import type { ServerName } from '../../domain/value-objects/ServerName.js';
 import { workloadNameOf } from './workloadNames.js';
-import type { IContainerRuntimePort, RuntimeActionResult } from '../../application/ports/outbound/IContainerRuntimePort.js';
+import {
+  RuntimeQueryTimeoutError,
+  type IContainerRuntimePort,
+  type RuntimeActionResult,
+  type WorkloadState,
+} from '../../application/ports/outbound/IContainerRuntimePort.js';
 import type {
   IServerConsolePort,
   ConsoleCommandResult,
@@ -27,6 +32,41 @@ import type { IRuntimeEnvironmentPort, ToolVersion } from '../../application/por
 const execFilePromise = promisify(execFile);
 /** `docker stats --no-stream` samples twice (~2 s); past this the child is killed. */
 const STATS_TIMEOUT_MS = 5000;
+/** Request-path queries (#672): a docker CLI that has not answered by then is killed. */
+export const RUNTIME_QUERY_TIMEOUT_MS = 10_000;
+
+/**
+ * Awaited `docker <args>` for request paths (#672): trimmed stdout. A non-zero
+ * exit is '' (the D1 sentinel) unless `strict`, where it rejects. Past the
+ * timeout the child is killed and the query rejects with RuntimeQueryTimeoutError.
+ */
+async function query(args: string[], options: { strict?: boolean } = {}): Promise<string> {
+  try {
+    const { stdout } = await execFilePromise('docker', args, {
+      encoding: 'utf-8',
+      timeout: RUNTIME_QUERY_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    return String(stdout).trim();
+  } catch (error) {
+    const failure = error as { killed?: boolean; stderr?: unknown; message?: string };
+    if (failure.killed) {
+      throw new RuntimeQueryTimeoutError(`docker ${args[0]} did not answer within ${RUNTIME_QUERY_TIMEOUT_MS} ms`);
+    }
+    if (options.strict) {
+      throw new Error(`docker ${args[0]} failed: ${String(failure.stderr ?? '').trim() || failure.message}`);
+    }
+    return '';
+  }
+}
+
+/** Health from a `docker ps` status column such as "Up 2 hours (healthy)". */
+function healthOfStatusLine(status: string): HealthStatus {
+  const match = /\((healthy|unhealthy|health: starting)\)/.exec(status);
+  if (!match) return 'none';
+  return match[1] === 'health: starting' ? 'starting' : (match[1] as HealthStatus);
+}
 
 /**
  * Get container status
@@ -197,9 +237,39 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
    * Non-zero exit → 'not_found'; otherwise the lower-cased state.
    */
   async getStatusAsync(name: ServerName | string): Promise<ContainerStatus> {
-    const result = await execCommandAsync('docker', ['inspect', '-f', '{{.State.Status}}', '--', workloadNameOf(name)]);
-    if (result.code !== 0) return 'not_found';
-    return result.stdout.trim().toLowerCase() as ContainerStatus;
+    const result = await query(['inspect', '-f', '{{.State.Status}}', '--', workloadNameOf(name)]);
+    if (!result) return 'not_found';
+    return result.toLowerCase() as ContainerStatus;
+  }
+
+  async listStates(): Promise<Map<string, WorkloadState>> {
+    const result = await query(
+      ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}'],
+      { strict: true }
+    );
+    const states = new Map<string, WorkloadState>();
+    for (const line of result.split('\n')) {
+      const [name, state, status = '', hostname = ''] = line.split('\t');
+      if (!name || !state) continue;
+      states.set(name, {
+        status: state.toLowerCase() as ContainerStatus,
+        health: healthOfStatusLine(status),
+        hostname: hostname || '-',
+      });
+    }
+    return states;
+  }
+
+  async listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]> {
+    return serverWorkloads(await query(listArgs(options), { strict: options?.strict }));
+  }
+
+  async getLogsAsync(name: ServerName | string, lines: number = 50): Promise<string> {
+    return query(['logs', '--tail', String(lines), '--', workloadNameOf(name)]);
+  }
+
+  async getUptimeAsync(name: ServerName | string): Promise<{ uptime: string; seconds: number } | null> {
+    return parseUptime(await query(['inspect', '--format', '{{.State.StartedAt}}', '--', workloadNameOf(name)]));
   }
 
   /**
@@ -626,6 +696,14 @@ export class DockerRouterStatusAdapter implements IRouterStatusPort {
     return parseRouterConfig(execCommand('docker', ROUTER_CONFIG_ARGS));
   }
 
+  async inspectRouterAsync(): Promise<RouterContainerConfig | null> {
+    return parseRouterConfig(await query(ROUTER_CONFIG_ARGS));
+  }
+
+  async getLabelsAsync(name: ServerName | string): Promise<Record<string, string>> {
+    return parseLabels(await query(labelArgs(name)));
+  }
+
   /**
    * All string labels of a container from one `docker inspect` (#768)
    */
@@ -674,6 +752,9 @@ function parseJsonObject(text: string): Record<string, unknown> | null {
   }
 }
 
+/** compose up may pull the agent image; past this a hung compose is killed (#672). */
+const PLAYIT_COMPOSE_TIMEOUT_MS = 120_000;
+
 /**
  * playit-agent container via docker compose with the playit profile.
  * `root` defaults to resolveMcctlRoot() at call time.
@@ -695,7 +776,7 @@ export class DockerPlayitAgentAdapter implements IPlayitAgentPort {
         'up',
         '-d',
         'playit',
-      ], { cwd: platformRoot });
+      ], { cwd: platformRoot, timeout: PLAYIT_COMPOSE_TIMEOUT_MS });
 
       if (result.code === 0) {
         return { success: true };
@@ -719,7 +800,7 @@ export class DockerPlayitAgentAdapter implements IPlayitAgentPort {
         'playit',
         'stop',
         'playit',
-      ], { cwd: platformRoot });
+      ], { cwd: platformRoot, timeout: PLAYIT_COMPOSE_TIMEOUT_MS });
 
       return result.code === 0;
     } catch {
@@ -737,6 +818,17 @@ export class DockerRuntimeEnvironmentAdapter implements IRuntimeEnvironmentPort 
       execSync('docker info', { stdio: 'pipe' });
       return true;
     } catch {
+      return false;
+    }
+  }
+
+  /** `docker info` answered. A timeout rejects (RuntimeQueryTimeoutError) rather than reading as "unavailable". */
+  async isAvailableAsync(): Promise<boolean> {
+    try {
+      await query(['info'], { strict: true });
+      return true;
+    } catch (error) {
+      if (error instanceof RuntimeQueryTimeoutError) throw error;
       return false;
     }
   }

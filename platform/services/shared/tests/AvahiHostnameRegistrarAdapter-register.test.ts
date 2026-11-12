@@ -52,7 +52,7 @@ afterEach(() => {
 
 const registrar = (sudoPassword?: string) => {
   const adapter = new AvahiHostnameRegistrarAdapter({ hostsFile: hosts, sudoPassword });
-  vi.spyOn(adapter, 'getStatus').mockReturnValue('running');
+  vi.spyOn(adapter, 'getStatusAsync').mockResolvedValue('running');
   return adapter;
 };
 
@@ -119,7 +119,7 @@ describe('AvahiHostnameRegistrarAdapter.register', () => {
 
   it('skips when avahi-daemon is not installed', async () => {
     const adapter = registrar();
-    vi.mocked(adapter.getStatus).mockReturnValue('not installed');
+    vi.mocked(adapter.getStatusAsync).mockResolvedValue('not installed');
     expect((await adapter.register('alpha.local', '192.168.1.10')).status).toBe('skipped');
     expect(sudoCalls()).toEqual([]);
   });
@@ -138,4 +138,23 @@ describe('AvahiHostnameRegistrarAdapter.register', () => {
       expect(readFileSync(hosts, 'utf-8')).toContain('192.168.1.10 wood.local\n');
     }
   );
+});
+
+describe('AvahiHostnameRegistrarAdapter.getStatusAsync (#672)', () => {
+  const status = () => new AvahiHostnameRegistrarAdapter({ hostsFile: hosts }).getStatusAsync();
+
+  it('asks systemctl, then OpenRC, then which, as getStatus does, without blocking', async () => {
+    fake('systemctl', 'exit "${FAKE_SYSTEMCTL_RC:-0}"');
+    fake('rc-service', 'exit "${FAKE_RC_RC:-1}"');
+    fake('which', 'exit "${FAKE_WHICH_RC:-1}"');
+    expect(await status()).toBe('running');
+    vi.stubEnv('FAKE_SYSTEMCTL_RC', '3');
+    vi.stubEnv('FAKE_RC_RC', '0');
+    expect(await status()).toBe('running');
+    vi.stubEnv('FAKE_RC_RC', '1');
+    vi.stubEnv('FAKE_WHICH_RC', '0');
+    expect(await status()).toBe('installed (not running)');
+    vi.stubEnv('FAKE_WHICH_RC', '1');
+    expect(await status()).toBe('not installed');
+  });
 });

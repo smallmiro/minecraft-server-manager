@@ -9,7 +9,7 @@ import type { NetworkInterfaceInfo } from 'node:os';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Paths } from '../src/utils/index.js';
-import { resolveHostIps, type HostIpProbes } from '../src/infrastructure/hostIps.js';
+import { resolveHostIps, resolveHostIpsAsync, type HostIpProbes } from '../src/infrastructure/hostIps.js';
 
 let root: string;
 let paths: Paths;
@@ -124,5 +124,41 @@ describe('resolveHostIps: probe cache (the API calls it on every spec load and w
     expect(resolveHostIps(paths, p)).toEqual(['192.168.1.10']);
     env('HOST_IP=10.0.0.1\n');
     expect(resolveHostIps(paths, p)).toEqual(['10.0.0.1']);
+  });
+});
+
+describe('resolveHostIpsAsync (#672): the same lookups without blocking the API', () => {
+  /** The sync fake behind awaited probes */
+  const later = (p: HostIpProbes & { calls: string[] }) => ({
+    ...p,
+    run: async (cmd: string, args: string[]) => p.run(cmd, args),
+  });
+
+  it('takes .env first without probing', async () => {
+    env('HOST_IPS=100.64.0.5,192.168.1.10\n');
+    const p = probes({ route: '1.0.0.0 dev eth0 src 10.9.9.9' });
+    expect(await resolveHostIpsAsync(paths, later(p))).toEqual(['100.64.0.5', '192.168.1.10']);
+    expect(p.calls).toEqual([]);
+  });
+
+  it('probes in the same order, running hostname -I only when ip route gives nothing usable', async () => {
+    const p = probes({ route: '1.0.0.0 dev eth0 src 192.168.1.10' });
+    expect(await resolveHostIpsAsync(paths, later(p))).toEqual(['192.168.1.10']);
+    expect(p.calls).toEqual(['ip route get 1']);
+
+    const q = probes({ route: '', hostnameI: '172.17.0.1 192.168.1.11', interfaces: { docker0: [iface('172.17.0.1')] } });
+    expect(await resolveHostIpsAsync(paths, later(q))).toEqual(['192.168.1.11']);
+    expect(q.calls).toEqual(['ip route get 1', 'hostname -I']);
+
+    const r = probes({ interfaces: { en0: [iface('192.168.1.20')] } });
+    expect(await resolveHostIpsAsync(paths, later(r))).toEqual(['192.168.1.20']);
+  });
+
+  it('reuses a probe result for a minute', async () => {
+    const p = probes({ route: '1.0.0.0 dev eth0 src 192.168.1.10' });
+    const async = later(p);
+    await resolveHostIpsAsync(paths, async);
+    await resolveHostIpsAsync(paths, async);
+    expect(p.calls).toEqual(['ip route get 1']);
   });
 });

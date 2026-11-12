@@ -5,4 +5,4 @@
 
 export * from './adapters/index.js';
 export * from './config/index.js';
-export { resolveHostIps, type HostIpProbes } from './hostIps.js';
+export { resolveHostIps, resolveHostIpsAsync, type HostIpProbes, type AsyncHostIpProbes } from './hostIps.js';

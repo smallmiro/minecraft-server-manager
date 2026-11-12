@@ -1,4 +1,5 @@
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
+import { promisify } from 'node:util';
 import { readFileSync } from 'node:fs';
 import { networkInterfaces, type NetworkInterfaceInfo } from 'node:os';
 import type { Paths } from '../utils/index.js';
@@ -22,14 +23,32 @@ const systemProbes: HostIpProbes = {
   interfaces: () => networkInterfaces(),
 };
 
+/** HostIpProbes whose commands are awaited (#672). */
+export interface AsyncHostIpProbes {
+  run(cmd: string, args: string[]): Promise<string | undefined>;
+  interfaces(): NodeJS.Dict<NetworkInterfaceInfo[]>;
+}
+
+const execFileAsync = promisify(execFile);
+const systemProbesAsync: AsyncHostIpProbes = {
+  run: async (cmd, args) => {
+    try {
+      return (await execFileAsync(cmd, args, { encoding: 'utf-8', timeout: 2000 })).stdout;
+    } catch {
+      return undefined;
+    }
+  },
+  interfaces: () => networkInterfaces(),
+};
+
 /**
- * Probe results per probe set, reused for PROBE_TTL_MS. ponytail: the first
- * lookup after the TTL still runs ip/hostname synchronously (up to 2 s each)
- * and an address change shows up only after the TTL; make the probes async
- * (execFile) if that ever matters. `.env` is read on every call.
+ * Probe results per probe set, reused for PROBE_TTL_MS. An address change
+ * shows up only after the TTL. `.env` is read on every call. The sync form
+ * (CLI) blocks on ip/hostname (up to 2 s each); request paths use
+ * resolveHostIpsAsync.
  */
 const PROBE_TTL_MS = 60_000;
-const probed = new WeakMap<HostIpProbes, { at: number; ips: string[] }>();
+const probed = new WeakMap<HostIpProbes | AsyncHostIpProbes, { at: number; ips: string[] }>();
 
 /** Container bridges and veth pairs: never a host address. */
 const VIRTUAL_IFACE = /^(docker0|br-.+|veth.+)$/;
@@ -57,6 +76,25 @@ export function resolveHostIps(paths: Paths, probes: HostIpProbes = systemProbes
   );
 }
 
+/** resolveHostIps with awaited probes (#672), for request paths. Same order and cache. */
+export async function resolveHostIpsAsync(
+  paths: Paths,
+  probes: AsyncHostIpProbes = systemProbesAsync
+): Promise<string[]> {
+  const fromEnv = readEnvHostIps(paths);
+  if (fromEnv.length > 0) return fromEnv;
+
+  const cached = cachedProbe(probes);
+  if (cached) return cached;
+  const usable = usableAddresses(probes.interfaces());
+  return remember(
+    probes,
+    fromRoute(await probes.run('ip', ['route', 'get', '1']), usable) ??
+      fromHostnameI(await probes.run('hostname', ['-I']), usable) ??
+      fromInterfaces(usable)
+  );
+}
+
 /** `.env` HOST_IPS, else HOST_IP, as a list ([] when unset or unreadable). */
 function readEnvHostIps(paths: Paths): string[] {
   let envText: string;
@@ -70,12 +108,12 @@ function readEnvHostIps(paths: Paths): string[] {
   return list.split(',').map((ip) => ip.trim()).filter(Boolean);
 }
 
-function cachedProbe(probes: HostIpProbes): string[] | undefined {
+function cachedProbe(probes: HostIpProbes | AsyncHostIpProbes): string[] | undefined {
   const cached = probed.get(probes);
   return cached && Date.now() - cached.at < PROBE_TTL_MS ? [...cached.ips] : undefined;
 }
 
-function remember(probes: HostIpProbes, ips: string[]): string[] {
+function remember(probes: HostIpProbes | AsyncHostIpProbes, ips: string[]): string[] {
   probed.set(probes, { at: Date.now(), ips });
   return [...ips];
 }

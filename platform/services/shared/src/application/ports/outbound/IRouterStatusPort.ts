@@ -27,4 +27,7 @@ export interface IRouterStatusPort {
    * {} when none or unreadable (#768). Same `name` rule as getHostnames.
    */
   getLabels(name: ServerName | string): Record<string, string>;
+  /** inspectRouter and getLabels for request paths (#672): same results, awaited with a timeout. */
+  inspectRouterAsync(): Promise<RouterContainerConfig | null>;
+  getLabelsAsync(name: ServerName | string): Promise<Record<string, string>>;
 }
