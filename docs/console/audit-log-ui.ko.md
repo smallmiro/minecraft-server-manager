@@ -100,7 +100,7 @@ JSON 파일에는 `exportedAt`, `filters`, `total`, `logs` 배열이 들어 있�
 
 ## 오래된 로그 삭제
 
-웹 콘솔에는 삭제(purge) 기능이 없습니다. 오래된 항목은 [`mcctl audit purge`](../cli/audit-log.md#mcctl-audit-purge)(`--dry-run`으로 삭제 대상을 미리 확인)나 Admin 역할이 필요한 `DELETE /api/audit-logs`로 삭제합니다. 플랫폼 `.env`에 `AUDIT_AUTO_CLEANUP=true`를 설정하면 `AUDIT_RETENTION_DAYS`(기본값 90)보다 오래된 항목이 자동으로 삭제됩니다.
+웹 콘솔에는 삭제(purge) 기능이 없습니다. 오래된 항목은 [`mcctl audit purge`](../cli/audit-log.md#mcctl-audit-purge)(`--dry-run`으로 삭제 대상을 미리 확인)나 Admin 역할이 필요한 `DELETE /api/audit-logs`로 삭제합니다. `AUDIT_RETENTION_DAYS`(기본값 90)보다 오래된 항목은 자동으로 삭제됩니다. 끄려면 플랫폼 `.env`에 `AUDIT_AUTO_CLEANUP=false`를 설정합니다.
 
 ## 문제 해결
 

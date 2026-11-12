@@ -517,7 +517,7 @@ Set these in the platform `.env` (read by mcctl-api); the CLI reads them from it
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `AUDIT_AUTO_CLEANUP` | off | `true`: delete logs older than `AUDIT_RETENTION_DAYS`, checked every 100 entries or 24 hours while logs are written |
+| `AUDIT_AUTO_CLEANUP` | on | Delete logs older than `AUDIT_RETENTION_DAYS` when the database is opened and while logs are written (every 100 entries or 24 hours). Set `false` to keep logs forever |
 | `AUDIT_RETENTION_DAYS` | `90` | Number of days to retain audit logs |
 
 ---
@@ -824,8 +824,7 @@ mcctl audit purge --force          # Skip confirmation
 ```
 
 Audit logs capture server lifecycle (create, delete, start, stop, restart), player management (whitelist, ban, op, kick), and world, mod, backup, configuration and settings changes. They are stored in `~/minecraft-servers/data/audit.db`.
-- Automatic cleanup is off unless `AUDIT_AUTO_CLEANUP=true`
-- Retention for that cleanup: `AUDIT_RETENTION_DAYS` (default: 90)
+- Automatic cleanup is on by default: entries older than `AUDIT_RETENTION_DAYS` (default: 90) are deleted, including on the first start after an upgrade. Set `AUDIT_AUTO_CLEANUP=false` to keep them
 
 ### Migration (Existing Servers)
 

@@ -196,7 +196,7 @@ Automatic cleanup is configured with two environment variables:
 ```bash
 # ~/minecraft-servers/.env
 
-# Delete old logs automatically (default: off)
+# Delete old logs automatically (default: on). Set false to keep logs forever
 AUDIT_AUTO_CLEANUP=true
 
 # Retention period in days (default: 90)
@@ -204,8 +204,8 @@ AUDIT_RETENTION_DAYS=90
 ```
 
 **AUDIT_AUTO_CLEANUP:**
-- `true`: While new entries are written, entries older than `AUDIT_RETENTION_DAYS` are deleted (after every 100 new entries, or 24 hours after the last cleanup)
-- Unset or any other value (default): no automatic cleanup; use `mcctl audit purge`
+- Unset or any value other than `false` (default): entries older than `AUDIT_RETENTION_DAYS` are deleted when the database is opened and while new entries are written (after every 100 new entries, or 24 hours after the last cleanup). The first start after upgrading to a version with this default deletes entries older than 90 days
+- `false`: no automatic cleanup; use `mcctl audit purge`
 
 mcctl-api reads both variables from `<root>/.env`, so the cleanup runs in mcctl-api. The CLI reads them only from the shell environment.
 

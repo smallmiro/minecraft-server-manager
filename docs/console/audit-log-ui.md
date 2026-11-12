@@ -100,7 +100,7 @@ The JSON file contains `exportedAt`, `filters`, `total` and the `logs` array.
 
 ## Purging Old Logs
 
-The web console has no purge control. Delete old entries with [`mcctl audit purge`](../cli/audit-log.md#mcctl-audit-purge) (`--dry-run` shows what would be deleted) or with `DELETE /api/audit-logs`, which requires the Admin role. With `AUDIT_AUTO_CLEANUP=true` in the platform `.env`, entries older than `AUDIT_RETENTION_DAYS` (default 90) are deleted automatically.
+The web console has no purge control. Delete old entries with [`mcctl audit purge`](../cli/audit-log.md#mcctl-audit-purge) (`--dry-run` shows what would be deleted) or with `DELETE /api/audit-logs`, which requires the Admin role. Entries older than `AUDIT_RETENTION_DAYS` (default 90) are deleted automatically; set `AUDIT_AUTO_CLEANUP=false` in the platform `.env` to turn this off.
 
 ## Troubleshooting
 

@@ -1052,7 +1052,7 @@ mcctl audit purge --dry-run            # Preview without deleting
 mcctl audit purge --force              # Skip confirmation
 ```
 
-The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest first, and `--action` takes the full name (e.g. `player.whitelist.add`). Old entries are removed only by `purge` or by the optional auto-cleanup (`AUDIT_AUTO_CLEANUP=true`, off by default; see Configuration).
+The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest first, and `--action` takes the full name (e.g. `player.whitelist.add`). Old entries are removed only by `purge` or by the auto-cleanup (on by default: `AUDIT_RETENTION_DAYS`, default 90; `AUDIT_AUTO_CLEANUP=false` turns it off; see Configuration).
 
 ---
 
@@ -1226,7 +1226,7 @@ STATS_ANALYZE_TIMEOUT_MS=600000      # ore/block statistics scan (10 min)
 SWAGGER_ENABLED=true                 # serve /docs under NODE_ENV=production
 
 # Audit Logs (read by mcctl-api from this file; the CLI reads only its shell environment)
-AUDIT_AUTO_CLEANUP=true              # Default off; true deletes logs older than AUDIT_RETENTION_DAYS while logs are written
+AUDIT_AUTO_CLEANUP=true              # Default on; false disables deleting logs older than AUDIT_RETENTION_DAYS (runs when the DB is opened and while logs are written)
 AUDIT_RETENTION_DAYS=90
 ```
 
@@ -3092,7 +3092,7 @@ A: Recommended JVM garbage collection tuning for Minecraft. Reduces GC pause tim
 A: A record of operations from the CLI, mcctl-api and the web console (servers, players, worlds, mods, playit, router, settings, files, schedules). View with `mcctl audit list` or in Web Console. Logs are kept until `mcctl audit purge` or the optional auto-cleanup removes them.
 
 **Q: How do I configure audit retention?**
-A: `AUDIT_AUTO_CLEANUP=true` (default off) and `AUDIT_RETENTION_DAYS` (default 90) in `.env`, read by mcctl-api (the CLI reads only its shell environment). Cleanup runs while logs are written (every 100 entries or 24 hours). Or run `mcctl audit purge --days <n>`.
+A: Cleanup is on by default; `AUDIT_RETENTION_DAYS` (default 90) and `AUDIT_AUTO_CLEANUP=false` (to disable) in `.env`, read by mcctl-api (the CLI reads only its shell environment). Cleanup runs while logs are written (every 100 entries or 24 hours). Or run `mcctl audit purge --days <n>`.
 
 **Q: What actions are tracked?**
 A: `server.` create, delete, start, stop, restart, config, hostname; `player.` whitelist.add, whitelist.remove, whitelist.toggle, ban, unban, op, op.level, deop, kick; `world.` create, delete, assign, release, map.render; `mod.` add, remove; `playit.` start, stop; `router.restart`; `platform.settings.update`; `file.` read, write, delete, mkdir, rename, upload, download; `backup.schedule.` create, update, delete, enable, disable, run; `config.snapshot.` create, delete, restore; `config.snapshot.schedule.` create, update, delete, enable, disable; `audit.purge`. Filter with the full name, e.g. `mcctl audit list --action player.ban`.

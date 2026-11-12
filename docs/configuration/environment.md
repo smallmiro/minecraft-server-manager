@@ -312,15 +312,19 @@ These are set in `~/minecraft-servers/.env` for audit log behavior. mcctl-api re
 
 | Variable | Description | Default | Management |
 |----------|-------------|---------|------------|
-| `AUDIT_AUTO_CLEANUP` | Automatically delete old audit logs | `false` (unset) | Manual |
+| `AUDIT_AUTO_CLEANUP` | Automatically delete old audit logs | `true` (on unless set to `false`) | Manual |
 | `AUDIT_RETENTION_DAYS` | Number of days to retain audit logs | `90` | Manual |
 
 **AUDIT_AUTO_CLEANUP:**
-- `true`: While new entries are logged, delete logs older than `AUDIT_RETENTION_DAYS` (after every 100 new entries, or once 24 hours have passed since the last cleanup)
-- Unset or `false`: No automatic cleanup (manual purge only via `mcctl audit purge`)
+- Unset or any value other than `false` (default): delete logs older than `AUDIT_RETENTION_DAYS` when the database is opened and while new entries are logged (after every 100 new entries, or once 24 hours have passed since the last cleanup)
+- `false`: No automatic cleanup (manual purge only via `mcctl audit purge`)
+
+!!! warning "Upgrade note"
+    Automatic cleanup used to be off. After upgrading, the first start deletes audit logs older than 90 days. To keep them, set `AUDIT_AUTO_CLEANUP=false` in `.env` before restarting mcctl-api, or raise `AUDIT_RETENTION_DAYS`.
 
 **AUDIT_RETENTION_DAYS:**
 - Number of days to retain audit logs before auto-cleanup
+- Default: 90 days (an invalid value also falls back to 90)
 - Recommended: 30-180 days depending on compliance requirements
 - Production environments: 90+ days
 
@@ -331,9 +335,11 @@ These are set in `~/minecraft-servers/.env` for audit log behavior. mcctl-api re
 
 **Example:**
 ```bash
-# Set custom retention policy
+# Set custom retention policy (cleanup is on by default)
 echo "AUDIT_RETENTION_DAYS=180" >> ~/minecraft-servers/.env
-echo "AUDIT_AUTO_CLEANUP=true" >> ~/minecraft-servers/.env
+
+# Or keep audit logs forever
+echo "AUDIT_AUTO_CLEANUP=false" >> ~/minecraft-servers/.env
 
 # Restart mcctl-api to apply
 mcctl console service restart --api

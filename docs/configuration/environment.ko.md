@@ -312,15 +312,19 @@ mcctl stop myserver && mcctl start myserver
 
 | 변수 | 설명 | 기본값 | 관리 |
 |------|------|--------|------|
-| `AUDIT_AUTO_CLEANUP` | 오래된 감사 로그 자동 삭제 | `false` (미설정) | 수동 |
+| `AUDIT_AUTO_CLEANUP` | 오래된 감사 로그 자동 삭제 | `true` (`false`로 설정하지 않으면 켜짐) | 수동 |
 | `AUDIT_RETENTION_DAYS` | 감사 로그 보관 일수 | `90` | 수동 |
 
 **AUDIT_AUTO_CLEANUP:**
-- `true`: 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 로그를 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지나면)
-- 미설정 또는 `false`: 자동 정리 비활성화 (`mcctl audit purge`를 통한 수동 삭제만 가능)
+- 미설정 또는 `false`가 아닌 값(기본값): 데이터베이스를 열 때와 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 로그를 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지나면)
+- `false`: 자동 정리 비활성화 (`mcctl audit purge`를 통한 수동 삭제만 가능)
+
+!!! warning "업그레이드 주의"
+    자동 정리는 예전에는 꺼져 있었습니다. 업그레이드 후 첫 시작에 90일이 넘은 감사 로그가 삭제됩니다. 로그를 유지하려면 mcctl-api를 재시작하기 전에 `.env`에 `AUDIT_AUTO_CLEANUP=false`를 설정하거나 `AUDIT_RETENTION_DAYS`를 늘리십시오.
 
 **AUDIT_RETENTION_DAYS:**
 - 자동 정리 전에 감사 로그를 보관할 일수
+- 기본값: 90일 (잘못된 값이어도 90일)
 - 권장값: 규정 준수 요구사항에 따라 30-180일
 - 프로덕션 환경: 90일 이상
 
@@ -331,9 +335,11 @@ mcctl stop myserver && mcctl start myserver
 
 **예제:**
 ```bash
-# 사용자 지정 보관 정책 설정
+# 사용자 지정 보관 정책 설정 (자동 정리는 기본으로 켜져 있습니다)
 echo "AUDIT_RETENTION_DAYS=180" >> ~/minecraft-servers/.env
-echo "AUDIT_AUTO_CLEANUP=true" >> ~/minecraft-servers/.env
+
+# 또는 감사 로그를 계속 보관
+echo "AUDIT_AUTO_CLEANUP=false" >> ~/minecraft-servers/.env
 
 # mcctl-api를 재시작하여 적용
 mcctl console service restart --api
