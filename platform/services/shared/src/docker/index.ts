@@ -698,7 +698,7 @@ export function getServerPlayitDomain(serverName: string, serversDir?: string): 
   return domain && domain.trim() ? domain.trim() : null;
 }
 
-/** mc-router.host label in a server docker-compose.yml (same regex as mcctl-api HostnameService) */
+/** mc-router.host label in a server docker-compose.yml (read by mcctl-api HostnameService) */
 const ROUTER_HOST_LABEL_REGEX = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
 
 const sameHost = (a: string, b: string | null): boolean => b !== null && a.toLowerCase() === b.toLowerCase();
