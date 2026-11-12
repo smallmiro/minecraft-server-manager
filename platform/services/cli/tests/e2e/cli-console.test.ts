@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { homedir, tmpdir, userInfo } from 'os';
+import { dirname, join } from 'path';
 import { runCliWithTimeout, isCliBuild, parseJsonOutput } from './helpers.js';
 
 // #628: options after `mcctl console user|api` must reach the Commander subcommands
@@ -70,5 +70,62 @@ describe('mcctl console user/api options', () => {
     const status = await run(['api', 'status', '--json']);
     expect(status.exitCode).toBe(0);
     expect(parseJsonOutput(status.stdout)).toEqual(expect.objectContaining({ accessMode: 'open' }));
+  });
+});
+
+// #650: enable registers `pm2 startup` (through sudo) and saves the process list.
+// A fake sudo and pm2 on PATH log their calls: no init system is touched.
+describe('mcctl console service enable', () => {
+  let root: string;
+  let log: string;
+  let env: Record<string, string>;
+  const calls = () => (existsSync(log) ? readFileSync(log, 'utf-8').trim().split('\n') : []);
+  const run = (extra: Record<string, string> = {}) =>
+    runCliWithTimeout(['console', 'service', 'enable'], 10000, { env: { ...env, ...extra } });
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'mcctl-enable-'));
+    log = join(root, 'calls.log');
+    const bin = join(root, 'bin');
+    mkdirSync(bin);
+    writeFileSync(
+      join(bin, 'sudo'),
+      `#!/bin/sh\necho "sudo $*" >> "${log}"\n[ -n "$SUDO_FAIL" ] && exit 1\n[ "$1" = -n ] && shift\nexec "$@"\n`,
+      { mode: 0o755 }
+    );
+    writeFileSync(
+      join(bin, 'pm2'),
+      `#!/bin/sh\n[ "$1" = --version ] && { echo 6.0.14; exit 0; }\necho "pm2 $*" >> "${log}"\n`,
+      { mode: 0o755 }
+    );
+    writeFileSync(join(root, 'docker-compose.yml'), 'services: {}\n');
+    env = { MCCTL_ROOT: root, PATH: `${bin}:${process.env.PATH}`, PM2_HOME: '' };
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('runs pm2 startup through sudo -n with this Node first on PATH, then pm2 save', async () => {
+    const result = await run();
+
+    expect(result.exitCode).toBe(0);
+    const [sudo, startup, save] = calls();
+    expect(sudo.startsWith(`sudo -n env PATH=${dirname(process.execPath)}:`)).toBe(true);
+    expect(startup).toBe(`pm2 startup -u ${userInfo().username} --hp ${homedir()}`);
+    expect(save).toBe('pm2 save');
+  });
+
+  it('points the startup unit at a custom PM2_HOME', async () => {
+    expect((await run({ PM2_HOME: '/srv/mcctl/.pm2' })).exitCode).toBe(0);
+    expect(calls()).toContain(`pm2 startup -u ${userInfo().username} --hp /srv/mcctl`);
+  });
+
+  it('shows the command to run when sudo fails, and does not save', async () => {
+    const result = await run({ SUDO_FAIL: '1' });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout + result.stderr).toMatch(/sudo env 'PATH=.*' \S*pm2 startup -u .* && \S*pm2 save/);
+    expect(calls().filter((c) => c.startsWith('pm2'))).toEqual([]);
   });
 });

@@ -19,7 +19,6 @@ import {
 } from '../../lib/admin-config.js';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
-  checkPm2Installation,
   ECOSYSTEM_CONFIG_FILE,
   PM2_SERVICE_NAMES,
   resolveServiceScriptPaths,

@@ -80,7 +80,7 @@ describe('consoleServiceCommand --force', () => {
   });
 
   describe('stop --force', () => {
-    it('should delete all services and kill PM2 daemon', async () => {
+    it('deletes only the mcctl processes and keeps the shared PM2 daemon (#650)', async () => {
       const exitCode = await consoleServiceCommand({
         subCommand: 'stop',
         force: true,
@@ -92,8 +92,8 @@ describe('consoleServiceCommand --force', () => {
       expect(mockDelete).toHaveBeenCalledWith('mcctl-console');
       // Should NOT call stop
       expect(mockStop).not.toHaveBeenCalled();
-      // Should kill PM2 daemon
-      expect(mockKillDaemon).toHaveBeenCalledOnce();
+      // Other apps run in the same daemon
+      expect(mockKillDaemon).not.toHaveBeenCalled();
     });
 
     it('should not kill PM2 daemon without --force', async () => {
@@ -119,12 +119,12 @@ describe('consoleServiceCommand --force', () => {
       });
 
       expect(exitCode).toBe(0);
-      expect(mockKillDaemon).toHaveBeenCalledOnce();
+      expect(mockDelete).toHaveBeenCalledWith('mcctl-console');
     });
   });
 
   describe('restart --force', () => {
-    it('should delete all services, kill daemon, and start fresh', async () => {
+    it('deletes the mcctl processes and starts them fresh, keeping the daemon (#650)', async () => {
       const exitCode = await consoleServiceCommand({
         subCommand: 'restart',
         force: true,
@@ -134,9 +134,9 @@ describe('consoleServiceCommand --force', () => {
       // Should delete each service
       expect(mockDelete).toHaveBeenCalledWith('mcctl-api');
       expect(mockDelete).toHaveBeenCalledWith('mcctl-console');
-      // Should kill PM2 daemon
-      expect(mockKillDaemon).toHaveBeenCalledOnce();
-      // Should start services fresh
+      // Other apps run in the same daemon
+      expect(mockKillDaemon).not.toHaveBeenCalled();
+      // Should start services fresh (re-reads the ecosystem config and this Node)
       expect(mockStart).toHaveBeenCalledWith('mcctl-api', { wait: true, waitTimeout: 30000 });
       expect(mockStart).toHaveBeenCalledWith('mcctl-console', { wait: true, waitTimeout: 30000 });
       // Should NOT call restart
@@ -176,7 +176,7 @@ describe('consoleServiceCommand --force', () => {
       });
 
       expect(exitCode).toBe(0);
-      expect(mockKillDaemon).toHaveBeenCalledOnce();
+      expect(mockKillDaemon).not.toHaveBeenCalled();
       expect(mockStart).toHaveBeenCalled();
     });
   });
