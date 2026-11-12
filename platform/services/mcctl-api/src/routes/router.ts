@@ -4,12 +4,10 @@ import {
   getRouterDetailInfoAsync,
   getAvahiStatus,
   getPlayitAgentStatus,
-  DockerComposeRuntimeAdapter,
   AuditActionEnum,
   parseRouterLogLine,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
-import { config, childProcessEnv } from '../config/index.js';
 import {
   RouterLogsStreamQuerySchema,
   RouterStatusStreamQuerySchema,
@@ -310,10 +308,7 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // Client disconnect: abort kills the docker logs child (spawn's `signal`)
     request.raw.on('close', () => finish());
 
-    const runtime = new DockerComposeRuntimeAdapter({
-      root: config.mcctlRoot,
-      env: () => childProcessEnv(),
-    });
+    const runtime = fastify.container.containerRuntime();
     void runtime
       .followLogs(ROUTER_CONTAINER, onChunk, controller.signal, {
         tail,
@@ -354,10 +349,7 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
 
     try {
-      const runtime = new DockerComposeRuntimeAdapter({
-        root: config.mcctlRoot,
-        env: () => childProcessEnv(),
-      });
+      const runtime = fastify.container.containerRuntime();
       // The compose service is `router` (container_name mc-router)
       const result = await runtime.restart('router');
 

@@ -21,6 +21,7 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 }));
 
 import authPlugin from '../src/plugins/auth.js';
+import containerPlugin from '../src/plugins/container.js';
 import { routerPlugin } from '../src/routes/router.js';
 import { writeAuditLog } from '../src/services/audit-log-service.js';
 import { getRouterDetailInfoAsync, AuditActionEnum } from '@minecraft-docker/shared';
@@ -41,6 +42,7 @@ describe('Router routes (#768)', () => {
   beforeAll(async () => {
     app = Fastify({ logger: false });
     await app.register(authPlugin, { config: { mode: 'api-key', apiKey: API_KEY } });
+    await app.register(containerPlugin);
     await app.register(routerPlugin);
     await app.ready();
   });
