@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
-import { patchRouterCompose } from '../../../src/lib/compose-router-patch.js';
+import { addComposeService, patchRouterCompose } from '../../../src/lib/compose-router-patch.js';
 
 const TEMPLATE = `services:
   router:
@@ -208,5 +208,67 @@ describe('patchRouterCompose', () => {
       expect(r.changes).toEqual(expect.arrayContaining(['router.logging added', 'playit.logging added']));
       expect(services(r.content)['router']!['logging']).toEqual(LOGGING);
     });
+  });
+});
+
+// #671: a whole service added to a user's compose, checked by re-parsing
+describe('addComposeService', () => {
+  const BLOCK = `  # playit agent
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.16
+    profiles:
+      - playit
+`;
+  const parsed = (c: string) => yaml.load(c) as { services: Record<string, Record<string, unknown>>; [k: string]: unknown };
+  const PLAYIT = { image: 'ghcr.io/playit-cloud/playit-agent:0.16', profiles: ['playit'] };
+
+  it('adds the service at the end of the services map, before the next section and its comments', () => {
+    const user = `services:
+  router:
+    image: itzg/mc-router:1.47.1
+
+# ---- Volumes ----
+volumes:
+  data: {}
+`;
+    const r = addComposeService(user, 'playit', BLOCK);
+    expect(r.changes).toEqual(['playit added']);
+    const doc = parsed(r.content);
+    expect(doc.services['playit']).toEqual(PLAYIT);
+    expect(doc['volumes']).toEqual({ data: {} });
+    expect(r.content).toContain('# ---- Volumes ----\nvolumes:');
+  });
+
+  it('follows the file indentation and keeps comments', () => {
+    const user = `services:
+    # my router
+    router:
+        image: itzg/mc-router:1.47.1   # pinned
+networks:
+    default: {}
+`;
+    const r = addComposeService(user, 'playit', BLOCK);
+    expect(parsed(r.content).services['playit']).toEqual(PLAYIT);
+    expect(r.content).toContain('    playit:\n        image: ghcr.io/playit-cloud/playit-agent:0.16');
+    expect(r.content).toContain('# pinned');
+    expect(r.content).toContain('    # my router');
+  });
+
+  it('adds to a file that ends with the services map', () => {
+    const r = addComposeService('services:\n  router:\n    image: x\n', 'playit', BLOCK);
+    expect(parsed(r.content).services).toEqual({ router: { image: 'x' }, playit: PLAYIT });
+  });
+
+  it('leaves a compose that already has the service as it is', () => {
+    const user = 'services:\n  playit:\n    image: mine\n';
+    expect(addComposeService(user, 'playit', BLOCK)).toEqual({ content: user, changes: [] });
+  });
+
+  it.each([
+    ['does not parse', 'services:\n  router: [\n'],
+    ['has no services map', 'networks:\n  default: {}\n'],
+    ['has a flow-style services map', 'services: { router: { image: x } }\n'],
+  ])('refuses a compose that %s and returns it unchanged', (_what, user) => {
+    expect(addComposeService(user, 'playit', BLOCK)).toEqual({ content: user, changes: [], skipped: 'invalid' });
   });
 });
