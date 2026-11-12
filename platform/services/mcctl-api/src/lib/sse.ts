@@ -10,11 +10,12 @@ export const sseLimits = {
   heartbeatMs: 30_000,
 };
 
-let openStreams = 0;
+/** The end() of every open stream. */
+const openStreams = new Set<() => void>();
 
 /** Number of SSE streams open right now. */
 export function openSseStreams(): number {
-  return openStreams;
+  return openStreams.size;
 }
 
 export interface SseStream {
@@ -51,7 +52,7 @@ export function openSse(
   // The client may have left while the handler awaited (a docker query): its
   // close event is gone, so a stream opened now would hold a slot until its lifetime.
   if (request.raw.destroyed || reply.raw.destroyed || request.raw.socket?.destroyed) return undefined;
-  if (openStreams >= sseLimits.maxStreams) {
+  if (openStreams.size >= sseLimits.maxStreams) {
     void reply
       .code(503)
       .header('Retry-After', '5')
@@ -59,14 +60,13 @@ export function openSse(
     return undefined;
   }
 
-  openStreams++;
   const cleanups: Array<() => void> = [];
   let open = true;
 
   const end = () => {
     if (!open) return;
     open = false;
-    openStreams--;
+    openStreams.delete(end);
     clearInterval(heartbeat);
     clearTimeout(lifetime);
     for (const cleanup of cleanups.splice(0)) {
@@ -79,6 +79,7 @@ export function openSse(
     if (!reply.raw.destroyed) reply.raw.end();
   };
 
+  openStreams.add(end);
   request.raw.on('close', end);
   reply.raw.on('close', end);
   reply.raw.on('error', end);
