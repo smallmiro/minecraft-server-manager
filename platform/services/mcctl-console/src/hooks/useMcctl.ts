@@ -49,6 +49,7 @@ import type {
   BackupScheduleActionResponse,
   HostnameResponse,
   UpdateHostnamesResponse,
+  ApplyHostnamesResponse,
   WhitelistResponse,
   WhitelistStatusResponse,
   PlayerActionResponse,
@@ -664,6 +665,24 @@ export function useUpdateHostnames() {
       ),
     onSuccess: (_, { serverName }) => {
       queryClient.invalidateQueries({ queryKey: ['servers', serverName, 'hostnames'] });
+      queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
+    },
+  });
+}
+
+/**
+ * Hook to apply saved hostnames: the API recreates the container (#671)
+ */
+export function useApplyHostnames() {
+  const queryClient = useQueryClient();
+
+  return useMutation<ApplyHostnamesResponse, Error, string>({
+    mutationFn: (serverName) =>
+      apiFetch<ApplyHostnamesResponse>(
+        `/api/servers/${encodeURIComponent(serverName)}/hostnames/apply`,
+        { method: 'POST' }
+      ),
+    onSuccess: (_, serverName) => {
       queryClient.invalidateQueries({ queryKey: ['servers', serverName] });
     },
   });
