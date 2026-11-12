@@ -34,6 +34,13 @@ describe('ConsoleDatabase', () => {
     }
   });
 
+  it('opens with the shared SQLite settings (#673)', () => {
+    const db = (consoleDb as unknown as { db: Database.Database }).db;
+    expect(db.pragma('busy_timeout', { simple: true })).toBe(5000);
+    expect(db.pragma('synchronous', { simple: true })).toBe(1);
+    expect(db.pragma('foreign_keys', { simple: true })).toBe(1);
+  });
+
   describe('ensureSchema', () => {
     it('should create all Better Auth tables', () => {
       consoleDb.ensureSchema();

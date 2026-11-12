@@ -3,6 +3,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import * as schema from './schema';
 import path from 'path';
 import { mkdirSync, existsSync } from 'fs';
+import { applySqliteSettings } from '@minecraft-docker/shared/utils';
 
 /**
  * Get the database file path from environment or default location
@@ -39,8 +40,8 @@ ensureDbDirectory(dbPath);
  */
 export const sqlite = new Database(dbPath);
 
-// Enable WAL mode for better performance
-sqlite.pragma('journal_mode = WAL');
+// Same busy_timeout, WAL and synchronous settings as the API and CLI (#673)
+applySqliteSettings(sqlite);
 sqlite.pragma('foreign_keys = ON');
 
 // Auto-create tables if they don't exist (e.g. first run or DB file recreated)
