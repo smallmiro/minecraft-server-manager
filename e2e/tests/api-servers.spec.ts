@@ -160,6 +160,23 @@ test.describe('Servers API', () => {
     });
   });
 
+  // #671: recreating a real server would restart it, so only the guards are exercised here
+  test.describe('POST /api/servers/:name/hostnames/apply - Apply Hostnames', () => {
+    test('should return 404 for non-existent server', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/servers/non-existent-server-12345/hostnames/apply`);
+
+      expect(response.status()).toBe(404);
+      const body = await response.json();
+      expect(body.error).toBe('NotFound');
+    });
+
+    test('should reject an invalid server name', async ({ request }) => {
+      const response = await request.post(`${API_BASE_URL}/api/servers/invalid@name!/hostnames/apply`);
+
+      expect([400, 404]).toContain(response.status());
+    });
+  });
+
   test.describe('POST /api/servers/:name/stop - Stop Server', () => {
     test('should handle non-existent server gracefully', async ({ request }) => {
       const response = await request.post(`${API_BASE_URL}/api/servers/non-existent-server/stop`);

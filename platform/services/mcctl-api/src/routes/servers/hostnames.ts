@@ -6,10 +6,12 @@ import {
   AuditActionEnum,
   getServerPlayitDomain,
   resolvePlayitDomain,
+  ServerName,
   ServerSpecError,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
+  ApplyHostnamesResponseSchema,
   HostnameResponseSchema,
   UpdateCustomHostnamesRequestSchema,
   UpdateHostnamesResponseSchema,
@@ -200,6 +202,47 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
         message: 'Failed to update server hostnames',
       });
     }
+  });
+
+  /**
+   * POST /api/servers/:name/hostnames/apply (#671)
+   * mc-router reads hosts from container labels, fixed at creation: recreate
+   * the container from the saved compose. A running server restarts (players
+   * are disconnected); a stopped one stays stopped.
+   */
+  fastify.post<GetHostnamesRoute>('/api/servers/:name/hostnames/apply', {
+    schema: {
+      description: 'Apply saved hostnames to mc-router by recreating the server container (a running server restarts)',
+      tags: ['servers', 'hostnames'],
+      params: ServerNameParamsSchema,
+      response: {
+        200: ApplyHostnamesResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
+    },
+  }, async (request: FastifyRequest<GetHostnamesRoute>, reply: FastifyReply) => {
+    const { name } = request.params;
+    if (!serverExists(name)) {
+      return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
+    }
+
+    const result = await fastify.container.containerRuntime().recreate(ServerName.fromExisting(name));
+    const errorMessage = result.success ? null : [result.error, result.stderr].filter(Boolean).join(': ') || 'Unknown error';
+    await writeAuditLog({
+      action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,
+      actor: 'api:console',
+      targetType: 'server',
+      targetName: name,
+      details: { applied: true },
+      status: result.success ? 'success' : 'failure',
+      ...(errorMessage && { errorMessage }),
+    });
+    if (errorMessage) {
+      fastify.log.error({ server: name, error: errorMessage }, 'Failed to apply server hostnames');
+      return reply.code(500).send({ error: 'InternalServerError', message: `Failed to recreate the container: ${errorMessage}` });
+    }
+    return reply.send({ success: true, serverName: name });
   });
 };
 
