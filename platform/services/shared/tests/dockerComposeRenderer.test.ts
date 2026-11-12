@@ -183,6 +183,17 @@ describe('docker-compose.yml', () => {
     expect(svc['logging']).toEqual({ driver: 'json-file', options: { 'max-size': '50m', 'max-file': '5' } });
   });
 
+  it('limits container memory to MEMORY plus room for the rest of the JVM, none when MEMORY is unknown (#662)', () => {
+    const limit = (doc: ServerSpecDocument) =>
+      (yaml.load(render(doc).compose.content) as { services: Record<string, Record<string, unknown>> }).services[
+        'mc-survival'
+      ]!['mem_limit'];
+    expect(limit(spec())).toBe('6g');
+    expect(limit(spec({ memory: '2560M' }))).toBe('4608m');
+    expect(limit(spec({ memory: undefined }))).toBeUndefined();
+    expect(limit(spec({ memory: '75%' }))).toBeUndefined();
+  });
+
   it('quotes the router label so the v2 label readers still match it', async () => {
     const { parseRouterHosts } = await import('../src/docker/index.js');
     expect(parseRouterHosts(render(spec()).compose.content)).toEqual(['survival.local', 'survival.192.168.1.10.nip.io']);

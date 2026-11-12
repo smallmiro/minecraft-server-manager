@@ -28,6 +28,7 @@ services:
     container_name: mc-nu
     restart: "no"
     stop_grace_period: 90s
+    mem_limit: 6g
     logging:
       driver: json-file
       options:

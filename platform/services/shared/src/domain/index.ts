@@ -131,6 +131,7 @@ export {
 } from './server-spec/ServerSpecDocument.js';
 export { buildCreateSpec, DEFAULT_SERVER_IMAGE, type CreateSpecInput } from './server-spec/buildCreateSpec.js';
 export { setEnvKeys, type SpecEnvChanges } from './server-spec/setEnvKeys.js';
+export { serverMemoryLimitMb } from './server-spec/serverMemoryLimit.js';
 
 // Entities
 export {

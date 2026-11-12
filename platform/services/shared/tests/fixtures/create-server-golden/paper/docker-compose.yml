@@ -28,6 +28,7 @@ services:
     container_name: mc-alpha
     restart: "no"
     stop_grace_period: 90s
+    mem_limit: 4g
     logging:
       driver: json-file
       options:
