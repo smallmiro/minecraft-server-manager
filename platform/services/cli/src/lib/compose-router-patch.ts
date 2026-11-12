@@ -71,8 +71,12 @@ function newer(a: string, b: string): boolean {
 
 const isVersion = (t: string) => /^\d+(\.\d+)*$/.test(t);
 
-/** Service keys added from the template's router when the user's service has none. */
-const ADDED: Array<[service: string, key: string]> = [['router', 'group_add']];
+/** Service keys added from the template's router when the user's service has none (logging: #662). */
+const ADDED: Array<[service: string, key: string]> = [
+  ['router', 'group_add'],
+  ['router', 'logging'],
+  ['playit', 'logging'],
+];
 /** Service keys this patch manages: compared with the template, everything else must stay as it was. */
 const MANAGED: Array<[service: string, key: string]> = [['router', 'image'], ...ADDED];
 

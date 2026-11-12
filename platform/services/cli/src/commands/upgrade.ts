@@ -317,7 +317,7 @@ function updateTemplateFiles(
 }
 
 /**
- * Patch the user's docker-compose.yml: mc-router image tag and group_add only.
+ * Patch the user's docker-compose.yml: mc-router image tag and group_add, router and playit logging only.
  * Everything else (extra services, ports, comments) is left untouched.
  */
 async function migrateComposeFile(
@@ -339,7 +339,8 @@ async function migrateComposeFile(
   if (result.skipped) {
     prompts.log.warn(
       'Could not patch mc-router in docker-compose.yml automatically. For mc-router 1.46+, set:\n' +
-      '    image: itzg/mc-router:<tag from template>\n    group_add:\n      - "${DOCKER_GID:-999}"',
+      '    image: itzg/mc-router:<tag from template>\n    group_add:\n      - "${DOCKER_GID:-999}"\n' +
+      'and copy the logging block of the template router into the router and playit services.',
     );
     return { changed: false };
   }
@@ -378,6 +379,9 @@ async function migrateComposeFile(
   prompts.log.success(`docker-compose.yml updated (backup: ${backup}).`);
 
   recreateRouter(paths);
+  if (result.changes.includes('playit.logging added')) {
+    prompts.log.info('playit-agent gets log rotation when recreated: mcctl playit stop && mcctl playit start');
+  }
   return { changed: true };
 }
 

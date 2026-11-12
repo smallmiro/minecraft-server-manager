@@ -65,6 +65,12 @@ export function ensurePlayitService(paths: Paths): void {
     restart: unless-stopped
     profiles:
       - playit
+    # Rotate the container log (docker logs): at most 5 files of 50MB (#662)
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
 `;
 
   // Insert before 'networks:' section if it exists, otherwise append before end

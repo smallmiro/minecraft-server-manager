@@ -1,4 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 import { patchRouterCompose } from '../../../src/lib/compose-router-patch.js';
 
 const TEMPLATE = `services:
@@ -159,5 +163,50 @@ describe('patchRouterCompose', () => {
     const r = patchRouterCompose(OLD, 'services:\n  x:\n    image: y\n');
     expect(r.skipped).toBe('no-template');
     expect(r.content).toBe(OLD);
+  });
+
+  describe('log rotation (#662)', () => {
+    const LOGGING_TEMPLATE = TEMPLATE.replace(
+      '    networks:',
+      '    # Rotate the container log\n    logging:\n      driver: json-file\n      options:\n        max-size: "50m"\n        max-file: "5"\n    networks:',
+    );
+    const LOGGING = { driver: 'json-file', options: { 'max-size': '50m', 'max-file': '5' } };
+    const WITH_PLAYIT = OLD.replace(
+      '  # my own service',
+      '  playit:\n    image: ghcr.io/playit-cloud/playit-agent:0.16\n    network_mode: host\n    profiles:\n      - playit\n\n  # my own service',
+    );
+    const services = (content: string) => (yaml.load(content) as { services: Record<string, Record<string, unknown>> }).services;
+
+    it('adds the template logging to router and playit, keeping everything else', () => {
+      const r = patchRouterCompose(WITH_PLAYIT, LOGGING_TEMPLATE);
+      expect(r.skipped).toBeUndefined();
+      expect(r.changes).toEqual(['router.image 1.43.1 → 1.47.1', 'router.group_add added', 'router.logging added', 'playit.logging added']);
+      expect(services(r.content)['router']!['logging']).toEqual(LOGGING);
+      expect(services(r.content)['playit']!['logging']).toEqual(LOGGING);
+      expect(r.content).toContain('      - playit\n    # Rotate the container log\n    logging:\n      driver: json-file\n');
+      expect(services(r.content)['grafana']).toEqual(services(WITH_PLAYIT)['grafana']);
+      expect(patchRouterCompose(r.content, LOGGING_TEMPLATE).changes).toEqual([]);
+    });
+
+    it('keeps a logging setting of the user', () => {
+      const user = WITH_PLAYIT.replace('    network_mode: host', '    network_mode: host\n    logging:\n      driver: local');
+      const r = patchRouterCompose(user, LOGGING_TEMPLATE);
+      expect(r.changes).not.toContain('playit.logging added');
+      expect(services(r.content)['playit']!['logging']).toEqual({ driver: 'local' });
+    });
+
+    it('works without a playit service', () => {
+      const r = patchRouterCompose(OLD, LOGGING_TEMPLATE);
+      expect(r.changes).toContain('router.logging added');
+      expect(services(r.content)['playit']).toBeUndefined();
+    });
+
+    it('brings a compose written before #662 to the bundled template', () => {
+      const bundled = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../templates/docker-compose.yml'), 'utf-8');
+      const r = patchRouterCompose(WITH_PLAYIT, bundled);
+      expect(r.skipped).toBeUndefined();
+      expect(r.changes).toEqual(expect.arrayContaining(['router.logging added', 'playit.logging added']));
+      expect(services(r.content)['router']!['logging']).toEqual(LOGGING);
+    });
   });
 });
