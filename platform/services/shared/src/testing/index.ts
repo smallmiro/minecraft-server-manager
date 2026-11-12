@@ -18,3 +18,4 @@ export {
 export { InMemoryServerRepository, type InMemoryServerData } from './InMemoryServerRepository.js';
 export { InMemoryWorldRepository, type InMemoryWorldData } from './InMemoryWorldRepository.js';
 export { InMemoryWorldAssignmentPort } from './InMemoryWorldAssignmentPort.js';
+export { installTestDocker } from './testDocker.js';

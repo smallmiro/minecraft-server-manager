@@ -1,3 +1,4 @@
+import { installTestDocker } from '@minecraft-docker/shared/testing';
 import { mkdirSync, mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -10,3 +11,6 @@ if (!process.env.MCCTL_ROOT) {
   mkdirSync(join(root, 'backups', 'meta'), { recursive: true });
   process.env.MCCTL_ROOT = root;
 }
+
+// No test reaches the host's Docker: a stand-in daemon with no containers (#666).
+installTestDocker();
