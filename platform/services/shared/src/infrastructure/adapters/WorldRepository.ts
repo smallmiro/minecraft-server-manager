@@ -7,6 +7,7 @@ import {
   writeFile,
   rename,
   cp,
+  lstat,
 } from 'node:fs/promises';
 import { join, basename, dirname, resolve, sep } from 'node:path';
 import { existsSync } from 'node:fs';
@@ -21,6 +22,7 @@ import type {
   WorldWithServerStatus,
   ServerStatus,
   WorldAvailabilityCategory,
+  ServerInternalWorld,
 } from '../../application/ports/outbound/IWorldRepository.js';
 import type { IWorldAssignmentPort } from '../../application/ports/outbound/IWorldAssignmentPort.js';
 import type { IContainerRuntimePort } from '../../application/ports/outbound/IContainerRuntimePort.js';
@@ -347,6 +349,21 @@ export class WorldRepository implements IWorldRepository {
       if (orderDiff !== 0) return orderDiff;
       return a.world.name.localeCompare(b.world.name);
     });
+  }
+
+  async findServerInternalWorlds(): Promise<ServerInternalWorld[]> {
+    const isDir = (p: string) => lstat(p).then((s) => s.isDirectory(), () => false);
+    const found: ServerInternalWorld[] = [];
+    for (const a of (await this.snapshot()).assignments) {
+      const path = join(this.paths.serverDir(a.server), 'data', a.world);
+      if (!(await isDir(path))) continue;
+      const dimensions: string[] = [];
+      for (const suffix of ['_nether', '_the_end']) {
+        if (await isDir(`${path}${suffix}`)) dimensions.push(`${path}${suffix}`);
+      }
+      found.push({ server: a.server, world: a.world, path, dimensions, inUse: !!a.internal });
+    }
+    return found;
   }
 
   /**

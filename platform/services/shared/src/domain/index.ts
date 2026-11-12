@@ -92,6 +92,7 @@ export {
   planRelease,
   findDuplicates,
   formatAssignmentWarnings,
+  formatInternalWorldWarnings,
   type WorldAssignment,
   type WorldAssignmentSnapshot,
   type WorldAssignmentErrorCode,

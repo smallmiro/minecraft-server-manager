@@ -21,6 +21,22 @@ export interface WorldWithServerStatus {
 }
 
 /**
+ * A world inside servers/<server>/data, not in worlds/ (D-1, #655):
+ * `mcctl migrate worlds` should move it.
+ */
+export interface ServerInternalWorld {
+  server: string;
+  /** The server's LEVEL (default `world`) */
+  world: string;
+  /** servers/<server>/data/<world> */
+  path: string;
+  /** Split-dimension folders next to it (Paper/Spigot): data/<world>_nether, data/<world>_the_end */
+  dimensions: string[];
+  /** false: the server already reads worlds/; an earlier migrate left this copy behind */
+  inUse: boolean;
+}
+
+/**
  * World Repository Port - Outbound Port
  * Interface for world data access
  */
@@ -65,6 +81,12 @@ export interface IWorldRepository {
    * Returns worlds categorized by availability
    */
   findAllWithServerStatus(): Promise<WorldWithServerStatus[]>;
+
+  /**
+   * Worlds in servers/<n>/data/<LEVEL> (real directories, not links), one per
+   * server whose assignment can be read (#655).
+   */
+  findServerInternalWorlds(): Promise<ServerInternalWorld[]>;
 
   /**
    * Delete a world directory
