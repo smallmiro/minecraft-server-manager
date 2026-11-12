@@ -171,6 +171,12 @@ describe('docker-compose.yml', () => {
     });
   });
 
+  it('waits longer than the itzg STOP_DURATION (60s) before Docker kills the server (#661)', () => {
+    const svc = (yaml.load(render(spec()).compose.content) as { services: Record<string, Record<string, unknown>> })
+      .services['mc-survival']!;
+    expect(svc['stop_grace_period']).toBe('90s');
+  });
+
   it('quotes the router label so the v2 label readers still match it', async () => {
     const { parseRouterHosts } = await import('../src/docker/index.js');
     expect(parseRouterHosts(render(spec()).compose.content)).toEqual(['survival.local', 'survival.192.168.1.10.nip.io']);

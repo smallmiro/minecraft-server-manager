@@ -238,6 +238,15 @@ describe('compose edits', () => {
     expect(read('survival', 'docker-compose.yml')).toContain('../global.env');
   });
 
+  it('overwrites a compose written before #661 (no stop_grace_period) without reporting it as protected', async () => {
+    templateServer('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *stop_grace_period:.*\n/m, ''));
+    const loaded = (await repo.load('survival'))!;
+    expect(loaded.warnings.join('\n')).not.toMatch(/protected/);
+    await repo.write({ ...loaded.document, image: 'itzg/minecraft-server:java21' }, { expectedRevision: loaded.revision });
+    expect(read('survival', 'docker-compose.yml')).toContain('stop_grace_period: "90s"');
+  });
+
   describe('a compose edited outside the spec', () => {
     const PORTS = (c: string) => c.replace('    restart: "no"', '    restart: "no"\n    ports:\n      - "25566:25565"');
 
