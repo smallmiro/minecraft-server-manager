@@ -86,7 +86,7 @@ async function handleConsoleCommand(
     case 'service':
       return consoleServiceCommand({
         root: rootDir,
-        subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | undefined,
+        subCommand: positional[0] as 'start' | 'stop' | 'restart' | 'status' | 'logs' | 'enable' | undefined,
         apiOnly: flags['api'] === true,
         consoleOnly: flags['console'] === true,
         follow: flags['follow'] === true,
@@ -305,7 +305,7 @@ ${colors.cyan('Console Management:')}
     --console-port <port>        Console server port (default: 5000)
   ${colors.bold('console user')} <action> [email] Manage console users (list, add, update, remove, reset-password)
   ${colors.bold('console api')} <action>         Manage API settings (status, key regenerate, mode, whitelist)
-  ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs)
+  ${colors.bold('console service')} <action>     Manage services via PM2 (start, stop, restart, status, logs, enable)
     --force                      stop: delete mcctl's PM2 processes; restart: recreate them
   ${colors.bold('console remove')} [options]     Remove console service (keeps user DB)
     --force                      Skip confirmation prompt

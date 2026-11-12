@@ -7,10 +7,12 @@
  * - restart: Restart services
  * - status: Show status with health checks
  * - logs: View logs with follow mode
+ * - enable: Start the services at boot (pm2 startup + save)
  */
 
 import { Paths, colors, log, ProcessInfo, ServiceStatusEnum } from '@minecraft-docker/shared';
-import { followPm2Logs } from '../../infrastructure/pm2-cli.js';
+import { enablePm2Startup, followPm2Logs } from '../../infrastructure/pm2-cli.js';
+import { basename } from 'node:path';
 import { select, isCancel } from '@clack/prompts';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
@@ -26,7 +28,7 @@ import { AdminConfigManager } from '../../lib/admin-config.js';
  */
 export interface ConsoleServiceOptions {
   root?: string;
-  subCommand?: 'start' | 'stop' | 'restart' | 'status' | 'logs';
+  subCommand?: 'start' | 'stop' | 'restart' | 'status' | 'logs' | 'enable';
   apiOnly?: boolean;
   consoleOnly?: boolean;
   follow?: boolean;
@@ -615,6 +617,35 @@ async function showLogs(
 }
 
 /**
+ * Start PM2, and the apps it saved, at boot (#650)
+ */
+function enableAtBoot(): number {
+  const pm2Path = pm2OnPath();
+  if (!pm2Path) return 1;
+
+  const pm2Home = process.env.PM2_HOME;
+  if (pm2Home && basename(pm2Home) !== '.pm2') {
+    // pm2 startup takes the directory holding .pm2 (--hp), not PM2_HOME itself
+    log.error(`pm2 startup supports only a PM2_HOME named .pm2 (PM2_HOME=${pm2Home}).`);
+    return 1;
+  }
+
+  log.info('Registering PM2 to start at boot (pm2 startup, needs sudo)...');
+  const result = enablePm2Startup(pm2Path, process.stdin.isTTY === true);
+  if (result.failed) {
+    log.error(`pm2 ${result.failed} failed.`);
+    log.info('Run this yourself:');
+    console.log(`  ${result.command}`);
+    return 1;
+  }
+
+  log.info('PM2 starts at boot and brings back the saved process list.');
+  log.info('mcctl console service start saves it, so services started with it come back after a reboot.');
+  log.info('After switching Node.js versions, run this command again. Undo: pm2 unstartup');
+  return 0;
+}
+
+/**
  * Delete admin images (legacy, now removes PM2 processes)
  */
 export function deleteAdminImages(): { success: boolean; deleted: string[]; errors: string[] } {
@@ -667,6 +698,9 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
 
       case 'logs':
         return await showLogs(paths, pm2Adapter, options);
+
+      case 'enable':
+        return enableAtBoot();
 
       default: {
         // Default: show status

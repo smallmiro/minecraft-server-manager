@@ -4,7 +4,8 @@
  */
 import { spawn, spawnSync } from 'node:child_process';
 import { accessSync, constants } from 'node:fs';
-import { delimiter, join } from 'node:path';
+import { homedir, userInfo } from 'node:os';
+import { delimiter, dirname, join } from 'node:path';
 
 /**
  * The pm2 binary on PATH, if any. The bundled pm2 module serves the
@@ -57,4 +58,36 @@ export function followPm2Logs(services: string[]): Promise<number> {
       proc.kill('SIGINT');
     });
   });
+}
+
+/**
+ * Make PM2 come back at boot (#650): `pm2 startup` writes a systemd unit
+ * (Linux) or launchd agent (macOS) that runs `pm2 resurrect`, then `pm2 save`
+ * records the running apps for it. startup needs root, so it runs through
+ * sudo unless mcctl is root (`-n` without a terminal: NOPASSWD or cached
+ * credentials only). PATH starts with the directory of the Node.js running
+ * mcctl, so pm2 and the unit it writes use that Node, the one better-sqlite3
+ * was built for. `--hp` points the unit at PM2_HOME (default ~/.pm2).
+ * Returns the step that failed and the command to show the user.
+ */
+export function enablePm2Startup(
+  pm2Path: string,
+  interactive: boolean
+): { failed?: 'startup' | 'save'; command: string } {
+  const pm2Home = process.env.PM2_HOME;
+  const path = `PATH=${dirname(process.execPath)}${delimiter}${process.env.PATH ?? ''}`;
+  const startup = ['env', path, pm2Path, 'startup', '-u', userInfo().username, '--hp', pm2Home ? dirname(pm2Home) : homedir()];
+  const isRoot = process.getuid?.() === 0;
+  const save = [pm2Path, 'save'];
+  const command = [...(isRoot ? [] : ['sudo']), 'env', `'${path}'`, ...startup.slice(2), '&&', ...save].join(' ');
+
+  const run = ([cmd, ...args]: string[]) => {
+    const result = spawnSync(cmd!, args, { stdio: 'inherit' });
+    return !result.error && result.status === 0;
+  };
+  if (!run(isRoot ? startup : ['sudo', ...(interactive ? [] : ['-n']), ...startup])) {
+    return { failed: 'startup', command };
+  }
+  if (!run(save)) return { failed: 'save', command: save.join(' ') };
+  return { command };
 }
