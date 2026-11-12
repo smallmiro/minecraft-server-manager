@@ -112,23 +112,24 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
     );
   }
 
-  // --- Step 2b2: server template keys: stop grace period (#661), log rotation (#662) ---
+  // --- Step 2b2: server template keys: stop grace period (#661), log rotation (#662), discovery labels (#674) ---
   const composeKeys = migrateComposeKeys(paths.root, paths.templates, !!options.dryRun);
   if (composeKeys.updated.length > 0) {
     prompts.log.success(
-      `${options.dryRun ? 'Would add' : 'Added'} missing stop_grace_period and logging to: ${composeKeys.updated.join(', ')}` +
+      `${options.dryRun ? 'Would add' : 'Added'} missing stop_grace_period, logging or io.mcctl labels to: ${composeKeys.updated.join(', ')}` +
         (options.dryRun ? '' : ' (backup: docker-compose.yml.bak-<time> in each server directory)')
     );
     // A container keeps the stop timeout it was created with, even when stopped by `mcctl stop`
     prompts.log.warn(
-      "Existing containers keep Docker's 10s stop timeout and an unrotated log until recreated. When a server is idle:\n" +
+      'Existing containers keep their old stop timeout, log settings and labels until recreated ' +
+        '(mcctl still finds them through the compose project meanwhile). When a server is idle:\n' +
         composeKeys.updated.map((name) => `  docker stop -t 90 mc-${name} && mcctl start ${name}`).join('\n')
     );
   }
   if (composeKeys.skipped.length > 0) {
     prompts.log.warn(
       'Could not update automatically; copy stop_grace_period and logging from servers/_template/docker-compose.yml ' +
-        `into the mc-<name> service of: ${composeKeys.skipped.join(', ')}`
+        `and add the labels io.mcctl.server: "<name>" and io.mcctl.role: "server" to the mc-<name> service of: ${composeKeys.skipped.join(', ')}`
     );
   }
   // Not added here: a limit below what a (modded) server really uses gets it OOM-killed mid-save (#662)

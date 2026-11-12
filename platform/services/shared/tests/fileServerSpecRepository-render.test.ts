@@ -257,6 +257,16 @@ describe('compose edits', () => {
     expect(read('survival', 'docker-compose.yml')).toContain('max-size: "50m"');
   });
 
+  it('overwrites a compose written before #674 (no io.mcctl labels) without reporting it as protected', async () => {
+    templateServer('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *io\.mcctl\..*\n/gm, ''));
+    expect(read('survival', 'docker-compose.yml')).not.toContain('io.mcctl');
+    const loaded = (await repo.load('survival'))!;
+    expect(loaded.warnings.join('\n')).not.toMatch(/protected/);
+    await repo.write({ ...loaded.document, image: 'itzg/minecraft-server:java21' }, { expectedRevision: loaded.revision });
+    expect(read('survival', 'docker-compose.yml')).toContain('io.mcctl.server: "survival"');
+  });
+
   it('overwrites a compose written before #662 (no mem_limit) without reporting it as protected', async () => {
     templateServer('survival');
     writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *mem_limit:.*\n/m, ''));

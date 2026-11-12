@@ -3,6 +3,8 @@ import { EventEmitter } from 'node:events';
 
 const mockSpawn = vi.fn();
 const mockExecFile = vi.fn();
+const mockListAsync = vi.fn();
+const mockRuntime = vi.fn();
 vi.mock('node:child_process', () => ({
   spawn: (...a: any[]) => mockSpawn(...a),
   execFile: (...a: any[]) => mockExecFile(...a),
@@ -10,6 +12,10 @@ vi.mock('node:child_process', () => ({
 vi.mock('@minecraft-docker/shared', () => ({
   log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
   Paths: vi.fn().mockImplementation(() => ({ root: '/tmp/r', servers: '/tmp/r/servers', templates: '/tmp/r/t' })),
+  DockerComposeRuntimeAdapter: vi.fn().mockImplementation((options: unknown) => {
+    mockRuntime(options);
+    return { listAsync: mockListAsync };
+  }),
 }));
 vi.mock('@minecraft-docker/shared/utils', () => ({
   assertEnvFileValue: vi.fn(),
@@ -57,8 +63,26 @@ describe('ShellExecutor runs no sh pipelines (#657)', () => {
   });
 
   it('down stops containers one by one, still runs compose down, and reports a stop failure', async () => {
-    setup({ 'ps --filter name=mc- --format {{.Names}}': 'mc-a\nmc-b\n' }, { 'stop mc-a': 1 });
+    setup({}, { 'stop mc-a': 1 });
+    mockListAsync.mockResolvedValue(['mc-a', 'mc-b']);
     expect(await new ShellExecutor().down()).toBe(1);
     expect(spawned()).toEqual(['docker stop mc-a', 'docker stop mc-b', 'docker compose down']);
+  });
+
+  it('down stops only the running servers the runtime discovers by label, never a docker ps name match (#674)', async () => {
+    setup({ 'ps --filter name=mc- --format {{.Names}}': 'mc-a\npostgres-mc-1\n' });
+    mockListAsync.mockResolvedValue(['mc-a']);
+    expect(await new ShellExecutor().down()).toBe(0);
+    expect(mockRuntime).toHaveBeenCalledWith({ root: '/tmp/r' });
+    expect(mockListAsync).toHaveBeenCalledWith({ running: true, strict: true });
+    expect(mockExecFile).not.toHaveBeenCalled();
+    expect(spawned()).toEqual(['docker stop mc-a', 'docker compose down']);
+  });
+
+  it('down reports a failure when the servers cannot be listed, and still runs compose down', async () => {
+    setup({});
+    mockListAsync.mockRejectedValue(new Error('docker ps failed'));
+    expect(await new ShellExecutor().down()).toBe(1);
+    expect(spawned()).toEqual(['docker compose down']);
   });
 });

@@ -32,9 +32,10 @@ import {
 } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 
 const PS =
-  'mc-router\trunning\tUp 1 hour\t\n' +
-  'mc-alpha\trunning\tUp 2 minutes (healthy)\talpha.local\n' +
-  'mc-orphan\texited\tExited (0) 3 days ago\t';
+  // discovery columns first (#674): name, io.mcctl.role, compose project, compose service
+  'mc-router\trouter\tminecraft\trouter\trunning\tUp 1 hour\t\n' +
+  'mc-alpha\tserver\tminecraft\tmc-alpha\trunning\tUp 2 minutes (healthy)\talpha.local\n' +
+  'mc-orphan\tserver\tminecraft\tmc-orphan\texited\tExited (0) 3 days ago\t';
 
 type Answer = (args: string[]) => string | null | 'hang' | 'timeout';
 

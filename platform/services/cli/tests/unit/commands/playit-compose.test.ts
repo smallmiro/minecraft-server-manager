@@ -38,6 +38,7 @@ volumes:
     const doc = yaml.load(readFileSync(compose(), 'utf-8')) as { services: Record<string, Record<string, unknown>>; volumes: unknown };
     expect(doc.services['playit']!['image']).toBe('ghcr.io/playit-cloud/playit-agent:0.16');
     expect(doc.services['playit']!['container_name']).toBe('playit-agent');
+    expect(doc.services['playit']!['labels']).toEqual({ 'io.mcctl.role': 'playit' }); // #674
     expect(doc.volumes).toEqual({ data: {} });
     const backup = readdirSync(root).find((f) => f.startsWith('docker-compose.yml.bak'));
     expect(backup).toBeDefined();

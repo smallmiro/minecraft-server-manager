@@ -3,6 +3,7 @@ import yaml from 'js-yaml';
 import { applyEnvChanges, parseEnvDocument } from '../../../utils/env-file.js';
 import { ServerSpecError, routerHosts, type ServerSpecDocument } from '../../../domain/server-spec/ServerSpecDocument.js';
 import { serverMemoryLimitMb } from '../../../domain/server-spec/serverMemoryLimit.js';
+import { serverLabelsOf } from '../workloadNames.js';
 
 /**
  * Rendering seam (ADR-0003 §3). Infrastructure, not a port: only the
@@ -91,6 +92,7 @@ function renderCompose(doc: ServerSpecDocument, hostIps: string[], templateText:
     'mc-router.auto-scale-down': String(r.autoScale.down),
     ...(r.asleepMotd !== undefined && { 'mc-router.auto-scale-asleep-motd': composeLiteral(r.asleepMotd) }),
     ...(r.loadingMotd !== undefined && { 'mc-router.auto-scale-loading-motd': composeLiteral(r.loadingMotd) }),
+    ...serverLabelsOf(doc.name),
   };
   const limitMb = serverMemoryLimitMb(doc);
   const service = {

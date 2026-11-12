@@ -1,7 +1,7 @@
 import { join } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawn, execFile } from 'node:child_process';
-import { Paths, log } from '@minecraft-docker/shared';
+import { DockerComposeRuntimeAdapter, Paths, log } from '@minecraft-docker/shared';
 import { assertEnvFileValue, parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { writeServerConfig } from '../lib/server-config.js';
 
@@ -197,8 +197,11 @@ export class ShellExecutor {
    */
   async down(): Promise<number> {
     log.info('Stopping all infrastructure...');
-    // First stop all mc-* containers (including those from included compose files)
-    const names = await this.dockerLines(['ps', '--filter', 'name=mc-', '--format', '{{.Names}}']);
+    // First stop the running servers, also those no compose file includes any more. Selected by
+    // label (#674): a name match would stop other projects' containers with mc- in their name.
+    const names = await new DockerComposeRuntimeAdapter({ root: this.paths.root })
+      .listAsync({ running: true, strict: true })
+      .catch(() => null);
     let failed = names === null;
     for (const name of names ?? []) {
       const code = await new Promise<number>((resolve) => {

@@ -268,7 +268,7 @@ describe('upgradeCommand', () => {
       compose,
       'services:\n  mc-a:\n    stop_grace_period: "90s"\n    logging:\n      driver: "json-file"\n    image: x\n'
     );
-    expect(prompts.log.success).toHaveBeenCalledWith(expect.stringContaining('stop_grace_period and logging'));
+    expect(prompts.log.success).toHaveBeenCalledWith(expect.stringContaining('stop_grace_period, logging or io.mcctl labels'));
     expect(prompts.log.warn).toHaveBeenCalledWith(expect.stringContaining('docker stop -t 90 mc-a && mcctl start a'));
     expect(prompts.log.info).toHaveBeenCalledWith(expect.stringMatching(/No memory limit on: a\b[\s\S]*mcctl migrate spec <name>/));
   });

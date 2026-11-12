@@ -13,13 +13,15 @@ function diff(a: unknown, b: unknown, path: string): string[] {
   return JSON.stringify(a) === JSON.stringify(b) ? [] : [path || '(root)'];
 }
 
-const routerLabels = (labels: Map<string, string | null>) =>
-  Object.fromEntries([...labels].filter(([k]) => k.startsWith('mc-router.')));
+/** Labels the spec owns: mc-router routing, and the mcctl discovery labels (#674; absent before it). */
+const specLabel = (key: string) => key.startsWith('mc-router.') || key.startsWith('io.mcctl.');
+const specLabels = (labels: Map<string, string | null>, owned: boolean) =>
+  Object.fromEntries([...labels].filter(([k]) => specLabel(k) === owned));
 
 /**
  * The YAML paths where a server compose differs from the rendered one
  * outside the spec-owned fields (ADR-0003 §3). Spec-owned fields (image,
- * mc-router labels) and known legacy variants (env_file ../../.env, #685;
+ * mc-router and io.mcctl labels) and known legacy variants (env_file ../../.env, #685;
  * no stop_grace_period, #661; no logging or mem_limit, #662) do not count. `environmentMoved`: the compose environment was moved into
  * the spec (import), so only EULA is compared.
  */
@@ -45,10 +47,7 @@ export function composeOutsideEdits(
   if (isMapping(theirs)) {
     theirs['image'] = ours['image'];
     const labels = composeMap(theirs['labels']);
-    theirs['labels'] = {
-      ...Object.fromEntries([...labels].filter(([k]) => !k.startsWith('mc-router.'))),
-      ...routerLabels(composeMap(ours['labels'])),
-    };
+    theirs['labels'] = { ...specLabels(labels, false), ...specLabels(composeMap(ours['labels']), true) };
     const environment = composeMap(theirs['environment']);
     theirs['environment'] = environmentMoved
       ? Object.fromEntries([...environment].filter(([k]) => k === 'EULA'))
