@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Upgrade notes.**
+> - **Audit log cleanup is on by default.** Entries older than 90 days are deleted. Set `AUDIT_RETENTION_DAYS` to change the retention, or turn cleanup off, as described in [Audit Log](docs/cli/audit-log.md).
+> - **Recreate existing containers.** New compose settings (`stop_grace_period`, log rotation, `mem_limit`, `io.mcctl.*` labels) apply only to a container that is created again. Run `mcctl upgrade`, then, when a server is idle, run the command it prints (`docker stop -t 90 mc-<name> && mcctl start <name>`); see [`mcctl upgrade`](docs/cli/commands.md).
+> - **Servers that ran an earlier `mcctl migrate worlds`** may start with an empty world. See [Recovering after an earlier `mcctl migrate worlds`](docs/cli/commands.md#recovering-after-an-earlier-mcctl-migrate-worlds).
+> - **`mcctl console service enable`** registers the services with PM2 `startup` and `save`, so they return after a reboot. Run it once after updating.
+
+### Added
+- **`mcctl console service enable`** - Registers mcctl-api and mcctl-console for start at boot (PM2 `startup` and `save`).
+- **Container runtime port** - Server containers are managed through `IContainerRuntimePort` (`DockerComposeRuntimeAdapter`) and found by the `io.mcctl.server` / `io.mcctl.role` labels, with a compose-project fallback for containers created before the labels existed. See [CLI Architecture](docs/development/cli-architecture.md).
+- **mcctl-api composition root** - Adapters are built in `plugins/container.ts` (`fastify.container`); tests pass fakes with `buildApp({ container })`.
+- **Hostnames Apply** - `POST /api/servers/:name/hostnames/apply` recreates the container so changed hostnames reach mc-router; the console has an **Apply now** action.
+- **`MINECRAFT_NETWORK` and `MINECRAFT_SUBNET`** are written by `mcctl init`.
+- **Container limits in `server.yaml`** - Memory limit rule, `stop_grace_period` and log rotation; see [server.yaml](docs/configuration/server-yaml.md#container-memory-limit).
+
+### Changed
+- **Fail-closed runtime queries** - When Docker cannot be asked, state-changing operations stop with `RuntimeUnavailableError` instead of treating the server as absent, and mcctl-api answers `503` with `Retry-After: 5`.
+- **`mcctl migrate worlds`** - Moves the world (with `_nether` / `_the_end`) into `worlds/` before it sets `LEVEL` and `EXTRA_ARGS --universe /worlds/`, and undoes the change when a step fails. `mcctl status` and `mcctl world list` warn `needs migration` for servers that still keep the world in `data/`.
+- **`--force` of `mcctl console service`** restarts the services even when they report healthy (for example after a Node.js change).
+- **`mcctl down`** scope and **`mcctl upgrade`** additions (`DOCKER_GID`, `stop_grace_period`, log rotation, labels) are described in [CLI Commands](docs/cli/commands.md).
+- **Audit log cleanup** defaults to on with a 90-day retention.
+- **SSE and shutdown** - SSE connections are limited and closed on shutdown; mcctl-api shuts down gracefully and logs unhandled process errors.
+
+### Fixed
+- **Documentation** - CLAUDE.md and the docs no longer say `scripts/` is absent (`scripts/upgrade-v3.sh` is the release helper); PRD completion marks and the lock-file wording match the LEVEL-based assignment.
+
 ## [3.1.0] - 2026-10-25
 
 > **Upgrade notes (v3.1.0).**
