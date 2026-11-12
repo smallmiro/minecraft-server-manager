@@ -1,5 +1,5 @@
 /**
- * migrateStopGrace (#661): `mcctl upgrade` adds the template's
+ * migrateComposeKeys (#661): `mcctl upgrade` adds the template's
  * stop_grace_period to server composes written before it, after a backup.
  * Real temp platform, real bundled template, real FileServerSpecRepository.
  */
@@ -10,7 +10,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { FileServerSpecRepository, Paths } from '@minecraft-docker/shared';
-import { migrateStopGrace } from '../../../src/lib/server-stop-grace-migration.js';
+import { migrateComposeKeys } from '../../../src/lib/server-compose-keys-migration.js';
 
 const TEMPLATES = join(dirname(fileURLToPath(import.meta.url)), '../../../templates');
 const TEMPLATE_COMPOSE = readFileSync(join(TEMPLATES, 'servers/_template/docker-compose.yml'), 'utf-8');
@@ -45,14 +45,14 @@ afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-describe('migrateStopGrace (#661)', () => {
+describe('migrateComposeKeys (#661)', () => {
   it('adds the template value after a backup, changing no other line', () => {
     expect(OLD('a')).not.toContain('stop_grace_period');
     server('a');
     server('custom', OLD('custom').replace('    tty: true', '    stop_grace_period: 30s\n    tty: true'));
     server('_template');
 
-    const result = migrateStopGrace(root, TEMPLATES, false);
+    const result = migrateComposeKeys(root, TEMPLATES, false);
 
     expect(result).toEqual({ updated: ['a'], skipped: [] });
     expect(grace('a')).toBe('90s');
@@ -65,10 +65,10 @@ describe('migrateStopGrace (#661)', () => {
 
   it('is idempotent', () => {
     server('a');
-    migrateStopGrace(root, TEMPLATES, false);
+    migrateComposeKeys(root, TEMPLATES, false);
     const after = compose('a');
 
-    expect(migrateStopGrace(root, TEMPLATES, false)).toEqual({ updated: [], skipped: [] });
+    expect(migrateComposeKeys(root, TEMPLATES, false)).toEqual({ updated: [], skipped: [] });
     expect(compose('a')).toBe(after);
     expect(backups('a')).toHaveLength(1);
   });
@@ -76,7 +76,7 @@ describe('migrateStopGrace (#661)', () => {
   it('dry-run reports without writing', () => {
     server('a');
 
-    expect(migrateStopGrace(root, TEMPLATES, true)).toEqual({ updated: ['a'], skipped: [] });
+    expect(migrateComposeKeys(root, TEMPLATES, true)).toEqual({ updated: ['a'], skipped: [] });
     expect(compose('a')).toBe(OLD('a'));
     expect(backups('a')).toEqual([]);
   });
@@ -85,7 +85,7 @@ describe('migrateStopGrace (#661)', () => {
     server('flow', 'services: { mc-flow: { image: x } }\n');
     server('broken', 'services:\n  mc-broken: [\n');
 
-    expect(migrateStopGrace(root, TEMPLATES, false)).toEqual({ updated: [], skipped: ['broken', 'flow'] });
+    expect(migrateComposeKeys(root, TEMPLATES, false)).toEqual({ updated: [], skipped: ['broken', 'flow'] });
     expect(compose('flow')).toBe('services: { mc-flow: { image: x } }\n');
   });
 
@@ -97,7 +97,7 @@ describe('migrateStopGrace (#661)', () => {
     // As rendered before #661: the generated file without the key (hash no longer matches, like an upgrade edit)
     writeFileSync(join(dir('a'), 'docker-compose.yml'), compose('a').replace(/^ *stop_grace_period:.*\n/m, ''));
 
-    expect(migrateStopGrace(root, TEMPLATES, false).updated).toEqual(['a']);
+    expect(migrateComposeKeys(root, TEMPLATES, false).updated).toEqual(['a']);
 
     const loaded = (await repo.load('a'))!;
     expect(loaded.warnings).toEqual([]);

@@ -3,10 +3,13 @@ import { join } from 'node:path';
 import yaml from 'js-yaml';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
-export interface StopGraceMigrationResult {
-  /** Servers whose docker-compose.yml got (or, in dry-run, would get) stop_grace_period. */
+/** Server template keys mcctl upgrade adds to existing server composes that lack them. */
+const KEYS = ['stop_grace_period'];
+
+export interface ComposeKeysMigrationResult {
+  /** Servers whose docker-compose.yml got (or, in dry-run, would get) a missing template key. */
   updated: string[];
-  /** Servers whose compose lacks it but could not be patched safely: set it by hand. */
+  /** Servers whose compose lacks one but could not be patched safely: set it by hand. */
   skipped: string[];
 }
 
@@ -19,31 +22,33 @@ const service = (text: string, name: string): Record<string, unknown> | undefine
 
 const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** `text` with `stop_grace_period: <value>` as the first key of service mc-<name>; undefined when not block style. */
-function insertGrace(text: string, name: string, value: string): string | undefined {
+/** `text` with `entries` as the first keys of service mc-<name>; undefined when not block style. */
+function insertKeys(text: string, name: string, entries: Record<string, unknown>): string | undefined {
   const key = new RegExp(`^( *)(["']?)mc-${escape(name)}\\2:[ \\t]*(#.*)?\\n`, 'm').exec(text);
   if (!key) return undefined;
   const at = key.index + key[0].length;
   const child = /^( +)[^\s#]/m.exec(text.slice(at));
   if (!child || child[1]!.length <= key[1]!.length) return undefined;
-  return `${text.slice(0, at)}${child[1]}stop_grace_period: ${JSON.stringify(value)}\n${text.slice(at)}`;
+  const block = yaml.dump(entries, { forceQuotes: true, quotingType: '"', lineWidth: -1 });
+  return `${text.slice(0, at)}${block.replace(/^(?=.)/gm, child[1]!)}${text.slice(at)}`;
 }
 
 /**
- * Give every existing server the template's stop_grace_period (#661), so
- * Docker waits for the world save instead of killing the server after 10s.
- * A compose that already sets one keeps its value. Each changed file is
- * copied to docker-compose.yml.bak-<timestamp> first. Like the env_file
- * migration (#685), this edits the generated file: server.yaml does not
- * change and the renderer writes the same key on the next render.
+ * Give every existing server the template keys it lacks (#661), so its
+ * container gets them when recreated. A compose that already sets a key
+ * keeps its value. Each changed file is copied to
+ * docker-compose.yml.bak-<timestamp> first. Like the env_file migration
+ * (#685), this edits the generated file: server.yaml does not change and
+ * the renderer writes the same keys on the next render.
  */
-export function migrateStopGrace(root: string, templatesDir: string, dryRun: boolean): StopGraceMigrationResult {
-  const result: StopGraceMigrationResult = { updated: [], skipped: [] };
+export function migrateComposeKeys(root: string, templatesDir: string, dryRun: boolean): ComposeKeysMigrationResult {
+  const result: ComposeKeysMigrationResult = { updated: [], skipped: [] };
   const serversDir = join(root, 'servers');
   const templatePath = join(templatesDir, 'servers', '_template', 'docker-compose.yml');
   if (!existsSync(templatePath) || !existsSync(serversDir)) return result;
-  const value = service(readFileSync(templatePath, 'utf-8'), 'template')?.['stop_grace_period'];
-  if (typeof value !== 'string') return result;
+  const template = service(readFileSync(templatePath, 'utf-8'), 'template') ?? {};
+  const wanted = KEYS.filter((k) => template[k] !== undefined);
+  if (wanted.length === 0) return result;
 
   const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
   const names = readdirSync(serversDir, { withFileTypes: true })
@@ -56,10 +61,13 @@ export function migrateStopGrace(root: string, templatesDir: string, dryRun: boo
     const content = readFileSync(composePath, 'utf-8');
     let updated: string | undefined;
     try {
-      if (service(content, name)?.['stop_grace_period'] !== undefined) continue;
-      updated = insertGrace(content, name, value);
+      const current = service(content, name);
+      const missing = wanted.filter((k) => current?.[k] === undefined);
+      if (current && missing.length === 0) continue;
+      updated = insertKeys(content, name, Object.fromEntries(missing.map((k) => [k, template[k]])));
       // Written only when the result reads back as intended
-      if (updated !== undefined && service(updated, name)?.['stop_grace_period'] !== value) updated = undefined;
+      const after = updated === undefined ? undefined : service(updated, name);
+      if (!after || missing.some((k) => JSON.stringify(after[k]) !== JSON.stringify(template[k]))) updated = undefined;
     } catch {
       updated = undefined;
     }

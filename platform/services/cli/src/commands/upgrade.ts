@@ -8,7 +8,7 @@ import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
-import { migrateStopGrace } from '../lib/server-stop-grace-migration.js';
+import { migrateComposeKeys } from '../lib/server-compose-keys-migration.js';
 import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
 import { serverSpecReport } from '../lib/server-config.js';
 import { handleLegacyScripts } from '../lib/legacy-scripts.js';
@@ -113,7 +113,7 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
   }
 
   // --- Step 2b2: servers wait for the world save when stopped (#661) ---
-  const stopGrace = migrateStopGrace(paths.root, paths.templates, !!options.dryRun);
+  const stopGrace = migrateComposeKeys(paths.root, paths.templates, !!options.dryRun);
   if (stopGrace.updated.length > 0) {
     prompts.log.success(
       `${options.dryRun ? 'Would add' : 'Added'} stop_grace_period to: ${stopGrace.updated.join(', ')}` +
