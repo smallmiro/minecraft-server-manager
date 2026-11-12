@@ -243,13 +243,16 @@ export function getDetailedServerInfo(container: string, configEnv?: Record<stri
     }
   }
 
-  // Get config info if provided
+  return withConfig(detailed, configEnv);
+}
+
+/** Adds type, version and memory from config.env when given. */
+function withConfig(detailed: DetailedServerInfo, configEnv?: Record<string, string>): DetailedServerInfo {
   if (configEnv) {
     detailed.type = configEnv['TYPE'];
     detailed.version = configEnv['VERSION'];
     detailed.memory = configEnv['MEMORY'];
   }
-
   return detailed;
 }
 
@@ -271,14 +274,19 @@ export async function getDetailedServerInfoWithPlayers(
     }
   }
 
-  // Get world name and size
+  return withWorld(detailed, configEnv, worldsDir);
+}
+
+/** Adds the world name and its directory size. */
+async function withWorld(
+  detailed: DetailedServerInfo,
+  configEnv: Record<string, string> | undefined,
+  worldsDir: string | undefined
+): Promise<DetailedServerInfo> {
   const worldName = resolveWorldName(configEnv ?? {});
   detailed.worldName = worldName;
-
-  // Calculate world size
   const worldSize = await getWorldDirectorySize(worldName, worldsDir);
   detailed.worldSize = formatBytes(worldSize);
-
   return detailed;
 }
 
@@ -315,35 +323,47 @@ export function getRouterDetailInfo(): RouterDetailInfo {
   const containers = getMcContainers();
   for (const container of containers) {
     const labels = router.getLabels(container);
-    const hostname = labels['mc-router.host']?.trim();
-    if (hostname) {
-      // hostname might be comma-separated (e.g., "server.local,server.192.168.1.10.nip.io")
-      const hostnames = hostname.split(',').map((h) => h.trim());
-      const serverStatus = getContainerStatus(container);
-
-      // Read config.env for server type/version
-      const serverName = container.replace(/^mc-/, '');
-      const configEnv = readServerConfigEnv(serverName);
-      const serverType = configEnv['TYPE'] || undefined;
-      const serverVersion = configEnv['VERSION'] || undefined;
-      const autoScale = resolveRouteAutoScale(labels, detailed.autoScale);
-
-      for (const h of hostnames) {
-        const route: RouteInfo = {
-          hostname: h,
-          target: `${container}:25565`,
-          serverStatus,
-          serverType,
-          serverVersion,
-        };
-        if (autoScale.up !== undefined) route.autoScaleUp = autoScale.up;
-        if (autoScale.down !== undefined) route.autoScaleDown = autoScale.down;
-        detailed.routes.push(route);
-      }
-    }
+    if (!labels['mc-router.host']?.trim()) continue;
+    detailed.routes.push(...routesOf(container, labels, getContainerStatus(container), detailed.autoScale));
   }
 
   return detailed;
+}
+
+/**
+ * The routes of one server container: a route per `mc-router.host` entry,
+ * with the server's type and version from config.env and its effective auto-scale.
+ */
+function routesOf(
+  container: string,
+  labels: Record<string, string>,
+  serverStatus: ContainerStatus,
+  globalAutoScale: RouterDetailInfo['autoScale']
+): RouteInfo[] {
+  const hostname = labels['mc-router.host']?.trim();
+  if (!hostname) return [];
+  // hostname might be comma-separated (e.g., "server.local,server.192.168.1.10.nip.io")
+  const hostnames = hostname.split(',').map((h) => h.trim());
+
+  // Read config.env for server type/version
+  const serverName = container.replace(/^mc-/, '');
+  const configEnv = readServerConfigEnv(serverName);
+  const serverType = configEnv['TYPE'] || undefined;
+  const serverVersion = configEnv['VERSION'] || undefined;
+  const autoScale = resolveRouteAutoScale(labels, globalAutoScale);
+
+  return hostnames.map((h) => {
+    const route: RouteInfo = {
+      hostname: h,
+      target: `${container}:25565`,
+      serverStatus,
+      serverType,
+      serverVersion,
+    };
+    if (autoScale.up !== undefined) route.autoScaleUp = autoScale.up;
+    if (autoScale.down !== undefined) route.autoScaleDown = autoScale.down;
+    return route;
+  });
 }
 
 /**
@@ -621,6 +641,32 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
   const status = getContainerStatus(containerName);
   const agentRunning = status === 'running';
 
+  const { secretKeyConfigured, playitEnabled } = readPlayitSettings();
+
+  // Get uptime if running
+  let uptime: string | undefined;
+  let uptimeSeconds: number | undefined;
+
+  if (agentRunning) {
+    const uptimeInfo = getContainerUptime(containerName);
+    if (uptimeInfo) {
+      uptime = uptimeInfo.uptime;
+      uptimeSeconds = uptimeInfo.seconds;
+    }
+  }
+
+  return {
+    enabled: playitEnabled || secretKeyConfigured,
+    agentRunning,
+    secretKeyConfigured,
+    containerStatus: status,
+    uptime,
+    uptimeSeconds,
+  };
+}
+
+/** PLAYIT_SECRET_KEY set in the platform .env; playitEnabled in .mcctl.json. */
+function readPlayitSettings(): { secretKeyConfigured: boolean; playitEnabled: boolean } {
   // Check if PLAYIT_SECRET_KEY is configured in platform .env
   const platformRoot = resolveMcctlRoot();
   const envPath = join(platformRoot, '.env');
@@ -648,26 +694,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
     }
   }
 
-  // Get uptime if running
-  let uptime: string | undefined;
-  let uptimeSeconds: number | undefined;
-
-  if (agentRunning) {
-    const uptimeInfo = getContainerUptime(containerName);
-    if (uptimeInfo) {
-      uptime = uptimeInfo.uptime;
-      uptimeSeconds = uptimeInfo.seconds;
-    }
-  }
-
-  return {
-    enabled: playitEnabled || secretKeyConfigured,
-    agentRunning,
-    secretKeyConfigured,
-    containerStatus: status,
-    uptime,
-    uptimeSeconds,
-  };
+  return { secretKeyConfigured, playitEnabled };
 }
 
 /**
