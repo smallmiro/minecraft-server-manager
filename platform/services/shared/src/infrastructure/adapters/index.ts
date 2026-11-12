@@ -67,7 +67,7 @@ export {
 } from './DockerComposeRuntimeAdapter.js';
 export { AvahiHostnameRegistrarAdapter } from './AvahiHostnameRegistrarAdapter.js';
 export { McRouterApiAdapter, type McRouterApiAdapterOptions } from './McRouterApiAdapter.js';
-export { containerNameOf, serverHostnameOf, workloadNameOf } from './workloadNames.js';
+export { containerNameOf, serverHostnameOf, workloadNameOf, serverLabelsOf, ROLE_LABEL, SERVER_LABEL } from './workloadNames.js';
 export {
   GitWorldBackupAdapter,
   type GitWorldBackupAdapterOptions,
