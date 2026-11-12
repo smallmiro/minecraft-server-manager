@@ -7,7 +7,8 @@ This project is a DevOps project for building and operating multiple Minecraft J
 pnpm monorepo. 패키지는 `platform/services/` 아래에 있고, 상세 구조는 파일시스템 탐색 또는 `docs/documentforllmagent.md` 참조.
 
 - `platform/services/cli/templates/` is the single source of the templates for `mcctl init`. `platform/docker-compose.yml`, `platform/servers/_template`, and similar paths are symlinks to it.
-- The CLI's `prepack` runs `sync-docker`, which copies `docker/bluemap` into the package. There is no `scripts/`.
+- The CLI's `prepack` runs `sync-docker`, which copies `docker/bluemap` into the package. `platform/scripts/` was removed in v3.0.0; the only script left is the release helper `scripts/upgrade-v3.sh`.
+- Server containers are managed only through `IContainerRuntimePort` (`DockerComposeRuntimeAdapter`). A runtime that cannot be asked throws `RuntimeUnavailableError` (fail-closed, mcctl-api answers 503), and servers are found by the `io.mcctl.*` labels. mcctl-api builds its dependencies in `plugins/container.ts` (`fastify.container`); tests pass fakes with `buildApp({ container })`. See [docs/development/cli-architecture.md](docs/development/cli-architecture.md).
 - mcctl-api (:5001) and mcctl-console (:5000) run natively under PM2. Minecraft servers and mc-router (:25565) run in Docker.
 - Agents are in `.claude/agents/`. Skills are in `.claude/skills/` and run as `/name`: `/plan-work` plans before work starts (inside `/work`, only at T4) and `/work` executes.
 

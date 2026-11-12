@@ -110,6 +110,17 @@ export interface IConfigSnapshotUseCase {
 
 **Outbound ports** (`application/ports/outbound/`) include `IPromptPort`, `IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository`, `IServerRepository`, `IWorldRepository`, `IDocProvider`, `IAuditLogPort`, `IRconPort`, `IModSourcePort`, `IServiceManagerPort` and the snapshot/backup repositories. Note that `IPromptPort` and `IDocProvider` are outbound ports.
 
+## Container Runtime Port
+
+Everything that starts, stops, inspects or recreates a Minecraft server container goes through `IContainerRuntimePort` (`shared/src/application/ports/outbound/`). Code outside the adapter does not call `docker` itself. The decision record is [ADR-0001](adr/0001-container-runtime-ports.md).
+
+- **Adapter.** `DockerComposeRuntimeAdapter` (`shared/src/infrastructure/adapters/`) implements it with `docker` and `docker compose`. A second runtime means a second adapter; commands and routes do not change.
+- **Names.** Methods take a `ServerName`; the adapter maps it to the workload (`mc-<name>`). A plain string is the workload name itself (`mc-router`, `playit-agent`).
+- **Two query styles.** The synchronous queries (`getStatus`, `list`, ...) are for the CLI and answer `not_found` or `[]` when Docker cannot be asked. Request paths in mcctl-api use the async queries (`getStatusAsync`, `listAsync`, `listStates`, ...): they do not block the event loop and are killed after a timeout (`RUNTIME_QUERY_TIMEOUT_MS`, 10 seconds).
+- **Fail-closed.** When the runtime cannot be asked (it does not answer, the query fails or times out), `getStatusAsync`, `listStates` and `list`/`listAsync` with `strict: true` reject with `RuntimeUnavailableError` (a timeout is the subclass `RuntimeQueryTimeoutError`) instead of returning "absent". Callers that change state, such as world reset, snapshot restore, `mcctl migrate` and `mcctl down`, stop on it. mcctl-api answers `503` with `Retry-After: 5` (`sendRuntimeUnavailable`, and an error handler for routes that let it escape). Never report "cannot tell" as "stopped".
+- **Discovery by label.** A server container is found by its labels, not by its name: `io.mcctl.role=server` and `io.mcctl.server=<name>` (the router has `io.mcctl.role=router`, playit-agent `playit`). A container created before the labels existed is found through the compose project (`COMPOSE_PROJECT_NAME` in the shell, else in the root `.env`, else the root directory name; the `name:` key of the compose file is not read) when its name and service start with `mc-` and it is not `mc-router`. `mcctl upgrade` adds the labels to existing servers; they apply when the container is recreated.
+- **Recreate.** `recreate()` rebuilds a container from its saved compose definition so that changed labels (the `mc-router.host` hostnames) apply; a running server runs again, any other is created without starting (`POST /api/servers/:name/hostnames/apply`).
+
 ## Adapters
 
 | Port | Adapter | Package |
@@ -144,6 +155,25 @@ Related helpers:
 - `Container.create(options?)` builds a fresh one.
 - `Container.createWithAdapters(...)` injects custom adapters (tests).
 - `resetContainer()` drops the global instance (tests).
+
+## mcctl-api Composition Root
+
+mcctl-api builds its adapters and use cases in one place, the Fastify plugin `mcctl-api/src/plugins/container.ts` (the counterpart of the CLI `Container`). Routes do not construct adapters; they read them from the decorated instance:
+
+```typescript
+// in a route handler
+const runtime = fastify.container.containerRuntime();
+```
+
+Members that are cheap to build are factories (one per call); the ones that hold a SQLite handle are built on first use and live as long as the app, and the handle opens on its first query, so a database that cannot be opened fails only the feature that needs it. `buildApp()` registers the container before the routes so that its `onClose` (closing the databases) runs after theirs.
+
+Tests replace members with fakes instead of mocking modules:
+
+```typescript
+const app = await buildApp({ container: { containerRuntime: () => fakeRuntime } });
+```
+
+`BuildAppOptions.container` is a `Partial<ApiContainer>`; what you leave out is the production adapter.
 
 ## Adding a New Command
 
