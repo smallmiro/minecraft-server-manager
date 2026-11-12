@@ -130,6 +130,49 @@ function parseDockerStats(result: string): ContainerStats | null {
   }
 }
 
+/** Time since `{{.State.StartedAt}}` as "1d 2h 30m"; null when empty or never started. */
+function parseUptime(result: string): { uptime: string; seconds: number } | null {
+  if (!result || result === '0001-01-01T00:00:00Z') return null;
+
+  try {
+    const startedAt = new Date(result);
+    const now = new Date();
+    const diffMs = now.getTime() - startedAt.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+
+    // Format uptime
+    const days = Math.floor(diffSeconds / 86400);
+    const hours = Math.floor((diffSeconds % 86400) / 3600);
+    const minutes = Math.floor((diffSeconds % 3600) / 60);
+
+    let uptime = '';
+    if (days > 0) uptime += `${days}d `;
+    if (hours > 0 || days > 0) uptime += `${hours}h `;
+    uptime += `${minutes}m`;
+
+    return { uptime: uptime.trim(), seconds: diffSeconds };
+  } catch {
+    return null;
+  }
+}
+
+/** `docker ps --format {{.Names}}` output → server workloads (mc-router dropped), sorted. */
+function serverWorkloads(result: string): string[] {
+  if (!result) return [];
+
+  return result
+    .split('\n')
+    .filter(name => name && name !== 'mc-router')
+    .sort();
+}
+
+/** `docker ps` argv for list(): all server containers, or running ones only. */
+function listArgs(options?: { running?: boolean }): string[] {
+  return options?.running
+    ? ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}']
+    : ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}'];
+}
+
 /**
  * IContainerRuntimePort over the Docker CLI. A ServerName maps to its container (`mc-<server>`, workloadNames.ts);
  * a string is the container name itself (deprecated v2 form, still used by the legacy facade).
@@ -193,9 +236,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
    * Get minecraft server containers (mc-* except mc-router), all or running only
    */
   list(options?: { running?: boolean; strict?: boolean }): string[] {
-    const args = options?.running
-      ? ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}']
-      : ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}'];
+    const args = listArgs(options);
     let result: string;
     if (options?.strict) {
       const r = spawnSync('docker', args, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
@@ -207,12 +248,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
       result = execCommand('docker', args);
     }
 
-    if (!result) return [];
-
-    return result
-      .split('\n')
-      .filter(name => name && name !== 'mc-router')
-      .sort();
+    return serverWorkloads(result);
   }
 
   /**
@@ -271,28 +307,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
       container,
     ]);
 
-    if (!result || result === '0001-01-01T00:00:00Z') return null;
-
-    try {
-      const startedAt = new Date(result);
-      const now = new Date();
-      const diffMs = now.getTime() - startedAt.getTime();
-      const diffSeconds = Math.floor(diffMs / 1000);
-
-      // Format uptime
-      const days = Math.floor(diffSeconds / 86400);
-      const hours = Math.floor((diffSeconds % 86400) / 3600);
-      const minutes = Math.floor((diffSeconds % 3600) / 60);
-
-      let uptime = '';
-      if (days > 0) uptime += `${days}d `;
-      if (hours > 0 || days > 0) uptime += `${hours}h `;
-      uptime += `${minutes}m`;
-
-      return { uptime: uptime.trim(), seconds: diffSeconds };
-    } catch {
-      return null;
-    }
+    return parseUptime(result);
   }
 
   /** Create the container if missing, then run it (`docker compose up -d`) */
@@ -608,35 +623,44 @@ export class DockerRouterStatusAdapter implements IRouterStatusPort {
    * Image and env of mc-router from one `docker inspect` (#768)
    */
   inspectRouter(): RouterContainerConfig | null {
-    const config = parseJsonObject(execCommand('docker', ['inspect', '--format', '{{json .Config}}', '--', 'mc-router']));
-    if (!config) return null;
-
-    const env: Record<string, string> = {};
-    if (Array.isArray(config['Env'])) {
-      for (const entry of config['Env']) {
-        if (typeof entry !== 'string') continue;
-        const eq = entry.indexOf('=');
-        if (eq > 0) env[entry.slice(0, eq)] = entry.slice(eq + 1);
-      }
-    }
-    const image = typeof config['Image'] === 'string' ? config['Image'] : undefined;
-    return { image, env };
+    return parseRouterConfig(execCommand('docker', ROUTER_CONFIG_ARGS));
   }
 
   /**
    * All string labels of a container from one `docker inspect` (#768)
    */
   getLabels(name: ServerName | string): Record<string, string> {
-    const container = workloadNameOf(name);
-    const labels = parseJsonObject(
-      execCommand('docker', ['inspect', '--format', '{{json .Config.Labels}}', '--', container])
-    );
-    const result: Record<string, string> = {};
-    for (const [key, value] of Object.entries(labels ?? {})) {
-      if (typeof value === 'string') result[key] = value;
-    }
-    return result;
+    return parseLabels(execCommand('docker', labelArgs(name)));
   }
+}
+
+const ROUTER_CONFIG_ARGS = ['inspect', '--format', '{{json .Config}}', '--', 'mc-router'];
+const labelArgs = (name: ServerName | string) => ['inspect', '--format', '{{json .Config.Labels}}', '--', workloadNameOf(name)];
+
+/** Image and env from `docker inspect --format '{{json .Config}}'`, or null. */
+function parseRouterConfig(text: string): RouterContainerConfig | null {
+  const config = parseJsonObject(text);
+  if (!config) return null;
+
+  const env: Record<string, string> = {};
+  if (Array.isArray(config['Env'])) {
+    for (const entry of config['Env']) {
+      if (typeof entry !== 'string') continue;
+      const eq = entry.indexOf('=');
+      if (eq > 0) env[entry.slice(0, eq)] = entry.slice(eq + 1);
+    }
+  }
+  const image = typeof config['Image'] === 'string' ? config['Image'] : undefined;
+  return { image, env };
+}
+
+/** String labels from `docker inspect --format '{{json .Config.Labels}}'`; {} when none or unreadable. */
+function parseLabels(text: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(parseJsonObject(text) ?? {})) {
+    if (typeof value === 'string') result[key] = value;
+  }
+  return result;
 }
 
 /** A JSON object from `docker inspect --format '{{json ...}}'`, or null. */
