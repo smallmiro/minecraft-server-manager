@@ -399,8 +399,12 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     return this.options.env?.() ?? process.env;
   }
 
-  /** Copied from mcctl-api executeServerAction */
-  private compose(args: string[], timeout = 60000): Promise<RuntimeActionResult> {
+  /**
+   * Copied from mcctl-api executeServerAction. The default outlasts the
+   * servers' 90s stop_grace_period (#661): a stop that takes the full grace
+   * period must not be reported as a failure, nor cut a restart short.
+   */
+  private compose(args: string[], timeout = 120000): Promise<RuntimeActionResult> {
     return this.run(args, {
       cwd: this.options.root ?? resolveMcctlRoot(),
       timeout,
