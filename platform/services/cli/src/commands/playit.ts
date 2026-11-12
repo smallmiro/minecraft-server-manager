@@ -10,10 +10,11 @@ import {
   getConfiguredServers,
 } from '@minecraft-docker/shared';
 import * as p from '@clack/prompts';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, copyFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 import { writeServerConfig } from '../lib/server-config.js';
+import { addComposeService } from '../lib/compose-router-patch.js';
 
 export interface PlayitCommandOptions {
   root?: string;
@@ -41,7 +42,9 @@ function isPlayitEnabled(paths: Paths): boolean {
 }
 
 /**
- * Ensure playit service exists in docker-compose.yml
+ * Ensure playit service exists in docker-compose.yml. Added through the
+ * re-parse-checked patch (#671) with a .bak-<time> backup; a file it cannot
+ * patch safely is left as is with a warning.
  */
 export function ensurePlayitService(paths: Paths): void {
   const composePath = join(paths.root, 'docker-compose.yml');
@@ -52,8 +55,7 @@ export function ensurePlayitService(paths: Paths): void {
   // Check if playit service already defined
   if (content.includes('playit-cloud/playit-agent')) return;
 
-  const playitService = `
-  # ===========================================================================
+  const playitService = `  # ===========================================================================
   # External Access - playit.gg Tunnel Agent
   # ===========================================================================
   playit:
@@ -73,13 +75,15 @@ export function ensurePlayitService(paths: Paths): void {
         max-file: "5"
 `;
 
-  // Insert before 'networks:' section if it exists, otherwise append before end
-  if (content.includes('\nnetworks:')) {
-    const updated = content.replace('\nnetworks:', playitService + '\nnetworks:');
-    atomicWriteFileSync(composePath, updated);
-  } else {
-    atomicWriteFileSync(composePath, content + playitService);
+  const result = addComposeService(content, 'playit', playitService);
+  if (result.skipped) {
+    log.warn('Could not add the playit service to docker-compose.yml safely; add it by hand (see mcctl docs: playit.gg).');
+    return;
   }
+  if (result.changes.length === 0) return;
+  const stamp = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+  copyFileSync(composePath, `${composePath}.bak-${stamp}`);
+  atomicWriteFileSync(composePath, result.content);
 }
 
 /**

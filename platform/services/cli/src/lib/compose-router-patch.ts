@@ -192,3 +192,50 @@ export function patchRouterCompose(user: string, template: string): ComposePatch
   }
   return { content, changes };
 }
+
+/**
+ * `content` with service `name` added at the end of its services map (#671).
+ * `block` is the service's YAML at a two-space service indent (comment lines
+ * kept); it is re-indented to the file's own. Unchanged when the service is
+ * there; refused ('invalid', content unchanged) unless re-parsing shows the
+ * new service as the only change.
+ */
+export function addComposeService(content: string, name: string, block: string): ComposePatchResult {
+  const refused: ComposePatchResult = { content, changes: [], skipped: 'invalid' };
+  let before: { services?: Record<string, unknown> } | null;
+  try {
+    before = yaml.load(content) as typeof before;
+  } catch {
+    return refused;
+  }
+  if (before?.services?.[name] !== undefined) return { content, changes: [] };
+
+  const lines = content.split('\n');
+  const services = lines.findIndex((l) => /^services:\s*(#.*)?$/.test(l));
+  if (services < 0) return refused;
+  const first = lines.findIndex((l, i) => i > services && meaningful(l));
+  const serviceIndent = first < 0 ? 0 : indentOf(lines[first]!);
+  if (serviceIndent === 0) return refused;
+  // Before the next top-level key and the comment lines that head it
+  let at = lines.findIndex((l, i) => i > services && meaningful(l) && indentOf(l) === 0);
+  if (at < 0) at = lines.length;
+  while (at - 1 > services && !meaningful(lines[at - 1]!)) at--;
+
+  const eol = content.includes('\r\n') ? '\r' : '';
+  const insert = block
+    .replace(/\n+$/, '')
+    .split('\n')
+    .map((l) => ' '.repeat((indentOf(l) / 2) * serviceIndent) + l.trimStart() + eol);
+  const next = [...lines.slice(0, at), eol, ...insert, ...lines.slice(at)].join('\n');
+
+  try {
+    const after = yaml.load(next) as { services?: Record<string, unknown> } | null;
+    const want = (yaml.load(`services:\n${block}`) as { services: Record<string, unknown> }).services[name];
+    const added = after?.services?.[name];
+    delete after?.services?.[name];
+    if (JSON.stringify(added) !== JSON.stringify(want) || JSON.stringify(after) !== JSON.stringify(before)) return refused;
+  } catch {
+    return refused;
+  }
+  return { content: next, changes: [`${name} added`] };
+}

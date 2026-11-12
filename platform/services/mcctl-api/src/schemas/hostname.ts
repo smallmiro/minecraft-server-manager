@@ -68,6 +68,14 @@ export const UpdateHostnamesResponseSchema = Type.Object({
   playitDomain: Type.Union([Type.String(), Type.Null()], { description: 'playit.gg domain (PLAYIT_DOMAIN) after the update' }),
 });
 
+/**
+ * Response schema for POST hostnames/apply (#671)
+ */
+export const ApplyHostnamesResponseSchema = Type.Object({
+  success: Type.Boolean(),
+  serverName: Type.String(),
+});
+
 // ============================================================
 // Type Exports
 // ============================================================

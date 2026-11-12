@@ -372,6 +372,8 @@ describe('mcctl playit subcommand', () => {
 
     it('should add playit service to docker-compose.yml if missing', async () => {
       createInitializedPlatform(false);
+      // A services map to add to (#671: a file without one is not patched)
+      writeFileSync(join(testRoot, 'docker-compose.yml'), 'services:\n  router:\n    image: itzg/mc-router:1.47.1\n');
 
       vi.mocked(shared.getPlayitAgentStatus).mockResolvedValueOnce({
         enabled: false,

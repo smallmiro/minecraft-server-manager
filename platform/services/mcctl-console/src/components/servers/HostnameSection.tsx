@@ -20,7 +20,7 @@ import LanguageIcon from '@mui/icons-material/Language';
 import CloseIcon from '@mui/icons-material/Close';
 import { BentoPanel } from '@/components/bento';
 import { useQueryClient } from '@tanstack/react-query';
-import { useServerHostnames, useUpdateHostnames } from '@/hooks/useMcctl';
+import { useServerHostnames, useUpdateHostnames, useApplyHostnames } from '@/hooks/useMcctl';
 import { usePlayitStatus } from '@/hooks/usePlayit';
 
 interface HostnameSectionProps {
@@ -30,6 +30,7 @@ interface HostnameSectionProps {
 export function HostnameSection({ serverName }: HostnameSectionProps) {
   const { data, isLoading } = useServerHostnames(serverName);
   const updateHostnames = useUpdateHostnames();
+  const applyHostnames = useApplyHostnames();
   const queryClient = useQueryClient();
   const { data: playitStatus } = usePlayitStatus();
   const playitDomain = playitStatus?.servers.find((s) => s.serverName === serverName)?.playitDomain;
@@ -106,13 +107,27 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
       setSavedSuccess(true);
       setSnackbar({
         open: true,
-        message: 'Hostnames saved. Stop the server, then start it again to apply (restart does not apply).',
+        message: 'Hostnames saved. Apply them to update mc-router routing.',
         severity: 'warning',
       });
     } catch (error) {
       setSnackbar({
         open: true,
         message: error instanceof Error ? error.message : 'Failed to save hostnames',
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleApply = async () => {
+    try {
+      await applyHostnames.mutateAsync(serverName);
+      setSavedSuccess(false);
+      setSnackbar({ open: true, message: 'Hostnames applied: mc-router picks them up within seconds.', severity: 'success' });
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: error instanceof Error ? error.message : 'Failed to apply hostnames',
         severity: 'error',
       });
     }
@@ -260,10 +275,18 @@ export function HostnameSection({ serverName }: HostnameSectionProps) {
 
           {/* Recreate Warning */}
           {savedSuccess && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
+            <Alert
+              severity="warning"
+              sx={{ mb: 2 }}
+              action={
+                <Button color="inherit" size="small" onClick={handleApply} disabled={applyHostnames.isPending}>
+                  {applyHostnames.isPending ? 'Applying...' : 'Apply now'}
+                </Button>
+              }
+            >
               Container recreation is required for hostname changes to take effect.
-              Stop the server, then start it again (a restart does not apply the changes),
-              or run <code>docker compose up -d</code>.
+              Apply now recreates the container (a running server restarts and players are disconnected).
+              You can also stop the server, then start it again (a restart does not apply the changes).
             </Alert>
           )}
 

@@ -68,6 +68,16 @@ describe('rerenderServers (init --reconfigure)', () => {
     expect(read('beta', 'docker-compose.yml')).toContain('beta.10.0.0.2.nip.io');
   });
 
+  it('keeps the playit domain and custom hosts after a HOST_IP change (#671)', async () => {
+    server('factory', 'factory.local,factory.1.2.3.4.nip.io,old.gl.joinmc.link,mc.example.com');
+    writeFileSync(join(root, 'servers', 'factory', 'config.env'), `${read('factory', 'config.env')}\nPLAYIT_DOMAIN=old.gl.joinmc.link\n`);
+    await rerenderServers(paths);
+    expect(read('factory', 'docker-compose.yml')).toContain(
+      'mc-router.host: "factory.local,factory.10.0.0.2.nip.io,old.gl.joinmc.link,mc.example.com"'
+    );
+    expect(parseEnvDocument(read('factory', 'config.env')).values.get('PLAYIT_DOMAIN')).toBe('old.gl.joinmc.link');
+  });
+
   it('reports a server it cannot read and goes on', async () => {
     server('good', 'good.local');
     server('bad', 'bad.local');

@@ -312,6 +312,18 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /**
+   * `compose up --force-recreate` (#671): labels are fixed at container
+   * creation, so router host changes need a new container. A stopped one is
+   * only created (`--no-start`): mc-router auto-scale reads its labels and
+   * wakes it, as before.
+   */
+  async recreate(name: ServerName | string): Promise<RuntimeActionResult> {
+    const container = workloadNameOf(name);
+    const run = (await this.getStatusAsync(name)) === 'running' ? '-d' : '--no-start';
+    return this.compose(['compose', 'up', run, '--force-recreate', '--no-deps', container], this.options.startTimeoutMs);
+  }
+
+  /**
    * delete-server.sh step 1 (#735): `docker ps -a` decides whether the
    * container exists; a container of the compose project is stopped and
    * removed with compose, any other with `docker rm -f`.
