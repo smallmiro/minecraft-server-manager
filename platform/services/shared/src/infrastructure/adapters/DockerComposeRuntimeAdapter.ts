@@ -242,10 +242,10 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     return result.toLowerCase() as ContainerStatus;
   }
 
-  async listStates(): Promise<Map<string, WorkloadState>> {
+  async listStates(options?: { strict?: boolean }): Promise<Map<string, WorkloadState>> {
     const result = await query(
       ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}'],
-      { strict: true }
+      { strict: options?.strict }
     );
     const states = new Map<string, WorkloadState>();
     for (const line of result.split('\n')) {

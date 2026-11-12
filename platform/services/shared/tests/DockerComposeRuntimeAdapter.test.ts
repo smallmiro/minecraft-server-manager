@@ -860,9 +860,14 @@ describe('async request-path queries (#672)', () => {
     expect(spawnSync).not.toHaveBeenCalled();
   });
 
-  it('listStates rejects when docker fails, so "no containers" and "cannot tell" differ', async () => {
+  it('listStates with strict rejects when docker fails, so "no containers" and "cannot tell" differ', async () => {
     execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { code: 1, stderr: 'daemon down' }));
-    await expect(runtime.listStates()).rejects.toThrow(/daemon down/);
+    await expect(runtime.listStates({ strict: true })).rejects.toThrow(/daemon down/);
+  });
+
+  it('listStates without strict keeps the D1 contract of list(): a failed docker ps reads as no containers', async () => {
+    execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { code: 1, stderr: 'daemon down' }));
+    expect(await runtime.listStates()).toEqual(new Map());
   });
 
   it('a hung docker is killed at the timeout and rejects with RuntimeQueryTimeoutError, never a sentinel', async () => {

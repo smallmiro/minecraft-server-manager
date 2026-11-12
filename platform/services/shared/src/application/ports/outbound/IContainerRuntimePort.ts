@@ -74,9 +74,10 @@ export interface IContainerRuntimePort {
   listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]>;
   /**
    * Every `mc-*` workload (mc-router included) keyed by container name, from
-   * one runtime query (#672). Rejects when the runtime cannot be queried.
+   * one runtime query (#672). Like list(): a failed query is an empty map
+   * unless `strict`, where it rejects. A timeout always rejects.
    */
-  listStates(): Promise<Map<string, WorkloadState>>;
+  listStates(options?: { strict?: boolean }): Promise<Map<string, WorkloadState>>;
 
   /** Create the workload if missing, then run it. */
   start(name: ServerName | string): Promise<RuntimeActionResult>;

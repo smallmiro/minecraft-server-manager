@@ -88,6 +88,11 @@ describe('getServerDetailedInfo (#672)', () => {
     expect(vi.mocked(execFile).mock.calls.map(([, args]) => (args as string[])[0])).toEqual(['ps', 'ps']);
   });
 
+  it('falls back to config like the sync path when docker fails without a timeout', async () => {
+    fakeExecFile(() => null);
+    expect(await getServerDetailedInfo('alpha', serversDir, worldsDir)).toMatchObject({ status: 'not_created' });
+  });
+
   it('rejects when docker hangs instead of reporting the server as not created', async () => {
     vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
       (args[args.length - 1] as (err: Error) => void)(Object.assign(new Error('killed'), { killed: true }));

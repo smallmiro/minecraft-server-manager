@@ -274,6 +274,13 @@ describe('getRouterDetailInfoAsync (#768)', () => {
     expect(await getRouterDetailInfoAsync({ routerApi: api({}) })).toMatchObject({ status: 'not_found', health: 'unknown' });
   });
 
+  it('reports a failed docker like the sync path: router not found, no routes (#672)', async () => {
+    vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
+      (args[args.length - 1] as (err: Error) => void)(Object.assign(new Error('daemon down'), { code: 1 }));
+    }) as never);
+    expect(await getRouterDetailInfoAsync({ routerApi: api({}) })).toMatchObject({ status: 'not_found', routes: [] });
+  });
+
   it('rejects when docker hangs instead of reporting an empty router (#672)', async () => {
     vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
       const callback = args[args.length - 1] as (err: Error) => void;

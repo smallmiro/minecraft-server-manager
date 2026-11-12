@@ -379,7 +379,8 @@ function routesOf(
  * Request paths call this, so every docker query is awaited and bounded (#672):
  * one `docker ps` gives every state and host label, labels are inspected only
  * for hosted containers, and health comes from the same API answer. A docker
- * timeout rejects with RuntimeQueryTimeoutError.
+ * timeout rejects with RuntimeQueryTimeoutError; a failed docker reads as no
+ * containers, as on the sync path (fail-closed is #669's decision).
  */
 export async function getRouterDetailInfoAsync(
   options: { routerApi?: IMcRouterApiPort } = {}
@@ -663,7 +664,8 @@ export async function getDetailedServerInfoFromConfig(
 /**
  * Get detailed server info (works for both running containers and config-only servers).
  * API request path: awaited, bounded docker queries only (#672); a docker
- * timeout rejects with RuntimeQueryTimeoutError.
+ * timeout rejects with RuntimeQueryTimeoutError, a failed docker falls back to
+ * config as on the sync path (#669 decides fail-closed).
  */
 export async function getServerDetailedInfo(
   serverName: string,
