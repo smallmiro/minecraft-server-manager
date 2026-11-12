@@ -11,7 +11,6 @@ import {
   PlatformSettingsValidationError,
   PlatformSettingsWorldLocationError,
 } from '../services/PlatformSettingsService.js';
-import { createWorldUseCase } from '../lib/world-use-case.js';
 import {
   PlatformSettingsResponseSchema,
   PlatformSettingsUpdateRequestSchema,
@@ -43,7 +42,7 @@ const platformSettingsPlugin: FastifyPluginAsync = async (fastify: FastifyInstan
       join(config.mcctlRoot, 'ecosystem.config.cjs'),
       process.env,
       async (nextEnv) => {
-        const refused = await createWorldUseCase().checkPlatformEnvChange(nextEnv);
+        const refused = await fastify.container.worldManagementUseCase().checkPlatformEnvChange(nextEnv);
         return refused ? { message: refused.message, servers: refused.servers } : null;
       },
     );

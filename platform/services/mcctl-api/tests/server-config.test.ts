@@ -106,10 +106,6 @@ const worldUseCase = vi.hoisted(() => ({
   assignWorldByName: vi.fn(),
   planWorldReset: vi.fn(),
 }));
-vi.mock('../src/lib/world-use-case.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../src/lib/world-use-case.js')>()),
-  createWorldUseCase: () => worldUseCase,
-}));
 
 // Mock fs module with path-aware logic
 vi.mock('fs', async (importOriginal) => {
@@ -171,7 +167,7 @@ GID=1000
 `;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: { worldManagementUseCase: () => worldUseCase as never } });
   });
 
   afterAll(async () => {
