@@ -1,6 +1,5 @@
-import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type Database from 'better-sqlite3';
+import { LazySqlite } from './sqlite.js';
 import type { IAuditLogPort, AuditLogQueryOptions } from '../../application/ports/outbound/IAuditLogPort.js';
 import { AuditLog, type AuditLogData, type AuditLogRow } from '../../domain/entities/AuditLog.js';
 import type { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
@@ -10,7 +9,7 @@ import type { AuditActionEnum } from '../../domain/value-objects/AuditAction.js'
  * Implements IAuditLogPort using SQLite database storage with better-sqlite3
  */
 export class SqliteAuditLogRepository implements IAuditLogPort {
-  private readonly db: Database.Database;
+  private readonly sqlite: LazySqlite;
   private logCallCount = 0;
   private lastCleanupTime = Date.now();
 
@@ -25,32 +24,24 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
    * @param dbPath - Path to the SQLite database file
    */
   constructor(dbPath: string) {
-    // Ensure directory exists
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-
-    // Open database connection
-    this.db = new Database(dbPath);
-
-    // Enable WAL mode for better concurrency
-    this.db.pragma('journal_mode = WAL');
-
-    // Run migrations
-    this.migrate();
+    this.sqlite = new LazySqlite(dbPath, (db) => this.migrate(db));
 
     // Initialize auto-cleanup settings from environment
     this.autoCleanupEnabled = process.env.AUDIT_AUTO_CLEANUP === 'true';
     this.retentionDays = parseInt(process.env.AUDIT_RETENTION_DAYS || '90', 10);
   }
 
+  /** The database handle, opened with the shared settings on first use (#673). */
+  private get db(): Database.Database {
+    return this.sqlite.get();
+  }
+
   /**
    * Run database migrations
    * Creates tables and indexes if they don't exist
    */
-  private migrate(): void {
-    this.db.exec(`
+  private migrate(db: Database.Database): void {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS audit_logs (
         id TEXT PRIMARY KEY,
         action TEXT NOT NULL,
@@ -283,6 +274,6 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
    * Should be called when the repository is no longer needed
    */
   close(): void {
-    this.db.close();
+    this.sqlite.close();
   }
 }

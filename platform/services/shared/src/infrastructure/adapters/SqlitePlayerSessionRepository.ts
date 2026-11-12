@@ -1,6 +1,5 @@
-import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type Database from 'better-sqlite3';
+import { LazySqlite } from './sqlite.js';
 import type {
   IPlayerSessionRepository,
   PlayerSessionSummary,
@@ -22,25 +21,23 @@ interface PlayerSessionRow {
  * `SqliteAuditLogRepository`.
  */
 export class SqlitePlayerSessionRepository implements IPlayerSessionRepository {
-  private readonly db: Database.Database;
+  private readonly sqlite: LazySqlite;
 
   /**
    * Create a new SqlitePlayerSessionRepository
    * @param dbPath - Path to the SQLite database file
    */
   constructor(dbPath: string) {
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-
-    this.db = new Database(dbPath);
-    this.db.pragma('journal_mode = WAL');
-    this.migrate();
+    this.sqlite = new LazySqlite(dbPath, (db) => this.migrate(db));
   }
 
-  private migrate(): void {
-    this.db.exec(`
+  /** The database handle, opened with the shared settings on first use (#673). */
+  private get db(): Database.Database {
+    return this.sqlite.get();
+  }
+
+  private migrate(db: Database.Database): void {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS player_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         server_name TEXT NOT NULL,
@@ -160,7 +157,7 @@ export class SqlitePlayerSessionRepository implements IPlayerSessionRepository {
 
   /** Close the database connection. */
   close(): void {
-    this.db.close();
+    this.sqlite.close();
   }
 }
 
