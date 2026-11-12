@@ -1,55 +1,16 @@
-import { join } from 'path';
 import {
-  ConfigSnapshotUseCaseImpl,
-  ConfigSnapshotDatabase,
-  SqliteConfigSnapshotRepository,
-  FileSystemConfigSnapshotStorage,
-  FileSystemConfigFileCollector,
-  ConfigEnvWorldAssignmentAdapter,
-  DockerComposeRuntimeAdapter,
-  Paths,
   type IConfigSnapshotUseCase,
   type ConfigSnapshot,
   type SnapshotDiff,
   serverExists,
   getContainerStatus,
 } from '@minecraft-docker/shared';
-import { config, childProcessEnv } from '../config/index.js';
+import { config } from '../config/index.js';
+import { currentContainer } from '../plugins/container.js';
 
-/**
- * Singleton instances for the config snapshot service
- */
-let database: ConfigSnapshotDatabase | null = null;
-let useCase: IConfigSnapshotUseCase | null = null;
-
-/**
- * Get or create the ConfigSnapshotDatabase singleton
- */
-function getDatabase(): ConfigSnapshotDatabase {
-  if (!database) {
-    const dbPath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshots.db');
-    database = new ConfigSnapshotDatabase(dbPath);
-  }
-  return database;
-}
-
-/**
- * Get or create the ConfigSnapshotUseCase singleton
- */
+/** The app's use case: config-snapshots.db has one handle, owned by the container (#673). */
 export function getConfigSnapshotUseCase(): IConfigSnapshotUseCase {
-  if (!useCase) {
-    const db = getDatabase();
-    const repository = new SqliteConfigSnapshotRepository(db);
-    const storagePath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshot-storage');
-    const storage = new FileSystemConfigSnapshotStorage(storagePath);
-    const serversDir = join(config.mcctlRoot, 'servers');
-    const collector = new FileSystemConfigFileCollector(serversDir);
-    // A restored config.env is checked against the world assignments (#670)
-    const assignments = new ConfigEnvWorldAssignmentAdapter(new Paths(config.mcctlRoot));
-    const runtime = new DockerComposeRuntimeAdapter({ root: config.mcctlRoot, env: () => childProcessEnv() });
-    useCase = new ConfigSnapshotUseCaseImpl(repository, storage, collector, assignments, runtime);
-  }
-  return useCase;
+  return currentContainer().configSnapshotUseCase();
 }
 
 /**
@@ -137,16 +98,5 @@ export async function isServerRunning(serverName: string): Promise<boolean> {
     return status === 'running';
   } catch {
     return false;
-  }
-}
-
-/**
- * Close the database (for graceful shutdown)
- */
-export function closeConfigSnapshotDatabase(): void {
-  if (database) {
-    database.close();
-    database = null;
-    useCase = null;
   }
 }

@@ -1,6 +1,5 @@
-import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type Database from 'better-sqlite3';
+import { LazySqlite } from './sqlite.js';
 
 /**
  * ConfigSnapshotDatabase
@@ -8,32 +7,19 @@ import { dirname } from 'node:path';
  * Provides shared database connection for snapshot and schedule repositories.
  */
 export class ConfigSnapshotDatabase {
-  private readonly db: Database.Database;
+  private readonly sqlite: LazySqlite;
 
   /**
    * Create a new ConfigSnapshotDatabase
    * @param dbPath - Path to the SQLite database file, or ':memory:' for in-memory
    */
   constructor(dbPath: string) {
-    // Ensure directory exists (skip for in-memory)
-    if (dbPath !== ':memory:') {
-      const dir = dirname(dbPath);
-      if (!existsSync(dir)) {
-        mkdirSync(dir, { recursive: true });
-      }
-    }
+    this.sqlite = new LazySqlite(dbPath, (db) => this.migrate(db));
+  }
 
-    // Open database connection
-    this.db = new Database(dbPath);
-
-    // Enable WAL mode for better concurrency
-    this.db.pragma('journal_mode = WAL');
-
-    // Enable foreign key constraints
-    this.db.pragma('foreign_keys = ON');
-
-    // Run migrations
-    this.migrate();
+  /** The database handle, opened with the shared settings on first use (#673). */
+  private get db(): Database.Database {
+    return this.sqlite.get();
   }
 
   /**
@@ -47,8 +33,10 @@ export class ConfigSnapshotDatabase {
    * Run database migrations
    * Creates tables and indexes if they don't exist
    */
-  private migrate(): void {
-    this.db.exec(`
+  private migrate(db: Database.Database): void {
+    // Snapshots reference schedules and files reference snapshots
+    db.pragma('foreign_keys = ON');
+    db.exec(`
       CREATE TABLE IF NOT EXISTS config_snapshot_schedules (
         id TEXT PRIMARY KEY,
         server_name TEXT NOT NULL,
@@ -94,6 +82,6 @@ export class ConfigSnapshotDatabase {
    * Close the database connection
    */
   close(): void {
-    this.db.close();
+    this.sqlite.close();
   }
 }

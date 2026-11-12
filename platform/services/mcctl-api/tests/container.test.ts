@@ -17,6 +17,14 @@ describe('container plugin (#667)', () => {
     expect(typeof app.container.createServerUseCase).toBe('function');
   });
 
+  it('services share the container handles for config-snapshots.db and audit.db (#673)', async () => {
+    app = await buildApp({ logger: false });
+    const { getConfigSnapshotUseCase } = await import('../src/services/config-snapshot-service.js');
+    const { getAuditLogRepository } = await import('../src/services/audit-log-service.js');
+    expect(getConfigSnapshotUseCase()).toBe(app.container.configSnapshotUseCase());
+    expect(getAuditLogRepository()).toBe(app.container.auditLogRepository());
+  });
+
   it('replaces only the members passed to buildApp({ container })', async () => {
     const fake = { getWorldInfo: async () => null } as never;
     app = await buildApp({ logger: false, container: { worldInfoUseCase: () => fake } });
@@ -32,6 +40,8 @@ describe('createApiContainer (#667)', () => {
       expect(container.playerSessionUseCase()).toBe(container.playerSessionUseCase());
       expect(container.backupScheduleUseCase()).toBe(container.backupScheduleUseCase());
       expect(container.configSnapshotRepository()).toBe(container.configSnapshotRepository());
+      expect(container.configSnapshotUseCase()).toBe(container.configSnapshotUseCase());
+      expect(container.auditLogRepository()).toBe(container.auditLogRepository());
       expect(container.worldInfoUseCase()).not.toBe(container.worldInfoUseCase());
     } finally {
       container.close();
