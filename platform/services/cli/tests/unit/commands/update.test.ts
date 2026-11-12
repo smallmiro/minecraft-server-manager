@@ -285,7 +285,7 @@ describe('update command', () => {
         (call: any[]) => call[0] === 'npm' && call[1]?.[0] === 'install'
       );
       expect(installCalls.length).toBe(1);
-      expect(installCalls[0][1][1]).toBe('@minecraft-docker/mcctl-api@latest');
+      expect((installCalls[0]![1] as string[])[1]).toBe('@minecraft-docker/mcctl-api@latest');
       // Should have called PM2 restart
       expect(mockRestart).toHaveBeenCalledWith('mcctl-api');
       expect(mockDisconnect).toHaveBeenCalled();

@@ -57,12 +57,12 @@ describe('OpsJsonAdapter', () => {
       const operators = await adapter.read();
 
       expect(operators).toHaveLength(2);
-      expect(operators[0].name).toBe('Notch');
-      expect(operators[0].level.value).toBe(4);
-      expect(operators[0].level.label).toBe('Owner');
-      expect(operators[1].name).toBe('Steve');
-      expect(operators[1].level.value).toBe(2);
-      expect(operators[1].level.label).toBe('Gamemaster');
+      expect(operators[0]!.name).toBe('Notch');
+      expect(operators[0]!.level.value).toBe(4);
+      expect(operators[0]!.level.label).toBe('Owner');
+      expect(operators[1]!.name).toBe('Steve');
+      expect(operators[1]!.level.value).toBe(2);
+      expect(operators[1]!.level.label).toBe('Gamemaster');
     });
 
     it('should handle invalid JSON gracefully', async () => {
@@ -88,8 +88,8 @@ describe('OpsJsonAdapter', () => {
       expect(existsSync(opsFilePath)).toBe(true);
       const operators2 = await adapter.read();
       expect(operators2).toHaveLength(1);
-      expect(operators2[0].name).toBe('Notch');
-      expect(operators2[0].level.value).toBe(4);
+      expect(operators2[0]!.name).toBe('Notch');
+      expect(operators2[0]!.level.value).toBe(4);
     });
 
     it('should overwrite existing ops.json file', async () => {
@@ -115,7 +115,7 @@ describe('OpsJsonAdapter', () => {
 
       const result = await adapter.read();
       expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('Steve');
+      expect(result[0]!.name).toBe('Steve');
     });
 
     it('should create parent directory if it does not exist', async () => {
@@ -177,8 +177,8 @@ describe('OpsJsonAdapter', () => {
 
       const operators = await adapter.read();
       expect(operators).toHaveLength(1);
-      expect(operators[0].name).toBe('Notch');
-      expect(operators[0].level.value).toBe(3);
+      expect(operators[0]!.name).toBe('Notch');
+      expect(operators[0]!.level.value).toBe(3);
     });
 
     it('should not add duplicate operator', async () => {
@@ -199,7 +199,7 @@ describe('OpsJsonAdapter', () => {
       const operators = await adapter.read();
       expect(operators).toHaveLength(1);
       // Should keep original level (not update)
-      expect(operators[0].level.value).toBe(3);
+      expect(operators[0]!.level.value).toBe(3);
     });
   });
 
@@ -224,7 +224,7 @@ describe('OpsJsonAdapter', () => {
       await adapter.remove('notch');
       const operators = await adapter.read();
       expect(operators).toHaveLength(1);
-      expect(operators[0].name).toBe('Steve');
+      expect(operators[0]!.name).toBe('Steve');
     });
 
     it('should do nothing when operator not found', async () => {
@@ -249,8 +249,8 @@ describe('OpsJsonAdapter', () => {
     it('should update operator level', async () => {
       await adapter.updateLevel('Notch', OpLevel.MODERATOR);
       const operators = await adapter.read();
-      expect(operators[0].level.value).toBe(1);
-      expect(operators[0].level.label).toBe('Moderator');
+      expect(operators[0]!.level.value).toBe(1);
+      expect(operators[0]!.level.label).toBe('Moderator');
     });
 
     it('should throw error when operator not found', async () => {

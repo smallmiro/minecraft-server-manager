@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { AuditActionEnum } from '@minecraft-docker/shared';
+import { AuditActionEnum, type DeleteServerUseCase } from '@minecraft-docker/shared';
 
 const { mockRepoCtor } = vi.hoisted(() => ({ mockRepoCtor: vi.fn() }));
 
@@ -104,7 +104,7 @@ describe('Container use case wiring (#736)', () => {
 
   it('deletes through the runtime and ServerSpec repository (the plan runs before any container call)', async () => {
     const container = new Container(root);
-    await expect(container.deleteServerUseCase.deprovision('ghost')).rejects.toThrow(
+    await expect((container.deleteServerUseCase as DeleteServerUseCase).deprovision('ghost')).rejects.toThrow(
       "Server 'ghost' not found (no servers/ghost directory)"
     );
   });

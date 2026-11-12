@@ -38,7 +38,7 @@ describe('migrateConsoleAuthEnv (#699)', () => {
     expect(after).toContain("PORT: '5000'");
     expect(after).toContain("NODE_ENV: 'production'");
     expect(backups()).toHaveLength(1);
-    expect(readFileSync(join(root, backups()[0]), 'utf-8')).toBe(ECO);
+    expect(readFileSync(join(root, backups()[0]!), 'utf-8')).toBe(ECO);
   });
 
   it('moves only the key that is defined', async () => {

@@ -19,7 +19,11 @@
     "no-restricted-imports": ["warn", {
       "paths": [
         { "name": "child_process", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." },
-        { "name": "node:child_process", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." }
+        { "name": "node:child_process", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." },
+        { "name": "vitest", "message": "vitest is allowed only under src/testing/ (#666)." }
+      ],
+      "patterns": [
+        { "group": ["**/testing", "**/testing/*"], "message": "src/testing is test code (#666): runtime modules must not import it." }
       ]
     }],
     "no-restricted-syntax": ["warn",
@@ -31,6 +35,10 @@
     {
       "files": ["src/infrastructure/**/*.ts"],
       "rules": { "no-restricted-imports": "off", "no-restricted-syntax": "off" }
+    },
+    {
+      "files": ["src/testing/**/*.ts"],
+      "rules": { "no-restricted-imports": "off" }
     }
   ]
 }
