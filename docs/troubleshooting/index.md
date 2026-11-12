@@ -234,6 +234,23 @@ mcctl upgrade                                    # sets DOCKER_GID from the sock
 mcctl router start                               # recreate mc-router with the new group
 ```
 
+### Server Starts With an Empty World After an Earlier `mcctl migrate worlds`
+
+**Symptoms:** A server that used to have a world starts in a new, empty world, or `mcctl status` / `mcctl world list` shows `needs migration` for it.
+
+**Cause:** An earlier `mcctl migrate worlds` set `LEVEL` and `EXTRA_ARGS` for the server without moving its world (or moved only part of it). The server then creates a new world in `worlds/<LEVEL>`. The original world is still in `servers/<name>/data/<LEVEL>`.
+
+**Diagnosis:**
+
+```bash
+mcctl status                       # lists servers with "needs migration"
+ls worlds/ servers/<name>/data     # is there a worlds/<LEVEL> next to the original?
+```
+
+**Solution:** Stop the server, move the empty `worlds/<LEVEL>` (and `_nether`, `_the_end`) aside if it exists, then run `mcctl migrate worlds --server <name>` and start the server. The full steps are in [Recovering after an earlier `mcctl migrate worlds`](../cli/commands.md#recovering-after-an-earlier-mcctl-migrate-worlds). Do not delete the moved-aside folders until the original world loads.
+
+**Affected versions:** installs that ran `mcctl migrate worlds` before the version that contains this fix (see the [changelog](https://github.com/smallmiro/minecraft-server-manager/blob/main/CHANGELOG.md), `[Unreleased]`).
+
 ### Web Console Returns 500 After a Node.js Change
 
 **Symptoms:** Console pages return HTTP 500, and `pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`.
