@@ -53,6 +53,12 @@ export interface IContainerRuntimePort {
   stop(name: ServerName | string): Promise<RuntimeActionResult>;
   restart(name: ServerName | string): Promise<RuntimeActionResult>;
   /**
+   * #671: recreate the workload from its definition so changed metadata (the
+   * mc-router host labels) applies; a restart keeps the old labels. A running
+   * workload runs again, any other is created without starting.
+   */
+  recreate(name: ServerName | string): Promise<RuntimeActionResult>;
+  /**
    * #735 (server delete): stop the workload and remove it. An absent workload
    * is success; a runtime that cannot be queried is a failure, not "absent".
    * Server data is not the runtime's: the ServerSpec repository deletes it.

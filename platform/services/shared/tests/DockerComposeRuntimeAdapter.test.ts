@@ -281,6 +281,34 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
     expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'restart', 'mc-a'], COMPOSE, expect.any(Function));
   });
 
+  it('recreate force-recreates a running container and keeps it running (#671)', async () => {
+    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'running\n'));
+    execFileCalls({});
+    expect(await runtime.recreate(ServerName.create('alpha'))).toEqual({ success: true, stdout: '', stderr: '' });
+    expect(spawn).toHaveBeenCalledWith('docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-alpha'], expect.anything());
+    expect(execFile).toHaveBeenCalledWith(
+      'docker',
+      ['compose', 'up', '-d', '--force-recreate', '--no-deps', 'mc-alpha'],
+      COMPOSE,
+      expect.any(Function)
+    );
+  });
+
+  it.each(['exited', 'created', 'not_found'])(
+    'recreate leaves a %s container stopped: created, not started (auto-scale wakes it, #671)',
+    async (state) => {
+      vi.mocked(spawn).mockReturnValueOnce(state === 'not_found' ? fakeChild(1) : fakeChild(0, `${state}\n`));
+      execFileCalls({});
+      expect((await runtime.recreate(ServerName.create('alpha'))).success).toBe(true);
+      expect(execFile).toHaveBeenCalledWith(
+        'docker',
+        ['compose', 'up', '--no-start', '--force-recreate', '--no-deps', 'mc-alpha'],
+        COMPOSE,
+        expect.any(Function)
+      );
+    }
+  );
+
   it('stop runs docker stop -- <name> with env and no timeout', async () => {
     execFileCalls({});
     expect(await runtime.stop('mc-a')).toEqual({ success: true, stdout: '', stderr: '' });
