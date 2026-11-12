@@ -28,6 +28,12 @@ services:
     container_name: mc-beta
     restart: "no"
     stop_grace_period: 90s
+    mem_limit: 6g
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     tty: true
     stdin_open: true
     # Platform keys listed in ../global.env, then this server's config.env

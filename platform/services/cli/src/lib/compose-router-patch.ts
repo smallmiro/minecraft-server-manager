@@ -8,16 +8,17 @@ export interface ComposePatchResult {
 
 interface Block {
   lines: string[];
-  start: number; // index of the "router:" line
-  end: number; // exclusive end of the router block (trailing blank/comment lines excluded)
+  start: number; // index of the "<service>:" line
+  end: number; // exclusive end of the service block (trailing blank/comment lines excluded)
 }
 
 const IMAGE_RE = /^(\s+image:\s*)(["']?)itzg\/mc-router:([^\s"'#]+)\2(\s*#.*)?\r?$/;
 const meaningful = (l: string) => l.trim() !== '' && !l.trim().startsWith('#');
 const indentOf = (l: string) => l.length - l.trimStart().length;
+const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** Locate the `router:` service block. Line-based so comments and formatting stay untouched. */
-function findRouter(content: string): Block | null {
+/** Locate the block of service `name`. Line-based so comments and formatting stay untouched. */
+function findService(content: string, name: string): Block | null {
   const lines = content.split('\n');
   const services = lines.findIndex((l) => /^services:\s*(#.*)?$/.test(l));
   if (services < 0) return null;
@@ -26,11 +27,12 @@ function findRouter(content: string): Block | null {
   const childIndent = indentOf(lines[first]!);
   if (childIndent === 0) return null;
 
+  const keyRe = new RegExp(`^${escape(name)}:\\s*(#.*)?$`);
   let start = -1;
   for (let i = first; i < lines.length; i++) {
     const l = lines[i]!;
     if (meaningful(l) && indentOf(l) === 0) return null; // left the services map
-    if (indentOf(l) === childIndent && /^router:\s*(#.*)?$/.test(l.trim())) {
+    if (indentOf(l) === childIndent && keyRe.test(l.trim())) {
       start = i;
       break;
     }
@@ -48,14 +50,14 @@ function findRouter(content: string): Block | null {
   return { lines, start, end };
 }
 
-const routerLines = (b: Block) => b.lines.slice(b.start + 1, b.end);
-/** Indent of the router's own keys (first non-comment line inside the block). */
-const childIndent = (b: Block) => indentOf(routerLines(b).find(meaningful) ?? '');
+const blockLines = (b: Block) => b.lines.slice(b.start + 1, b.end);
+/** Indent of the service's own keys (first non-comment line inside the block). */
+const childIndent = (b: Block) => indentOf(blockLines(b).find(meaningful) ?? '');
 
-type Router = Record<string, unknown> | undefined;
-const parseRouter = (content: string): Router =>
-  (yaml.load(content) as { services?: { router?: Record<string, unknown> } } | null)?.services?.router;
-const routerTag = (b: Block) => routerLines(b).map((l) => l.match(IMAGE_RE)?.[3]).find(Boolean);
+type Service = Record<string, unknown> | undefined;
+const parseService = (content: string, name: string): Service =>
+  (yaml.load(content) as { services?: Record<string, Record<string, unknown>> } | null)?.services?.[name];
+const routerTag = (b: Block) => blockLines(b).map((l) => l.match(IMAGE_RE)?.[3]).find(Boolean);
 
 function newer(a: string, b: string): boolean {
   const pa = a.split('.').map(Number);
@@ -69,18 +71,61 @@ function newer(a: string, b: string): boolean {
 
 const isVersion = (t: string) => /^\d+(\.\d+)*$/.test(t);
 
-/** Everything in the parsed compose except router.image / router.group_add. */
+/** Service keys added from the template's router when the user's service has none (logging: #662). */
+const ADDED: Array<[service: string, key: string]> = [
+  ['router', 'group_add'],
+  ['router', 'logging'],
+  ['playit', 'logging'],
+];
+/** Service keys this patch manages: compared with the template, everything else must stay as it was. */
+const MANAGED: Array<[service: string, key: string]> = [['router', 'image'], ...ADDED];
+
+/** The parsed compose without the MANAGED keys. */
 function withoutManaged(content: string): unknown {
-  const doc = yaml.load(content) as { services?: { router?: Record<string, unknown> } } | null;
-  if (doc?.services?.router) {
-    delete doc.services.router['image'];
-    delete doc.services.router['group_add'];
+  const doc = yaml.load(content) as { services?: Record<string, Record<string, unknown>> } | null;
+  for (const [service, key] of MANAGED) {
+    const svc = doc?.services?.[service];
+    if (svc && typeof svc === 'object') delete svc[key];
   }
   return doc;
 }
 
 /**
- * Patch only router.image (bump if lower than the template's) and router.group_add (add if missing)
+ * `content` with the template's `key` block (and the comment lines right
+ * above it) added to service `service` when it has none, before its
+ * networks: key or at its end; unchanged when the service or the template
+ * key is missing. Throws when `content` does not parse.
+ */
+function addTemplateKey(content: string, service: string, key: string, tpl: Block): string {
+  const block = findService(content, service);
+  if (!block) return content;
+  const userIndent = childIndent(block);
+  const keyRe = new RegExp(`^\\s+${escape(key)}:`);
+  // also counts YAML merge keys
+  if (blockLines(block).some((l) => keyRe.test(l)) || parseService(content, service)?.[key] !== undefined) return content;
+
+  const tplIndent = childIndent(tpl);
+  const tplLines = blockLines(tpl).map((l) => l.replace(/\r$/, ''));
+  const g = tplLines.findIndex((l) => indentOf(l) === tplIndent && keyRe.test(l));
+  if (g < 0) return content;
+  let gEnd = g + 1;
+  while (gEnd < tplLines.length && meaningful(tplLines[gEnd]!) && indentOf(tplLines[gEnd]!) > tplIndent) gEnd++;
+  let gStart = g;
+  while (gStart > 0 && tplLines[gStart - 1]!.trim().startsWith('#')) gStart--;
+  const eol = content.includes('\r\n') ? '\r' : '';
+  const insert = tplLines
+    .slice(gStart, gEnd)
+    .map((l) => ' '.repeat(Math.round((indentOf(l) / tplIndent) * userIndent)) + l.trimStart() + eol);
+
+  const { lines, start, end } = block;
+  let at = lines.findIndex((l, i) => i > start && i < end && indentOf(l) === userIndent && /^\s+networks:/.test(l));
+  if (at < 0) at = end;
+  while (at - 1 > start && lines[at - 1]!.trim().startsWith('#')) at--; // keep comments with their key
+  return [...lines.slice(0, at), ...insert, ...lines.slice(at)].join('\n');
+}
+
+/**
+ * Patch only router.image (bump if lower than the template's) and the ADDED keys (add if missing)
  * in a user's docker-compose.yml. The result is re-parsed and refused unless nothing else changed.
  */
 export function patchRouterCompose(user: string, template: string): ComposePatchResult {
@@ -90,21 +135,19 @@ export function patchRouterCompose(user: string, template: string): ComposePatch
     ...(skipped && { skipped }),
   });
 
-  const tpl = findRouter(template);
+  const tpl = findService(template, 'router');
   if (!tpl) return unchanged('no-template');
-  const block = findRouter(user);
+  const block = findService(user, 'router');
   if (!block) return unchanged('no-router');
 
   const changes: string[] = [];
   const lines = [...block.lines];
-  let end = block.end;
   const userIndent = childIndent(block);
-  const eol = user.includes('\r\n') ? '\r' : '';
 
   // image: bump only a lower itzg/mc-router version tag
   const tplTag = routerTag(tpl);
   const imageIdx = lines.findIndex(
-    (l, i) => i > block.start && i < end && indentOf(l) === userIndent && IMAGE_RE.test(l),
+    (l, i) => i > block.start && i < block.end && indentOf(l) === userIndent && IMAGE_RE.test(l),
   );
   if (tplTag && imageIdx >= 0) {
     const m = lines[imageIdx]!.match(IMAGE_RE)!;
@@ -118,52 +161,31 @@ export function patchRouterCompose(user: string, template: string): ComposePatch
     }
   }
 
-  // group_add: add the template's lines when the user has none (also counts YAML merge keys)
-  let userHasGroupAdd = lines.slice(block.start + 1, end).some((l) => /^\s+group_add:/.test(l));
-  try {
-    userHasGroupAdd ||= parseRouter(user)?.['group_add'] !== undefined;
-  } catch {
-    return unchanged('invalid');
-  }
-  if (!userHasGroupAdd) {
-    const tplRouter = routerLines(tpl).map((l) => l.replace(/\r$/, ''));
-    const g = tplRouter.findIndex((l) => /^\s+group_add:/.test(l));
-    if (g >= 0) {
-      let gEnd = g + 1;
-      while (gEnd < tplRouter.length && /^\s+-\s/.test(tplRouter[gEnd]!)) gEnd++;
-      let gStart = g;
-      while (gStart > 0 && tplRouter[gStart - 1]!.trim().startsWith('#')) gStart--;
-      const tplIndent = childIndent(tpl);
-      const insert = tplRouter
-        .slice(gStart, gEnd)
-        .map((l) => ' '.repeat(Math.round((indentOf(l) / tplIndent) * userIndent)) + l.trimStart() + eol);
-
-      let at = lines.findIndex((l, i) => i > block.start && i < end && indentOf(l) === userIndent && /^\s+networks:/.test(l));
-      if (at < 0) at = end;
-      while (at - 1 > block.start && lines[at - 1]!.trim().startsWith('#')) at--; // keep comments with their key
-      lines.splice(at, 0, ...insert);
-      end += insert.length;
-      changes.push('router.group_add added');
+  // Keys the user lacks get the template's lines
+  let content = lines.join('\n');
+  for (const [service, key] of ADDED) {
+    try {
+      const next = addTemplateKey(content, service, key, tpl);
+      if (next !== content) changes.push(`${service}.${key} added`);
+      content = next;
+    } catch {
+      return unchanged('invalid');
     }
   }
 
   if (changes.length === 0) return unchanged();
 
-  const content = lines.join('\n');
   try {
     if (JSON.stringify(withoutManaged(content)) !== JSON.stringify(withoutManaged(user))) {
       return unchanged('invalid');
     }
-    const patched = parseRouter(content);
-    const want = parseRouter(template);
-    if (changes.some((c) => c.startsWith('router.image')) && patched?.['image'] !== want?.['image']) {
+    const want = parseService(template, 'router');
+    if (changes.some((c) => c.startsWith('router.image')) && parseService(content, 'router')?.['image'] !== want?.['image']) {
       return unchanged('invalid');
     }
-    if (
-      changes.includes('router.group_add added') &&
-      JSON.stringify(patched?.['group_add']) !== JSON.stringify(want?.['group_add'])
-    ) {
-      return unchanged('invalid');
+    for (const [service, key] of ADDED) {
+      if (!changes.includes(`${service}.${key} added`)) continue;
+      if (JSON.stringify(parseService(content, service)?.[key]) !== JSON.stringify(want?.[key])) return unchanged('invalid');
     }
   } catch {
     return unchanged('invalid');

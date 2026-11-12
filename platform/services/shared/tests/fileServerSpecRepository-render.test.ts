@@ -247,6 +247,33 @@ describe('compose edits', () => {
     expect(read('survival', 'docker-compose.yml')).toContain('stop_grace_period: "90s"');
   });
 
+  it('overwrites a compose written before #662 (no logging) without reporting it as protected', async () => {
+    templateServer('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *logging:\n(?: {6,}.*\n)+/m, ''));
+    expect(read('survival', 'docker-compose.yml')).not.toContain('logging');
+    const loaded = (await repo.load('survival'))!;
+    expect(loaded.warnings.join('\n')).not.toMatch(/protected/);
+    await repo.write({ ...loaded.document, image: 'itzg/minecraft-server:java21' }, { expectedRevision: loaded.revision });
+    expect(read('survival', 'docker-compose.yml')).toContain('max-size: "50m"');
+  });
+
+  it('overwrites a compose written before #662 (no mem_limit) without reporting it as protected', async () => {
+    templateServer('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *mem_limit:.*\n/m, ''));
+    expect(read('survival', 'docker-compose.yml')).not.toContain('mem_limit');
+    const loaded = (await repo.load('survival'))!;
+    expect(loaded.warnings.join('\n')).not.toMatch(/protected/);
+    await repo.write({ ...loaded.document, image: 'itzg/minecraft-server:java21' }, { expectedRevision: loaded.revision });
+    expect(read('survival', 'docker-compose.yml')).toMatch(/mem_limit: "\d+[gm]"/);
+  });
+
+  it('protects a compose whose mem_limit was changed by hand (#662)', async () => {
+    templateServer('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace('    restart: "no"', '    restart: "no"\n    mem_limit: 1g'));
+    const loaded = (await repo.load('survival'))!;
+    expect(loaded.warnings.join('\n')).toMatch(/edits outside the spec \(services\.mc-survival\.mem_limit\)/);
+  });
+
   describe('a compose edited outside the spec', () => {
     const PORTS = (c: string) => c.replace('    restart: "no"', '    restart: "no"\n    ports:\n      - "25566:25565"');
 
@@ -263,8 +290,24 @@ describe('compose edits', () => {
 
     it('is left untouched by a write that does not change the rendered compose', async () => {
       const loaded = (await repo.load('survival'))!;
+      await repo.write({ ...loaded.document, env: { ...loaded.document.env, MOTD: 'edited' } }, { expectedRevision: loaded.revision });
+      expect(read('survival', 'docker-compose.yml')).toContain('25566:25565');
+      expect(parseEnvDocument(read('survival', 'config.env')).values.get('MOTD')).toBe('edited');
+    });
+
+    it("refuses a MEMORY change with 'compose_edited': the old mem_limit could be below the new heap (#662)", async () => {
+      const loaded = (await repo.load('survival'))!;
+      const error = await rejection(repo.write({ ...loaded.document, memory: '6G' }, { expectedRevision: loaded.revision }));
+      expect(error.code).toBe('compose_edited');
+      expect(read('survival', 'docker-compose.yml')).toContain('mem_limit: "6g"');
+    });
+
+    it('takes a MEMORY change when the compose has no mem_limit (written before #662): no limit stays no limit', async () => {
+      writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *mem_limit:.*\n/m, ''));
+      const loaded = (await repo.load('survival'))!;
       await repo.write({ ...loaded.document, memory: '6G' }, { expectedRevision: loaded.revision });
       expect(read('survival', 'docker-compose.yml')).toContain('25566:25565');
+      expect(read('survival', 'docker-compose.yml')).not.toContain('mem_limit');
       expect(parseEnvDocument(read('survival', 'config.env')).values.get('MEMORY')).toBe('6G');
     });
 

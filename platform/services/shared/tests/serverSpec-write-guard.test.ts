@@ -17,8 +17,8 @@ const ALLOWED: Record<string, string> = {
   'shared/src/infrastructure/adapters/server-spec/FileServerSpecRepository.ts': 'the repository: renders the generated files',
   'shared/src/infrastructure/adapters/server-spec/DockerComposeRenderer.ts': 'renders file contents; writes nothing itself',
   'cli/src/lib/server-env-migration.ts': 'repoints env_file of never-imported servers; kept until v3.0.0 (#736)',
-  'cli/src/lib/server-stop-grace-migration.ts':
-    'mcctl upgrade adds stop_grace_period to existing server compose files in place, with a backup (#661); load() reads the patched file as unchanged',
+  'cli/src/lib/server-compose-keys-migration.ts':
+    'mcctl upgrade adds stop_grace_period (#661) and logging (#662) to existing server compose files in place, with a backup; load() reads the patched file as unchanged',
   'shared/src/infrastructure/adapters/FileSystemConfigFileCollector.ts':
     'config snapshot restore writes a consistent set (server.yaml with its generated files), or a pre-#675 set that load() absorbs',
   // Name config.env / docker-compose.yml only to read them, or name the platform docker-compose.yml /
