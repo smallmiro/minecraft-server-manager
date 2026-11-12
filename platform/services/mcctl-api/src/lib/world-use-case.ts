@@ -1,44 +1,5 @@
-import {
-  WorldManagementUseCase,
-  ApiPromptAdapter,
-  WorldRepository,
-  ServerRepository,
-  ConfigEnvWorldAssignmentAdapter,
-  DockerComposeRuntimeAdapter,
-  FileServerSpecRepository,
-  Paths,
-  type ServerSpecErrorCode,
-  type WorldAssignmentErrorCode,
-} from '@minecraft-docker/shared';
-import { childProcessEnv } from '../config/index.js';
+import type { ServerSpecErrorCode, WorldAssignmentErrorCode } from '@minecraft-docker/shared';
 import { serverSpecFailure } from './server-spec.js';
-
-/**
- * Create WorldManagementUseCase instance with API adapters
- */
-export function createWorldUseCase(options?: {
-  serverName?: string;
-  worldName?: string;
-  worldSeed?: string;
-  confirmValue?: boolean;
-}): WorldManagementUseCase {
-  const paths = new Paths();
-  const prompt = new ApiPromptAdapter({
-    serverName: options?.serverName,
-    worldName: options?.worldName,
-    worldSeed: options?.worldSeed,
-    confirmValue: options?.confirmValue ?? true,
-  });
-  // #670: assignments come from each server's LEVEL; D2 moves these into its container plugin
-  const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
-  // LEVEL and SEED writes go through the ServerSpec repository (#675), which checks the server is stopped
-  const specRepo = new FileServerSpecRepository(paths, undefined, runtime);
-  const assignments = new ConfigEnvWorldAssignmentAdapter(paths, specRepo);
-  const worldRepo = new WorldRepository(paths, assignments);
-  const serverRepo = new ServerRepository(paths);
-
-  return new WorldManagementUseCase(prompt, worldRepo, serverRepo, assignments, runtime);
-}
 
 /**
  * HTTP status and body for a failed world operation (#670): invalid_world ->

@@ -6,9 +6,7 @@
  */
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { join } from 'node:path';
-import { YamlUserRepository, Username } from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
+import { Username } from '@minecraft-docker/shared';
 
 /**
  * Login request body schema
@@ -78,9 +76,7 @@ export default async function authRoutes(app: FastifyInstance): Promise<void> {
       }
 
       try {
-        const usersPath = join(config.mcctlRoot, 'users.yaml');
-
-        const userRepo = new YamlUserRepository(usersPath);
+        const userRepo = app.container.userRepository();
 
         // Find user by username
         const usernameVO = Username.create(username);

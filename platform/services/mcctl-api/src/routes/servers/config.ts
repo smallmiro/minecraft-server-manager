@@ -23,7 +23,7 @@ import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } fr
 import { config } from '../../config/index.js';
 import { resolveInside } from '../../lib/safe-path.js';
 import { createConfigService } from '../../services/ConfigService.js';
-import { createWorldUseCase, worldFailure } from '../../lib/world-use-case.js';
+import { worldFailure } from '../../lib/world-use-case.js';
 import { serverSpecFailure } from '../../lib/server-spec.js';
 
 // ============================================================
@@ -159,7 +159,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // the assignment port (R1, R7, server must be stopped) before anything else
       const levelChanged = level !== undefined && level !== previousConfig.level;
       if (levelChanged) {
-        const assigned = await createWorldUseCase().assignWorldByName(level, name, { requireExisting: false });
+        const assigned = await fastify.container.worldManagementUseCase().assignWorldByName(level, name, { requireExisting: false });
         if (!assigned.success) {
           const failure = worldFailure(assigned, 'Failed to change level');
           return reply.code(failure.status).send(failure.body);
@@ -269,7 +269,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       // Only the sole, non-internal user of worlds/<LEVEL> may wipe it, and the
       // world name comes from the same parser as every assignment check (#670)
-      const plan = await createWorldUseCase().planWorldReset(name);
+      const plan = await fastify.container.worldManagementUseCase().planWorldReset(name);
       if (plan instanceof WorldAssignmentError) {
         const failure = worldFailure({ error: plan.message, errorCode: plan.code }, 'World cannot be reset');
         return reply.code(failure.status).send(failure.body);

@@ -11,34 +11,16 @@ import {
   getContainerHealth,
   getServerPlayitDomain,
   getOnlinePlayers,
-  WorldInfoUseCase,
-  PrismarineWorldDataReader,
-  RconCliAdapter,
-  WorldRepository,
-  Paths,
-  ConfigEnvWorldAssignmentAdapter,
   checkAssign,
   ModSourceFactory,
   buildModpackCompatibilityMatrix,
   isModpackCompatible,
-  CreateServerUseCase,
-  DeleteServerUseCase,
   ServerStartError,
   ServerSpecError,
   parseCreateServerConfig,
   WorldAssignmentError,
-  ApiPromptAdapter,
-  Config,
-  ServerRepository,
-  FileServerSpecRepository,
-  AvahiHostnameRegistrarAdapter,
-  DockerComposeRuntimeAdapter,
-  DockerServerConsoleAdapter,
-  GetServerSummariesUseCase,
-  resolveHostIps,
   type CreateServerConfig,
   type CreateServerRunOptions,
-  type ICreateServerUseCase,
 } from '@minecraft-docker/shared';
 import '@minecraft-docker/mod-source-modrinth';
 import { EnvValueError } from '@minecraft-docker/shared/utils';
@@ -73,64 +55,11 @@ import {
   type DeleteServerRequest,
 } from '../schemas/server.js';
 import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
-import { config, childProcessEnv } from '../config/index.js';
 import { getContainerName } from '../lib/rcon.js';
 import { worldFailure } from '../lib/world-use-case.js';
 import { serverSpecFailure } from '../lib/server-spec.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
-
-/**
- * How POST /api/servers builds its CreateServerUseCase (#675, ADR-0003 §5):
- * TypeScript provisioning with the ServerSpec repository, avahi (the
- * request's sudo password as an adapter option, never an env var) and the
- * runtime. Tests replace createUseCase.
- */
-export const serverProvision = {
-  createUseCase(options: { sudoPassword?: string }): ICreateServerUseCase {
-    const paths = new Paths(config.mcctlRoot);
-    // Image pulls and modpack downloads can take a while on the first start.
-    const runtime = new DockerComposeRuntimeAdapter({
-      root: paths.root,
-      env: () => childProcessEnv(),
-      startTimeoutMs: lifecycleLimits.sseCreateTimeoutMs,
-    });
-    const assignments = new ConfigEnvWorldAssignmentAdapter(paths);
-    return new CreateServerUseCase(
-      new ApiPromptAdapter({}),
-      new ServerRepository(paths),
-      new Config(paths),
-      {
-        specRepo: new FileServerSpecRepository(paths, undefined, runtime),
-        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: options.sudoPassword }),
-        runtime,
-        hostIps: () => resolveHostIps(paths),
-      },
-      undefined,
-      undefined,
-      undefined,
-      assignments
-    );
-  },
-  /**
-   * DELETE /api/servers/:name (#735): TypeScript deprovision with the runtime,
-   * the ServerSpec repository and avahi (the request's sudo password as an
-   * adapter option, as in create). Tests replace deleteUseCase.
-   */
-  deleteUseCase(options: { sudoPassword?: string }): Pick<DeleteServerUseCase, 'deprovision'> {
-    const paths = new Paths(config.mcctlRoot);
-    const runtime = new DockerComposeRuntimeAdapter({ root: paths.root, env: () => childProcessEnv() });
-    return new DeleteServerUseCase(
-      new ApiPromptAdapter({}),
-      new ServerRepository(paths),
-      runtime,
-      {
-        specRepo: new FileServerSpecRepository(paths, undefined, runtime),
-        hostnames: new AvahiHostnameRegistrarAdapter({ sudoPassword: options.sudoPassword }),
-      }
-    );
-  },
-};
 
 /**
  * How long the create/delete queue (#656) waits for a request before the next
@@ -245,14 +174,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     return started.then(({ run }) => run);
   };
 
-  // One instance for the plugin's lifetime: its 10s TTL cache lives on it (#764).
+  // One instance for the app's lifetime: its 10s TTL cache lives on it (#764).
   // Default timeouts: RCON 2s, docker stats 3s (it samples twice, often ~2s).
-  const summaryPaths = new Paths(config.mcctlRoot);
-  const serverSummaries = new GetServerSummariesUseCase(
-    new ServerRepository(summaryPaths),
-    new DockerComposeRuntimeAdapter({ root: summaryPaths.root, env: () => childProcessEnv() }),
-    new DockerServerConsoleAdapter(),
-  );
+  const serverSummaries = fastify.container.serverSummariesUseCase();
 
   /**
    * GET /api/servers
@@ -588,11 +512,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       const container = getContainerName(name);
-      const useCase = new WorldInfoUseCase(
-        new WorldRepository(new Paths()),
-        new PrismarineWorldDataReader(),
-        new RconCliAdapter()
-      );
+      const useCase = fastify.container.worldInfoUseCase();
 
       const resolveLive = async () => {
         try {
@@ -894,14 +814,13 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // default world <name>, which a deleted server may have left to another.
     // Adopting a free worlds/<name> stays allowed.
     try {
-      const paths = new Paths();
-      if (worldName && !(await new WorldRepository(paths).exists(worldName))) {
+      if (worldName && !(await fastify.container.worldRepository().exists(worldName))) {
         return reply.code(400).send({
           error: 'BadRequest',
           message: `World '${worldName}' not found`,
         });
       }
-      const snapshot = await new ConfigEnvWorldAssignmentAdapter(paths).snapshot();
+      const snapshot = await fastify.container.worldAssignmentPort().snapshot();
       const refused = checkAssign(snapshot, worldName ?? name, name, { newServer: true });
       if (refused) {
         const failure = worldFailure({ error: refused.message, errorCode: refused.code }, 'World is not available');
@@ -938,7 +857,11 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const failure = serverSpecFailure(error as ServerSpecError);
       return reply.code(failure.status).send(failure.body);
     }
-    const useCase = serverProvision.createUseCase({ sudoPassword });
+    // Image pulls and modpack downloads can take a while on the first start.
+    const useCase = fastify.container.createServerUseCase({
+      sudoPassword,
+      startTimeoutMs: lifecycleLimits.sseCreateTimeoutMs,
+    });
     const auditDetails = {
       type: type ?? null,
       version: version ?? null,
@@ -1104,7 +1027,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     // TypeScript deprovision replaces delete-server.sh (#735). It stops and
     // removes the container itself, so `force` no longer changes anything here.
     try {
-      const result = await serverProvision.deleteUseCase({ sudoPassword }).deprovision(name, { deleteWorld });
+      const result = await fastify.container.deleteServerUseCase({ sudoPassword }).deprovision(name, { deleteWorld });
       const { hostname, ...world } = result;
       fastify.log.info({ server: name, ...world, hostname: hostname?.status }, 'Server deleted');
 

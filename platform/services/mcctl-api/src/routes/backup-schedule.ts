@@ -1,14 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { join } from 'path';
-import {
-  BackupScheduleUseCase,
-  SqliteBackupScheduleRepository,
-  type IBackupScheduleUseCase,
-} from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
 import { BackupSchedulerService } from '../services/backup-scheduler.js';
-import { createWorldBackupPort } from '../lib/world-backup.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import {
@@ -48,24 +40,20 @@ interface ScheduleIdRoute {
  * Backup schedule management routes plugin
  */
 const backupSchedulePlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  // Initialize repository and use case
-  const dbPath = join(config.mcctlRoot, 'backups', 'meta', 'backup-schedules.db');
-  const repository = new SqliteBackupScheduleRepository(dbPath);
-  const useCase: IBackupScheduleUseCase = new BackupScheduleUseCase(repository);
+  // The container owns the schedule database and closes it after this plugin's onClose
+  const useCase = fastify.container.backupScheduleUseCase();
 
   // Initialize backup scheduler service
   const scheduler = new BackupSchedulerService(
     useCase,
-    createWorldBackupPort(config.mcctlRoot),
+    fastify.container.worldBackupPort(),
     fastify.log,
     writeAuditLog
   );
   await scheduler.initialize();
 
-  // Store scheduler on fastify instance for graceful shutdown
   fastify.addHook('onClose', async () => {
     scheduler.shutdown();
-    repository.close();
   });
 
   /**

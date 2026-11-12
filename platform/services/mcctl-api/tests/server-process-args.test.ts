@@ -48,12 +48,11 @@ import {
   Config,
 } from '@minecraft-docker/shared';
 import { parseEnvDocument } from '@minecraft-docker/shared/utils';
-import { serverProvision } from '../src/routes/servers.js';
-import { fakeDelete } from './fake-provision.js';
+import { fakeDelete, provision, provisionContainer } from './fake-provision.js';
 
 /** The real provisioning on ROOT, without runtime or avahi. */
 function fileProvision(): void {
-  serverProvision.createUseCase = () => {
+  provision.create = () => {
     const paths = new Paths(ROOT);
     return new CreateServerUseCase(
       new ApiPromptAdapter({}),
@@ -85,7 +84,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
     (config as any).mcctlRoot = ROOT;
 
     const { buildApp } = await import('../src/app.js');
-    app = await buildApp();
+    app = await buildApp({ container: provisionContainer });
     await app.ready();
   });
 

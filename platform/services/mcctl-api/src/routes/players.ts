@@ -7,14 +7,7 @@ import {
   getContainerStatus,
   serverExists,
   OpLevel,
-  Paths,
-  PlayerRepository,
-  PlayerManagementUseCase,
-  PlayerSessionUseCase,
-  RconCliAdapter,
-  SqlitePlayerSessionRepository,
   ServerSpecError,
-  type IPlayerManagementUseCase,
   type SessionHistory,
 } from '@minecraft-docker/shared';
 import {
@@ -142,17 +135,10 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const playerFileService = new PlayerFileService(config.mcctlRoot);
   const opsJsonService = new OpsJsonService(config.mcctlRoot);
 
-  // Session/visit history store (#528, Phase 4). Mirrors audit-log-service's
-  // `audit.db` singleton pattern; closed via the onClose hook below.
-  const sessionDbPath = join(config.mcctlRoot, 'data', 'players.db');
-  const playerSessionRepository = new SqlitePlayerSessionRepository(sessionDbPath);
-  const playerSessionUseCase = new PlayerSessionUseCase(playerSessionRepository);
-
-  const playerManagementUseCase: IPlayerManagementUseCase = new PlayerManagementUseCase(
-    new PlayerRepository(new Paths(config.mcctlRoot)),
-    new RconCliAdapter(),
-    playerSessionUseCase
-  );
+  // Session/visit history store (#528, Phase 4). The container owns players.db
+  // and closes it after this plugin's onClose stops the collector.
+  const playerSessionUseCase = fastify.container.playerSessionUseCase();
+  const playerManagementUseCase = fastify.container.playerManagementUseCase();
 
   // Background collector: every 30s, ingest each defined server's log lines
   // into session history (#528, Phase 4). Skipped in tests to avoid spawning
@@ -170,7 +156,6 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
   fastify.addHook('onClose', async () => {
     sessionCollector.stop();
-    playerSessionRepository.close();
   });
 
   // Helper to check server exists (container created)

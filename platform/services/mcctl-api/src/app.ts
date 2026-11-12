@@ -4,6 +4,7 @@ import helmet from '@fastify/helmet';
 import { config } from './config/index.js';
 import authPlugin from './plugins/auth.js';
 import swaggerPlugin from './plugins/swagger.js';
+import containerPlugin, { type ApiContainer } from './plugins/container.js';
 import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import serverConfigRoutes from './routes/servers/config.js';
@@ -23,10 +24,11 @@ import platformSettingsRoutes from './routes/platform-settings.js';
 import configSnapshotsRoutes from './routes/servers/config-snapshots.js';
 import configSnapshotDiffRoutes from './routes/config-snapshot-diff.js';
 import configSnapshotSchedulesRoutes from './routes/config-snapshot-schedules.js';
-import { closeConfigSnapshotDatabase } from './services/config-snapshot-service.js';
 
 export interface BuildAppOptions {
   logger?: boolean;
+  /** Replaces members of the production container (tests pass fakes, #667). */
+  container?: Partial<ApiContainer>;
 }
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
@@ -63,6 +65,10 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     });
   }
 
+  // Composition root: routes take adapters and use cases from fastify.container.
+  // Registered before the routes so its onClose (closing databases) runs after theirs.
+  await app.register(containerPlugin, { container: options.container });
+
   // Register server routes
   await app.register(serversRoutes);
   await app.register(serverActionsRoutes);
@@ -97,11 +103,6 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(configSnapshotsRoutes);
   await app.register(configSnapshotDiffRoutes);
   await app.register(configSnapshotSchedulesRoutes);
-
-  // Register onClose hook for config snapshot database cleanup
-  app.addHook('onClose', async () => {
-    closeConfigSnapshotDatabase();
-  });
 
   // Health check endpoint
   app.get('/health', async () => {

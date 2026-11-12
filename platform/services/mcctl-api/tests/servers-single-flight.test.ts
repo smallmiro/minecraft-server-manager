@@ -28,7 +28,7 @@ import type { FastifyReply } from 'fastify';
 import { serverExists } from '@minecraft-docker/shared';
 import { buildApp } from '../src/app.js';
 import { lifecycleLimits } from '../src/routes/servers.js';
-import { fakeDelete, fakeProvision } from './fake-provision.js';
+import { fakeDelete, fakeProvision, provisionContainer } from './fake-provision.js';
 
 /** Give a queued request time to (wrongly) start; only for "has not started" checks. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
@@ -70,7 +70,7 @@ describe('server create/delete single-flight (#656)', () => {
   const defaults = { ...lifecycleLimits };
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
     app.addHook('onRequest', async (request, reply) => {
       if (request.url.includes('follow=true')) lastReply = reply;
     });

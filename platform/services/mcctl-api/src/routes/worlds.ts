@@ -7,17 +7,8 @@ import { createWriteStream } from 'fs';
 import { rm } from 'fs/promises';
 import { pipeline } from 'stream/promises';
 import {
-  WorldManagementUseCase,
-  WorldInfoUseCase,
-  PrismarineWorldDataReader,
-  RconCliAdapter,
-  WorldRepository,
   Paths,
   AuditActionEnum,
-  BlueMapCliRenderer,
-  BlueMapMarkerWriter,
-  WorldStatsUseCase,
-  AnvilBlockScanner,
   AnalysisCancelledError,
   formatAssignmentWarnings,
 } from '@minecraft-docker/shared';
@@ -66,8 +57,7 @@ import {
 } from '../schemas/world-stats.js';
 import { mkdir, readFile as readFileAsync, writeFile, rename } from 'fs/promises';
 import { config } from '../config/index.js';
-import { createWorldUseCase, worldFailure } from '../lib/world-use-case.js';
-import { resolveBlueMapDockerDir } from '../lib/docker-dir.js';
+import { worldFailure } from '../lib/world-use-case.js';
 import { resolveInside } from '../lib/safe-path.js';
 import { resolve as resolvePath, sep, extname } from 'node:path';
 import { existsSync, statSync, createReadStream } from 'node:fs';
@@ -112,18 +102,6 @@ interface MapServeRoute {
   Params: MapWorldNameParams & { '*': string };
 }
 
-/**
- * Create WorldInfoUseCase instance with API adapters (#525).
- * Read-only: world metadata, offline player locations, live RCON locations.
- */
-function createWorldInfoUseCase(): WorldInfoUseCase {
-  const paths = new Paths();
-  const worldRepo = new WorldRepository(paths);
-  const dataReader = new PrismarineWorldDataReader();
-  const rcon = new RconCliAdapter();
-  return new WorldInfoUseCase(worldRepo, dataReader, rcon);
-}
-
 /** Base directory for rendered web maps (kept out of worlds/ for lean backups). */
 function getMapsDir(): string {
   return join(config.mcctlRoot, 'maps');
@@ -142,12 +120,6 @@ function getWorldDir(name: string): string | null {
 /** 400 body when a world name would leave its base directory (#720). */
 const INVALID_WORLD_NAME = { error: 'BadRequest', message: 'Invalid world name' };
 
-/** Create the world block-stats use case (#531). */
-function createWorldStatsUseCase(): WorldStatsUseCase {
-  const paths = new Paths();
-  return new WorldStatsUseCase(new WorldRepository(paths), new AnvilBlockScanner());
-}
-
 /** Default block-stats analysis timeout (10 minutes). */
 const STATS_ANALYZE_TIMEOUT_MS =
   Number(process.env['STATS_ANALYZE_TIMEOUT_MS']) || 10 * 60 * 1000;
@@ -156,15 +128,6 @@ const STATS_ANALYZE_TIMEOUT_MS =
 function getWebroot(name: string): string | null {
   const mapDir = resolveInside(getMapsDir(), name);
   return mapDir && join(mapDir, 'web');
-}
-
-/** Create the BlueMap-backed map renderer (#529, #733). */
-function createMapRenderer(): BlueMapCliRenderer {
-  return new BlueMapCliRenderer({
-    worldsDir: new Paths().worlds,
-    mapsDir: getMapsDir(),
-    dockerDir: resolveBlueMapDockerDir(config.mcctlRoot),
-  });
 }
 
 /** Minimal content-type map for BlueMap's static webapp assets. */
@@ -213,7 +176,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (_request, reply) => {
     try {
-      const useCase = createWorldUseCase();
+      const useCase = fastify.container.worldManagementUseCase();
       const worlds = await useCase.listWorlds();
       // Duplicates and unreadable configs are reported, never fixed (#670)
       const assignmentWarnings = await useCase
@@ -265,7 +228,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name } = request.params;
 
     try {
-      const useCase = createWorldUseCase();
+      const useCase = fastify.container.worldManagementUseCase();
       const worlds = await useCase.listWorlds();
       const world = worlds.find((w) => w.name === name);
 
@@ -316,7 +279,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<WorldNameRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     try {
-      const useCase = createWorldInfoUseCase();
+      const useCase = fastify.container.worldInfoUseCase();
       const info = await useCase.getWorldInfo(name);
       return reply.send({ info });
     } catch (error) {
@@ -353,7 +316,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<WorldNameRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     try {
-      const useCase = createWorldInfoUseCase();
+      const useCase = fastify.container.worldInfoUseCase();
       const players = await useCase.getPlayerLocations(name);
       return reply.send({ players });
     } catch (error) {
@@ -449,7 +412,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     }
 
-    const renderer = createMapRenderer();
+    const renderer = fastify.container.mapRenderer();
 
     // SSE streaming mode
     if (follow) {
@@ -620,9 +583,9 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     }
 
     try {
-      const useCase = createWorldInfoUseCase();
+      const useCase = fastify.container.worldInfoUseCase();
       const structures = await useCase.getStructures(name);
-      const counts = await new BlueMapMarkerWriter().writeMarkers(webroot, structures);
+      const counts = await fastify.container.mapMarkerWriter().writeMarkers(webroot, structures);
       // Report what was actually written (only rendered dimensions), not the
       // raw all-dimension structure count.
       const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
@@ -702,7 +665,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.code(404).send({ error: 'NotFound', message: `World '${name}' not found` });
     }
 
-    const useCase = createWorldStatsUseCase();
+    const useCase = fastify.container.worldStatsUseCase();
 
     // Atomic write: stage to a temp file then rename, so a concurrent GET (or
     // a second analyze) never reads a half-written stats file.
@@ -808,7 +771,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name, seed, serverName, autoStart } = request.body;
 
     try {
-      const useCase = createWorldUseCase({
+      const useCase = fastify.container.worldManagementUseCase({
         serverName,
         worldName: name,
         worldSeed: seed,
@@ -895,7 +858,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { serverName } = request.body;
 
     try {
-      const useCase = createWorldUseCase({
+      const useCase = fastify.container.worldManagementUseCase({
         serverName,
         worldName: name,
       });
@@ -974,7 +937,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { force } = request.query;
 
     try {
-      const useCase = createWorldUseCase({
+      const useCase = fastify.container.worldManagementUseCase({
         worldName: name,
       });
 
@@ -1052,7 +1015,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { force } = request.query;
 
     try {
-      const useCase = createWorldUseCase({
+      const useCase = fastify.container.worldManagementUseCase({
         worldName: name,
         confirmValue: true, // Auto-confirm in API mode
       });
@@ -1136,7 +1099,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // 1. Pre-check for duplicate world name
     try {
-      const checkUseCase = createWorldUseCase(); // listWorlds doesn't use the prompt adapter
+      const checkUseCase = fastify.container.worldManagementUseCase(); // listWorlds doesn't use the prompt adapter
       const existing = (await checkUseCase.listWorlds()).find((w) => w.name === name);
       if (existing) {
         return reply.code(409).send({
@@ -1219,7 +1182,7 @@ const worldsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // 3. Import the world from the temp zip
     try {
-      const useCase = createWorldUseCase({ worldName: name });
+      const useCase = fastify.container.worldManagementUseCase({ worldName: name });
       const result = await useCase.importWorldFromZip({ zipPath: tempZip, worldName: name });
 
       if (!result.success) {

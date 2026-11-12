@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
-import { fakeProvision, type ProvisionCall } from './fake-provision.js';
+import { fakeProvision, type ProvisionCall, provisionContainer } from './fake-provision.js';
 
 // Mock node:child_process for spawn
 vi.mock('node:child_process', async (importOriginal) => {
@@ -141,7 +141,7 @@ describe('Server Routes', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
   });
 
   afterAll(async () => {
@@ -448,7 +448,7 @@ describe('Server Routes - Response Format', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
   });
 
   afterAll(async () => {
@@ -487,7 +487,7 @@ describe('POST /api/servers - Server Creation', () => {
   let provisions: ProvisionCall[];
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
   });
 
   afterAll(async () => {
@@ -774,7 +774,7 @@ describe('POST /api/servers - Modrinth Modpack Support', () => {
   let provisions: ProvisionCall[];
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
   });
 
   afterAll(async () => {
