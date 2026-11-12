@@ -7,4 +7,3 @@ export {
   type InMemoryServerData as MockServerData,
   type InMemoryWorldData as MockWorldData,
 } from '@minecraft-docker/shared/testing';
-export { createMockContainerRuntime } from './MockContainerRuntime.js';

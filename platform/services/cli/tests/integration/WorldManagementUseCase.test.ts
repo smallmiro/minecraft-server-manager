@@ -1,20 +1,24 @@
 import { describe, it, beforeEach } from 'vitest';
 import assert from 'node:assert';
-import { WorldManagementUseCase } from '@minecraft-docker/shared';
+import { WorldManagementUseCase, type ContainerStatus } from '@minecraft-docker/shared';
+import { FakeContainerRuntime, serverWorkload } from '@minecraft-docker/shared/testing';
 import {
   MockPromptAdapter,
   MockServerRepository,
   MockWorldRepository,
   MockWorldAssignmentPort,
-  createMockContainerRuntime,
 } from '../mocks/index.js';
+
+/** The containers of server1 and server2, both in `status`. */
+const containers = (status: ContainerStatus) =>
+  new FakeContainerRuntime([serverWorkload('server1', status), serverWorkload('server2', status)]);
 
 describe('WorldManagementUseCase Integration', () => {
   let promptAdapter: MockPromptAdapter;
   let serverRepo: MockServerRepository;
   let worldRepo: MockWorldRepository;
   let assignments: MockWorldAssignmentPort;
-  let runtime: ReturnType<typeof createMockContainerRuntime>;
+  let runtime: FakeContainerRuntime;
   let useCase: WorldManagementUseCase;
 
   const makeUseCase = () =>
@@ -23,7 +27,7 @@ describe('WorldManagementUseCase Integration', () => {
       worldRepo,
       serverRepo,
       assignments,
-      runtime.runtime
+      runtime
     );
 
   beforeEach(() => {
@@ -42,7 +46,7 @@ describe('WorldManagementUseCase Integration', () => {
     ]);
     // A server's world is its LEVEL (#670): server1 uses 'creative'
     assignments = new MockWorldAssignmentPort({ server1: 'creative', server2: 'server2' });
-    runtime = createMockContainerRuntime();
+    runtime = containers('exited');
     useCase = makeUseCase();
   });
 
@@ -86,7 +90,7 @@ describe('WorldManagementUseCase Integration', () => {
     });
 
     it('should refuse a running server without stopping it (#670)', async () => {
-      runtime = createMockContainerRuntime('running');
+      runtime = containers('running');
       useCase = makeUseCase();
 
       const result = await useCase.createWorld({
@@ -109,7 +113,7 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.started, true);
-      assert.deepStrictEqual(runtime.started, ['mc-server1']);
+      assert.deepStrictEqual(runtime.callsOf('start'), ['mc-server1']);
     });
 
     it('should not start server when autoStart is false', async () => {
@@ -121,7 +125,7 @@ describe('WorldManagementUseCase Integration', () => {
 
       assert.strictEqual(result.success, true);
       assert.strictEqual(result.started, false);
-      assert.deepStrictEqual(runtime.started, []);
+      assert.deepStrictEqual(runtime.callsOf('start'), []);
     });
 
     it('should return error when no servers available', async () => {
