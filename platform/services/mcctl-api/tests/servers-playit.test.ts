@@ -5,15 +5,15 @@ import { buildApp } from '../src/app.js';
 // Mock @minecraft-docker/shared module
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  getAllServers: vi.fn(),
-  getServerInfoFromConfig: vi.fn(),
-  serverExists: vi.fn(),
+  getAllServersAsync: vi.fn(),
+  getServerInfoFromConfigAsync: vi.fn(),
+  serverExistsAsync: vi.fn(),
   getServerDetailedInfo: vi.fn(),
   getServerPlayitDomain: vi.fn(),
-  containerExists: vi.fn(),
-  getContainerLogs: vi.fn(),
-  getContainerStatus: vi.fn(),
-  getContainerHealth: vi.fn(),
+  containerExistsAsync: vi.fn(),
+  getContainerLogsAsync: vi.fn(),
+  getContainerStatusAsync: vi.fn(),
+  getContainerHealthAsync: vi.fn(),
   stopContainer: vi.fn(),
   AuditActionEnum: {},
   ModSourceFactory: {
@@ -54,9 +54,9 @@ describe('Server Routes - Playit Domain Integration', () => {
 
   describe('GET /api/servers/:name - with playitDomain field', () => {
     it('should include playitDomain when server has external access configured', async () => {
-      const { serverExists, getServerDetailedInfo, getServerPlayitDomain } = await import('@minecraft-docker/shared');
+      const { serverExistsAsync, getServerDetailedInfo, getServerPlayitDomain } = await import('@minecraft-docker/shared');
 
-      vi.mocked(serverExists).mockReturnValue(true);
+      vi.mocked(serverExistsAsync).mockReturnValue(true);
 
       vi.mocked(getServerDetailedInfo).mockResolvedValue({
         name: 'survival',
@@ -86,9 +86,9 @@ describe('Server Routes - Playit Domain Integration', () => {
     });
 
     it('should include null playitDomain when server has no external access', async () => {
-      const { serverExists, getServerDetailedInfo, getServerPlayitDomain } = await import('@minecraft-docker/shared');
+      const { serverExistsAsync, getServerDetailedInfo, getServerPlayitDomain } = await import('@minecraft-docker/shared');
 
-      vi.mocked(serverExists).mockReturnValue(true);
+      vi.mocked(serverExistsAsync).mockReturnValue(true);
 
       vi.mocked(getServerDetailedInfo).mockResolvedValue({
         name: 'creative',

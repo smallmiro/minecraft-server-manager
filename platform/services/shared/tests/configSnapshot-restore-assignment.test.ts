@@ -52,7 +52,7 @@ function setup(opts: {
       return opts.currentCompose;
     }),
   } as unknown as IConfigFileCollector;
-  const runtime = { getStatus: vi.fn(() => opts.status ?? 'exited') } as unknown as IContainerRuntimePort;
+  const runtime = { getStatusAsync: vi.fn(async () => opts.status ?? 'exited') } as unknown as IContainerRuntimePort;
   const useCase = new ConfigSnapshotUseCaseImpl(
     repository,
     storage,

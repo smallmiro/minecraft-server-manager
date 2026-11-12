@@ -68,14 +68,14 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@minecraft-docker/shared')>();
   return {
     ...actual,
-    getAllServers: vi.fn(),
-    getServerInfoFromConfig: vi.fn(),
+    getAllServersAsync: vi.fn(),
+    getServerInfoFromConfigAsync: vi.fn(),
     getServerDetailedInfo: vi.fn(),
-    getContainerLogs: vi.fn(),
-    containerExists: vi.fn(),
-    serverExists: vi.fn(),
-    getContainerStatus: vi.fn(),
-    getContainerHealth: vi.fn(),
+    getContainerLogsAsync: vi.fn(),
+    containerExistsAsync: vi.fn(),
+    serverExistsAsync: vi.fn(),
+    getContainerStatusAsync: vi.fn(),
+    getContainerHealthAsync: vi.fn(),
     stopContainer: vi.fn(),
   };
 });
@@ -121,15 +121,15 @@ vi.mock('fs', async (importOriginal) => {
 });
 
 import {
-  serverExists,
-  getContainerStatus,
+  serverExistsAsync,
+  getContainerStatusAsync,
   WorldAssignmentError,
 } from '@minecraft-docker/shared';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
-const mockedServerExists = vi.mocked(serverExists);
-const mockedGetContainerStatus = vi.mocked(getContainerStatus);
+const mockedServerExists = vi.mocked(serverExistsAsync);
+const mockedGetContainerStatus = vi.mocked(getContainerStatusAsync);
 const mockExistsSync = vi.mocked(existsSync);
 const mockReadFileSync = vi.mocked(readFileSync);
 const mockWriteFileSync = vi.mocked(atomicWriteFileSync);

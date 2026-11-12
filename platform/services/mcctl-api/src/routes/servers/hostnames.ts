@@ -2,7 +2,8 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import { join } from 'path';
 import {
-  serverExists,
+  serverExistsAsync,
+  invalidateContainerStates,
   AuditActionEnum,
   getServerPlayitDomain,
   resolvePlayitDomain,
@@ -65,7 +66,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
     const { name } = request.params;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -119,7 +120,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
     const { customHostnames } = request.body;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -223,11 +224,12 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
     },
   }, async (request: FastifyRequest<GetHostnamesRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!serverExists(name)) {
+    if (!(await serverExistsAsync(name))) {
       return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
     }
 
     const result = await fastify.container.containerRuntime().recreate(ServerName.fromExisting(name));
+    invalidateContainerStates();
     const errorMessage = result.success ? null : [result.error, result.stderr].filter(Boolean).join(': ') || 'Unknown error';
     await writeAuditLog({
       action: AuditActionEnum.SERVER_HOSTNAME_UPDATE,

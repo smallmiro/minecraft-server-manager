@@ -9,6 +9,7 @@ import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   AuditActionEnum,
   AUTO_BACKUP_CLOSE_WAIT_MS,
+  invalidateContainerStates,
   EXISTING_SERVER_NAME_PATTERN,
   ServerName,
   autoBackupOnStop,
@@ -102,6 +103,8 @@ async function handleServerAction(
 
   // Execute the action
   const result = await executeServerAction(serverName, action);
+  // The next status read sees the change instead of the 2s cached snapshot (#672)
+  invalidateContainerStates();
 
   if (!result.success) {
     await writeAuditLog({

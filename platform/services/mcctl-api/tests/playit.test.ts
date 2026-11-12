@@ -6,11 +6,11 @@ import { buildApp } from '../src/app.js';
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
   // Existing mocks (keep them for other tests)
-  getAllServers: vi.fn(),
-  getServerInfoFromConfig: vi.fn(),
-  serverExists: vi.fn(),
+  getAllServersAsync: vi.fn(),
+  getServerInfoFromConfigAsync: vi.fn(),
+  serverExistsAsync: vi.fn(),
   getRouterDetailInfo: vi.fn(),
-  getAvahiStatus: vi.fn(),
+  getAvahiStatusAsync: vi.fn(),
 
   // Playit-specific mocks
   getPlayitAgentStatus: vi.fn(),
@@ -61,7 +61,7 @@ describe('Playit Routes', () => {
 
   describe('GET /api/playit/status', () => {
     it('should return playit status with running agent', async () => {
-      const { getPlayitAgentStatus, getAllServers, getServerPlayitDomain, getServerInfoFromConfig } = await import('@minecraft-docker/shared');
+      const { getPlayitAgentStatus, getAllServersAsync, getServerPlayitDomain, getServerInfoFromConfigAsync } = await import('@minecraft-docker/shared');
 
       // Mock playit agent status
       vi.mocked(getPlayitAgentStatus).mockResolvedValue({
@@ -74,10 +74,10 @@ describe('Playit Routes', () => {
       });
 
       // Mock servers list
-      vi.mocked(getAllServers).mockReturnValue(['survival', 'creative']);
+      vi.mocked(getAllServersAsync).mockReturnValue(['survival', 'creative']);
 
       // Mock server info for hostnames
-      vi.mocked(getServerInfoFromConfig)
+      vi.mocked(getServerInfoFromConfigAsync)
         .mockReturnValueOnce({
           name: 'survival',
           container: 'mc-survival',
@@ -129,7 +129,7 @@ describe('Playit Routes', () => {
     });
 
     it('should return playit status when agent is stopped', async () => {
-      const { getPlayitAgentStatus, getAllServers } = await import('@minecraft-docker/shared');
+      const { getPlayitAgentStatus, getAllServersAsync } = await import('@minecraft-docker/shared');
 
       vi.mocked(getPlayitAgentStatus).mockResolvedValue({
         enabled: true,
@@ -138,7 +138,7 @@ describe('Playit Routes', () => {
         containerStatus: 'exited',
       });
 
-      vi.mocked(getAllServers).mockReturnValue([]);
+      vi.mocked(getAllServersAsync).mockReturnValue([]);
 
       const response = await app.inject({
         method: 'GET',
@@ -154,7 +154,7 @@ describe('Playit Routes', () => {
     });
 
     it('should return playit status when not configured', async () => {
-      const { getPlayitAgentStatus, getAllServers } = await import('@minecraft-docker/shared');
+      const { getPlayitAgentStatus, getAllServersAsync } = await import('@minecraft-docker/shared');
 
       vi.mocked(getPlayitAgentStatus).mockResolvedValue({
         enabled: false,
@@ -163,7 +163,7 @@ describe('Playit Routes', () => {
         containerStatus: 'not_found',
       });
 
-      vi.mocked(getAllServers).mockReturnValue([]);
+      vi.mocked(getAllServersAsync).mockReturnValue([]);
 
       const response = await app.inject({
         method: 'GET',

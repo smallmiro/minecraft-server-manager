@@ -5,8 +5,8 @@ import {
   startPlayitAgent as startAgent,
   stopPlayitAgent as stopAgent,
   getServerPlayitDomain,
-  getAllServers,
-  getServerInfoFromConfig,
+  getAllServersAsync,
+  getServerInfoFromConfigAsync,
 } from '@minecraft-docker/shared';
 import {
   PlayitAgentStatusSchema,
@@ -42,9 +42,9 @@ const playitPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const status = await getPlayitStatus();
 
       // Get all servers and their playit domains
-      const serverNames = getAllServers();
-      const servers: PlayitServerInfo[] = serverNames.map((serverName) => {
-        const info = getServerInfoFromConfig(serverName);
+      const serverNames = await getAllServersAsync();
+      const servers: PlayitServerInfo[] = await Promise.all(serverNames.map(async (serverName) => {
+        const info = await getServerInfoFromConfigAsync(serverName);
         const playitDomain = getServerPlayitDomain(serverName);
 
         return {
@@ -52,7 +52,7 @@ const playitPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           playitDomain,
           lanHostname: info.hostname,
         };
-      });
+      }));
 
       const response: PlayitAgentStatus = {
         ...status,

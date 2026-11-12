@@ -2,8 +2,8 @@ import {
   type IConfigSnapshotUseCase,
   type ConfigSnapshot,
   type SnapshotDiff,
-  serverExists,
-  getContainerStatus,
+  serverExistsAsync,
+  getContainerStatusAsync,
 } from '@minecraft-docker/shared';
 import { config } from '../config/index.js';
 import { currentContainer } from '../plugins/container.js';
@@ -83,7 +83,7 @@ export async function restoreSnapshot(
  */
 export async function checkServerExists(serverName: string): Promise<boolean> {
   try {
-    return await serverExists(serverName, config.mcctlRoot);
+    return await serverExistsAsync(serverName, config.mcctlRoot);
   } catch {
     return false;
   }
@@ -94,7 +94,7 @@ export async function checkServerExists(serverName: string): Promise<boolean> {
  */
 export async function isServerRunning(serverName: string): Promise<boolean> {
   try {
-    const status = await getContainerStatus(`mc-${serverName}`);
+    const status = await getContainerStatusAsync(`mc-${serverName}`);
     return status === 'running';
   } catch {
     return false;

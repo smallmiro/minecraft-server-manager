@@ -50,7 +50,7 @@ async function rejection(promise: Promise<unknown>): Promise<WorldAssignmentErro
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-assign-'));
   const paths = new Paths(root);
-  const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+  const stopped = { getStatusAsync: async () => 'exited' } as unknown as IContainerRuntimePort;
   adapter = new ConfigEnvWorldAssignmentAdapter(paths, new FileServerSpecRepository(paths, undefined, stopped, () => []));
 });
 

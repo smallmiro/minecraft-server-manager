@@ -3,8 +3,8 @@ import fp from 'fastify-plugin';
 import { join } from 'path';
 import { existsSync, readFileSync, readdirSync, rmSync } from 'fs';
 import {
-  serverExists,
-  getContainerStatus,
+  serverExistsAsync,
+  getContainerStatusAsync,
   AuditActionEnum,
   WORLD_NAME_PATTERN,
   WorldAssignmentError,
@@ -74,7 +74,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // Check if server exists
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -127,7 +127,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // Check if server exists
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -251,7 +251,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // Check if server exists
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -259,7 +259,7 @@ const configPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       // Check if server is stopped - must be fully stopped to reset world
-      const status = getContainerStatus(containerName);
+      const status = await getContainerStatusAsync(containerName);
       if (status === 'running' || status === 'paused' || status === 'restarting' || status === 'created') {
         return reply.code(409).send({
           error: 'Conflict',

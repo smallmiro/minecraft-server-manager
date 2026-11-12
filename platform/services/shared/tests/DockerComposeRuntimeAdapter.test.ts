@@ -17,7 +17,9 @@ import {
   DockerRouterStatusAdapter,
   DockerPlayitAgentAdapter,
   DockerRuntimeEnvironmentAdapter,
+  RUNTIME_QUERY_TIMEOUT_MS,
 } from '../src/infrastructure/adapters/DockerComposeRuntimeAdapter.js';
+import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import { ServerName } from '../src/domain/value-objects/ServerName.js';
 
 const PIPE = { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] };
@@ -102,19 +104,6 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
       expect(c.run('mc-a')).toBe(c.failed);
     });
   }
-
-  it('getStatusAsync runs the pre-#665 async docker inspect (with --) and keeps its mapping', async () => {
-    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'Running\n'));
-    expect(await runtime.getStatusAsync('mc-a')).toBe('running');
-    expect(spawn).toHaveBeenCalledWith('docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-a'], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      cwd: undefined,
-    });
-    expect(spawnSync).not.toHaveBeenCalled();
-
-    vi.mocked(spawn).mockReturnValueOnce(fakeChild(1, '', 'No such object'));
-    expect(await runtime.getStatusAsync('mc-a')).toBe('not_found');
-  });
 
   it('exists maps the docker inspect exit code to a boolean', () => {
     expect(runtime.exists('mc-a')).toBe(true);
@@ -282,10 +271,14 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
   });
 
   it('recreate force-recreates a running container and keeps it running (#671)', async () => {
-    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'running\n'));
-    execFileCalls({});
+    execFileCalls({ stdout: 'running\n' }, {});
     expect(await runtime.recreate(ServerName.create('alpha'))).toEqual({ success: true, stdout: '', stderr: '' });
-    expect(spawn).toHaveBeenCalledWith('docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-alpha'], expect.anything());
+    expect(execFile).toHaveBeenCalledWith(
+      'docker',
+      ['inspect', '-f', '{{.State.Status}}', '--', 'mc-alpha'],
+      expect.anything(),
+      expect.any(Function)
+    );
     expect(execFile).toHaveBeenCalledWith(
       'docker',
       ['compose', 'up', '-d', '--force-recreate', '--no-deps', 'mc-alpha'],
@@ -297,8 +290,7 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
   it.each(['exited', 'created', 'not_found'])(
     'recreate leaves a %s container stopped: created, not started (auto-scale wakes it, #671)',
     async (state) => {
-      vi.mocked(spawn).mockReturnValueOnce(state === 'not_found' ? fakeChild(1) : fakeChild(0, `${state}\n`));
-      execFileCalls({});
+      execFileCalls(state === 'not_found' ? new Error('exit 1') : { stdout: `${state}\n` }, {});
       expect((await runtime.recreate(ServerName.create('alpha'))).success).toBe(true);
       expect(execFile).toHaveBeenCalledWith(
         'docker',
@@ -750,7 +742,8 @@ describe('DockerRouterStatusAdapter', () => {
 
 describe('DockerPlayitAgentAdapter', () => {
   const playit = new DockerPlayitAgentAdapter({ root: '/srv/mc' });
-  const SPAWN = { stdio: ['pipe', 'pipe', 'pipe'], cwd: '/srv/mc' };
+  // compose up can pull the agent image; a hung compose is killed after 2 minutes (#672)
+  const SPAWN = { stdio: ['pipe', 'pipe', 'pipe'], cwd: '/srv/mc', timeout: 120_000 };
 
   it('start runs compose up with the playit profile in the root', async () => {
     vi.mocked(spawn).mockImplementation(() => fakeChild(0));
@@ -777,7 +770,7 @@ describe('DockerPlayitAgentAdapter', () => {
     vi.stubEnv('MCCTL_ROOT', '/opt/mcctl');
     vi.mocked(spawn).mockImplementation(() => fakeChild(0));
     await new DockerPlayitAgentAdapter().stop();
-    expect(spawn).toHaveBeenCalledWith('docker', expect.any(Array), { stdio: ['pipe', 'pipe', 'pipe'], cwd: '/opt/mcctl' });
+    expect(spawn).toHaveBeenCalledWith('docker', expect.any(Array), { ...SPAWN, cwd: '/opt/mcctl' });
   });
 });
 
@@ -862,5 +855,130 @@ describe('ServerName arguments (#665)', () => {
       ['inspect', '--format', '{{index .Config.Labels "mc-router.host"}}', '--', 'mc-a'],
       PIPE
     );
+  });
+});
+
+describe('async request-path queries (#672)', () => {
+  const runtime = new DockerComposeRuntimeAdapter();
+  const killed = () => Object.assign(new Error('killed'), { killed: true, signal: 'SIGKILL' });
+  const QUERY = expect.objectContaining({ timeout: RUNTIME_QUERY_TIMEOUT_MS, killSignal: 'SIGKILL' });
+  const argvOf = (call = 0) => vi.mocked(execFile).mock.calls[call]?.slice(0, 2);
+
+  it('listStates reads every mc-* container from one docker ps, health from its status column', async () => {
+    execFileCalls({
+      stdout: [
+        'mc-a\trunning\tUp 2 hours (healthy)\ta.local,a.nip.io',
+        'mc-b\texited\tExited (0) 3 minutes ago\t',
+        'mc-c\trunning\tUp 5 seconds (health: starting)\tc.local',
+        'mc-d\trunning\tUp 1 hour (unhealthy)\t',
+        'mc-router\trunning\tUp 3 days\t',
+        '',
+      ].join('\n'),
+    });
+    const states = await runtime.listStates();
+    expect(argvOf()).toEqual([
+      'docker',
+      ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}'],
+    ]);
+    expect(vi.mocked(execFile).mock.calls[0]?.[2]).toEqual(QUERY);
+    expect(Object.fromEntries(states)).toEqual({
+      'mc-a': { status: 'running', health: 'healthy', hostname: 'a.local,a.nip.io' },
+      'mc-b': { status: 'exited', health: 'none', hostname: '-' },
+      'mc-c': { status: 'running', health: 'starting', hostname: 'c.local' },
+      'mc-d': { status: 'running', health: 'unhealthy', hostname: '-' },
+      'mc-router': { status: 'running', health: 'none', hostname: '-' },
+    });
+    expect(spawnSync).not.toHaveBeenCalled();
+  });
+
+  it('listStates with strict rejects when docker fails, so "no containers" and "cannot tell" differ', async () => {
+    execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { code: 1, stderr: 'daemon down' }));
+    await expect(runtime.listStates({ strict: true })).rejects.toThrow(/daemon down/);
+  });
+
+  it('listStates without strict keeps the D1 contract of list(): a failed docker ps reads as no containers', async () => {
+    execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { code: 1, stderr: 'daemon down' }));
+    expect(await runtime.listStates()).toEqual(new Map());
+  });
+
+  it('a hung docker is killed at the timeout and rejects with RuntimeQueryTimeoutError, never a sentinel', async () => {
+    execFileCalls(killed(), killed(), killed(), killed(), killed());
+    await expect(runtime.listStates()).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
+    await expect(runtime.getStatusAsync('mc-a')).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
+    await expect(runtime.getLogsAsync('mc-a')).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
+    await expect(runtime.getUptimeAsync('mc-a')).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
+    await expect(runtime.listAsync()).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
+  });
+
+  it('getStatusAsync keeps its sentinel and mapping, now with a timeout', async () => {
+    execFileCalls({ stdout: 'Running\n' }, new Error('No such object'));
+    expect(await runtime.getStatusAsync('mc-a')).toBe('running');
+    expect(argvOf()).toEqual(['docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-a']]);
+    expect(vi.mocked(execFile).mock.calls[0]?.[2]).toEqual(QUERY);
+    expect(await runtime.getStatusAsync('mc-a')).toBe('not_found');
+    expect(spawn).not.toHaveBeenCalled();
+  });
+
+  it('getLogsAsync tails like getLogs and returns "" on failure', async () => {
+    execFileCalls({ stdout: 'line1\nline2\n' }, new Error('No such container'));
+    expect(await runtime.getLogsAsync('mc-a', 20)).toBe('line1\nline2');
+    expect(argvOf()).toEqual(['docker', ['logs', '--tail', '20', '--', 'mc-a']]);
+    expect(await runtime.getLogsAsync('mc-a')).toBe('');
+    expect(argvOf(1)).toEqual(['docker', ['logs', '--tail', '50', '--', 'mc-a']]);
+  });
+
+  it('getUptimeAsync formats StartedAt like getUptime; null on failure or never started', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-21T12:30:00Z'));
+    try {
+      execFileCalls({ stdout: '2026-10-20T10:00:00Z\n' }, new Error('x'), { stdout: '0001-01-01T00:00:00Z' });
+      expect(await runtime.getUptimeAsync('mc-a')).toEqual({ uptime: '1d 2h 30m', seconds: 95400 });
+      expect(argvOf()).toEqual(['docker', ['inspect', '--format', '{{.State.StartedAt}}', '--', 'mc-a']]);
+      expect(await runtime.getUptimeAsync('mc-a')).toBeNull();
+      expect(await runtime.getUptimeAsync('mc-a')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('listAsync mirrors list: sorted without mc-router, [] on failure unless strict', async () => {
+    execFileCalls({ stdout: 'mc-b\nmc-router\nmc-a\n' }, new Error('x'), new Error('x'));
+    expect(await runtime.listAsync({ running: true })).toEqual(['mc-a', 'mc-b']);
+    expect(argvOf()).toEqual([
+      'docker',
+      ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}'],
+    ]);
+    expect(await runtime.listAsync()).toEqual([]);
+    await expect(runtime.listAsync({ running: true, strict: true })).rejects.toThrow();
+  });
+});
+
+describe('async router and environment queries (#672)', () => {
+  const argvOf = (call = 0) => vi.mocked(execFile).mock.calls[call]?.slice(0, 2);
+
+  it('inspectRouterAsync and getLabelsAsync parse like their sync forms', async () => {
+    const router = new DockerRouterStatusAdapter();
+    execFileCalls(
+      { stdout: JSON.stringify({ Image: 'itzg/mc-router:1', Env: ['A=1', 'B=x=y'] }) },
+      { stdout: JSON.stringify({ 'mc-router.host': 'a.local', n: 1 }) },
+      new Error('No such object'),
+      new Error('No such object')
+    );
+    expect(await router.inspectRouterAsync()).toEqual({ image: 'itzg/mc-router:1', env: { A: '1', B: 'x=y' } });
+    expect(argvOf()).toEqual(['docker', ['inspect', '--format', '{{json .Config}}', '--', 'mc-router']]);
+    expect(await router.getLabelsAsync('mc-a')).toEqual({ 'mc-router.host': 'a.local' });
+    expect(argvOf(1)).toEqual(['docker', ['inspect', '--format', '{{json .Config.Labels}}', '--', 'mc-a']]);
+    expect(await router.inspectRouterAsync()).toBeNull();
+    expect(await router.getLabelsAsync('mc-a')).toEqual({});
+  });
+
+  it('isAvailableAsync runs docker info with a timeout', async () => {
+    const environment = new DockerRuntimeEnvironmentAdapter();
+    execFileCalls({ stdout: 'ok' }, new Error('x'));
+    expect(await environment.isAvailableAsync()).toBe(true);
+    expect(argvOf()).toEqual(['docker', ['info']]);
+    expect(vi.mocked(execFile).mock.calls[0]?.[2]).toEqual(expect.objectContaining({ timeout: RUNTIME_QUERY_TIMEOUT_MS }));
+    expect(await environment.isAvailableAsync()).toBe(false);
+    expect(execSync).not.toHaveBeenCalled();
   });
 });

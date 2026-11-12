@@ -6,11 +6,11 @@ import { buildApp } from '../src/app.js';
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
   getRouterDetailInfoAsync: vi.fn(),
-  getAvahiStatus: vi.fn(),
+  getAvahiStatusAsync: vi.fn(),
   getPlayitAgentStatus: vi.fn(),
-  getAllServers: vi.fn(),
-  getServerInfoFromConfig: vi.fn(),
-  serverExists: vi.fn(),
+  getAllServersAsync: vi.fn(),
+  getServerInfoFromConfigAsync: vi.fn(),
+  serverExistsAsync: vi.fn(),
   getServerDetailedInfo: vi.fn(),
   getServerPlayitDomain: vi.fn(),
   AuditActionEnum: {},
@@ -52,7 +52,7 @@ describe('Router Routes - Playit Integration', () => {
 
   describe('GET /api/router/status - with playit field', () => {
     it('should include playit status in router response', async () => {
-      const { getRouterDetailInfoAsync, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
+      const { getRouterDetailInfoAsync, getAvahiStatusAsync, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
 
       vi.mocked(getRouterDetailInfoAsync).mockResolvedValue({
         name: 'mc-router',
@@ -65,7 +65,7 @@ describe('Router Routes - Playit Integration', () => {
         routes: [],
       });
 
-      vi.mocked(getAvahiStatus).mockReturnValue('running');
+      vi.mocked(getAvahiStatusAsync).mockReturnValue('running');
 
       vi.mocked(getPlayitAgentStatus).mockResolvedValue({
         enabled: true,
@@ -96,7 +96,7 @@ describe('Router Routes - Playit Integration', () => {
     });
 
     it('should omit playit field when playit status fails', async () => {
-      const { getRouterDetailInfoAsync, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
+      const { getRouterDetailInfoAsync, getAvahiStatusAsync, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
 
       vi.mocked(getRouterDetailInfoAsync).mockResolvedValue({
         name: 'mc-router',
@@ -106,7 +106,7 @@ describe('Router Routes - Playit Integration', () => {
         routes: [],
       });
 
-      vi.mocked(getAvahiStatus).mockReturnValue('running');
+      vi.mocked(getAvahiStatusAsync).mockReturnValue('running');
 
       vi.mocked(getPlayitAgentStatus).mockRejectedValue(new Error('Docker not available'));
 
@@ -124,7 +124,7 @@ describe('Router Routes - Playit Integration', () => {
     });
 
     it('should include playit status when agent is disabled', async () => {
-      const { getRouterDetailInfoAsync, getAvahiStatus, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
+      const { getRouterDetailInfoAsync, getAvahiStatusAsync, getPlayitAgentStatus } = await import('@minecraft-docker/shared');
 
       vi.mocked(getRouterDetailInfoAsync).mockResolvedValue({
         name: 'mc-router',
@@ -134,7 +134,7 @@ describe('Router Routes - Playit Integration', () => {
         routes: [],
       });
 
-      vi.mocked(getAvahiStatus).mockReturnValue('running');
+      vi.mocked(getAvahiStatusAsync).mockReturnValue('running');
 
       vi.mocked(getPlayitAgentStatus).mockResolvedValue({
         enabled: false,

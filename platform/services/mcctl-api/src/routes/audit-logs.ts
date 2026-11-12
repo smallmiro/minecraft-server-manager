@@ -23,6 +23,7 @@ import {
   getAuditLogRepository,
 } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
+import { openSse } from '../lib/sse.js';
 
 // Route generic interfaces
 interface ListRoute {
@@ -108,33 +109,19 @@ const auditLogsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
       },
     },
   }, async (request: FastifyRequest, reply: FastifyReply) => {
-    // Set SSE headers
-    reply.raw.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-    });
+    const stream = openSse(request, reply, { 'Access-Control-Allow-Origin': '*' });
+    if (!stream) return reply;
 
-    // Send initial connected event
-    reply.raw.write(`event: connected\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+    stream.send('connected', { timestamp: new Date().toISOString() });
 
     // Subscribe to new audit log events
-    const unsubscribe = subscribeAuditLogs((log) => {
-      reply.raw.write(`event: audit-log\ndata: ${JSON.stringify(log)}\n\n`);
-    });
+    stream.onClose(subscribeAuditLogs((log) => stream.send('audit-log', log)));
 
-    // Heartbeat to keep connection alive (every 30 seconds)
+    // Clients listen for this heartbeat event (openSse's comment heartbeat is not an event)
     const heartbeat = setInterval(() => {
-      reply.raw.write(`event: heartbeat\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+      stream.send('heartbeat', { timestamp: new Date().toISOString() });
     }, 30000);
-
-    // Cleanup on client disconnect
-    request.raw.on('close', () => {
-      clearInterval(heartbeat);
-      unsubscribe();
-      reply.raw.end();
-    });
+    stream.onClose(() => clearInterval(heartbeat));
 
     // Don't return - keep connection open for SSE
     return;

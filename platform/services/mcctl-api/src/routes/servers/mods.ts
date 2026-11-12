@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import {
-  serverExists,
+  serverExistsAsync,
   AuditActionEnum,
   ModSourceFactory,
   buildModpackCompatibilityMatrix,
@@ -85,7 +85,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name } = request.params;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -118,7 +118,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { slugs, source } = request.body;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -187,7 +187,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name, slug } = request.params;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -462,7 +462,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { name } = request.params;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -495,7 +495,7 @@ const modsPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { excluded } = request.body ?? {};
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 

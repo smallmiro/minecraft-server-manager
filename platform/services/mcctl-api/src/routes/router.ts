@@ -2,12 +2,13 @@ import { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } fro
 import fp from 'fastify-plugin';
 import {
   getRouterDetailInfoAsync,
-  getAvahiStatus,
+  getAvahiStatusAsync,
   getPlayitAgentStatus,
   AuditActionEnum,
   parseRouterLogLine,
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
+import { openSse } from '../lib/sse.js';
 import {
   RouterLogsStreamQuerySchema,
   RouterStatusStreamQuerySchema,
@@ -51,7 +52,7 @@ export async function buildRouterStatusPayload(log: { warn: (obj: unknown, msg?:
 
     const avahi = {
       name: 'avahi-daemon',
-      status: getAvahiStatus(),
+      status: await getAvahiStatusAsync(),
       type: 'system',
     };
 
@@ -73,7 +74,6 @@ export async function buildRouterStatusPayload(log: { warn: (obj: unknown, msg?:
 }
 
 const ROUTER_CONTAINER = 'mc-router';
-const SSE_HEARTBEAT_MS = 30000;
 const LOG_TAIL_DEFAULT = 100;
 const LOG_TAIL_MAX = 500;
 
@@ -150,12 +150,7 @@ class RouterStatusPoller {
   }
 }
 
-const sseHeaders = {
-  'Content-Type': 'text/event-stream',
-  'Cache-Control': 'no-cache',
-  'Connection': 'keep-alive',
-  'Access-Control-Allow-Origin': '*',
-};
+const sseCorsHeaders = { 'Access-Control-Allow-Origin': '*' };
 
 /**
  * Router routes plugin
@@ -219,36 +214,25 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<{ Querystring: { interval?: number } }>, reply: FastifyReply) => {
     const { interval = 5000 } = request.query;
 
-    reply.raw.writeHead(200, sseHeaders);
+    const stream = openSse(request, reply, sseCorsHeaders);
+    if (!stream) return reply;
 
-    let closed = false;
     let lastKey: string | undefined;
 
     const unsubscribe = pollerFor(interval).subscribe({
       onPayload(payload) {
-        if (closed) return;
         const key = routerStatusChangeKey(payload);
         if (key === lastKey) return;
         lastKey = key;
-        reply.raw.write(`event: router-status\ndata: ${JSON.stringify(payload)}\n\n`);
+        stream.send('router-status', payload);
       },
       onError() {
-        if (closed) return;
         // Clients fall back to polling GET /status; resend the next good payload even if unchanged.
         lastKey = undefined;
-        reply.raw.write(`event: router-status-error\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+        stream.send('router-status-error', { timestamp: new Date().toISOString() });
       },
     });
-    const heartbeat = setInterval(() => {
-      reply.raw.write(': heartbeat\n\n');
-    }, SSE_HEARTBEAT_MS);
-
-    request.raw.on('close', () => {
-      closed = true;
-      unsubscribe();
-      clearInterval(heartbeat);
-      reply.raw.end();
-    });
+    stream.onClose(unsubscribe);
 
     return;
   });
@@ -269,16 +253,16 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<{ Querystring: { tail?: string } }>, reply: FastifyReply) => {
     const tail = clampLogTail(request.query.tail);
 
-    reply.raw.writeHead(200, sseHeaders);
-    reply.raw.write(`event: connected\ndata: ${JSON.stringify({ timestamp: new Date().toISOString() })}\n\n`);
+    const stream = openSse(request, reply, sseCorsHeaders);
+    if (!stream) return reply;
+    stream.send('connected', { timestamp: new Date().toISOString() });
 
     const controller = new AbortController();
-    let finished = false;
     let pending = '';
 
     const emitLine = (line: string) => {
-      if (finished || line.length === 0) return;
-      reply.raw.write(`event: router-log\ndata: ${JSON.stringify(parseRouterLogLine(line))}\n\n`);
+      if (line.length === 0) return;
+      stream.send('router-log', parseRouterLogLine(line));
     };
 
     const onChunk = (chunk: string) => {
@@ -288,25 +272,17 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       for (const part of parts) emitLine(part.replace(/\r$/, ''));
     };
 
-    const heartbeat = setInterval(() => {
-      reply.raw.write(': heartbeat\n\n');
-    }, SSE_HEARTBEAT_MS);
-
     const finish = (payload?: { code: number | null; error?: string }) => {
-      if (finished) return;
-      if (payload) {
+      if (payload && stream.open) {
         emitLine(pending.replace(/\r$/, ''));
         pending = '';
-        reply.raw.write(`event: end\ndata: ${JSON.stringify(payload)}\n\n`);
+        stream.send('end', payload);
       }
-      finished = true;
-      clearInterval(heartbeat);
-      controller.abort();
-      reply.raw.end();
+      stream.end();
     };
 
     // Client disconnect: abort kills the docker logs child (spawn's `signal`)
-    request.raw.on('close', () => finish());
+    stream.onClose(() => controller.abort());
 
     const runtime = fastify.container.containerRuntime();
     void runtime

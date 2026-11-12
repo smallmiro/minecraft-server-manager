@@ -10,6 +10,26 @@ export interface RuntimeActionResult {
 }
 
 /**
+ * A runtime query did not answer in time (#672). The query is killed; callers
+ * get this instead of a sentinel, so a hung runtime never reads as "absent".
+ */
+export class RuntimeQueryTimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RuntimeQueryTimeoutError';
+  }
+}
+
+/** One workload as `listStates` reports it (#672). */
+export interface WorkloadState {
+  status: ContainerStatus;
+  /** From the runtime's status line: 'none' without a healthcheck or when not running. */
+  health: HealthStatus;
+  /** `mc-router.host` label, '-' when none. */
+  hostname: string;
+}
+
+/**
  * Container Runtime Port - Outbound Port (ADR-0001)
  *
  * Per-workload runtime operations.
@@ -19,7 +39,9 @@ export interface RuntimeActionResult {
  * servers and is narrowed once every caller passes a ServerName (#667; router
  * and playit-agent need #641 first).
  * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
- * Synchronous methods stay synchronous until C2.
+ * Synchronous methods remain for the CLI. Request paths use the async ones
+ * (#672): they run as awaited child processes with a timeout and reject with
+ * RuntimeQueryTimeoutError when it passes; other failures keep the sentinels.
  */
 export interface IContainerRuntimePort {
   /** 'not_found' when absent or when the runtime cannot be queried. */
@@ -47,6 +69,15 @@ export interface IContainerRuntimePort {
    */
   getStatsAsync(name: ServerName | string): Promise<ContainerStats | null>;
   getUptime(name: ServerName | string): { uptime: string; seconds: number } | null;
+  getUptimeAsync(name: ServerName | string): Promise<{ uptime: string; seconds: number } | null>;
+  getLogsAsync(name: ServerName | string, lines?: number): Promise<string>;
+  listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]>;
+  /**
+   * Every `mc-*` workload (mc-router included) keyed by container name, from
+   * one runtime query (#672). Like list(): a failed query is an empty map
+   * unless `strict`, where it rejects. A timeout always rejects.
+   */
+  listStates(options?: { strict?: boolean }): Promise<Map<string, WorkloadState>>;
 
   /** Create the workload if missing, then run it. */
   start(name: ServerName | string): Promise<RuntimeActionResult>;

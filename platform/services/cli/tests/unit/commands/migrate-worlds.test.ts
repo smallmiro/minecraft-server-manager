@@ -53,7 +53,7 @@ beforeEach(() => {
     join(root, 'servers', 'alpha', 'docker-compose.yml'),
     TEMPLATE_COMPOSE.replace(/mc-template/g, 'mc-alpha').replace('mc-router.host: "template.local"', 'mc-router.host: "alpha.local"')
   );
-  const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+  const stopped = { getStatusAsync: async () => 'exited' } as unknown as IContainerRuntimePort;
   serverSpecRepositories.create = (p) => new FileServerSpecRepository(p, undefined, stopped, () => []);
   writeFileSync(join(root, 'servers', 'alpha', 'data', 'world', 'level.dat'), 'x');
   runtime.getStatusAsync.mockReset();
@@ -121,7 +121,7 @@ describe('migrate worlds (runtime port)', () => {
 
   describe('when the spec write left files it could not put back (unrestoredFiles)', () => {
     const alpha = () => join(root, 'servers', 'alpha');
-    const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+    const stopped = { getStatusAsync: async () => 'exited' } as unknown as IContainerRuntimePort;
     type Write = FileServerSpecRepository['write'];
     /** A repository whose write runs `before`, then fails like a write whose undo was incomplete. */
     function failingWrite(left: string[], before: (write: Write, doc: ServerSpecDocument) => Promise<void>) {

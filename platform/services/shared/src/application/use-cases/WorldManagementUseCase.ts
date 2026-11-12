@@ -90,7 +90,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
     }
   }
 
-  private checkStopped(server: string): WorldAssignmentError | null {
+  private checkStopped(server: string): Promise<WorldAssignmentError | null> {
     return checkServerStopped(this.runtime, server);
   }
 
@@ -101,7 +101,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
   private async checkNewWorldTarget(worldName: string, serverName: string): Promise<WorldAssignmentError | null> {
     const snapshot = await this.snapshot();
     if (snapshot instanceof WorldAssignmentError) return snapshot;
-    return checkAssign(snapshot, worldName, serverName) ?? this.checkStopped(serverName);
+    return checkAssign(snapshot, worldName, serverName) ?? (await this.checkStopped(serverName));
   }
 
   /**
@@ -525,7 +525,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       return { success: true, worldName, serverName };
     }
 
-    const running = this.checkStopped(serverName);
+    const running = await this.checkStopped(serverName);
     if (running) return fail(running);
 
     try {
@@ -632,7 +632,7 @@ export class WorldManagementUseCase implements IWorldManagementUseCase {
       return fail(plan);
     }
 
-    const running = this.checkStopped(plan.server);
+    const running = await this.checkStopped(plan.server);
     if (running) return fail(running, plan.server);
 
     let released: { server: string; fallback: string };

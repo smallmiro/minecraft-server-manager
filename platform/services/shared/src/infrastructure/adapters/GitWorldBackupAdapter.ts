@@ -245,13 +245,13 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
       }
       const oid = await this.resolveCommit(commit, cfg);
 
-      this.assertNothingRunning();
+      await this.assertNothingRunning();
       const staging = join(this.root, 'backups', `.restore-${this.stamp()}`);
       return withCleanup(
         async () => {
           await this.mustGit(['worktree', 'add', '-q', '--detach', staging, oid]);
           const { targets, skipped } = await this.planRestore(staging);
-          this.assertNothingRunning(); // re-check right before the swap (K3, R1)
+          await this.assertNothingRunning(); // re-check right before the swap (K3, R1)
           const previousDir = await swapIntoPlace(this.root, oid, targets, this.stamp());
           await rotateSlots(this.root);
           return { commit: oid, previousDir, skipped };
@@ -601,19 +601,20 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
 
   // ---------------------------------------------------------------- runtime
 
-  private runningServers(): string[] {
-    if (!this.options.environment.isAvailable()) {
+  /** Awaited and bounded (#672); a timed-out query refuses like an unreachable runtime. */
+  private async runningServers(): Promise<string[]> {
+    if (!(await this.options.environment.isAvailableAsync().catch(() => false))) {
       fail('runtime_unavailable', 'Cannot query the container runtime; refusing to continue');
     }
     try {
-      return this.options.runtime.list({ running: true, strict: true });
+      return await this.options.runtime.listAsync({ running: true, strict: true });
     } catch (e) {
       return fail('runtime_unavailable', `Cannot list running servers; refusing to continue: ${(e as Error).message}`);
     }
   }
 
-  private assertNothingRunning(): void {
-    const running = this.runningServers();
+  private async assertNothingRunning(): Promise<void> {
+    const running = await this.runningServers();
     if (running.length > 0) {
       const servers = running.map(serverNameOf);
       fail('servers_running', `Stop all servers before restoring (running: ${servers.join(', ')})`, { servers });
@@ -625,7 +626,7 @@ export class GitWorldBackupAdapter implements IWorldBackupPort {
     copy: () => Promise<void>,
     signal?: AbortSignal
   ): Promise<{ flushed: string[]; saveOnFailures: SaveOnFailure[] }> {
-    const running = this.runningServers();
+    const running = await this.runningServers();
     const cleanup: string[] = [];
     const timeoutMs = this.options.flushTimeoutMs ?? 60_000;
     const abortedTimeoutMs = this.options.abortedSaveOnTimeoutMs ?? 20_000;

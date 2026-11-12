@@ -17,6 +17,11 @@ import type {
 
 const MODRINTH_API = 'https://api.modrinth.com/v2';
 
+/** API requests, body included, end here so a stalled Modrinth cannot hold a caller open (#672). */
+const API_TIMEOUT_MS = 15_000;
+/** `.mrpack` archives can be tens of MB: their download gets this many API timeouts (120 s by default). */
+const DOWNLOAD_TIMEOUT_FACTOR = 8;
+
 /**
  * A single file entry from a modpack's `modrinth.index.json`.
  */
@@ -59,8 +64,15 @@ export interface ModrinthVersionParams {
 export class ModrinthApiClient {
   private readonly baseUrl: string;
 
-  constructor(baseUrl: string = MODRINTH_API) {
+  constructor(
+    baseUrl: string = MODRINTH_API,
+    private readonly timeoutMs: number = API_TIMEOUT_MS
+  ) {
     this.baseUrl = baseUrl;
+  }
+
+  private get(url: string, timeoutMs = this.timeoutMs): Promise<Response> {
+    return fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
   }
 
   /**
@@ -78,7 +90,7 @@ export class ModrinthApiClient {
       urlParams.set('facets', JSON.stringify(params.facets));
     }
 
-    const response = await fetch(`${this.baseUrl}/search?${urlParams}`);
+    const response = await this.get(`${this.baseUrl}/search?${urlParams}`);
 
     if (!response.ok) {
       throw new Error(`Modrinth API error: ${response.status} ${response.statusText}`);
@@ -91,7 +103,7 @@ export class ModrinthApiClient {
    * Get project by slug or ID
    */
   async getProject(slugOrId: string): Promise<ModrinthProjectRaw | null> {
-    const response = await fetch(`${this.baseUrl}/project/${slugOrId}`);
+    const response = await this.get(`${this.baseUrl}/project/${slugOrId}`);
 
     if (response.status === 404) {
       return null;
@@ -122,7 +134,7 @@ export class ModrinthApiClient {
 
     const queryString = urlParams.toString();
     const url = `${this.baseUrl}/project/${slugOrId}/version${queryString ? '?' + queryString : ''}`;
-    const response = await fetch(url);
+    const response = await this.get(url);
 
     // A non-existent project returns 404. Treat it as "no versions" (empty list)
     // rather than throwing, mirroring getProject()'s 404 handling. This lets the
@@ -143,7 +155,7 @@ export class ModrinthApiClient {
    * Get team members for a project
    */
   async getTeamMembers(teamId: string): Promise<ModrinthTeamMemberRaw[]> {
-    const response = await fetch(`${this.baseUrl}/team/${teamId}/members`);
+    const response = await this.get(`${this.baseUrl}/team/${teamId}/members`);
 
     if (!response.ok) {
       return [];
@@ -163,7 +175,7 @@ export class ModrinthApiClient {
       ids: JSON.stringify(slugsOrIds),
     });
 
-    const response = await fetch(`${this.baseUrl}/projects?${params}`);
+    const response = await this.get(`${this.baseUrl}/projects?${params}`);
 
     if (!response.ok) {
       throw new Error(`Modrinth API error: ${response.status} ${response.statusText}`);
@@ -179,7 +191,7 @@ export class ModrinthApiClient {
    * @param mrpackUrl - Direct download URL of the `.mrpack` file
    */
   async getModpackIndexFiles(mrpackUrl: string): Promise<ModrinthIndexFileRaw[]> {
-    const response = await fetch(mrpackUrl);
+    const response = await this.get(mrpackUrl, this.timeoutMs * DOWNLOAD_TIMEOUT_FACTOR);
     if (!response.ok) {
       throw new Error(`Failed to download modpack: ${response.status} ${response.statusText}`);
     }
@@ -202,7 +214,7 @@ export class ModrinthApiClient {
    */
   async isAvailable(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/`);
+      const response = await this.get(`${this.baseUrl}/`);
       return response.ok;
     } catch {
       return false;

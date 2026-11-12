@@ -15,7 +15,7 @@ vi.mock('node:child_process', async (importOriginal) => ({
 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  serverExists: vi.fn(),
+  serverExistsAsync: vi.fn(),
 }));
 
 vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
@@ -25,7 +25,7 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 }));
 
 import type { FastifyReply } from 'fastify';
-import { serverExists } from '@minecraft-docker/shared';
+import { serverExistsAsync } from '@minecraft-docker/shared';
 import { buildApp } from '../src/app.js';
 import { lifecycleLimits } from '../src/routes/servers.js';
 import { fakeDelete, fakeProvision, provisionContainer } from './fake-provision.js';
@@ -97,7 +97,7 @@ describe('server create/delete single-flight (#656)', () => {
       return pending(deletes, name);
     });
     vi.restoreAllMocks();
-    vi.mocked(serverExists).mockImplementation((name: string) => name === 'old');
+    vi.mocked(serverExistsAsync).mockImplementation((name: string) => name === 'old');
     Object.assign(lifecycleLimits, defaults);
   });
 
@@ -124,7 +124,7 @@ describe('server create/delete single-flight (#656)', () => {
     await queued(2);
     expect(creates).toHaveLength(1);
 
-    vi.mocked(serverExists).mockImplementation((name: string) => name === 'twin');
+    vi.mocked(serverExistsAsync).mockImplementation((name: string) => name === 'twin');
     creates[0]!.done();
     expect((await first).statusCode).toBe(201);
     expect((await second).statusCode).toBe(409);

@@ -7,4 +7,10 @@ describe('AvahiHostnameRegistrarAdapter run()', () => {
     // A large input makes the write outlive the child every time.
     await expect(run('sh', ['-c', 'exit 3'], 'x'.repeat(4 * 1024 * 1024))).resolves.toBe(3);
   });
+
+  it('kills a command that hangs past the timeout and resolves -1 (#672)', async () => {
+    const started = Date.now();
+    await expect(run('sleep', ['5'], undefined, { timeoutMs: 100 })).resolves.toBe(-1);
+    expect(Date.now() - started).toBeLessThan(3000);
+  });
 });

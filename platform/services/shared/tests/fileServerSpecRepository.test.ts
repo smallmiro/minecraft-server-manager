@@ -85,7 +85,7 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'mcctl-spec-repo-'));
   mkdirSync(join(root, 'servers'));
   // A stopped runtime: these specs set a level the bare config.env lacks (ADR-0003 R4 asks it).
-  const stopped = { getStatus: () => 'exited' } as unknown as IContainerRuntimePort;
+  const stopped = { getStatusAsync: async () => 'exited' } as unknown as IContainerRuntimePort;
   repo = new FileServerSpecRepository(new Paths(root), undefined, stopped);
 });
 

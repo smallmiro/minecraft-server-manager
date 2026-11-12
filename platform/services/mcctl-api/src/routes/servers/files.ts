@@ -4,7 +4,7 @@ import multipart from '@fastify/multipart';
 import { resolve, join, basename, dirname } from 'path';
 import { existsSync, statSync, readdirSync, readFileSync, mkdirSync, renameSync, rmSync, realpathSync, createReadStream, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
-import { serverExists, AuditActionEnum } from '@minecraft-docker/shared';
+import { serverExistsAsync, AuditActionEnum } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import { ErrorResponseSchema, ServerNameParamsSchema, type ServerNameParams } from '../../schemas/server.js';
 import { config } from '../../config/index.js';
@@ -138,7 +138,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const userPath = request.query.path || '/';
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -212,7 +212,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const userPath = request.query.path;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -274,7 +274,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { content } = request.body;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -357,7 +357,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const userPath = request.query.path;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -429,7 +429,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const userPath = request.query.path;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -498,7 +498,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { oldPath, newPath } = request.body;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -576,7 +576,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const userPath = request.query.path;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 
@@ -673,7 +673,7 @@ const filesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const userPath = request.query.path;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       }
 

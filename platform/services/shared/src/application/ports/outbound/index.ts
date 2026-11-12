@@ -74,7 +74,8 @@ export type {
 } from './IBlockScanner.js';
 
 // Runtime ports (ADR-0001)
-export type { IContainerRuntimePort, RuntimeActionResult } from './IContainerRuntimePort.js';
+export type { IContainerRuntimePort, RuntimeActionResult, WorkloadState } from './IContainerRuntimePort.js';
+export { RuntimeQueryTimeoutError } from './IContainerRuntimePort.js';
 export type {
   IServerConsolePort,
   ConsoleCommandResult,

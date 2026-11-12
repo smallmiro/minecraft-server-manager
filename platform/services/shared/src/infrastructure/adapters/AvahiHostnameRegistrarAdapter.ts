@@ -19,6 +19,9 @@ export interface AvahiHostnameRegistrarOptions {
   hostsFile?: string;
 }
 
+/** Each getStatusAsync probe. */
+const STATUS_TIMEOUT_MS = 5_000;
+
 const IPV4 = /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
 /** True when an uncommented line lists exactly `hostname` as a host field (#660). */
@@ -34,13 +37,29 @@ function registered(content: string, hostname: string): boolean {
   });
 }
 
-/** Run argv (no shell) with optional stdin; resolves the exit code (-1 when it cannot start). */
-/** @internal exported for tests */
-export function run(cmd: string, args: string[], input?: string): Promise<number> {
+/** sudo, tee and an avahi-daemon restart take seconds; past this the command is killed (#672). */
+const RUN_TIMEOUT_MS = 60_000;
+
+/**
+ * Run argv (no shell) with optional stdin; resolves the exit code (-1 when it
+ * cannot start or is killed at the timeout).
+ * @internal exported for tests
+ */
+export function run(
+  cmd: string,
+  args: string[],
+  input?: string,
+  options: { timeoutMs?: number } = {}
+): Promise<number> {
   return new Promise((resolve) => {
     const env = { ...process.env };
     delete env['MCCTL_SUDO_PASSWORD']; // the password only ever travels on stdin (#682)
-    const child = spawn(cmd, args, { env, stdio: ['pipe', 'ignore', 'ignore'] });
+    const child = spawn(cmd, args, {
+      env,
+      stdio: ['pipe', 'ignore', 'ignore'],
+      timeout: options.timeoutMs ?? RUN_TIMEOUT_MS,
+      killSignal: 'SIGKILL',
+    });
     child.on('error', () => resolve(-1));
     child.on('close', (code) => resolve(code ?? -1));
     // A child that exits before reading stdin (sudo -n refusing) closes the pipe; the
@@ -91,6 +110,15 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
     }
   }
 
+  /** getStatus for request paths (#672): the same probes, awaited, each with a timeout. */
+  async getStatusAsync(): Promise<HostnameRegistrarStatus> {
+    const probe = { timeoutMs: STATUS_TIMEOUT_MS };
+    if ((await run('systemctl', ['is-active', '--quiet', 'avahi-daemon'], undefined, probe)) === 0) return 'running';
+    if ((await run('rc-service', ['avahi-daemon', 'status'], undefined, probe)) === 0) return 'running';
+    if ((await run('which', ['avahi-daemon'], undefined, probe)) === 0) return 'installed (not running)';
+    return 'not installed';
+  }
+
   /**
    * Append `<ip> <hostname>` to the avahi hosts file and restart avahi-daemon,
    * with exactly the commands the README sudoers lines allow:
@@ -103,7 +131,7 @@ export class AvahiHostnameRegistrarAdapter implements IHostnameRegistrarPort {
     }
     const hostError = validateHostname(hostname);
     if (hostError) return skipped(`invalid hostname '${hostname}': ${hostError}`);
-    if (this.getStatus() === 'not installed') return skipped('avahi-daemon is not installed');
+    if ((await this.getStatusAsync()) === 'not installed') return skipped('avahi-daemon is not installed');
 
     let current = '';
     try {

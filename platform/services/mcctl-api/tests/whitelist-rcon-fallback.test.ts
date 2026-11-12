@@ -39,12 +39,12 @@ vi.mock('@minecraft-docker/shared', async () => {
   const actual = await vi.importActual('@minecraft-docker/shared');
   return {
     ...actual,
-    containerExists: vi.fn((containerName: string) => {
+    containerExistsAsync: vi.fn((containerName: string) => {
       const serverName = containerName.replace('mc-', '');
       const serverPath = join(TEST_PLATFORM_PATH, 'servers', serverName, 'docker-compose.yml');
       return existsSync(serverPath);
     }),
-    getContainerStatus: vi.fn(() => 'running'),
+    getContainerStatusAsync: vi.fn(() => 'running'),
   };
 });
 
@@ -70,7 +70,7 @@ function setupServer(serverName: string, opts: { whitelist?: Array<{ uuid: strin
 }
 
 // Server defined on disk (config.env) but WITHOUT a container.
-// Intentionally omits docker-compose.yml so the mocked containerExists() returns false.
+// Intentionally omits docker-compose.yml so the mocked containerExistsAsync() returns false.
 function setupServerConfigOnly(serverName: string, opts: { whitelist?: Array<{ uuid: string; name: string }> } = {}) {
   const serverDir = join(TEST_PLATFORM_PATH, 'servers', serverName);
   const dataDir = join(serverDir, 'data');

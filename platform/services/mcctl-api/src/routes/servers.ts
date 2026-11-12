@@ -1,14 +1,15 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import {
-  getAllServers,
-  getServerInfoFromConfig,
+  getAllServersAsync,
+  getServerInfoFromConfigAsync,
   getServerDetailedInfo,
-  getContainerLogs,
-  containerExists,
-  serverExists,
-  getContainerStatus,
-  getContainerHealth,
+  getContainerLogsAsync,
+  containerExistsAsync,
+  serverExistsAsync,
+  getContainerStatusAsync,
+  getContainerHealthAsync,
+  invalidateContainerStates,
   getServerPlayitDomain,
   getOnlinePlayers,
   checkAssign,
@@ -55,7 +56,8 @@ import {
   type DeleteServerRequest,
 } from '../schemas/server.js';
 import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
-import { getContainerName } from '../lib/rcon.js';
+import { getContainerName, RCON_TIMEOUT_MS } from '../lib/rcon.js';
+import { openSse } from '../lib/sse.js';
 import { worldFailure } from '../lib/world-use-case.js';
 import { serverSpecFailure } from '../lib/server-spec.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
@@ -167,7 +169,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms).unref());
   const runSerial = <T>(task: () => Promise<T>, maxHoldMs: () => number): Promise<T> => {
     const started = lifecycleTail.then(() => {
-      const run = task();
+      // A create or delete changes containers: drop the cached status snapshot when it settles (#672)
+      const run = task().finally(invalidateContainerStates);
       return { run, hold: Promise.race([run.catch(() => undefined), delay(maxHoldMs())]) };
     });
     lifecycleTail = started.then(({ hold }) => hold);
@@ -195,9 +198,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request, reply) => {
     try {
       // Get all servers (both configured and running containers)
-      const serverNames = getAllServers();
-      const servers: ServerSummary[] = serverNames.map((serverName) => {
-        const info = getServerInfoFromConfig(serverName);
+      const serverNames = await getAllServersAsync();
+      const servers: ServerSummary[] = await Promise.all(serverNames.map(async (serverName) => {
+        const info = await getServerInfoFromConfigAsync(serverName);
         return {
           name: info.name,
           container: info.container,
@@ -205,7 +208,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           health: info.health,
           hostname: info.hostname,
         };
-      });
+      }));
 
       if (request.query.include === 'summary') {
         const summary = await serverSummaries.execute(servers);
@@ -251,68 +254,50 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // SSE streaming mode
     if (follow) {
-      reply.raw.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      });
+      const stream = openSse(request, reply, { 'Access-Control-Allow-Origin': '*' });
+      if (!stream) return reply;
 
       // Send status update for all servers
-      const sendAllStatuses = () => {
-        const serverNames = getAllServers();
+      const sendAllStatuses = async () => {
+        const serverNames = await getAllServersAsync();
         for (const name of serverNames) {
           const containerName = `mc-${name}`;
-          const dockerStatus = getContainerStatus(containerName);
-          const dockerHealth = getContainerHealth(containerName);
-          const status = mapContainerStatus(dockerStatus);
-          const health = mapHealthStatus(dockerHealth);
-
-          reply.raw.write(`event: server-status\n`);
-          reply.raw.write(`data: ${JSON.stringify({
+          const dockerStatus = await getContainerStatusAsync(containerName);
+          const dockerHealth = await getContainerHealthAsync(containerName);
+          stream.send('server-status', {
             serverName: name,
-            status,
-            health,
+            status: mapContainerStatus(dockerStatus),
+            health: mapHealthStatus(dockerHealth),
             timestamp: new Date().toISOString(),
-          })}\n\n`);
+          });
         }
       };
 
-      // Send initial status immediately
-      sendAllStatuses();
+      // A failed poll (e.g. docker timed out) skips this tick
+      const poll = () => {
+        sendAllStatuses().catch((error) => fastify.log.warn(error, 'Failed to poll server statuses'));
+      };
 
-      // Poll for status updates at the specified interval
-      const polling = setInterval(sendAllStatuses, interval);
-
-      // Heartbeat to keep connection alive (every 30 seconds)
-      const heartbeat = setInterval(() => {
-        reply.raw.write(': heartbeat\n\n');
-      }, 30000);
-
-      // Cleanup on client disconnect
-      request.raw.on('close', () => {
-        clearInterval(polling);
-        clearInterval(heartbeat);
-        reply.raw.end();
-      });
-
+      const polling = setInterval(poll, interval);
+      stream.onClose(() => clearInterval(polling));
+      poll();
       return;
     }
 
     // Standard JSON response (non-streaming)
     try {
-      const serverNames = getAllServers();
-      const statuses = serverNames.map((name) => {
+      const serverNames = await getAllServersAsync();
+      const statuses = await Promise.all(serverNames.map(async (name) => {
         const containerName = `mc-${name}`;
-        const dockerStatus = getContainerStatus(containerName);
-        const dockerHealth = getContainerHealth(containerName);
+        const dockerStatus = await getContainerStatusAsync(containerName);
+        const dockerHealth = await getContainerHealthAsync(containerName);
         return {
           serverName: name,
           status: mapContainerStatus(dockerStatus),
           health: mapHealthStatus(dockerHealth),
           timestamp: new Date().toISOString(),
         };
-      });
+      }));
 
       return reply.send(statuses);
     } catch (error) {
@@ -342,7 +327,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // Check if server exists (either as container or config)
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -404,7 +389,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const containerName = `mc-${name}`;
 
     // Check if server exists first (before SSE mode check)
-    if (!serverExists(name)) {
+    if (!(await serverExistsAsync(name))) {
       return reply.code(404).send({
         error: 'NotFound',
         message: `Server '${name}' not found`,
@@ -413,54 +398,36 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // SSE streaming mode
     if (follow) {
-      reply.raw.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      });
+      const stream = openSse(request, reply, { 'Access-Control-Allow-Origin': '*' });
+      if (!stream) return reply;
 
       // Send status update
-      const sendStatus = () => {
-        const dockerStatus = getContainerStatus(containerName);
-        const dockerHealth = getContainerHealth(containerName);
-        const status = mapContainerStatus(dockerStatus);
-        const health = mapHealthStatus(dockerHealth);
-
-        reply.raw.write(`event: server-status\n`);
-        reply.raw.write(`data: ${JSON.stringify({
+      const sendStatus = async () => {
+        const dockerStatus = await getContainerStatusAsync(containerName);
+        const dockerHealth = await getContainerHealthAsync(containerName);
+        stream.send('server-status', {
           serverName: name,
-          status,
-          health,
+          status: mapContainerStatus(dockerStatus),
+          health: mapHealthStatus(dockerHealth),
           timestamp: new Date().toISOString(),
-        })}\n\n`);
+        });
       };
 
-      // Send initial status immediately
-      sendStatus();
+      // A failed poll (e.g. docker timed out) skips this tick
+      const poll = () => {
+        sendStatus().catch((error) => fastify.log.warn(error, 'Failed to poll server status'));
+      };
 
-      // Poll for status updates at the specified interval
-      const polling = setInterval(sendStatus, interval);
-
-      // Heartbeat to keep connection alive (every 30 seconds)
-      const heartbeat = setInterval(() => {
-        reply.raw.write(': heartbeat\n\n');
-      }, 30000);
-
-      // Cleanup on client disconnect
-      request.raw.on('close', () => {
-        clearInterval(polling);
-        clearInterval(heartbeat);
-        reply.raw.end();
-      });
-
+      const polling = setInterval(poll, interval);
+      stream.onClose(() => clearInterval(polling));
+      poll();
       return;
     }
 
     // Standard JSON response (non-streaming)
     try {
-      const dockerStatus = getContainerStatus(containerName);
-      const dockerHealth = getContainerHealth(containerName);
+      const dockerStatus = await getContainerStatusAsync(containerName);
+      const dockerHealth = await getContainerHealthAsync(containerName);
       const status = mapContainerStatus(dockerStatus);
       const health = mapHealthStatus(dockerHealth);
 
@@ -504,7 +471,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const { name } = request.params;
       const { follow = false, interval = 5000 } = request.query;
 
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -526,48 +493,20 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       // SSE streaming mode
       if (follow) {
-        reply.raw.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-        });
+        const stream = openSse(request, reply, { 'Access-Control-Allow-Origin': '*' });
+        if (!stream) return reply;
 
-        let polling: ReturnType<typeof setInterval> | undefined;
-        let heartbeat: ReturnType<typeof setInterval> | undefined;
-        const cleanup = () => {
-          if (polling) clearInterval(polling);
-          if (heartbeat) clearInterval(heartbeat);
-        };
-
+        // resolveLive never rejects: RCON failures read as no players
         const sendPlayers = async () => {
-          try {
-            const players = await resolveLive();
-            reply.raw.write(`event: players-live\n`);
-            reply.raw.write(`data: ${JSON.stringify({ players })}\n\n`);
-          } catch {
-            // Socket likely closed/errored — stop streaming.
-            cleanup();
-            reply.raw.end();
-          }
+          const players = await resolveLive();
+          stream.send('players-live', { players });
         };
 
-        await sendPlayers();
-        polling = setInterval(() => {
+        const polling = setInterval(() => {
           void sendPlayers();
         }, interval);
-        heartbeat = setInterval(() => {
-          try {
-            reply.raw.write(': heartbeat\n\n');
-          } catch {
-            cleanup();
-          }
-        }, 30000);
-
-        request.raw.on('close', () => {
-          cleanup();
-          reply.raw.end();
-        });
+        stream.onClose(() => clearInterval(polling));
+        await sendPlayers();
         return;
       }
 
@@ -596,7 +535,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const containerName = `mc-${name}`;
 
     try {
-      if (!containerExists(containerName)) {
+      if (!(await containerExistsAsync(containerName))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -605,63 +544,33 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
       // SSE streaming mode
       if (follow) {
-        const { spawn } = await import('node:child_process');
+        // Read the backlog before the stream opens: a failure still answers 500
+        const initialLogs = await getContainerLogsAsync(containerName, lines);
+        const stream = openSse(request, reply, { 'Access-Control-Allow-Origin': '*' });
+        if (!stream) return reply;
 
-        reply.raw.writeHead(200, {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
-          'Access-Control-Allow-Origin': '*',
-        });
-
-        // Send initial logs
-        const initialLogs = getContainerLogs(containerName, lines);
-        for (const line of initialLogs.split('\n')) {
-          if (line) {
-            reply.raw.write(`data: ${JSON.stringify({ type: 'server-log', data: { log: line } })}\n\n`);
-          }
-        }
-
-        // Follow new logs with docker logs -f
-        const dockerLogs = spawn('docker', ['logs', '-f', '--tail', '0', containerName], {
-          stdio: ['ignore', 'pipe', 'pipe'],
-        });
-
-        const sendLine = (data: Buffer) => {
-          const lines = data.toString().split('\n');
-          for (const line of lines) {
-            if (line.trim()) {
-              reply.raw.write(`data: ${JSON.stringify({ type: 'server-log', data: { log: line } })}\n\n`);
-            }
+        const sendLines = (text: string) => {
+          for (const line of text.split('\n')) {
+            if (line.trim()) stream.send(undefined, { type: 'server-log', data: { log: line } });
           }
         };
+        sendLines(initialLogs);
 
-        dockerLogs.stdout?.on('data', sendLine);
-        dockerLogs.stderr?.on('data', sendLine);
-
-        // Heartbeat to keep connection alive
-        const heartbeat = setInterval(() => {
-          reply.raw.write(': heartbeat\n\n');
-        }, 30000);
-
-        // Cleanup on client disconnect
-        request.raw.on('close', () => {
-          clearInterval(heartbeat);
-          dockerLogs.kill();
-          reply.raw.end();
-        });
-
-        dockerLogs.on('close', () => {
-          clearInterval(heartbeat);
-          reply.raw.write(`data: ${JSON.stringify({ type: 'connection-closed', data: { timestamp: new Date().toISOString() } })}\n\n`);
-          reply.raw.end();
+        // Follow new logs; closing the stream aborts, which kills the docker logs child
+        const controller = new AbortController();
+        stream.onClose(() => controller.abort());
+        void fastify.container.containerRuntime().followLogs(containerName, sendLines, controller.signal, {
+          onExit: () => {
+            stream.send(undefined, { type: 'connection-closed', data: { timestamp: new Date().toISOString() } });
+            stream.end();
+          },
         });
 
         return;
       }
 
       // Standard JSON response (non-streaming)
-      const logs = getContainerLogs(containerName, lines);
+      const logs = await getContainerLogsAsync(containerName, lines);
 
       return reply.send({
         logs,
@@ -697,7 +606,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const containerName = `mc-${name}`;
 
     try {
-      if (!containerExists(containerName)) {
+      if (!(await containerExistsAsync(containerName))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -707,14 +616,20 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // Import and use execRcon dynamically to avoid circular dependency
       const { spawn } = await import('node:child_process');
 
-      const output = await new Promise<string>((resolve) => {
+      const output = await new Promise<string>((resolve, reject) => {
         // '--': rcon-cli never reads the command as a flag (#728)
         const child = spawn('docker', ['exec', containerName, 'rcon-cli', '--', command], {
           stdio: ['pipe', 'pipe', 'pipe'],
+          timeout: RCON_TIMEOUT_MS,
+          killSignal: 'SIGKILL',
         });
         let stdout = '';
         child.stdout?.on('data', (data) => { stdout += data.toString(); });
-        child.on('close', () => { resolve(stdout.trim()); });
+        child.on('close', () => {
+          // `killed`: spawn's timeout ended it (#672)
+          if (child.killed) reject(new Error(`RCON command timed out after ${RCON_TIMEOUT_MS} ms`));
+          else resolve(stdout.trim());
+        });
         child.on('error', () => { resolve(''); });
       });
 
@@ -753,7 +668,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { follow = false } = request.query;
 
     // Check if server already exists (before SSE mode check)
-    if (serverExists(name)) {
+    if (await serverExistsAsync(name)) {
       return reply.code(409).send({
         error: 'Conflict',
         message: `Server '${name}' already exists`,
@@ -1017,7 +932,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { force, deleteWorld } = request.query;
     const sudoPassword = request.body?.sudoPassword;
 
-    if (!serverExists(name)) {
+    if (!(await serverExistsAsync(name))) {
       return reply.code(404).send({
         error: 'NotFound',
         message: `Server '${name}' not found`,

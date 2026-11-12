@@ -15,7 +15,7 @@ import type { ContainerStatus } from '../src/types/index.js';
 
 // Injected runtime (#665); was a mock of the facade's getContainerStatus
 const containerStatus = { value: 'not_found' as ContainerStatus };
-const runtime = { getStatus: vi.fn(() => containerStatus.value) } as unknown as IContainerRuntimePort;
+const runtime = { getStatusAsync: vi.fn(async () => containerStatus.value) } as unknown as IContainerRuntimePort;
 
 let root: string;
 let repo: WorldRepository;
@@ -140,7 +140,7 @@ describe('WorldRepository assignment hydration', () => {
 
     const [result] = await repo.findAllWithServerStatus();
     expect(result).toMatchObject({ category: 'running', assignedServer: 'alpha', serverStatus: 'running' });
-    expect(runtime.getStatus).toHaveBeenCalledWith('mc-alpha');
+    expect(runtime.getStatusAsync).toHaveBeenCalledWith('mc-alpha');
   });
 
   it('delete leaves worlds/.locks alone', async () => {

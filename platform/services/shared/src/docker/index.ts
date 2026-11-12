@@ -15,7 +15,7 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot, Paths } from '../utils/index.js';
-import { resolveHostIps } from '../infrastructure/hostIps.js';
+import { resolveHostIps, resolveHostIpsAsync } from '../infrastructure/hostIps.js';
 import { parseEnvDocument } from '../utils/env-file.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
@@ -29,6 +29,7 @@ import { composeMap } from '../infrastructure/adapters/server-spec/importDockerS
 import { AvahiHostnameRegistrarAdapter } from '../infrastructure/adapters/AvahiHostnameRegistrarAdapter.js';
 import { McRouterApiAdapter } from '../infrastructure/adapters/McRouterApiAdapter.js';
 import type { IMcRouterApiPort } from '../application/ports/outbound/IMcRouterApiPort.js';
+import type { WorkloadState } from '../application/ports/outbound/IContainerRuntimePort.js';
 import {
   parseRouterAutoScaleEnv,
   resolveRouteAutoScale,
@@ -161,6 +162,11 @@ export function getAvahiStatus(): string {
   return hostnameRegistrar.getStatus();
 }
 
+/** getAvahiStatus without blocking the event loop, each probe bounded (#672). */
+export async function getAvahiStatusAsync(): Promise<string> {
+  return hostnameRegistrar.getStatusAsync();
+}
+
 /**
  * Get full platform status
  * Includes both running containers and configured-but-not-running servers
@@ -245,13 +251,16 @@ export function getDetailedServerInfo(container: string, configEnv?: Record<stri
     }
   }
 
-  // Get config info if provided
+  return withConfig(detailed, configEnv);
+}
+
+/** Adds type, version and memory from config.env when given. */
+function withConfig(detailed: DetailedServerInfo, configEnv?: Record<string, string>): DetailedServerInfo {
   if (configEnv) {
     detailed.type = configEnv['TYPE'];
     detailed.version = configEnv['VERSION'];
     detailed.memory = configEnv['MEMORY'];
   }
-
   return detailed;
 }
 
@@ -273,14 +282,19 @@ export async function getDetailedServerInfoWithPlayers(
     }
   }
 
-  // Get world name and size
+  return withWorld(detailed, configEnv, worldsDir);
+}
+
+/** Adds the world name and its directory size. */
+async function withWorld(
+  detailed: DetailedServerInfo,
+  configEnv: Record<string, string> | undefined,
+  worldsDir: string | undefined
+): Promise<DetailedServerInfo> {
   const worldName = resolveWorldName(configEnv ?? {});
   detailed.worldName = worldName;
-
-  // Calculate world size
   const worldSize = await getWorldDirectorySize(worldName, worldsDir);
   detailed.worldSize = formatBytes(worldSize);
-
   return detailed;
 }
 
@@ -317,49 +331,100 @@ export function getRouterDetailInfo(): RouterDetailInfo {
   const containers = getMcContainers();
   for (const container of containers) {
     const labels = router.getLabels(container);
-    const hostname = labels['mc-router.host']?.trim();
-    if (hostname) {
-      // hostname might be comma-separated (e.g., "server.local,server.192.168.1.10.nip.io")
-      const hostnames = hostname.split(',').map((h) => h.trim());
-      const serverStatus = getContainerStatus(container);
-
-      // Read config.env for server type/version
-      const serverName = container.replace(/^mc-/, '');
-      const configEnv = readServerConfigEnv(serverName);
-      const serverType = configEnv['TYPE'] || undefined;
-      const serverVersion = configEnv['VERSION'] || undefined;
-      const autoScale = resolveRouteAutoScale(labels, detailed.autoScale);
-
-      for (const h of hostnames) {
-        const route: RouteInfo = {
-          hostname: h,
-          target: `${container}:25565`,
-          serverStatus,
-          serverType,
-          serverVersion,
-        };
-        if (autoScale.up !== undefined) route.autoScaleUp = autoScale.up;
-        if (autoScale.down !== undefined) route.autoScaleDown = autoScale.down;
-        detailed.routes.push(route);
-      }
-    }
+    if (!labels['mc-router.host']?.trim()) continue;
+    detailed.routes.push(...routesOf(container, labels, getContainerStatus(container), detailed.autoScale));
   }
 
   return detailed;
 }
 
 /**
+ * The routes of one server container: a route per `mc-router.host` entry,
+ * with the server's type and version from config.env and its effective auto-scale.
+ */
+function routesOf(
+  container: string,
+  labels: Record<string, string>,
+  serverStatus: ContainerStatus,
+  globalAutoScale: RouterDetailInfo['autoScale']
+): RouteInfo[] {
+  const hostname = labels['mc-router.host']?.trim();
+  if (!hostname) return [];
+  // hostname might be comma-separated (e.g., "server.local,server.192.168.1.10.nip.io")
+  const hostnames = hostname.split(',').map((h) => h.trim());
+
+  // Read config.env for server type/version
+  const serverName = container.replace(/^mc-/, '');
+  const configEnv = readServerConfigEnv(serverName);
+  const serverType = configEnv['TYPE'] || undefined;
+  const serverVersion = configEnv['VERSION'] || undefined;
+  const autoScale = resolveRouteAutoScale(labels, globalAutoScale);
+
+  return hostnames.map((h) => {
+    const route: RouteInfo = {
+      hostname: h,
+      target: `${container}:25565`,
+      serverStatus,
+      serverType,
+      serverVersion,
+    };
+    if (autoScale.up !== undefined) route.autoScaleUp = autoScale.up;
+    if (autoScale.down !== undefined) route.autoScaleDown = autoScale.down;
+    return route;
+  });
+}
+
+/**
  * getRouterDetailInfo plus `discoveredByRouter` per route from the mc-router
  * management API (#768). The field stays absent when the router is not
  * running or the API cannot be read.
+ *
+ * Request paths call this, so every docker query is awaited and bounded (#672):
+ * one `docker ps` gives every state and host label, labels are inspected only
+ * for hosted containers, and health comes from the same API answer. A docker
+ * timeout rejects with RuntimeQueryTimeoutError; a failed docker reads as no
+ * containers, as on the sync path (fail-closed is #669's decision).
  */
 export async function getRouterDetailInfoAsync(
   options: { routerApi?: IMcRouterApiPort } = {}
 ): Promise<RouterDetailInfo> {
-  const detailed = getRouterDetailInfo();
-  if (detailed.status !== 'running') return detailed;
+  const states = await runtime.listStates();
+  const status = states.get('mc-router')?.status ?? 'not_found';
+  const running = status === 'running';
+  const [uptimeInfo, routerConfig, resolver, listed] = await Promise.all([
+    running ? runtime.getUptimeAsync('mc-router') : null,
+    status === 'not_found' ? null : router.inspectRouterAsync(),
+    readRouterResolverAsync(),
+    running ? (options.routerApi ?? routerApi).listRoutes() : null,
+  ]);
 
-  const listed = await (options.routerApi ?? routerApi).listRoutes();
+  const detailed: RouterDetailInfo = {
+    name: 'mc-router',
+    status,
+    health: !running ? 'unknown' : listed ? 'healthy' : 'unhealthy',
+    port: 25565,
+    routes: [],
+    mode: '--in-docker (auto-discovery)',
+    resolver,
+  };
+  if (uptimeInfo) {
+    detailed.uptime = uptimeInfo.uptime;
+    detailed.uptimeSeconds = uptimeInfo.seconds;
+  }
+  if (routerConfig) {
+    if (routerConfig.image) detailed.image = routerConfig.image;
+    detailed.autoScale = parseRouterAutoScaleEnv(routerConfig.env);
+  }
+
+  const hosted = [...states].filter(([name, state]) => name !== 'mc-router' && state.hostname !== '-');
+  const routes = await Promise.all(
+    hosted.map(async ([name, state]) =>
+      routesOf(name, await router.getLabelsAsync(name), state.status, detailed.autoScale)
+    )
+  );
+  detailed.routes = routes.flat();
+
+  if (!running) return detailed;
   detailed.routes = markDiscoveredRoutes(detailed.routes, listed ? listed.keys() : null, {
     stoppedRoutesListed: detailed.autoScale?.up !== false,
   });
@@ -372,7 +437,14 @@ export async function getRouterDetailInfoAsync(
  * The first one is the primary, as for avahi.
  */
 function readRouterResolver(): RouterResolver {
-  const hostIps = resolveHostIps(new Paths());
+  return resolverOf(resolveHostIps(new Paths()));
+}
+
+async function readRouterResolverAsync(): Promise<RouterResolver> {
+  return resolverOf(await resolveHostIpsAsync(new Paths()));
+}
+
+function resolverOf(hostIps: string[]): RouterResolver {
   return hostIps.length > 0 ? { hostIp: hostIps[0], hostIps } : { hostIps };
 }
 
@@ -546,6 +618,68 @@ export function serverExists(serverName: string, serversDir?: string): boolean {
   return existsSync(join(serverPath, 'config.env'));
 }
 
+// ---------------------------------------------------------------------------
+// Async status queries for API request paths (#672). One `docker ps` answers
+// every status, health and existence check; concurrent callers share it and a
+// success is reused for STATES_TTL_MS. A failed docker reads as no containers,
+// as on the sync path; a timeout rejects and is not cached.
+// ---------------------------------------------------------------------------
+
+const STATES_TTL_MS = 2_000;
+let statesCache: { at: number; states: Promise<Map<string, WorkloadState>> } | undefined;
+
+/** Drop the cached snapshot, e.g. after a start, stop, create or delete. */
+export function invalidateContainerStates(): void {
+  statesCache = undefined;
+}
+
+function containerStates(): Promise<Map<string, WorkloadState>> {
+  if (statesCache && Date.now() - statesCache.at < STATES_TTL_MS) return statesCache.states;
+  const entry = { at: Date.now(), states: runtime.listStates() };
+  statesCache = entry;
+  entry.states.catch(() => {
+    if (statesCache === entry) statesCache = undefined;
+  });
+  return entry.states;
+}
+
+export async function getContainerStatusAsync(container: string): Promise<ContainerStatus> {
+  return (await containerStates()).get(container)?.status ?? 'not_found';
+}
+
+export async function getContainerHealthAsync(container: string): Promise<HealthStatus> {
+  return (await containerStates()).get(container)?.health ?? 'unknown';
+}
+
+export async function containerExistsAsync(container: string): Promise<boolean> {
+  return (await containerStates()).has(container);
+}
+
+export async function getServerInfoFromConfigAsync(serverName: string): Promise<ServerInfo> {
+  const container = `mc-${serverName}`;
+  const state = (await containerStates()).get(container);
+  if (!state) return { name: serverName, container, status: 'not_created', health: 'none', hostname: '-' };
+  return { name: serverName, container, ...state };
+}
+
+export async function getAllServersAsync(serversDir?: string): Promise<string[]> {
+  const containers = [...(await containerStates()).keys()]
+    .filter(name => name !== 'mc-router')
+    .map(name => name.replace(/^mc-/, ''));
+  return Array.from(new Set([...getConfiguredServers(serversDir), ...containers])).sort();
+}
+
+/** A configured server answers without docker. */
+export async function serverExistsAsync(serverName: string, serversDir?: string): Promise<boolean> {
+  const dir = serversDir ?? getServersDir();
+  if (existsSync(join(dir, serverName, 'config.env'))) return true;
+  return containerExistsAsync(`mc-${serverName}`);
+}
+
+export async function getContainerLogsAsync(container: string, lines: number = 50): Promise<string> {
+  return runtime.getLogsAsync(container, lines);
+}
+
 /**
  * Get detailed server info from config.env (for servers without containers)
  */
@@ -593,7 +727,10 @@ export async function getDetailedServerInfoFromConfig(
 }
 
 /**
- * Get detailed server info (works for both running containers and config-only servers)
+ * Get detailed server info (works for both running containers and config-only servers).
+ * API request path: awaited, bounded docker queries only (#672); a docker
+ * timeout rejects with RuntimeQueryTimeoutError, a failed docker falls back to
+ * config as on the sync path (#669 decides fail-closed).
  */
 export async function getServerDetailedInfo(
   serverName: string,
@@ -601,15 +738,25 @@ export async function getServerDetailedInfo(
   worldsDir?: string
 ): Promise<DetailedServerInfo> {
   const container = `mc-${serverName}`;
+  const state = (await runtime.listStates()).get(container);
+  if (!state) return getDetailedServerInfoFromConfig(serverName, serversDir, worldsDir);
+
   const configEnv = readServerConfigEnv(serverName, serversDir);
-
-  // If container exists, get info from Docker
-  if (containerExists(container)) {
-    return getDetailedServerInfoWithPlayers(container, configEnv, worldsDir);
+  const detailed: DetailedServerInfo = { name: serverName, container, ...state };
+  if (state.status === 'running') {
+    const [stats, uptimeInfo, players] = await Promise.all([
+      runtime.getStatsAsync(container),
+      runtime.getUptimeAsync(container),
+      getOnlinePlayers(container),
+    ]);
+    if (stats) detailed.stats = stats;
+    if (uptimeInfo) {
+      detailed.uptime = uptimeInfo.uptime;
+      detailed.uptimeSeconds = uptimeInfo.seconds;
+    }
+    if (players) detailed.players = players;
   }
-
-  // Otherwise, get info from config only
-  return getDetailedServerInfoFromConfig(serverName, serversDir, worldsDir);
+  return withWorld(withConfig(detailed, configEnv), configEnv, worldsDir);
 }
 
 /**
@@ -619,10 +766,36 @@ export async function getServerDetailedInfo(
 export async function getPlayitAgentStatus(): Promise<import('../types/index.js').PlayitAgentStatus> {
   const containerName = 'playit-agent';
 
-  // Check if container exists
-  const status = getContainerStatus(containerName);
+  // Awaited and bounded: the API calls this per request (#672)
+  const status = await runtime.getStatusAsync(containerName);
   const agentRunning = status === 'running';
 
+  const { secretKeyConfigured, playitEnabled } = readPlayitSettings();
+
+  // Get uptime if running
+  let uptime: string | undefined;
+  let uptimeSeconds: number | undefined;
+
+  if (agentRunning) {
+    const uptimeInfo = await runtime.getUptimeAsync(containerName);
+    if (uptimeInfo) {
+      uptime = uptimeInfo.uptime;
+      uptimeSeconds = uptimeInfo.seconds;
+    }
+  }
+
+  return {
+    enabled: playitEnabled || secretKeyConfigured,
+    agentRunning,
+    secretKeyConfigured,
+    containerStatus: status,
+    uptime,
+    uptimeSeconds,
+  };
+}
+
+/** PLAYIT_SECRET_KEY set in the platform .env; playitEnabled in .mcctl.json. */
+function readPlayitSettings(): { secretKeyConfigured: boolean; playitEnabled: boolean } {
   // Check if PLAYIT_SECRET_KEY is configured in platform .env
   const platformRoot = resolveMcctlRoot();
   const envPath = join(platformRoot, '.env');
@@ -650,26 +823,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
     }
   }
 
-  // Get uptime if running
-  let uptime: string | undefined;
-  let uptimeSeconds: number | undefined;
-
-  if (agentRunning) {
-    const uptimeInfo = getContainerUptime(containerName);
-    if (uptimeInfo) {
-      uptime = uptimeInfo.uptime;
-      uptimeSeconds = uptimeInfo.seconds;
-    }
-  }
-
-  return {
-    enabled: playitEnabled || secretKeyConfigured,
-    agentRunning,
-    secretKeyConfigured,
-    containerStatus: status,
-    uptime,
-    uptimeSeconds,
-  };
+  return { secretKeyConfigured, playitEnabled };
 }
 
 /**

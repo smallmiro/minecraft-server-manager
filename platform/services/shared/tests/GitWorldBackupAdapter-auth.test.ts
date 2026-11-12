@@ -26,8 +26,8 @@ exec "${REAL_GIT}" "$@"
 `;
 
 const fakes = {
-  runtime: { list: () => [] } as unknown as IContainerRuntimePort,
-  environment: { isAvailable: () => true } as unknown as IRuntimeEnvironmentPort,
+  runtime: { listAsync: async () => [] } as unknown as IContainerRuntimePort,
+  environment: { isAvailableAsync: async () => true } as unknown as IRuntimeEnvironmentPort,
   console: { command: async () => ({ exitCode: 0, stdout: '', stderr: '' }) } as unknown as IServerConsolePort,
 };
 

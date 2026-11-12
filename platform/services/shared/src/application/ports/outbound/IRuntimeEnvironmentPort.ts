@@ -9,6 +9,8 @@ export interface ToolVersion {
 export interface IRuntimeEnvironmentPort {
   /** Runtime daemon/cluster reachable. */
   isAvailable(): boolean;
+  /** isAvailable for request paths (#672): awaited, with a timeout. */
+  isAvailableAsync(): Promise<boolean>;
   getEngineVersion(): ToolVersion;
   /** Version without a leading 'v'. */
   getComposeVersion(): ToolVersion;

@@ -88,6 +88,7 @@ export type {
   MapRenderOptions,
   IContainerRuntimePort,
   RuntimeActionResult,
+  WorkloadState,
   IServerConsolePort,
   ConsoleCommandResult,
   ConsoleEndpoint,
@@ -123,3 +124,4 @@ export type {
   WorldBackupPruneOutcome,
   WorldAssignmentSnapshot,
 } from './outbound/index.js';
+export { RuntimeQueryTimeoutError } from './outbound/index.js';

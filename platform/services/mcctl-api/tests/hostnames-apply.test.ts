@@ -11,7 +11,7 @@ import type { ApiContainer } from '../src/plugins/container.js';
 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  serverExists: vi.fn(),
+  serverExistsAsync: vi.fn(),
 }));
 
 vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
@@ -38,8 +38,8 @@ describe('POST /api/servers/:name/hostnames/apply', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { serverExists } = await import('@minecraft-docker/shared');
-    vi.mocked(serverExists).mockReturnValue(true);
+    const { serverExistsAsync } = await import('@minecraft-docker/shared');
+    vi.mocked(serverExistsAsync).mockReturnValue(true);
   });
 
   const apply = (name = 'factory') => app.inject({ method: 'POST', url: `/api/servers/${name}/hostnames/apply` });
@@ -60,8 +60,8 @@ describe('POST /api/servers/:name/hostnames/apply', () => {
   });
 
   it('is 404 for an unknown server and recreates nothing', async () => {
-    const { serverExists } = await import('@minecraft-docker/shared');
-    vi.mocked(serverExists).mockReturnValue(false);
+    const { serverExistsAsync } = await import('@minecraft-docker/shared');
+    vi.mocked(serverExistsAsync).mockReturnValue(false);
 
     const res = await apply();
 
