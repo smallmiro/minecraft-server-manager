@@ -7,20 +7,19 @@
  * - restart: Restart services
  * - status: Show status with health checks
  * - logs: View logs with follow mode
+ * - enable: Start the services at boot (pm2 startup + save)
  */
 
 import { Paths, colors, log, ProcessInfo, ServiceStatusEnum } from '@minecraft-docker/shared';
-import { followPm2Logs } from '../../infrastructure/pm2-cli.js';
-import { existsSync } from 'node:fs';
+import { enablePm2Startup, followPm2Logs } from '../../infrastructure/pm2-cli.js';
+import { basename } from 'node:path';
 import { select, isCancel } from '@clack/prompts';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
   checkPm2Installation,
-  getEcosystemConfigPath,
   ecosystemConfigExists,
   PM2_SERVICE_NAMES,
   getAvailableServices,
-  checkServiceAvailability,
 } from '../../lib/pm2-utils.js';
 import { AdminConfigManager } from '../../lib/admin-config.js';
 
@@ -29,7 +28,7 @@ import { AdminConfigManager } from '../../lib/admin-config.js';
  */
 export interface ConsoleServiceOptions {
   root?: string;
-  subCommand?: 'start' | 'stop' | 'restart' | 'status' | 'logs';
+  subCommand?: 'start' | 'stop' | 'restart' | 'status' | 'logs' | 'enable';
   apiOnly?: boolean;
   consoleOnly?: boolean;
   follow?: boolean;
@@ -67,19 +66,14 @@ const API_PORT_DEFAULT = 5001;
 const CONSOLE_PORT_DEFAULT = 5000;
 const HEALTH_RETRY_MS = 15000;
 
-/**
- * Check PM2 is installed
- */
-function ensurePm2Installed(): boolean {
-  const pm2Check = checkPm2Installation();
-
-  if (!pm2Check.installed) {
-    log.error('PM2 is not installed.');
+/** The pm2 binary on PATH; logs an install hint when it is missing. */
+function pm2OnPath(): string | undefined {
+  const pm2 = checkPm2Installation();
+  if (!pm2.path) {
+    log.error('PM2 is not on PATH.');
     log.info('Install PM2 globally with: npm install -g pm2');
-    return false;
   }
-
-  return true;
+  return pm2.path;
 }
 
 type ServiceAction = 'start' | 'stop' | 'restart' | 'logs';
@@ -357,7 +351,7 @@ async function printUnhealthyHint(
         log.error(
           `${svc.name}: a native module (e.g. better-sqlite3) was built for a different Node.js version than the one the PM2 daemon runs on.`
         );
-        log.info('Fix: pm2 kill, switch to the Node.js version used to install mcctl (e.g. nvm use 22), then run: mcctl console service start');
+        log.info('Fix: switch to the Node.js version used to install mcctl (e.g. nvm use 22), then run: mcctl console service restart --console --force');
         return;
       }
     } catch {
@@ -460,7 +454,7 @@ async function stopServices(
   }
 
   if (options.force) {
-    log.info('Force stopping console services (killing PM2 daemon)...');
+    log.info('Force stopping console services (deleting their PM2 processes)...');
   } else {
     log.info('Stopping console services...');
   }
@@ -478,11 +472,6 @@ async function stopServices(
         await pm2Adapter.stop(service);
         log.info(`  Stopped ${service}`);
       }
-    }
-
-    if (options.force) {
-      await pm2Adapter.killDaemon();
-      log.info('PM2 daemon killed');
     }
 
     log.info('Console services stopped');
@@ -525,7 +514,7 @@ async function restartServices(
       log.info("Please run 'mcctl console init' to initialize console services");
       return 1;
     }
-    log.info('Force restarting console services (killing PM2 daemon)...');
+    log.info('Force restarting console services (deleting and recreating their PM2 processes)...');
   } else {
     log.info('Restarting console services...');
   }
@@ -535,7 +524,9 @@ async function restartServices(
 
   try {
     if (options.force) {
-      // Force restart: delete all, kill daemon, start fresh
+      // Force restart: delete and start fresh, so the ecosystem config and the
+      // Node.js running mcctl are read again. Only mcctl's processes: the PM2
+      // daemon may run the user's other apps (#650).
       for (const service of services) {
         try {
           await pm2Adapter.delete(service);
@@ -545,13 +536,6 @@ async function restartServices(
         log.info(`  Deleted ${service}`);
       }
 
-      await pm2Adapter.killDaemon();
-      log.info('  PM2 daemon killed');
-
-      // Wait for daemon to fully terminate before reconnecting
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Start fresh (ensureConnected will reconnect to a new PM2 daemon)
       for (const service of services) {
         await pm2Adapter.start(service, { wait: true, waitTimeout: 30000 });
         log.info(`  Started ${service}`);
@@ -614,6 +598,7 @@ async function showLogs(
 
   if (options.follow) {
     // Use pm2 logs command for follow mode
+    if (!pm2OnPath()) return 1;
     return followPm2Logs(services);
   }
 
@@ -629,6 +614,35 @@ async function showLogs(
     log.error(`Failed to get logs: ${error instanceof Error ? error.message : error}`);
     return 1;
   }
+}
+
+/**
+ * Start PM2, and the apps it saved, at boot (#650)
+ */
+function enableAtBoot(): number {
+  const pm2Path = pm2OnPath();
+  if (!pm2Path) return 1;
+
+  const pm2Home = process.env.PM2_HOME;
+  if (pm2Home && basename(pm2Home) !== '.pm2') {
+    // pm2 startup takes the directory holding .pm2 (--hp), not PM2_HOME itself
+    log.error(`pm2 startup supports only a PM2_HOME named .pm2 (PM2_HOME=${pm2Home}).`);
+    return 1;
+  }
+
+  log.info('Registering PM2 to start at boot (pm2 startup, needs sudo)...');
+  const result = enablePm2Startup(pm2Path, process.stdin.isTTY === true);
+  if (result.failed) {
+    log.error(`pm2 ${result.failed} failed.`);
+    log.info('Run this yourself:');
+    console.log(`  ${result.command}`);
+    return 1;
+  }
+
+  log.info('PM2 starts at boot and brings back the saved process list.');
+  log.info('mcctl console service start saves it, so services started with it come back after a reboot.');
+  log.info('After switching Node.js versions, run this command again. Undo: pm2 unstartup');
+  return 0;
 }
 
 /**
@@ -648,11 +662,6 @@ export function deleteAdminImages(): { success: boolean; deleted: string[]; erro
  * Console service command
  */
 export async function consoleServiceCommand(options: ConsoleServiceOptions): Promise<number> {
-  // Check PM2 is installed
-  if (!ensurePm2Installed()) {
-    return 1;
-  }
-
   const paths = new Paths(options.root);
 
   // Check if platform is initialized
@@ -689,6 +698,9 @@ export async function consoleServiceCommand(options: ConsoleServiceOptions): Pro
 
       case 'logs':
         return await showLogs(paths, pm2Adapter, options);
+
+      case 'enable':
+        return enableAtBoot();
 
       default: {
         // Default: show status

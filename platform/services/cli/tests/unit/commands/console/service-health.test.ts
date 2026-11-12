@@ -141,7 +141,7 @@ describe('consoleServiceCommand health probe', () => {
     const { log } = await import('@minecraft-docker/shared');
     expect(await consoleServiceCommand({ subCommand: 'status' })).toBe(1);
     expect(mockLogs).toHaveBeenCalledWith('mcctl-api', { err: true, lines: 50 });
-    expect(vi.mocked(log.info).mock.calls.flat().join('\n')).toContain('pm2 kill');
+    expect(vi.mocked(log.info).mock.calls.flat().join('\n')).toContain('restart --console --force');
   });
 
   it('start: returns 1 when services stay unhealthy after retries', async () => {
