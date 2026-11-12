@@ -45,6 +45,7 @@ describe('/health while docker hangs (#672)', () => {
     expect(health.statusCode).toBe(200);
     expect(Date.now() - started).toBeLessThan(1_000);
 
-    expect((await servers).statusCode).toBe(200);
+    // The slow docker then fails: "cannot tell", not an empty list (#669)
+    expect((await servers).statusCode).toBe(503);
   }, 15_000);
 });

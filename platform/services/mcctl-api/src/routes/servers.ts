@@ -60,6 +60,7 @@ import { getContainerName, RCON_TIMEOUT_MS } from '../lib/rcon.js';
 import { openSse } from '../lib/sse.js';
 import { worldFailure } from '../lib/world-use-case.js';
 import { serverSpecFailure } from '../lib/server-spec.js';
+import { sendRuntimeUnavailable } from '../lib/runtime-unavailable.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 
@@ -193,6 +194,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       response: {
         200: ServerListResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request, reply) => {
@@ -225,7 +227,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     } catch (error) {
       fastify.log.error(error, 'Failed to list servers');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to list servers',
       });
@@ -247,6 +249,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           items: StatusResponseSchema,
         },
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<{ Querystring: StatusQuery }>, reply: FastifyReply) => {
@@ -302,7 +305,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.send(statuses);
     } catch (error) {
       fastify.log.error(error, 'Failed to get all server statuses');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get all server statuses',
       });
@@ -320,6 +323,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         200: ServerDetailResponseSchema,
         404: ErrorResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<ServerNameRoute>, reply: FastifyReply) => {
@@ -360,7 +364,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.send({ server });
     } catch (error) {
       fastify.log.error(error, 'Failed to get server details');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get server details',
       });
@@ -381,6 +385,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         200: StatusResponseSchema,
         404: ErrorResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<StatusRoute>, reply: FastifyReply) => {
@@ -439,7 +444,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     } catch (error) {
       fastify.log.error(error, 'Failed to get server status');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get server status',
       });
@@ -527,6 +532,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         200: LogsResponseSchema,
         404: ErrorResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<LogsRoute>, reply: FastifyReply) => {
@@ -578,7 +584,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     } catch (error) {
       fastify.log.error(error, 'Failed to get server logs');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get server logs',
       });
@@ -598,6 +604,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         404: ErrorResponseSchema,
         400: ErrorResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (request: FastifyRequest<ExecRoute>, reply: FastifyReply) => {
@@ -639,7 +646,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
     } catch (error) {
       fastify.log.error(error, 'Failed to execute command');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to execute command',
       });

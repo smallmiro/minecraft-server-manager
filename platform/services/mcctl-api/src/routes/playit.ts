@@ -16,6 +16,7 @@ import {
   type PlayitServerInfo,
 } from '../schemas/playit.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
+import { sendRuntimeUnavailable } from '../lib/runtime-unavailable.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 
 /**
@@ -34,6 +35,7 @@ const playitPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       response: {
         200: PlayitAgentStatusSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (_request, reply) => {
@@ -62,7 +64,7 @@ const playitPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.send(response);
     } catch (error) {
       fastify.log.error(error, 'Failed to get playit status');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get playit status',
       });

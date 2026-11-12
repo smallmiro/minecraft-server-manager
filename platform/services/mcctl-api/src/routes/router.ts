@@ -9,6 +9,7 @@ import {
 } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { openSse } from '../lib/sse.js';
+import { sendRuntimeUnavailable } from '../lib/runtime-unavailable.js';
 import {
   RouterLogsStreamQuerySchema,
   RouterStatusStreamQuerySchema,
@@ -183,6 +184,7 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       response: {
         200: RouterStatusResponseSchema,
         500: ErrorResponseSchema,
+        503: ErrorResponseSchema,
       },
     },
   }, async (_request, reply) => {
@@ -190,7 +192,7 @@ const routerPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       return reply.send(await buildRouterStatusPayload(fastify.log));
     } catch (error) {
       fastify.log.error(error, 'Failed to get router status');
-      return reply.code(500).send({
+      return sendRuntimeUnavailable(reply, error) ?? reply.code(500).send({
         error: 'InternalServerError',
         message: 'Failed to get router status',
       });
