@@ -62,6 +62,8 @@ export function ensurePlayitService(paths: Paths): void {
     image: ghcr.io/playit-cloud/playit-agent:0.16
     container_name: playit-agent
     network_mode: host
+    labels:
+      io.mcctl.role: "playit"
     environment:
       - SECRET_KEY=\${PLAYIT_SECRET_KEY:?PLAYIT_SECRET_KEY must be set in .env}
     restart: unless-stopped
