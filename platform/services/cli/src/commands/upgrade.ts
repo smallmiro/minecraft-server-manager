@@ -112,22 +112,31 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
     );
   }
 
-  // --- Step 2b2: servers wait for the world save when stopped (#661) ---
-  const stopGrace = migrateComposeKeys(paths.root, paths.templates, !!options.dryRun);
-  if (stopGrace.updated.length > 0) {
+  // --- Step 2b2: server template keys: stop grace period (#661), log rotation (#662) ---
+  const composeKeys = migrateComposeKeys(paths.root, paths.templates, !!options.dryRun);
+  if (composeKeys.updated.length > 0) {
     prompts.log.success(
-      `${options.dryRun ? 'Would add' : 'Added'} stop_grace_period to: ${stopGrace.updated.join(', ')}` +
+      `${options.dryRun ? 'Would add' : 'Added'} missing stop_grace_period and logging to: ${composeKeys.updated.join(', ')}` +
         (options.dryRun ? '' : ' (backup: docker-compose.yml.bak-<time> in each server directory)')
     );
     // A container keeps the stop timeout it was created with, even when stopped by `mcctl stop`
     prompts.log.warn(
-      "Existing containers still get Docker's 10s stop timeout until recreated. When a server is idle:\n" +
-        stopGrace.updated.map((name) => `  docker stop -t 90 mc-${name} && mcctl start ${name}`).join('\n')
+      "Existing containers keep Docker's 10s stop timeout and an unrotated log until recreated. When a server is idle:\n" +
+        composeKeys.updated.map((name) => `  docker stop -t 90 mc-${name} && mcctl start ${name}`).join('\n')
     );
   }
-  if (stopGrace.skipped.length > 0) {
+  if (composeKeys.skipped.length > 0) {
     prompts.log.warn(
-      `Could not add stop_grace_period automatically; add "stop_grace_period: 90s" to the mc-<name> service of: ${stopGrace.skipped.join(', ')}`
+      'Could not update automatically; copy stop_grace_period and logging from servers/_template/docker-compose.yml ' +
+        `into the mc-<name> service of: ${composeKeys.skipped.join(', ')}`
+    );
+  }
+  // Not added here: a limit below what a (modded) server really uses gets it OOM-killed mid-save (#662)
+  if (composeKeys.noMemLimit.length > 0) {
+    prompts.log.info(
+      `No memory limit on: ${composeKeys.noMemLimit.join(', ')}. mcctl upgrade does not add one. ` +
+        'New servers get mem_limit = MEMORY + max(2G, MEMORY/2); an existing server gets it the next time its ' +
+        'server.yaml is written. To add it now: mcctl migrate spec <name>, then recreate the server when idle.'
     );
   }
 

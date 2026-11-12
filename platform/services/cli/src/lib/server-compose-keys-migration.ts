@@ -4,13 +4,15 @@ import yaml from 'js-yaml';
 import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 
 /** Server template keys mcctl upgrade adds to existing server composes that lack them. */
-const KEYS = ['stop_grace_period'];
+const KEYS = ['stop_grace_period', 'logging'];
 
 export interface ComposeKeysMigrationResult {
   /** Servers whose docker-compose.yml got (or, in dry-run, would get) a missing template key. */
   updated: string[];
   /** Servers whose compose lacks one but could not be patched safely: set it by hand. */
   skipped: string[];
+  /** Servers whose compose has no mem_limit (#662): not added here, mcctl migrate spec renders it. */
+  noMemLimit: string[];
 }
 
 type ComposeDoc = { services?: Record<string, unknown> } | null;
@@ -34,15 +36,15 @@ function insertKeys(text: string, name: string, entries: Record<string, unknown>
 }
 
 /**
- * Give every existing server the template keys it lacks (#661), so its
- * container gets them when recreated. A compose that already sets a key
+ * Give every existing server the template keys it lacks, so its container
+ * gets them when recreated: stop_grace_period (#661) and log rotation (#662). A compose that already sets a key
  * keeps its value. Each changed file is copied to
  * docker-compose.yml.bak-<timestamp> first. Like the env_file migration
  * (#685), this edits the generated file: server.yaml does not change and
  * the renderer writes the same keys on the next render.
  */
 export function migrateComposeKeys(root: string, templatesDir: string, dryRun: boolean): ComposeKeysMigrationResult {
-  const result: ComposeKeysMigrationResult = { updated: [], skipped: [] };
+  const result: ComposeKeysMigrationResult = { updated: [], skipped: [], noMemLimit: [] };
   const serversDir = join(root, 'servers');
   const templatePath = join(templatesDir, 'servers', '_template', 'docker-compose.yml');
   if (!existsSync(templatePath) || !existsSync(serversDir)) return result;
@@ -62,6 +64,7 @@ export function migrateComposeKeys(root: string, templatesDir: string, dryRun: b
     let updated: string | undefined;
     try {
       const current = service(content, name);
+      if (current && current['mem_limit'] === undefined) result.noMemLimit.push(name);
       const missing = wanted.filter((k) => current?.[k] === undefined);
       if (current && missing.length === 0) continue;
       updated = insertKeys(content, name, Object.fromEntries(missing.map((k) => [k, template[k]])));
