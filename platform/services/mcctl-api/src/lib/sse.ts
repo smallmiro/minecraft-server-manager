@@ -18,6 +18,11 @@ export function openSseStreams(): number {
   return openStreams.size;
 }
 
+/** End every open stream (shutdown, #650): clients reconnect elsewhere or later. */
+export function endSseStreams(): void {
+  for (const end of [...openStreams]) end();
+}
+
 export interface SseStream {
   /** False once the stream ended: later writes are dropped. */
   readonly open: boolean;
