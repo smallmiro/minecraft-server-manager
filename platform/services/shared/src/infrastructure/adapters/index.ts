@@ -7,6 +7,7 @@ export { ServerRepository } from './ServerRepository.js';
 export { WorldRepository, findWorldLayout, type WorldLayout } from './WorldRepository.js';
 export { DocsAdapter } from './DocsAdapter.js';
 export { YamlUserRepository } from './YamlUserRepository.js';
+export { openSqlite, LazySqlite } from './sqlite.js';
 export { SqliteUserRepository } from './SqliteUserRepository.js';
 export { SqliteAuditLogRepository } from './SqliteAuditLogRepository.js';
 export {
