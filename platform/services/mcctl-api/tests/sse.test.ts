@@ -27,15 +27,29 @@ describe('openSse (#672)', () => {
   let app: FastifyInstance;
   let port: number;
   const cleanup = vi.fn();
+  let started = false;
+  let release: () => void = () => undefined;
+  let opened: boolean | undefined;
 
   beforeEach(async () => {
     cleanup.mockClear();
+    started = false;
+    opened = undefined;
     app = Fastify({ logger: false });
     app.get('/stream', async (request, reply) => {
       const stream = openSse(request, reply);
       if (!stream) return reply;
       stream.onClose(cleanup);
       stream.send('hello', { ok: true });
+    });
+    // A handler that awaits (a docker query) before it opens the stream
+    app.get('/slow', async (request, reply) => {
+      started = true;
+      await new Promise<void>((resolve) => (release = resolve));
+      const stream = openSse(request, reply);
+      opened = !!stream;
+      if (!stream) return reply;
+      stream.onClose(cleanup);
     });
     await app.listen({ port: 0, host: '127.0.0.1' });
     port = (app.server.address() as { port: number }).port;
@@ -74,6 +88,18 @@ describe('openSse (#672)', () => {
     res.resume();
     await new Promise((resolve) => res.on('end', resolve));
     expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(openSseStreams()).toBe(0);
+  });
+
+  it('opens nothing for a client that left while the handler awaited', async () => {
+    const req = http.get({ host: '127.0.0.1', port, path: '/slow' });
+    req.on('error', () => undefined);
+    await until(() => started);
+    req.destroy();
+    await new Promise((r) => setTimeout(r, 50));
+    release();
+    await until(() => opened !== undefined);
+    expect(opened).toBe(false);
     expect(openSseStreams()).toBe(0);
   });
 });

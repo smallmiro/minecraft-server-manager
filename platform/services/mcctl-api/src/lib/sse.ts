@@ -40,13 +40,17 @@ const BASE_HEADERS = {
  * Opens an SSE stream on the raw response. The close and error listeners are
  * registered before anything is written, so a client that leaves early still
  * clears the stream's timers and children. With `sseLimits.maxStreams` open,
- * answers 503 and returns undefined: the handler should `return reply`.
+ * answers 503 and returns undefined: the handler should `return reply`. Also
+ * returns undefined, without answering, for a client that already left.
  */
 export function openSse(
   request: FastifyRequest,
   reply: FastifyReply,
   headers: Record<string, string> = {}
 ): SseStream | undefined {
+  // The client may have left while the handler awaited (a docker query): its
+  // close event is gone, so a stream opened now would hold a slot until its lifetime.
+  if (request.raw.destroyed || reply.raw.destroyed || request.raw.socket?.destroyed) return undefined;
   if (openStreams >= sseLimits.maxStreams) {
     void reply
       .code(503)
