@@ -67,6 +67,25 @@ describe('Docker daemon down (#669)', () => {
     expect(response.json()).toMatchObject({ error: 'ServiceUnavailable' });
   });
 
+  // These check the server outside any route try block; the app error handler answers (#669)
+  it.each([
+    ['POST', '/api/servers', { name: 'ghost', type: 'PAPER', version: '1.21.1' }],
+    ['DELETE', '/api/servers/ghost', undefined],
+    ['GET', '/api/servers/ghost/players', undefined],
+    ['POST', '/api/servers/ghost/hostnames/apply', undefined],
+  ] as const)('%s %s answers 503 from the app error handler', async (method, url, payload) => {
+    const response = await app.inject({ method, url, payload });
+    expect(response.statusCode).toBe(503);
+    expect(response.headers['retry-after']).toBe('5');
+    expect(response.json()).toMatchObject({ error: 'ServiceUnavailable' });
+  });
+
+  it('keeps the Fastify validation error as 400', async () => {
+    const response = await app.inject({ method: 'POST', url: '/api/servers', payload: {} });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: 'Bad Request', message: "body must have required property 'name'" });
+  });
+
   it('refuses a world reset with 503 and leaves the world alone', async () => {
     const response = await app.inject({ method: 'POST', url: '/api/servers/alpha/world/reset' });
     expect(response.statusCode).toBe(503);
