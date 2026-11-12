@@ -21,12 +21,12 @@ vi.mock('@minecraft-docker/shared', async () => {
   const actual = await vi.importActual('@minecraft-docker/shared');
   return {
     ...actual,
-    containerExists: vi.fn((containerName: string) => {
+    containerExistsAsync: vi.fn((containerName: string) => {
       const serverName = containerName.replace('mc-', '');
       const serverPath = join(TEST_PLATFORM_PATH, 'servers', serverName, 'docker-compose.yml');
       return existsSync(serverPath);
     }),
-    getContainerStatus: vi.fn(() => 'stopped'),
+    getContainerStatusAsync: vi.fn(() => 'stopped'),
   };
 });
 

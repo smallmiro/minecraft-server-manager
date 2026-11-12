@@ -47,8 +47,8 @@ export class PlayerSessionCollectorService {
 
   constructor(
     private readonly sessions: IPlayerSessionUseCase,
-    private readonly listServerNames: () => string[],
-    private readonly getStatus: (container: string) => ContainerStatus,
+    private readonly listServerNames: () => string[] | Promise<string[]>,
+    private readonly getStatus: (container: string) => ContainerStatus | Promise<ContainerStatus>,
     private readonly fetchLogs: LogFetcher = defaultLogFetcher,
     private readonly logger?: Pick<FastifyBaseLogger, 'warn'>
   ) {}
@@ -76,13 +76,16 @@ export class PlayerSessionCollectorService {
     if (this.inFlight) return;
     this.inFlight = true;
     try {
-      for (const serverName of this.listServerNames()) {
+      for (const serverName of await this.listServerNames()) {
         try {
           await this.collectServer(serverName);
         } catch (error) {
           this.logger?.warn(error, `Player session collection failed for server '${serverName}'`);
         }
       }
+    } catch (error) {
+      // The server list itself failed (e.g. docker timed out): skip this pass
+      this.logger?.warn(error, 'Player session collection could not list servers');
     } finally {
       this.inFlight = false;
     }
@@ -91,7 +94,7 @@ export class PlayerSessionCollectorService {
   private async collectServer(serverName: string): Promise<void> {
     const container = getContainerName(serverName);
 
-    if (this.getStatus(container) !== 'running') {
+    if ((await this.getStatus(container)) !== 'running') {
       await this.sessions.markServerStopped(serverName, new Date());
       return;
     }

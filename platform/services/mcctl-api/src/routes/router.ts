@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyPluginAsync, FastifyReply, FastifyRequest } fro
 import fp from 'fastify-plugin';
 import {
   getRouterDetailInfoAsync,
-  getAvahiStatus,
+  getAvahiStatusAsync,
   getPlayitAgentStatus,
   AuditActionEnum,
   parseRouterLogLine,
@@ -51,7 +51,7 @@ export async function buildRouterStatusPayload(log: { warn: (obj: unknown, msg?:
 
     const avahi = {
       name: 'avahi-daemon',
-      status: getAvahiStatus(),
+      status: await getAvahiStatusAsync(),
       type: 'system',
     };
 

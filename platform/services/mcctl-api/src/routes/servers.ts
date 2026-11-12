@@ -1,14 +1,15 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import {
-  getAllServers,
-  getServerInfoFromConfig,
+  getAllServersAsync,
+  getServerInfoFromConfigAsync,
   getServerDetailedInfo,
-  getContainerLogs,
-  containerExists,
-  serverExists,
-  getContainerStatus,
-  getContainerHealth,
+  getContainerLogsAsync,
+  containerExistsAsync,
+  serverExistsAsync,
+  getContainerStatusAsync,
+  getContainerHealthAsync,
+  invalidateContainerStates,
   getServerPlayitDomain,
   getOnlinePlayers,
   checkAssign,
@@ -167,7 +168,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms).unref());
   const runSerial = <T>(task: () => Promise<T>, maxHoldMs: () => number): Promise<T> => {
     const started = lifecycleTail.then(() => {
-      const run = task();
+      // A create or delete changes containers: drop the cached status snapshot when it settles (#672)
+      const run = task().finally(invalidateContainerStates);
       return { run, hold: Promise.race([run.catch(() => undefined), delay(maxHoldMs())]) };
     });
     lifecycleTail = started.then(({ hold }) => hold);
@@ -195,9 +197,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request, reply) => {
     try {
       // Get all servers (both configured and running containers)
-      const serverNames = getAllServers();
-      const servers: ServerSummary[] = serverNames.map((serverName) => {
-        const info = getServerInfoFromConfig(serverName);
+      const serverNames = await getAllServersAsync();
+      const servers: ServerSummary[] = await Promise.all(serverNames.map(async (serverName) => {
+        const info = await getServerInfoFromConfigAsync(serverName);
         return {
           name: info.name,
           container: info.container,
@@ -205,7 +207,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
           health: info.health,
           hostname: info.hostname,
         };
-      });
+      }));
 
       if (request.query.include === 'summary') {
         const summary = await serverSummaries.execute(servers);
@@ -259,12 +261,12 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
 
       // Send status update for all servers
-      const sendAllStatuses = () => {
-        const serverNames = getAllServers();
+      const sendAllStatuses = async () => {
+        const serverNames = await getAllServersAsync();
         for (const name of serverNames) {
           const containerName = `mc-${name}`;
-          const dockerStatus = getContainerStatus(containerName);
-          const dockerHealth = getContainerHealth(containerName);
+          const dockerStatus = await getContainerStatusAsync(containerName);
+          const dockerHealth = await getContainerHealthAsync(containerName);
           const status = mapContainerStatus(dockerStatus);
           const health = mapHealthStatus(dockerHealth);
 
@@ -278,11 +280,16 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         }
       };
 
+      // A failed poll (e.g. docker timed out) skips this tick
+      const poll = () => {
+        sendAllStatuses().catch((error) => fastify.log.warn(error, 'Failed to poll server statuses'));
+      };
+
       // Send initial status immediately
-      sendAllStatuses();
+      poll();
 
       // Poll for status updates at the specified interval
-      const polling = setInterval(sendAllStatuses, interval);
+      const polling = setInterval(poll, interval);
 
       // Heartbeat to keep connection alive (every 30 seconds)
       const heartbeat = setInterval(() => {
@@ -301,18 +308,18 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Standard JSON response (non-streaming)
     try {
-      const serverNames = getAllServers();
-      const statuses = serverNames.map((name) => {
+      const serverNames = await getAllServersAsync();
+      const statuses = await Promise.all(serverNames.map(async (name) => {
         const containerName = `mc-${name}`;
-        const dockerStatus = getContainerStatus(containerName);
-        const dockerHealth = getContainerHealth(containerName);
+        const dockerStatus = await getContainerStatusAsync(containerName);
+        const dockerHealth = await getContainerHealthAsync(containerName);
         return {
           serverName: name,
           status: mapContainerStatus(dockerStatus),
           health: mapHealthStatus(dockerHealth),
           timestamp: new Date().toISOString(),
         };
-      });
+      }));
 
       return reply.send(statuses);
     } catch (error) {
@@ -342,7 +349,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // Check if server exists (either as container or config)
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -404,7 +411,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const containerName = `mc-${name}`;
 
     // Check if server exists first (before SSE mode check)
-    if (!serverExists(name)) {
+    if (!(await serverExistsAsync(name))) {
       return reply.code(404).send({
         error: 'NotFound',
         message: `Server '${name}' not found`,
@@ -421,9 +428,9 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       });
 
       // Send status update
-      const sendStatus = () => {
-        const dockerStatus = getContainerStatus(containerName);
-        const dockerHealth = getContainerHealth(containerName);
+      const sendStatus = async () => {
+        const dockerStatus = await getContainerStatusAsync(containerName);
+        const dockerHealth = await getContainerHealthAsync(containerName);
         const status = mapContainerStatus(dockerStatus);
         const health = mapHealthStatus(dockerHealth);
 
@@ -436,11 +443,16 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         })}\n\n`);
       };
 
+      // A failed poll (e.g. docker timed out) skips this tick
+      const poll = () => {
+        sendStatus().catch((error) => fastify.log.warn(error, 'Failed to poll server status'));
+      };
+
       // Send initial status immediately
-      sendStatus();
+      poll();
 
       // Poll for status updates at the specified interval
-      const polling = setInterval(sendStatus, interval);
+      const polling = setInterval(poll, interval);
 
       // Heartbeat to keep connection alive (every 30 seconds)
       const heartbeat = setInterval(() => {
@@ -459,8 +471,8 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // Standard JSON response (non-streaming)
     try {
-      const dockerStatus = getContainerStatus(containerName);
-      const dockerHealth = getContainerHealth(containerName);
+      const dockerStatus = await getContainerStatusAsync(containerName);
+      const dockerHealth = await getContainerHealthAsync(containerName);
       const status = mapContainerStatus(dockerStatus);
       const health = mapHealthStatus(dockerHealth);
 
@@ -504,7 +516,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const { name } = request.params;
       const { follow = false, interval = 5000 } = request.query;
 
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -596,7 +608,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const containerName = `mc-${name}`;
 
     try {
-      if (!containerExists(containerName)) {
+      if (!(await containerExistsAsync(containerName))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -615,7 +627,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
 
         // Send initial logs
-        const initialLogs = getContainerLogs(containerName, lines);
+        const initialLogs = await getContainerLogsAsync(containerName, lines);
         for (const line of initialLogs.split('\n')) {
           if (line) {
             reply.raw.write(`data: ${JSON.stringify({ type: 'server-log', data: { log: line } })}\n\n`);
@@ -661,7 +673,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       }
 
       // Standard JSON response (non-streaming)
-      const logs = getContainerLogs(containerName, lines);
+      const logs = await getContainerLogsAsync(containerName, lines);
 
       return reply.send({
         logs,
@@ -697,7 +709,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const containerName = `mc-${name}`;
 
     try {
-      if (!containerExists(containerName)) {
+      if (!(await containerExistsAsync(containerName))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -759,7 +771,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { follow = false } = request.query;
 
     // Check if server already exists (before SSE mode check)
-    if (serverExists(name)) {
+    if (await serverExistsAsync(name)) {
       return reply.code(409).send({
         error: 'Conflict',
         message: `Server '${name}' already exists`,
@@ -1023,7 +1035,7 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     const { force, deleteWorld } = request.query;
     const sudoPassword = request.body?.sudoPassword;
 
-    if (!serverExists(name)) {
+    if (!(await serverExistsAsync(name))) {
       return reply.code(404).send({
         error: 'NotFound',
         message: `Server '${name}' not found`,

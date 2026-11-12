@@ -60,6 +60,21 @@ describe('PlayerSessionCollectorService', () => {
     ]);
   });
 
+  it('awaits async server lists and statuses (#672)', async () => {
+    listServers.mockResolvedValue(['alpha']);
+    getStatus.mockResolvedValue('exited');
+    await createService().tick();
+    expect(sessions.markServerStopped).toHaveBeenCalledWith('alpha', expect.any(Date));
+    expect(fetchLogs).not.toHaveBeenCalled();
+  });
+
+  it('skips a pass with a warning when the server list fails, e.g. a docker timeout (#672)', async () => {
+    listServers.mockRejectedValue(new Error('docker ps did not answer'));
+    await expect(createService().tick()).resolves.toBeUndefined();
+    expect(logger.warn).toHaveBeenCalled();
+    expect(fetchLogs).not.toHaveBeenCalled();
+  });
+
   it('fetches logs since the stored cursor ISO string when one exists', async () => {
     const cursor = new Date('2026-01-01T00:00:00.000Z');
     sessions.getCursor.mockResolvedValue(cursor);
@@ -106,9 +121,8 @@ describe('PlayerSessionCollectorService', () => {
     const service = createService();
 
     const firstTick = service.tick();
-    // Let the first tick run past its `await getCursor(...)` hop so it
-    // reaches (and calls) fetchLogs before the second tick is issued.
-    await Promise.resolve();
+    // Let the first tick reach (and call) fetchLogs before the second tick is issued.
+    await vi.waitFor(() => expect(fetchLogs).toHaveBeenCalledTimes(1));
     const secondTick = service.tick();
     resolveFirstFetch([]);
     await Promise.all([firstTick, secondTick]);
@@ -133,13 +147,13 @@ describe('PlayerSessionCollectorService', () => {
       expect(fetchLogs).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(30_000);
-      // tick() is async; flushing microtasks isn't needed to assert it was invoked.
-      expect(getStatus).toHaveBeenCalled();
+      // tick() lists the servers before its first await, so no microtask flush is needed.
+      expect(listServers).toHaveBeenCalled();
 
       service.stop();
-      getStatus.mockClear();
+      listServers.mockClear();
       vi.advanceTimersByTime(60_000);
-      expect(getStatus).not.toHaveBeenCalled();
+      expect(listServers).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }

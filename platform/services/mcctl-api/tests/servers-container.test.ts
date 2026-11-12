@@ -1,7 +1,7 @@
 /**
  * Server routes on a fake container (#667): the use cases and ports come from
  * buildApp({ container }), so no child_process mock is needed. The only
- * docker call left is the module-level serverExists() check; a `docker` on
+ * docker call left is the module-level serverExistsAsync() check; a `docker` on
  * PATH that always fails makes it read config.env from the temp root.
  */
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';

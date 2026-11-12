@@ -6,14 +6,14 @@ import http from 'http';
 // Mock @minecraft-docker/shared module
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  getAllServers: vi.fn(),
-  getServerInfoFromConfig: vi.fn(),
+  getAllServersAsync: vi.fn(),
+  getServerInfoFromConfigAsync: vi.fn(),
   getServerDetailedInfo: vi.fn(),
-  getContainerLogs: vi.fn(),
-  containerExists: vi.fn(),
-  serverExists: vi.fn(),
-  getContainerStatus: vi.fn(),
-  getContainerHealth: vi.fn(),
+  getContainerLogsAsync: vi.fn(),
+  containerExistsAsync: vi.fn(),
+  serverExistsAsync: vi.fn(),
+  getContainerStatusAsync: vi.fn(),
+  getContainerHealthAsync: vi.fn(),
   stopContainer: vi.fn(),
   ModSourceFactory: {
     get: vi.fn(),
@@ -31,14 +31,14 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
 vi.mock('@minecraft-docker/mod-source-modrinth', () => ({}));
 
 import {
-  serverExists,
-  getContainerStatus,
-  getContainerHealth,
+  serverExistsAsync,
+  getContainerStatusAsync,
+  getContainerHealthAsync,
 } from '@minecraft-docker/shared';
 
-const mockedServerExists = vi.mocked(serverExists);
-const mockedGetContainerStatus = vi.mocked(getContainerStatus);
-const mockedGetContainerHealth = vi.mocked(getContainerHealth);
+const mockedServerExists = vi.mocked(serverExistsAsync);
+const mockedGetContainerStatus = vi.mocked(getContainerStatusAsync);
+const mockedGetContainerHealth = vi.mocked(getContainerHealthAsync);
 
 /**
  * Helper to test SSE endpoints

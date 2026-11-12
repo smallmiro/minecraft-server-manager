@@ -5,7 +5,7 @@ import { buildApp } from '../src/app.js';
 // Real resolvePlayitDomain, mocked file I/O
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  serverExists: vi.fn(),
+  serverExistsAsync: vi.fn(),
   getServerPlayitDomain: vi.fn(),
   AuditActionEnum: {},
 }));
@@ -48,8 +48,8 @@ describe('PUT /api/servers/:name/hostnames - playit domain sync', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { serverExists } = await import('@minecraft-docker/shared');
-    vi.mocked(serverExists).mockReturnValue(true);
+    const { serverExistsAsync } = await import('@minecraft-docker/shared');
+    vi.mocked(serverExistsAsync).mockReturnValue(true);
     hostnameService.composeExists.mockReturnValue(true);
   });
 

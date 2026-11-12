@@ -25,8 +25,8 @@ vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock Docker functions: containerExists reflects whether docker-compose.yml
-// was written for the fixture server; getContainerStatus is controlled per-test.
+// Mock Docker functions: containerExistsAsync reflects whether docker-compose.yml
+// was written for the fixture server; getContainerStatusAsync is controlled per-test.
 let containerStatus: 'running' | 'stopped' = 'stopped';
 // Controls RconCliAdapter#getEntityPosition for ?include=nbt's livePosition (#528, Phase 3).
 const mockGetEntityPosition = vi.fn();
@@ -34,12 +34,12 @@ vi.mock('@minecraft-docker/shared', async () => {
   const actual = await vi.importActual('@minecraft-docker/shared');
   return {
     ...actual,
-    containerExists: vi.fn((containerName: string) => {
+    containerExistsAsync: vi.fn((containerName: string) => {
       const serverName = containerName.replace('mc-', '');
       const serverPath = join(TEST_PLATFORM_PATH, 'servers', serverName, 'docker-compose.yml');
       return existsSync(serverPath);
     }),
-    getContainerStatus: vi.fn(() => containerStatus),
+    getContainerStatusAsync: vi.fn(() => containerStatus),
     RconCliAdapter: vi.fn().mockImplementation(() => ({
       getEntityPosition: mockGetEntityPosition,
     })),
@@ -72,10 +72,10 @@ function setupServer(serverName: string, opts: { files?: Record<string, unknown>
     'services:\n  minecraft:\n    image: itzg/minecraft-server',
     'utf-8'
   );
-  // checkServerDefined() → shared serverExists() falls back to config.env on
-  // disk via its own internal (unmocked) containerExists call — the
-  // consumer-side containerExists mock above only patches players.ts's own
-  // direct calls, not serverExists's internal one (mirrors world-info.test.ts).
+  // checkServerDefined() → shared serverExistsAsync() falls back to config.env on
+  // disk via its own internal (unmocked) containerExistsAsync call — the
+  // consumer-side containerExistsAsync mock above only patches players.ts's own
+  // direct calls, not serverExistsAsync's internal one (mirrors world-info.test.ts).
   writeFileSync(join(serverDir, 'config.env'), 'TYPE=PAPER\n', 'utf-8');
 
   for (const [filename, content] of Object.entries(opts.files ?? {})) {

@@ -56,7 +56,7 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   }
   return {
     ...actual,
-    serverExists: vi.fn((name: string) => exists(joinPath(process.env.MCCTL_ROOT!, 'servers', name, 'config.env'))),
+    serverExistsAsync: vi.fn((name: string) => exists(joinPath(process.env.MCCTL_ROOT!, 'servers', name, 'config.env'))),
     AvahiHostnameRegistrarAdapter: FakeAvahi,
     DockerComposeRuntimeAdapter: FakeRuntime,
   };

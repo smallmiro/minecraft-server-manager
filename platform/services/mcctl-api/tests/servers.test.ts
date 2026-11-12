@@ -71,14 +71,14 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
       return summaryMocks.execute(servers);
     }
   },
-  getAllServers: vi.fn(),
-  getServerInfoFromConfig: vi.fn(),
+  getAllServersAsync: vi.fn(),
+  getServerInfoFromConfigAsync: vi.fn(),
   getServerDetailedInfo: vi.fn(),
-  getContainerLogs: vi.fn(),
-  containerExists: vi.fn(),
-  serverExists: vi.fn(),
-  getContainerStatus: vi.fn(),
-  getContainerHealth: vi.fn(),
+  getContainerLogsAsync: vi.fn(),
+  containerExistsAsync: vi.fn(),
+  serverExistsAsync: vi.fn(),
+  getContainerStatusAsync: vi.fn(),
+  getContainerHealthAsync: vi.fn(),
   stopContainer: vi.fn(),
   getServerPlayitDomain: vi.fn(),
   AuditActionEnum: {
@@ -118,23 +118,23 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 }));
 
 import {
-  getAllServers,
-  getServerInfoFromConfig,
+  getAllServersAsync,
+  getServerInfoFromConfigAsync,
   getServerDetailedInfo,
-  getContainerLogs,
-  containerExists,
-  serverExists,
+  getContainerLogsAsync,
+  containerExistsAsync,
+  serverExistsAsync,
   getServerPlayitDomain,
 } from '@minecraft-docker/shared';
 import { spawn } from 'node:child_process';
 
-const mockedGetAllServers = vi.mocked(getAllServers);
-const mockedGetServerInfoFromConfig = vi.mocked(getServerInfoFromConfig);
+const mockedGetAllServers = vi.mocked(getAllServersAsync);
+const mockedGetServerInfoFromConfig = vi.mocked(getServerInfoFromConfigAsync);
 const mockedGetServerDetailedInfo = vi.mocked(getServerDetailedInfo);
 const mockedGetServerPlayitDomain = vi.mocked(getServerPlayitDomain);
-const mockedGetContainerLogs = vi.mocked(getContainerLogs);
-const mockedContainerExists = vi.mocked(containerExists);
-const mockedServerExists = vi.mocked(serverExists);
+const mockedGetContainerLogs = vi.mocked(getContainerLogsAsync);
+const mockedContainerExists = vi.mocked(containerExistsAsync);
+const mockedServerExists = vi.mocked(serverExistsAsync);
 const mockedSpawn = vi.mocked(spawn);
 
 describe('Server Routes', () => {

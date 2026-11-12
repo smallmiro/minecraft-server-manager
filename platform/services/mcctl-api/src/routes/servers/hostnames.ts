@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import { join } from 'path';
 import {
-  serverExists,
+  serverExistsAsync,
   AuditActionEnum,
   getServerPlayitDomain,
   resolvePlayitDomain,
@@ -63,7 +63,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
     const { name } = request.params;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,
@@ -117,7 +117,7 @@ const hostnamesPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => 
     const { customHostnames } = request.body;
 
     try {
-      if (!serverExists(name)) {
+      if (!(await serverExistsAsync(name))) {
         return reply.code(404).send({
           error: 'NotFound',
           message: `Server '${name}' not found`,

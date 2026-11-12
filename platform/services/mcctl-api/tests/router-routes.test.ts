@@ -6,7 +6,7 @@ const restartMock = vi.hoisted(() => vi.fn());
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
   getRouterDetailInfoAsync: vi.fn(),
-  getAvahiStatus: vi.fn().mockReturnValue('running'),
+  getAvahiStatusAsync: vi.fn().mockReturnValue('running'),
   getPlayitAgentStatus: vi.fn().mockResolvedValue({
     enabled: false,
     agentRunning: false,

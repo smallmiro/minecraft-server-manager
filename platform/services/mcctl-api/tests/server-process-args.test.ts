@@ -27,8 +27,8 @@ vi.mock('child_process', async (importOriginal) => {
 
 vi.mock('@minecraft-docker/shared', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@minecraft-docker/shared')>()),
-  serverExists: vi.fn(),
-  getContainerStatus: vi.fn(() => 'not_found'),
+  serverExistsAsync: vi.fn(),
+  getContainerStatusAsync: vi.fn(() => 'not_found'),
   stopContainer: vi.fn(),
 }));
 
@@ -38,7 +38,7 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 
 import { exec, execFile, spawn } from 'child_process';
 import {
-  serverExists,
+  serverExistsAsync,
   CreateServerUseCase,
   ApiPromptAdapter,
   ServerRepository,
@@ -102,7 +102,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
 
   describe('POST /api/servers (non-streaming)', () => {
     it('writes seed and modpack version into config.env as given, running no shell', async () => {
-      vi.mocked(serverExists).mockReturnValue(false);
+      vi.mocked(serverExistsAsync).mockReturnValue(false);
       const seed = `-123"; touch "${ROOT}/pwned-seed"; echo "`;
       const modpackVersion = `1.0 $(touch ${ROOT}/pwned-modpack) \`touch ${ROOT}/pwned-tick\``;
 
@@ -132,7 +132,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
     });
 
     it('writes a world URL with command substitution as given', async () => {
-      vi.mocked(serverExists).mockReturnValue(false);
+      vi.mocked(serverExistsAsync).mockReturnValue(false);
       const worldUrl = 'http://example.com/w.zip?$(touch$IFS$MCCTL_ROOT/pwned-url)';
 
       const response = await app.inject({
@@ -170,7 +170,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       { type: 'MODRINTH', modpack: 'pack', modpackVersion: 'x'.repeat(129) },
       { worldUrl: 'http://example.com/w.zip\nEULA=FALSE' },
     ])('rejects %j', async (payload) => {
-      vi.mocked(serverExists).mockReturnValue(false);
+      vi.mocked(serverExistsAsync).mockReturnValue(false);
       const response = await create(payload);
       expect(response.statusCode).toBe(400);
       expect(existsSync(join(ROOT, 'servers', 'argv-test'))).toBe(false);
@@ -187,7 +187,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
       { type: 'MODRINTH', modpack: 'pack', modpackVersion: '0.5.1+1.20.1' },
       { type: 'MODRINTH', modpack: 'pack', modpackVersion: 'Release 5 (beta)' },
     ])('accepts %j', async (payload) => {
-      vi.mocked(serverExists).mockReturnValue(false);
+      vi.mocked(serverExistsAsync).mockReturnValue(false);
       const response = await create({ ...payload, autoStart: false });
       expect(response.statusCode, response.body).toBe(201);
       // The seed is trimmed like every create path (WorldOptions); Compose trimmed it from the script's line too.
@@ -198,7 +198,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
 
   describe('DELETE /api/servers/:name', () => {
     it('hands the name to the deprovision as one value and runs no process (#735)', async () => {
-      vi.mocked(serverExists).mockReturnValue(true);
+      vi.mocked(serverExistsAsync).mockReturnValue(true);
       const calls = fakeDelete();
 
       const response = await app.inject({ method: 'DELETE', url: '/api/servers/My_Server' });
@@ -210,7 +210,7 @@ describe('Server scripts receive user input as argv, not shell text (#720)', () 
     });
 
     it('passes deleteWorld only when deleteWorld=true (#652)', async () => {
-      vi.mocked(serverExists).mockReturnValue(true);
+      vi.mocked(serverExistsAsync).mockReturnValue(true);
       const calls = fakeDelete();
 
       expect((await app.inject({ method: 'DELETE', url: '/api/servers/alpha?deleteWorld=false' })).statusCode).toBe(200);

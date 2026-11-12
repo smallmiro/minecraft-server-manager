@@ -2,10 +2,10 @@ import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } fro
 import fp from 'fastify-plugin';
 import { join } from 'node:path';
 import {
-  containerExists,
-  getAllServers,
-  getContainerStatus,
-  serverExists,
+  containerExistsAsync,
+  getAllServersAsync,
+  getContainerStatusAsync,
+  serverExistsAsync,
   OpLevel,
   ServerSpecError,
   type SessionHistory,
@@ -150,8 +150,8 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // `docker` calls / a lingering interval outside app.close().
   const sessionCollector = new PlayerSessionCollectorService(
     playerSessionUseCase,
-    () => getAllServers(join(config.mcctlRoot, 'servers')),
-    getContainerStatus,
+    () => getAllServersAsync(join(config.mcctlRoot, 'servers')),
+    getContainerStatusAsync,
     undefined,
     fastify.log
   );
@@ -164,9 +164,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   });
 
   // Helper to check server exists (container created)
-  const checkServerExists = (name: string, reply: FastifyReply): boolean => {
+  const checkServerExists = async (name: string, reply: FastifyReply): Promise<boolean> => {
     const containerName = `mc-${name}`;
-    if (!containerExists(containerName)) {
+    if (!(await containerExistsAsync(containerName))) {
       reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       return false;
     }
@@ -176,25 +176,22 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Helper to check a server is defined (container OR config.env on disk).
   // Use for read endpoints so a defined-but-not-running server can still be
   // served from its files instead of 404ing when no container exists.
-  const checkServerDefined = (name: string, reply: FastifyReply): boolean => {
-    if (!serverExists(name, join(config.mcctlRoot, 'servers'))) {
+  const checkServerDefined = async (name: string, reply: FastifyReply): Promise<boolean> => {
+    if (!(await serverExistsAsync(name, join(config.mcctlRoot, 'servers')))) {
       reply.code(404).send({ error: 'NotFound', message: `Server '${name}' not found` });
       return false;
     }
     return true;
   };
 
-  // Helper to check if server is running
-  const isServerRunning = (name: string): boolean => {
-    const containerName = `mc-${name}`;
-    if (!containerExists(containerName)) return false;
-    return getContainerStatus(containerName) === 'running';
-  };
+  // Helper to check if server is running (a missing container reads as not_found)
+  const isServerRunning = async (name: string): Promise<boolean> =>
+    (await getContainerStatusAsync(`mc-${name}`)) === 'running';
 
   // Helper to check server is running (for commands that require it, like kick/online players)
-  const checkServerRunning = (name: string, reply: FastifyReply): boolean => {
-    if (!checkServerExists(name, reply)) return false;
-    if (!isServerRunning(name)) {
+  const checkServerRunning = async (name: string, reply: FastifyReply): Promise<boolean> => {
+    if (!(await checkServerExists(name, reply))) return false;
+    if (!(await isServerRunning(name))) {
       reply.code(400).send({ error: 'BadRequest', message: `Server '${name}' is not running` });
       return false;
     }
@@ -208,7 +205,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
    * so both agree on who's online (#528).
    */
   const getOnlinePlayers = async (name: string): Promise<{ running: boolean; online: number; max: number; names: string[] }> => {
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
     if (!running) return { running, online: 0, max: 0, names: [] };
 
     try {
@@ -257,7 +254,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<PlayerRosterRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     const { follow = false, interval = 5000 } = request.query;
-    if (!checkServerDefined(name, reply)) return;
+    if (!(await checkServerDefined(name, reply))) return;
 
     // SSE streaming mode
     if (follow) {
@@ -336,7 +333,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<PlayerDetailRoute>, reply: FastifyReply) => {
     const { name, uuid } = request.params;
     const { include } = request.query;
-    if (!checkServerDefined(name, reply)) return;
+    if (!(await checkServerDefined(name, reply))) return;
 
     const requested = (include ?? '').split(',').filter(Boolean);
     const wantsNbt = requested.includes('nbt');
@@ -437,9 +434,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!checkServerDefined(name, reply)) return;
+    if (!(await checkServerDefined(name, reply))) return;
 
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
     const enabled = playerFileService.readWhitelistEnabled(name);
 
     if (running) {
@@ -489,7 +486,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!checkServerDefined(name, reply)) return;
+    if (!(await checkServerDefined(name, reply))) return;
 
     try {
       const enabled = playerFileService.readWhitelistEnabled(name);
@@ -525,11 +522,11 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<WhitelistStatusRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     const { enabled } = request.body;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
     try {
       // If server is running, also send RCON command
-      if (isServerRunning(name)) {
+      if (await isServerRunning(name)) {
         try {
           await execRconCommand(name, `whitelist ${enabled ? 'on' : 'off'}`);
         } catch (error) {
@@ -582,9 +579,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<AddPlayerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     const { player } = request.body;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
 
     if (running) {
       try {
@@ -665,9 +662,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<PlayerRoute>, reply: FastifyReply) => {
     const { name, player } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
 
     if (running) {
       try {
@@ -750,9 +747,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
 
     if (running) {
       try {
@@ -798,9 +795,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<AddPlayerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     const { player, reason } = request.body;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
 
     if (running) {
       try {
@@ -863,9 +860,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<PlayerRoute>, reply: FastifyReply) => {
     const { name, player } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
-    const running = isServerRunning(name);
+    const running = await isServerRunning(name);
 
     if (running) {
       try {
@@ -931,7 +928,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<KickPlayerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     const { player, reason } = request.body;
-    if (!checkServerRunning(name, reply)) return;
+    if (!(await checkServerRunning(name, reply))) return;
 
     try {
       const cmd = reason ? `kick ${player} ${reason}` : `kick ${player}`;
@@ -975,7 +972,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<ServerRoute>, reply: FastifyReply) => {
     const { name } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
     try {
       // Read from ops.json file
@@ -1013,7 +1010,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<AddOperatorRoute>, reply: FastifyReply) => {
     const { name } = request.params;
     const { player, level = 4 } = request.body;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
     try {
       // Lookup UUID
@@ -1076,7 +1073,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   }, async (request: FastifyRequest<UpdateOperatorLevelRoute>, reply: FastifyReply) => {
     const { name, player } = request.params;
     const { level } = request.body;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
     try {
       // Read current level before update for audit trail
@@ -1138,7 +1135,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     },
   }, async (request: FastifyRequest<PlayerRoute>, reply: FastifyReply) => {
     const { name, player } = request.params;
-    if (!checkServerExists(name, reply)) return;
+    if (!(await checkServerExists(name, reply))) return;
 
     try {
       const removed = opsJsonService.removeOperator(name, player);
