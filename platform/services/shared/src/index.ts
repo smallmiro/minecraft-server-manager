@@ -43,6 +43,7 @@ export {
   getServerInfo,
   getRouterInfo,
   getAvahiStatus,
+  getAvahiStatusAsync,
   getPlatformStatus,
   startContainer,
   stopContainer,

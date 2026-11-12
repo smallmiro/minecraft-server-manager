@@ -16,8 +16,9 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }));
 
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFile } from 'node:child_process';
 import { getRouterDetailInfo, getRouterDetailInfoAsync } from '../src/docker/index.js';
+import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import type { IMcRouterApiPort, McRouterRoute } from '../src/application/ports/outbound/IMcRouterApiPort.js';
 
 const exited = (status: number, stdout = '') => ({ status, stdout, stderr: '', error: undefined }) as never;
@@ -28,12 +29,32 @@ interface FakeDocker {
   containers?: Record<string, { status?: string; labels: Record<string, string> | null }>;
 }
 
-/** spawnSync fake answering the docker/curl argv the router composite issues. */
+/**
+ * spawnSync and execFile fakes answering the docker/curl argv the router
+ * composite issues (sync form for the CLI, async form for the API, #672).
+ */
 function fakeDocker(fake: FakeDocker) {
   const containers = fake.containers ?? {};
-  vi.mocked(spawnSync).mockImplementation(((cmd: string, args: string[]) => {
+  vi.mocked(execFile).mockImplementation(((cmd: string, args: string[], ...rest: unknown[]) => {
+    const callback = rest[rest.length - 1] as (err: Error | null, value?: unknown) => void;
+    const r = respond(cmd, args) as unknown as { status: number; stdout: string };
+    if (r.status === 0) callback(null, { stdout: r.stdout, stderr: '' });
+    else callback(Object.assign(new Error('exit 1'), { code: r.status }));
+  }) as never);
+  const respond = (cmd: string, args: string[]) => {
     if (cmd === 'curl') return exited(0, '200');
     if (cmd !== 'docker') return exited(1);
+    if (args[0] === 'ps' && args[args.length - 1]?.includes('{{.State}}')) {
+      const line = (name: string, state: string, labels: Record<string, string> | null) =>
+        [name, state, state === 'running' ? 'Up 1 hour' : 'Exited (0)', labels?.['mc-router.host'] ?? ''].join('\t');
+      return exited(
+        0,
+        [
+          ...(fake.routerStatus === undefined ? [] : [line('mc-router', fake.routerStatus, null)]),
+          ...Object.entries(containers).map(([n, c]) => line(n, c.status ?? 'running', c.labels)),
+        ].join('\n')
+      );
+    }
     if (args[0] === 'ps') return exited(0, ['mc-router', ...Object.keys(containers)].join('\n'));
     const format = args[2];
     const name = args[args.length - 1];
@@ -52,7 +73,8 @@ function fakeDocker(fake: FakeDocker) {
     if (format === '{{json .Config.Labels}}') return exited(0, JSON.stringify(container.labels));
     if (format === '{{index .Config.Labels "mc-router.host"}}') return exited(0, container.labels?.['mc-router.host'] ?? '');
     return exited(1);
-  }) as never);
+  };
+  vi.mocked(spawnSync).mockImplementation(respond as never);
 }
 
 const ROUTER_CONFIG = {
@@ -223,6 +245,41 @@ describe('getRouterDetailInfoAsync (#768)', () => {
     expect(beta.serverStatus).toBe('exited');
     expect('discoveredByRouter' in beta).toBe(false);
     expect(info.routes.find((r) => r.hostname === 'Alpha.192.168.1.10.nip.io')!.discoveredByRouter).toBe(false);
+  });
+
+  it('runs no synchronous child process and inspects labels only of containers with a router host (#672)', async () => {
+    fakeDocker({ routerStatus: 'running', routerConfig: ROUTER_CONFIG, containers: CONTAINERS });
+    const info = await getRouterDetailInfoAsync({ routerApi: api({}) });
+    expect(spawnSync).not.toHaveBeenCalled();
+    expect(info.routes.map((r) => [r.hostname, r.serverStatus])).toEqual([
+      ['alpha.local', 'running'],
+      ['Alpha.192.168.1.10.nip.io', 'running'],
+      ['beta.local', 'exited'],
+    ]);
+    const labelCalls = vi
+      .mocked(execFile)
+      .mock.calls.filter(([, args]) => (args as string[])[2] === '{{json .Config.Labels}}');
+    expect(labelCalls.map(([, args]) => (args as string[]).at(-1))).toEqual(['mc-alpha', 'mc-beta']);
+    expect(info.uptimeSeconds).toBeGreaterThanOrEqual(60);
+    expect(info.resolver).toEqual({ hostIp: '192.168.1.10', hostIps: ['192.168.1.10', '100.64.0.5'] });
+  });
+
+  it('takes router health from the management API answer instead of curl (#672)', async () => {
+    fakeDocker({ routerStatus: 'running', routerConfig: ROUTER_CONFIG, containers: {} });
+    expect((await getRouterDetailInfoAsync({ routerApi: api({}) })).health).toBe('healthy');
+    expect((await getRouterDetailInfoAsync({ routerApi: api(null) })).health).toBe('unhealthy');
+    fakeDocker({ routerStatus: 'exited', routerConfig: ROUTER_CONFIG, containers: {} });
+    expect((await getRouterDetailInfoAsync({ routerApi: api({}) })).health).toBe('unknown');
+    fakeDocker({ containers: {} });
+    expect(await getRouterDetailInfoAsync({ routerApi: api({}) })).toMatchObject({ status: 'not_found', health: 'unknown' });
+  });
+
+  it('rejects when docker hangs instead of reporting an empty router (#672)', async () => {
+    vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
+      const callback = args[args.length - 1] as (err: Error) => void;
+      callback(Object.assign(new Error('killed'), { killed: true }));
+    }) as never);
+    await expect(getRouterDetailInfoAsync({ routerApi: api({}) })).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
   });
 
   it('does not call the API when the router is not running', async () => {

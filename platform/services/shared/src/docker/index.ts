@@ -14,7 +14,7 @@ import type {
 } from '../types/index.js';
 import { resolveWorldName } from '../domain/value-objects/WorldName.js';
 import { resolveMcctlRoot, Paths } from '../utils/index.js';
-import { resolveHostIps } from '../infrastructure/hostIps.js';
+import { resolveHostIps, resolveHostIpsAsync } from '../infrastructure/hostIps.js';
 import { parseEnvDocument } from '../utils/env-file.js';
 // Adapters are imported by file path, never via a barrel: the barrel loads ServerRepository, which imports this module (ADR-0001)
 import {
@@ -157,6 +157,11 @@ export function getRouterInfo(): RouterInfo {
  */
 export function getAvahiStatus(): string {
   return hostnameRegistrar.getStatus();
+}
+
+/** getAvahiStatus without blocking the event loop, each probe bounded (#672). */
+export async function getAvahiStatusAsync(): Promise<string> {
+  return hostnameRegistrar.getStatusAsync();
 }
 
 /**
@@ -370,14 +375,52 @@ function routesOf(
  * getRouterDetailInfo plus `discoveredByRouter` per route from the mc-router
  * management API (#768). The field stays absent when the router is not
  * running or the API cannot be read.
+ *
+ * Request paths call this, so every docker query is awaited and bounded (#672):
+ * one `docker ps` gives every state and host label, labels are inspected only
+ * for hosted containers, and health comes from the same API answer. A docker
+ * timeout rejects with RuntimeQueryTimeoutError.
  */
 export async function getRouterDetailInfoAsync(
   options: { routerApi?: IMcRouterApiPort } = {}
 ): Promise<RouterDetailInfo> {
-  const detailed = getRouterDetailInfo();
-  if (detailed.status !== 'running') return detailed;
+  const states = await runtime.listStates();
+  const status = states.get('mc-router')?.status ?? 'not_found';
+  const running = status === 'running';
+  const [uptimeInfo, routerConfig, resolver, listed] = await Promise.all([
+    running ? runtime.getUptimeAsync('mc-router') : null,
+    status === 'not_found' ? null : router.inspectRouterAsync(),
+    readRouterResolverAsync(),
+    running ? (options.routerApi ?? routerApi).listRoutes() : null,
+  ]);
 
-  const listed = await (options.routerApi ?? routerApi).listRoutes();
+  const detailed: RouterDetailInfo = {
+    name: 'mc-router',
+    status,
+    health: !running ? 'unknown' : listed ? 'healthy' : 'unhealthy',
+    port: 25565,
+    routes: [],
+    mode: '--in-docker (auto-discovery)',
+    resolver,
+  };
+  if (uptimeInfo) {
+    detailed.uptime = uptimeInfo.uptime;
+    detailed.uptimeSeconds = uptimeInfo.seconds;
+  }
+  if (routerConfig) {
+    if (routerConfig.image) detailed.image = routerConfig.image;
+    detailed.autoScale = parseRouterAutoScaleEnv(routerConfig.env);
+  }
+
+  const hosted = [...states].filter(([name, state]) => name !== 'mc-router' && state.hostname !== '-');
+  const routes = await Promise.all(
+    hosted.map(async ([name, state]) =>
+      routesOf(name, await router.getLabelsAsync(name), state.status, detailed.autoScale)
+    )
+  );
+  detailed.routes = routes.flat();
+
+  if (!running) return detailed;
   detailed.routes = markDiscoveredRoutes(detailed.routes, listed ? listed.keys() : null, {
     stoppedRoutesListed: detailed.autoScale?.up !== false,
   });
@@ -390,7 +433,14 @@ export async function getRouterDetailInfoAsync(
  * The first one is the primary, as for avahi.
  */
 function readRouterResolver(): RouterResolver {
-  const hostIps = resolveHostIps(new Paths());
+  return resolverOf(resolveHostIps(new Paths()));
+}
+
+async function readRouterResolverAsync(): Promise<RouterResolver> {
+  return resolverOf(await resolveHostIpsAsync(new Paths()));
+}
+
+function resolverOf(hostIps: string[]): RouterResolver {
   return hostIps.length > 0 ? { hostIp: hostIps[0], hostIps } : { hostIps };
 }
 
@@ -611,7 +661,9 @@ export async function getDetailedServerInfoFromConfig(
 }
 
 /**
- * Get detailed server info (works for both running containers and config-only servers)
+ * Get detailed server info (works for both running containers and config-only servers).
+ * API request path: awaited, bounded docker queries only (#672); a docker
+ * timeout rejects with RuntimeQueryTimeoutError.
  */
 export async function getServerDetailedInfo(
   serverName: string,
@@ -619,15 +671,25 @@ export async function getServerDetailedInfo(
   worldsDir?: string
 ): Promise<DetailedServerInfo> {
   const container = `mc-${serverName}`;
+  const state = (await runtime.listStates()).get(container);
+  if (!state) return getDetailedServerInfoFromConfig(serverName, serversDir, worldsDir);
+
   const configEnv = readServerConfigEnv(serverName, serversDir);
-
-  // If container exists, get info from Docker
-  if (containerExists(container)) {
-    return getDetailedServerInfoWithPlayers(container, configEnv, worldsDir);
+  const detailed: DetailedServerInfo = { name: serverName, container, ...state };
+  if (state.status === 'running') {
+    const [stats, uptimeInfo, players] = await Promise.all([
+      runtime.getStatsAsync(container),
+      runtime.getUptimeAsync(container),
+      getOnlinePlayers(container),
+    ]);
+    if (stats) detailed.stats = stats;
+    if (uptimeInfo) {
+      detailed.uptime = uptimeInfo.uptime;
+      detailed.uptimeSeconds = uptimeInfo.seconds;
+    }
+    if (players) detailed.players = players;
   }
-
-  // Otherwise, get info from config only
-  return getDetailedServerInfoFromConfig(serverName, serversDir, worldsDir);
+  return withWorld(withConfig(detailed, configEnv), configEnv, worldsDir);
 }
 
 /**
@@ -637,8 +699,8 @@ export async function getServerDetailedInfo(
 export async function getPlayitAgentStatus(): Promise<import('../types/index.js').PlayitAgentStatus> {
   const containerName = 'playit-agent';
 
-  // Check if container exists
-  const status = getContainerStatus(containerName);
+  // Awaited and bounded: the API calls this per request (#672)
+  const status = await runtime.getStatusAsync(containerName);
   const agentRunning = status === 'running';
 
   const { secretKeyConfigured, playitEnabled } = readPlayitSettings();
@@ -648,7 +710,7 @@ export async function getPlayitAgentStatus(): Promise<import('../types/index.js'
   let uptimeSeconds: number | undefined;
 
   if (agentRunning) {
-    const uptimeInfo = getContainerUptime(containerName);
+    const uptimeInfo = await runtime.getUptimeAsync(containerName);
     if (uptimeInfo) {
       uptime = uptimeInfo.uptime;
       uptimeSeconds = uptimeInfo.seconds;
