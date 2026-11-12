@@ -27,6 +27,7 @@ import {
 import { AvahiHostnameRegistrarAdapter } from '../infrastructure/adapters/AvahiHostnameRegistrarAdapter.js';
 import { McRouterApiAdapter } from '../infrastructure/adapters/McRouterApiAdapter.js';
 import type { IMcRouterApiPort } from '../application/ports/outbound/IMcRouterApiPort.js';
+import type { WorkloadState } from '../application/ports/outbound/IContainerRuntimePort.js';
 import {
   parseRouterAutoScaleEnv,
   resolveRouteAutoScale,
@@ -613,6 +614,68 @@ export function serverExists(serverName: string, serversDir?: string): boolean {
   const dir = serversDir ?? getServersDir();
   const serverPath = join(dir, serverName);
   return existsSync(join(serverPath, 'config.env'));
+}
+
+// ---------------------------------------------------------------------------
+// Async status queries for API request paths (#672). One `docker ps` answers
+// every status, health and existence check; concurrent callers share it and a
+// success is reused for STATES_TTL_MS. A failed docker reads as no containers,
+// as on the sync path; a timeout rejects and is not cached.
+// ---------------------------------------------------------------------------
+
+const STATES_TTL_MS = 2_000;
+let statesCache: { at: number; states: Promise<Map<string, WorkloadState>> } | undefined;
+
+/** Drop the cached snapshot, e.g. after a start, stop, create or delete. */
+export function invalidateContainerStates(): void {
+  statesCache = undefined;
+}
+
+function containerStates(): Promise<Map<string, WorkloadState>> {
+  if (statesCache && Date.now() - statesCache.at < STATES_TTL_MS) return statesCache.states;
+  const entry = { at: Date.now(), states: runtime.listStates() };
+  statesCache = entry;
+  entry.states.catch(() => {
+    if (statesCache === entry) statesCache = undefined;
+  });
+  return entry.states;
+}
+
+export async function getContainerStatusAsync(container: string): Promise<ContainerStatus> {
+  return (await containerStates()).get(container)?.status ?? 'not_found';
+}
+
+export async function getContainerHealthAsync(container: string): Promise<HealthStatus> {
+  return (await containerStates()).get(container)?.health ?? 'unknown';
+}
+
+export async function containerExistsAsync(container: string): Promise<boolean> {
+  return (await containerStates()).has(container);
+}
+
+export async function getServerInfoFromConfigAsync(serverName: string): Promise<ServerInfo> {
+  const container = `mc-${serverName}`;
+  const state = (await containerStates()).get(container);
+  if (!state) return { name: serverName, container, status: 'not_created', health: 'none', hostname: '-' };
+  return { name: serverName, container, ...state };
+}
+
+export async function getAllServersAsync(serversDir?: string): Promise<string[]> {
+  const containers = [...(await containerStates()).keys()]
+    .filter(name => name !== 'mc-router')
+    .map(name => name.replace(/^mc-/, ''));
+  return Array.from(new Set([...getConfiguredServers(serversDir), ...containers])).sort();
+}
+
+/** A configured server answers without docker. */
+export async function serverExistsAsync(serverName: string, serversDir?: string): Promise<boolean> {
+  const dir = serversDir ?? getServersDir();
+  if (existsSync(join(dir, serverName, 'config.env'))) return true;
+  return containerExistsAsync(`mc-${serverName}`);
+}
+
+export async function getContainerLogsAsync(container: string, lines: number = 50): Promise<string> {
+  return runtime.getLogsAsync(container, lines);
 }
 
 /**
