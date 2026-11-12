@@ -1,12 +1,10 @@
-import { join } from 'path';
 import {
-  SqliteAuditLogRepository,
+  type SqliteAuditLogRepository,
   AuditLog,
   AuditActionEnum,
   type AuditLogData,
   type AuditLogQueryOptions,
 } from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
 import type {
   AuditLogEntry,
   AuditLogBrief,
@@ -16,11 +14,7 @@ import type {
   AuditLogDetailResponse,
   AuditLogPurgeResponse,
 } from '../schemas/audit-log.js';
-
-/**
- * Singleton instance of the audit log repository
- */
-let repository: SqliteAuditLogRepository | null = null;
+import { currentContainer } from '../plugins/container.js';
 
 /**
  * Event listeners for new audit log entries (SSE support)
@@ -28,15 +22,9 @@ let repository: SqliteAuditLogRepository | null = null;
 type AuditLogListener = (log: AuditLogEntry) => void;
 const listeners = new Set<AuditLogListener>();
 
-/**
- * Get or create the audit log repository singleton
- */
+/** The app's repository: audit.db has one handle, owned by the container (#673). */
 export function getAuditLogRepository(): SqliteAuditLogRepository {
-  if (!repository) {
-    const dbPath = join(config.mcctlRoot, 'data', 'audit.db');
-    repository = new SqliteAuditLogRepository(dbPath);
-  }
-  return repository;
+  return currentContainer().auditLogRepository();
 }
 
 /**
@@ -314,8 +302,14 @@ export function notifyNewAuditLog(entry: AuditLogEntry): void {
  * Write an audit log entry and notify SSE listeners
  */
 export async function writeAuditLog(data: AuditLogData): Promise<void> {
-  const repo = getAuditLogRepository();
-  await repo.log(data);
+  // The action being audited has already run: an audit store that cannot be
+  // opened or written must not turn its response into an error (#673).
+  try {
+    await getAuditLogRepository().log(data);
+  } catch (error) {
+    console.error('Audit log write failed:', error);
+    return;
+  }
 
   // Notify SSE listeners
   const log = AuditLog.create(data);
@@ -331,14 +325,4 @@ export async function writeAuditLog(data: AuditLogData): Promise<void> {
     errorMessage: json.errorMessage ?? null,
     timestamp: json.timestamp,
   });
-}
-
-/**
- * Close the repository (for graceful shutdown)
- */
-export function closeAuditLogRepository(): void {
-  if (repository) {
-    repository.close();
-    repository = null;
-  }
 }

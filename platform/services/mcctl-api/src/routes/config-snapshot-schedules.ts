@@ -3,7 +3,6 @@ import fp from 'fastify-plugin';
 import { ConfigSnapshotSchedulerService } from '@minecraft-docker/shared';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../services/audit-log-service.js';
-import { getConfigSnapshotUseCase } from '../services/config-snapshot-service.js';
 import {
   ConfigSnapshotScheduleSchema,
   ConfigSnapshotScheduleListResponseSchema,
@@ -58,7 +57,7 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
   const snapshotRepository = fastify.container.configSnapshotRepository();
 
   // Initialize config snapshot scheduler service
-  const snapshotUseCase = getConfigSnapshotUseCase();
+  const snapshotUseCase = fastify.container.configSnapshotUseCase();
   const scheduler = new ConfigSnapshotSchedulerService(
     snapshotUseCase,
     useCase,
