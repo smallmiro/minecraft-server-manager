@@ -14,6 +14,7 @@ import type {
 } from '../src/application/ports/index.js';
 import type { ContainerStatus } from '../src/types/index.js';
 import { ServerName } from '../src/domain/value-objects/ServerName.js';
+import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import { ServerSpecError } from '../src/domain/server-spec/ServerSpecDocument.js';
 
 interface Setup {
@@ -57,8 +58,8 @@ function setup(opts: Setup = {}) {
   } satisfies IWorldAssignmentPort;
 
   const runtime = {
-    getStatus: vi.fn((): ContainerStatus => opts.status ?? 'exited'),
-    list: vi.fn((options?: { strict?: boolean }): string[] => {
+    getStatusAsync: vi.fn(async (): Promise<ContainerStatus> => opts.status ?? 'exited'),
+    listAsync: vi.fn(async (options?: { strict?: boolean }): Promise<string[]> => {
       if (opts.unreachable && options?.strict) throw new Error('docker ps failed: cannot connect');
       return [];
     }),
@@ -113,7 +114,7 @@ describe('assignWorldByName', () => {
 
     expect(result).toEqual({ success: true, worldName: 'free', serverName: 'srv' });
     expect(port.assign).toHaveBeenCalledWith('free', 'srv');
-    expect(runtime.getStatus).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
+    expect(runtime.getStatusAsync).toHaveBeenCalledWith(ServerName.fromExisting('srv'));
     expect(levels.get('srv')).toBe('free');
   });
 
@@ -173,22 +174,33 @@ describe('assignWorldByName', () => {
 
     expect(result).toMatchObject({ success: false, errorCode: 'undetermined' });
     expect(result.error).toContain('cannot connect');
-    expect(runtime.list).toHaveBeenCalledWith({ strict: true });
+    expect(runtime.listAsync).toHaveBeenCalledWith({ strict: true });
     expect(port.assign).not.toHaveBeenCalled();
     expect(levels.get('srv')).toBe('srv');
+  });
+
+  test('refuses when the status query times out (#672)', async () => {
+    const { useCase, port, runtime } = setup();
+    runtime.getStatusAsync.mockRejectedValueOnce(new RuntimeQueryTimeoutError('docker inspect timed out'));
+
+    const result = await useCase.assignWorldByName('free', 'srv');
+
+    expect(result).toMatchObject({ success: false, errorCode: 'undetermined' });
+    expect(result.error).toContain('timed out');
+    expect(port.assign).not.toHaveBeenCalled();
   });
 
   test('a stopped container needs no strict lookup', async () => {
     const { useCase, runtime } = setup({ status: 'exited', unreachable: true });
     expect((await useCase.assignWorldByName('free', 'srv')).success).toBe(true);
-    expect(runtime.list).not.toHaveBeenCalled();
+    expect(runtime.listAsync).not.toHaveBeenCalled();
   });
 
   test('re-assigning the current world succeeds without a runtime check', async () => {
     const { useCase, runtime, port } = setup({ levels: { srv: 'held' }, status: 'running' });
 
     expect((await useCase.assignWorldByName('held', 'srv')).success).toBe(true);
-    expect(runtime.getStatus).not.toHaveBeenCalled();
+    expect(runtime.getStatusAsync).not.toHaveBeenCalled();
     expect(port.assign).not.toHaveBeenCalled();
   });
 

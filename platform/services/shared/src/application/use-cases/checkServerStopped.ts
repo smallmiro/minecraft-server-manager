@@ -16,17 +16,18 @@ const ACTIVE_STATES: ReadonlySet<ContainerStatus> = new Set(['running', 'paused'
  * Nothing is stopped automatically. 'not_found' also means "runtime
  * unreachable" (D1), so it passes only when a strict list succeeds (#734). A
  * throw (or no runtime) is undetermined, and so is a name no server can have
- * (ServerName.fromExisting rejects it).
+ * (ServerName.fromExisting rejects it). The queries are awaited and bounded,
+ * so a hung runtime is undetermined too (#672).
  */
-export function checkServerStopped(
+export async function checkServerStopped(
   runtime: IContainerRuntimePort | undefined,
   server: string
-): WorldAssignmentError | null {
+): Promise<WorldAssignmentError | null> {
   let status: ContainerStatus;
   try {
     if (!runtime) throw new Error('no runtime configured');
-    status = runtime.getStatus(ServerName.fromExisting(server));
-    if (status === 'not_found') runtime.list({ strict: true });
+    status = await runtime.getStatusAsync(ServerName.fromExisting(server));
+    if (status === 'not_found') await runtime.listAsync({ strict: true });
   } catch (error) {
     return new WorldAssignmentError(
       'undetermined',
@@ -66,7 +67,9 @@ export async function checkSnapshotChange(
     const refused = checkProposed(next, server);
     if (refused) return refused;
   }
-  const stopErrors = changed.map((s) => checkServerStopped(runtime, s)).filter((e) => e !== null);
+  const stopErrors = (await Promise.all(changed.map((s) => checkServerStopped(runtime, s)))).filter(
+    (e) => e !== null
+  );
   if (stopErrors.length === 1) return stopErrors[0]!;
   if (stopErrors.length > 1) {
     const names = stopErrors.flatMap((e) => e.servers);

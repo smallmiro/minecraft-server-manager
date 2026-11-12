@@ -313,7 +313,7 @@ export class WorldRepository implements IWorldRepository {
         const containerName = serverName.startsWith('mc-')
           ? serverName
           : containerNameOf(serverName);
-        const containerStatus = this.runtime.getStatus(containerName);
+        const containerStatus = await this.runtime.getStatusAsync(containerName);
 
         let serverStatus: ServerStatus;
         let category: WorldAvailabilityCategory;

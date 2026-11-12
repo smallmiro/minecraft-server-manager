@@ -24,11 +24,11 @@ vi.mock('@minecraft-docker/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@minecraft-docker/shared')>();
   class FakeRuntimeAdapter {
     // Ports pass a ServerName since #665; key the fake by container name
-    getStatus(name: Parameters<typeof actual.workloadNameOf>[0]) {
+    async getStatusAsync(name: Parameters<typeof actual.workloadNameOf>[0]) {
       return runtime.status.get(actual.workloadNameOf(name)) ?? 'not_found';
     }
     // 'not_found' counts as stopped only when a strict list succeeds (#734)
-    list() {
+    async listAsync() {
       return [];
     }
   }

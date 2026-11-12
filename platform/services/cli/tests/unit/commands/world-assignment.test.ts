@@ -66,7 +66,7 @@ beforeEach(() => {
   mkdirSync(join(root, 'worlds'), { recursive: true });
   state.status = 'exited';
   const paths = new Paths(root);
-  const runtime = { getStatus: () => state.status, start: async () => ({ success: true }) };
+  const runtime = { getStatusAsync: async () => state.status, start: async () => ({ success: true }) };
   // LEVEL writes go through the ServerSpec repository with the fake runtime (#675)
   const specRepo = new FileServerSpecRepository(paths, undefined, runtime as unknown as IContainerRuntimePort, () => []);
   const assignments = new ConfigEnvWorldAssignmentAdapter(paths, specRepo);

@@ -15,6 +15,8 @@ export function createMockContainerRuntime(status: ContainerStatus = 'exited') {
   const runtime = {
     getStatus: (): ContainerStatus => status,
     list: (): string[] => [],
+    getStatusAsync: async (): Promise<ContainerStatus> => status,
+    listAsync: async (): Promise<string[]> => [],
     start: async (name: ServerName | string): Promise<RuntimeActionResult> => {
       started.push(workloadNameOf(name));
       return { success: true };

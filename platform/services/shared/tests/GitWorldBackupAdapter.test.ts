@@ -12,7 +12,7 @@ import { GitWorldBackupAdapter } from '../src/infrastructure/adapters/GitWorldBa
 import { BackupRetentionPolicy } from '../src/domain/index.js';
 import { fsOps } from '../src/infrastructure/backup/restore-slots.js';
 import { vi } from 'vitest';
-import type { IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+import { RuntimeQueryTimeoutError, type IContainerRuntimePort } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import type { IRuntimeEnvironmentPort } from '../src/application/ports/outbound/IRuntimeEnvironmentPort.js';
 import type {
   IServerConsolePort,
@@ -41,11 +41,11 @@ function git(cwd: string, args: string[], env: Record<string, string> = {}): str
 
 class FakeRuntime {
   running: string[] = [];
-  /** Optional sequence of answers for list({ running: true }); an Error is a failed query. */
+  /** Optional sequence of answers for listAsync({ running: true }); an Error is a failed query. */
   answers: Array<string[] | Error> = [];
   /** `docker ps` fails: [] without strict (the D1 contract), a throw with strict. */
   failList = false;
-  list(options?: { running?: boolean; strict?: boolean }): string[] {
+  async listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]> {
     const answer = options?.running && this.answers.length > 0 ? this.answers.shift()! : undefined;
     const failed = answer instanceof Error || this.failList;
     if (failed) {
@@ -57,8 +57,9 @@ class FakeRuntime {
 }
 
 class FakeEnvironment {
-  available = true;
-  isAvailable(): boolean {
+  available: boolean | Error = true;
+  async isAvailableAsync(): Promise<boolean> {
+    if (this.available instanceof Error) throw this.available;
     return this.available;
   }
   getEngineVersion() {
@@ -443,6 +444,13 @@ describe('push', () => {
   it('refuses when the runtime cannot be queried (K3)', async () => {
     await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
     ctx.environment.available = false;
+    expect(errCode(await ctx.adapter.push())).toBe('runtime_unavailable');
+    expect(ctx.console.calls).toEqual([]);
+  });
+
+  it('refuses when the runtime query times out (#672)', async () => {
+    await writeWorld(join(ctx.root, 'worlds', 'alpha'), 'A1');
+    ctx.environment.available = new RuntimeQueryTimeoutError('docker info timed out');
     expect(errCode(await ctx.adapter.push())).toBe('runtime_unavailable');
     expect(ctx.console.calls).toEqual([]);
   });

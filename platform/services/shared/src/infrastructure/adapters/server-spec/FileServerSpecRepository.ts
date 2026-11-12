@@ -626,7 +626,7 @@ export class FileServerSpecRepository implements IServerSpecRepository {
       return a ? `${a.world}\0${!!a.internal}` : undefined;
     };
     if (key(current) === key(next)) return;
-    const refused = checkProposed(next, name) ?? checkServerStopped(this.runtime, name);
+    const refused = checkProposed(next, name) ?? (await checkServerStopped(this.runtime, name));
     if (refused) throw refused;
   }
 
