@@ -43,42 +43,72 @@ const IPV4 = /^\d{1,3}(\.\d{1,3}){3}$/;
  * (macOS). docker0, br-* and veth* addresses are skipped in every probe.
  */
 export function resolveHostIps(paths: Paths, probes: HostIpProbes = systemProbes): string[] {
-  let envText: string | undefined;
+  const fromEnv = readEnvHostIps(paths);
+  if (fromEnv.length > 0) return fromEnv;
+
+  const cached = cachedProbe(probes);
+  if (cached) return cached;
+  const usable = usableAddresses(probes.interfaces());
+  return remember(
+    probes,
+    fromRoute(probes.run('ip', ['route', 'get', '1']), usable) ??
+      fromHostnameI(probes.run('hostname', ['-I']), usable) ??
+      fromInterfaces(usable)
+  );
+}
+
+/** `.env` HOST_IPS, else HOST_IP, as a list ([] when unset or unreadable). */
+function readEnvHostIps(paths: Paths): string[] {
+  let envText: string;
   try {
     envText = readFileSync(paths.envFile, 'utf-8');
   } catch {
-    envText = undefined;
+    return [];
   }
-  if (envText !== undefined) {
-    const values = parseEnvDocument(envText).values;
-    const list = values.get('HOST_IPS')?.trim() || values.get('HOST_IP')?.trim() || '';
-    const ips = list.split(',').map((ip) => ip.trim()).filter(Boolean);
-    if (ips.length > 0) return ips;
-  }
+  const values = parseEnvDocument(envText).values;
+  const list = values.get('HOST_IPS')?.trim() || values.get('HOST_IP')?.trim() || '';
+  return list.split(',').map((ip) => ip.trim()).filter(Boolean);
+}
 
+function cachedProbe(probes: HostIpProbes): string[] | undefined {
   const cached = probed.get(probes);
-  if (cached && Date.now() - cached.at < PROBE_TTL_MS) return [...cached.ips];
-  const ips = probe(probes);
+  return cached && Date.now() - cached.at < PROBE_TTL_MS ? [...cached.ips] : undefined;
+}
+
+function remember(probes: HostIpProbes, ips: string[]): string[] {
   probed.set(probes, { at: Date.now(), ips });
   return [...ips];
 }
 
-function probe(probes: HostIpProbes): string[] {
-  const ifaces = Object.entries(probes.interfaces());
+interface Usable {
+  ifaces: Array<[string, NetworkInterfaceInfo[] | undefined]>;
+  ok: (ip: string | undefined, dev?: string) => ip is string;
+}
+
+function usableAddresses(interfaces: NodeJS.Dict<NetworkInterfaceInfo[]>): Usable {
+  const ifaces = Object.entries(interfaces);
   const virtual = new Set(
     ifaces.filter(([name]) => VIRTUAL_IFACE.test(name)).flatMap(([, infos]) => (infos ?? []).map((i) => i.address))
   );
-  const usable = (ip: string | undefined, dev?: string): ip is string =>
+  const ok = (ip: string | undefined, dev?: string): ip is string =>
     !!ip && IPV4.test(ip) && !virtual.has(ip) && !(dev && VIRTUAL_IFACE.test(dev));
+  return { ifaces, ok };
+}
 
-  const route = probes.run('ip', ['route', 'get', '1']) ?? '';
-  const src = /\bsrc (\S+)/.exec(route)?.[1];
-  if (usable(src, /\bdev (\S+)/.exec(route)?.[1])) return [src];
+/** The src address of `ip route get 1`, unless it is on a virtual device. */
+function fromRoute(route: string | undefined, usable: Usable): string[] | undefined {
+  const src = /\bsrc (\S+)/.exec(route ?? '')?.[1];
+  return usable.ok(src, /\bdev (\S+)/.exec(route ?? '')?.[1]) ? [src] : undefined;
+}
 
-  const first = (probes.run('hostname', ['-I']) ?? '').split(/\s+/).find((ip) => usable(ip));
-  if (first) return [first];
+function fromHostnameI(output: string | undefined, usable: Usable): string[] | undefined {
+  const first = (output ?? '').split(/\s+/).find((ip) => usable.ok(ip));
+  return first ? [first] : undefined;
+}
 
-  for (const [name, infos] of ifaces) {
+/** The first non-internal IPv4 interface (macOS), else []. */
+function fromInterfaces(usable: Usable): string[] {
+  for (const [name, infos] of usable.ifaces) {
     if (VIRTUAL_IFACE.test(name)) continue;
     const info = (infos ?? []).find((i) => i.family === 'IPv4' && !i.internal);
     if (info) return [info.address];
