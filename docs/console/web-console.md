@@ -523,7 +523,7 @@ At the top of the Options tab, the **Hostnames / Domains** card shows all the ho
 - **System Hostnames (read-only)** -- Automatically generated hostnames (e.g., `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
 - **Custom Domains** -- User-defined custom domain names, each with a remove button. The server's playit.gg domain, if it has one, is listed here with a **playit** chip: removing it clears the server's playit.gg domain, and replacing it with exactly one new domain in the same save makes that domain the playit.gg domain
 - **+ Add Domain** button to enter an additional custom hostname. Domains ending in `.local` or `.nip.io` are reserved for system hostnames
-- A **Save Hostnames** button to store the list. Hostname changes only take effect after the server container is recreated: stop the server and start it again (**Restart** does not apply them), or run `docker compose up -d`
+- A **Save Hostnames** button to store the list. Hostname changes only take effect after the server container is recreated: click **Apply now** in the warning that appears right after you save (a running server restarts and its players are disconnected; a stopped server is only recreated and stays stopped), or stop the server and start it again (**Restart** does not apply them). The button is there only in the same session, right after saving; hostnames saved earlier still need a stop and start
 
 #### Settings Sections
 
