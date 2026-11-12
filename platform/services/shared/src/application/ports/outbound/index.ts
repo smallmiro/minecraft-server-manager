@@ -75,7 +75,7 @@ export type {
 
 // Runtime ports (ADR-0001)
 export type { IContainerRuntimePort, RuntimeActionResult, WorkloadState } from './IContainerRuntimePort.js';
-export { RuntimeQueryTimeoutError } from './IContainerRuntimePort.js';
+export { RuntimeUnavailableError, RuntimeQueryTimeoutError } from './IContainerRuntimePort.js';
 export type {
   IServerConsolePort,
   ConsoleCommandResult,

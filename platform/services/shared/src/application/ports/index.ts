@@ -124,4 +124,4 @@ export type {
   WorldBackupPruneOutcome,
   WorldAssignmentSnapshot,
 } from './outbound/index.js';
-export { RuntimeQueryTimeoutError } from './outbound/index.js';
+export { RuntimeUnavailableError, RuntimeQueryTimeoutError } from './outbound/index.js';

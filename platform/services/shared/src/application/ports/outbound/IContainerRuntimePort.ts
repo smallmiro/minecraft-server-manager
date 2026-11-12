@@ -10,10 +10,21 @@ export interface RuntimeActionResult {
 }
 
 /**
+ * The runtime could not be asked (#669): it did not answer, or the query
+ * failed. Never "absent": callers that change state stop on it.
+ */
+export class RuntimeUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RuntimeUnavailableError';
+  }
+}
+
+/**
  * A runtime query did not answer in time (#672). The query is killed; callers
  * get this instead of a sentinel, so a hung runtime never reads as "absent".
  */
-export class RuntimeQueryTimeoutError extends Error {
+export class RuntimeQueryTimeoutError extends RuntimeUnavailableError {
   constructor(message: string) {
     super(message);
     this.name = 'RuntimeQueryTimeoutError';
