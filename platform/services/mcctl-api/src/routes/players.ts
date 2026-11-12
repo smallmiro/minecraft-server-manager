@@ -49,6 +49,7 @@ import {
 } from '../schemas/op.js';
 import { ServerNameParamsSchema, type ServerNameParams } from '../schemas/server.js';
 import { execRconCommand, parsePlayerList, getContainerName } from '../lib/rcon.js';
+import { openSse } from '../lib/sse.js';
 import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
 import { OpsJsonService } from '../services/OpsJsonService.js';
@@ -258,48 +259,22 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     // SSE streaming mode
     if (follow) {
-      reply.raw.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*',
-      });
-
-      let polling: ReturnType<typeof setInterval> | undefined;
-      let heartbeat: ReturnType<typeof setInterval> | undefined;
-      const cleanup = () => {
-        if (polling) clearInterval(polling);
-        if (heartbeat) clearInterval(heartbeat);
-      };
+      const stream = openSse(request, reply, { 'Access-Control-Allow-Origin': '*' });
+      if (!stream) return reply;
 
       const sendRoster = async () => {
         try {
-          const data = await buildPlayerRoster(name);
-          reply.raw.write(`event: players\n`);
-          reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
-        } catch {
-          // Socket likely closed/errored — stop streaming.
-          cleanup();
-          reply.raw.end();
+          stream.send('players', await buildPlayerRoster(name));
+        } catch (error) {
+          fastify.log.warn(error, 'Failed to poll player roster');
         }
       };
 
-      await sendRoster();
-      polling = setInterval(() => {
+      const polling = setInterval(() => {
         void sendRoster();
       }, interval);
-      heartbeat = setInterval(() => {
-        try {
-          reply.raw.write(': heartbeat\n\n');
-        } catch {
-          cleanup();
-        }
-      }, 30000);
-
-      request.raw.on('close', () => {
-        cleanup();
-        reply.raw.end();
-      });
+      stream.onClose(() => clearInterval(polling));
+      await sendRoster();
       return;
     }
 
