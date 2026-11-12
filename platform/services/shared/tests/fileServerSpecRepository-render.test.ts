@@ -247,6 +247,16 @@ describe('compose edits', () => {
     expect(read('survival', 'docker-compose.yml')).toContain('stop_grace_period: "90s"');
   });
 
+  it('overwrites a compose written before #662 (no logging) without reporting it as protected', async () => {
+    templateServer('survival');
+    writeFileSync(file('survival', 'docker-compose.yml'), read('survival', 'docker-compose.yml').replace(/^ *logging:\n(?: {6,}.*\n)+/m, ''));
+    expect(read('survival', 'docker-compose.yml')).not.toContain('logging');
+    const loaded = (await repo.load('survival'))!;
+    expect(loaded.warnings.join('\n')).not.toMatch(/protected/);
+    await repo.write({ ...loaded.document, image: 'itzg/minecraft-server:java21' }, { expectedRevision: loaded.revision });
+    expect(read('survival', 'docker-compose.yml')).toContain('max-size: "50m"');
+  });
+
   describe('a compose edited outside the spec', () => {
     const PORTS = (c: string) => c.replace('    restart: "no"', '    restart: "no"\n    ports:\n      - "25566:25565"');
 

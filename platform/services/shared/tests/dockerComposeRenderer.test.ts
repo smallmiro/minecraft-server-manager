@@ -177,6 +177,12 @@ describe('docker-compose.yml', () => {
     expect(svc['stop_grace_period']).toBe('90s');
   });
 
+  it('rotates the container log: json-file, 50m x 5 (#662)', () => {
+    const svc = (yaml.load(render(spec()).compose.content) as { services: Record<string, Record<string, unknown>> })
+      .services['mc-survival']!;
+    expect(svc['logging']).toEqual({ driver: 'json-file', options: { 'max-size': '50m', 'max-file': '5' } });
+  });
+
   it('quotes the router label so the v2 label readers still match it', async () => {
     const { parseRouterHosts } = await import('../src/docker/index.js');
     expect(parseRouterHosts(render(spec()).compose.content)).toEqual(['survival.local', 'survival.192.168.1.10.nip.io']);
