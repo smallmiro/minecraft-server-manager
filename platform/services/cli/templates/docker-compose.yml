@@ -54,6 +54,9 @@ services:
     image: itzg/mc-router:1.47.1
     container_name: mc-router
     restart: unless-stopped
+    # mcctl finds its containers by this label, not by name (#674)
+    labels:
+      io.mcctl.role: "router"
     environment:
       IN_DOCKER: "true"
       AUTO_SCALE_UP: "true"

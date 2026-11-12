@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 vi.mock('node:child_process', () => ({
   spawnSync: vi.fn(),
@@ -18,6 +21,7 @@ import {
   DockerPlayitAgentAdapter,
   DockerRuntimeEnvironmentAdapter,
   RUNTIME_QUERY_TIMEOUT_MS,
+  composeProjectName,
 } from '../src/infrastructure/adapters/DockerComposeRuntimeAdapter.js';
 import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import { ServerName } from '../src/domain/value-objects/ServerName.js';
@@ -66,6 +70,75 @@ beforeEach(() => {
   vi.resetAllMocks();
 });
 
+/** Platform root of the discovery tests: its .env names the compose project `minecraft` (#674). */
+const ROOT = mkdtempSync(join(tmpdir(), 'mcctl-runtime-'));
+writeFileSync(join(ROOT, '.env'), 'COMPOSE_PROJECT_NAME=minecraft\n');
+/** Runtime whose compose project is `minecraft`, whatever the test process environment holds. */
+const discovery = () => new DockerComposeRuntimeAdapter({ root: ROOT, env: () => ({}) });
+
+/** The `docker ps` columns discovery selects on (#674), then the caller's own columns. */
+const SELECT = '{{.Names}}\t{{.Label "io.mcctl.role"}}\t{{.Label "com.docker.compose.project"}}\t{{.Label "com.docker.compose.service"}}';
+const row = (name: string, role = '', project = '', service = '', ...rest: string[]) =>
+  [name, role, project, service, ...rest].join('\t');
+/** A host with mcctl servers and other containers whose names contain `mc-`. */
+const HOST = [
+  row('mc-b', 'server', 'minecraft', 'mc-b'),
+  row('mc-router', 'router', 'minecraft', 'router'),
+  row('mc-a', 'server', 'minecraft', 'mc-a'),
+  row('mc-legacy', '', 'minecraft', 'mc-legacy'), // created before the labels: compose project + mc-* service
+  row('mc-router', '', 'minecraft', 'router'),
+  row('mc-web', '', 'shop', 'mc-web'), // another compose project
+  row('postgres-mc-1', '', 'billing', 'db'), // name merely contains mc-
+  row('mc-scratch'), // docker run --name mc-scratch: not compose, not labelled
+  row('playit-agent', 'playit', 'minecraft', 'playit'),
+  '',
+].join('\n');
+
+describe('label discovery (#674)', () => {
+  it('list selects labelled servers and pre-label mc-* services of the compose project, nothing else', () => {
+    vi.mocked(spawnSync).mockReturnValue(exited(0, HOST));
+    expect(discovery().list()).toEqual(['mc-a', 'mc-b', 'mc-legacy']);
+    expect(spawnSync).toHaveBeenCalledWith('docker', ['ps', '-a', '--format', SELECT], PIPE);
+  });
+
+  it('list({ running: true }) asks docker for running containers only, same selection', () => {
+    vi.mocked(spawnSync).mockReturnValue(exited(0, HOST));
+    expect(discovery().list({ running: true })).toEqual(['mc-a', 'mc-b', 'mc-legacy']);
+    expect(spawnSync).toHaveBeenCalledWith('docker', ['ps', '--filter', 'status=running', '--format', SELECT], PIPE);
+  });
+
+  it('listAsync selects like list', async () => {
+    execFileCalls({ stdout: HOST });
+    expect(await discovery().listAsync({ running: true })).toEqual(['mc-a', 'mc-b', 'mc-legacy']);
+    expect(vi.mocked(execFile).mock.calls[0]?.[1]).toEqual(['ps', '--filter', 'status=running', '--format', SELECT]);
+  });
+
+  it('listStates keeps the servers and mc-router only', async () => {
+    const state = (r: string) => `${r}\trunning\tUp 1 hour\t`;
+    execFileCalls({ stdout: HOST.split('\n').filter(Boolean).map(state).join('\n') });
+    const states = await discovery().listStates();
+    expect(vi.mocked(execFile).mock.calls[0]?.[1]).toEqual([
+      'ps', '-a', '--format', `${SELECT}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}`,
+    ]);
+    expect([...states.keys()].sort()).toEqual(['mc-a', 'mc-b', 'mc-legacy', 'mc-router']);
+  });
+
+  it('a container with another io.mcctl role is never a server, whatever its name', () => {
+    vi.mocked(spawnSync).mockReturnValue(exited(0, row('mc-x', 'router', 'minecraft', 'mc-x')));
+    expect(discovery().list()).toEqual([]);
+  });
+});
+
+describe('composeProjectName (#674)', () => {
+  it('takes COMPOSE_PROJECT_NAME from the environment, then the root .env, then the directory name, as compose does', () => {
+    expect(composeProjectName(ROOT, { COMPOSE_PROJECT_NAME: 'fromenv' })).toBe('fromenv');
+    expect(composeProjectName(ROOT, {})).toBe('minecraft');
+    const bare = mkdtempSync(join(tmpdir(), 'My.Servers_'));
+    expect(composeProjectName(bare, {})).toBe(bare.split('/').pop()!.toLowerCase().replace('.', ''));
+    expect(composeProjectName('/nonexistent/-Minecraft Servers', {})).toBe('minecraftservers');
+  });
+});
+
 afterEach(() => {
   vi.unstubAllEnvs();
 });
@@ -112,26 +185,6 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
     expect(runtime.exists('mc-a')).toBe(false);
   });
 
-  it('list returns server containers sorted, without mc-router', () => {
-    vi.mocked(spawnSync).mockReturnValue(exited(0, 'mc-b\nmc-router\nmc-a\n'));
-    expect(runtime.list()).toEqual(['mc-a', 'mc-b']);
-    expect(spawnSync).toHaveBeenCalledWith(
-      'docker',
-      ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}'],
-      PIPE
-    );
-  });
-
-  it('list({ running: true }) filters running containers', () => {
-    vi.mocked(spawnSync).mockReturnValue(exited(0, 'mc-a\n'));
-    expect(runtime.list({ running: true })).toEqual(['mc-a']);
-    expect(spawnSync).toHaveBeenCalledWith(
-      'docker',
-      ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}'],
-      PIPE
-    );
-  });
-
   it('list returns [] when docker fails', () => {
     vi.mocked(spawnSync).mockReturnValue(exited(1));
     expect(runtime.list()).toEqual([]);
@@ -143,8 +196,8 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
     expect(() => runtime.list({ running: true, strict: true })).toThrow();
     vi.mocked(spawnSync).mockReturnValue(exited(0, ''));
     expect(runtime.list({ running: true, strict: true })).toEqual([]);
-    vi.mocked(spawnSync).mockReturnValue(exited(0, 'mc-b\nmc-router\nmc-a\n'));
-    expect(runtime.list({ strict: true })).toEqual(['mc-a', 'mc-b']);
+    vi.mocked(spawnSync).mockReturnValue(exited(0, HOST));
+    expect(discovery().list({ strict: true })).toEqual(['mc-a', 'mc-b', 'mc-legacy']);
   });
 
   it('getLogs tails 50 lines by default and returns "" on failure', () => {
@@ -864,21 +917,22 @@ describe('async request-path queries (#672)', () => {
   const QUERY = expect.objectContaining({ timeout: RUNTIME_QUERY_TIMEOUT_MS, killSignal: 'SIGKILL' });
   const argvOf = (call = 0) => vi.mocked(execFile).mock.calls[call]?.slice(0, 2);
 
-  it('listStates reads every mc-* container from one docker ps, health from its status column', async () => {
+  it('listStates reads every workload from one docker ps, health from its status column', async () => {
+    const server = (name: string) => row(name, 'server', 'minecraft', name);
     execFileCalls({
       stdout: [
-        'mc-a\trunning\tUp 2 hours (healthy)\ta.local,a.nip.io',
-        'mc-b\texited\tExited (0) 3 minutes ago\t',
-        'mc-c\trunning\tUp 5 seconds (health: starting)\tc.local',
-        'mc-d\trunning\tUp 1 hour (unhealthy)\t',
-        'mc-router\trunning\tUp 3 days\t',
+        `${server('mc-a')}\trunning\tUp 2 hours (healthy)\ta.local,a.nip.io`,
+        `${server('mc-b')}\texited\tExited (0) 3 minutes ago\t`,
+        `${server('mc-c')}\trunning\tUp 5 seconds (health: starting)\tc.local`,
+        `${server('mc-d')}\trunning\tUp 1 hour (unhealthy)\t`,
+        `${row('mc-router', 'router', 'minecraft', 'router')}\trunning\tUp 3 days\t`,
         '',
       ].join('\n'),
     });
     const states = await runtime.listStates();
     expect(argvOf()).toEqual([
       'docker',
-      ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}'],
+      ['ps', '-a', '--format', `${SELECT}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}`],
     ]);
     expect(vi.mocked(execFile).mock.calls[0]?.[2]).toEqual(QUERY);
     expect(Object.fromEntries(states)).toEqual({
@@ -942,12 +996,9 @@ describe('async request-path queries (#672)', () => {
   });
 
   it('listAsync mirrors list: sorted without mc-router, [] on failure unless strict', async () => {
-    execFileCalls({ stdout: 'mc-b\nmc-router\nmc-a\n' }, new Error('x'), new Error('x'));
-    expect(await runtime.listAsync({ running: true })).toEqual(['mc-a', 'mc-b']);
-    expect(argvOf()).toEqual([
-      'docker',
-      ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}'],
-    ]);
+    execFileCalls({ stdout: HOST }, new Error('x'), new Error('x'));
+    expect(await discovery().listAsync({ running: true })).toEqual(['mc-a', 'mc-b', 'mc-legacy']);
+    expect(argvOf()).toEqual(['docker', ['ps', '--filter', 'status=running', '--format', SELECT]]);
     expect(await runtime.listAsync()).toEqual([]);
     await expect(runtime.listAsync({ running: true, strict: true })).rejects.toThrow();
   });

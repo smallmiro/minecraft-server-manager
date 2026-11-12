@@ -1,7 +1,7 @@
 /**
- * migrateComposeKeys (#661, #662): `mcctl upgrade` adds the template's
- * stop_grace_period and logging to server composes written before them,
- * after a backup.
+ * migrateComposeKeys (#661, #662, #674): `mcctl upgrade` adds the template's
+ * stop_grace_period and logging, and the io.mcctl discovery labels, to server
+ * composes written before them, after a backup.
  * Real temp platform, real bundled template, real FileServerSpecRepository.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -23,6 +23,14 @@ const V661 = (name: string) =>
 /** A server compose as mcctl wrote it before #661: also without stop_grace_period. */
 const OLD = (name: string) => V661(name).replace(/^ *# Longer than[\s\S]*?stop_grace_period:.*\n/m, '');
 const LOGGING = '    logging:\n      driver: "json-file"\n      options:\n        max-size: "50m"\n        max-file: "5"\n';
+/** `text` (a server compose without the #674 labels) as the migration leaves it: labels first in the labels mapping. */
+const labelled = (text: string, name: string) =>
+  text.replace('    labels:\n', `    labels:\n      io.mcctl.server: "${name}"\n      io.mcctl.role: "server"\n`);
+/** A server compose as mcctl wrote it before #674: every template key, no io.mcctl labels. */
+const V662 = (name: string) =>
+  TEMPLATE_COMPOSE.replace(/mc-template/g, `mc-${name}`).replace('mc-router.host: "template.local"', `mc-router.host: "${name}.local"`);
+const labels = (name: string) =>
+  (yaml.load(compose(name)) as { services: Record<string, Record<string, unknown>> }).services[`mc-${name}`]!['labels'];
 
 let root: string;
 const dir = (name: string) => join(root, 'servers', name);
@@ -61,7 +69,7 @@ describe('migrateComposeKeys (#661, #662)', () => {
     const result = migrateComposeKeys(root, TEMPLATES, false);
 
     expect(result).toEqual({ updated: ['a', 'custom'], skipped: [], noMemLimit: ['a', 'custom'] });
-    expect(compose('a')).toBe(OLD('a').replace('  mc-a:\n', `  mc-a:\n    stop_grace_period: "90s"\n${LOGGING}`));
+    expect(compose('a')).toBe(labelled(OLD('a'), 'a').replace('  mc-a:\n', `  mc-a:\n    stop_grace_period: "90s"\n${LOGGING}`));
     expect(grace('a')).toBe('90s');
     expect(logging('a')).toEqual({ driver: 'json-file', options: { 'max-size': '50m', 'max-file': '5' } });
     expect(backups('a').map((f) => readFileSync(join(dir('a'), f), 'utf-8'))).toEqual([OLD('a')]);
@@ -74,11 +82,11 @@ describe('migrateComposeKeys (#661, #662)', () => {
     server('a', V661('a'));
 
     expect(migrateComposeKeys(root, TEMPLATES, false)).toEqual({ updated: ['a'], skipped: [], noMemLimit: ['a'] });
-    expect(compose('a')).toBe(V661('a').replace('  mc-a:\n', `  mc-a:\n${LOGGING}`));
+    expect(compose('a')).toBe(labelled(V661('a'), 'a').replace('  mc-a:\n', `  mc-a:\n${LOGGING}`));
   });
 
   it('keeps a logging setting of its own', () => {
-    server('a', V661('a').replace('    tty: true', '    logging:\n      driver: local\n    tty: true'));
+    server('a', labelled(V661('a'), 'a').replace('    tty: true', '    logging:\n      driver: local\n    tty: true'));
 
     expect(migrateComposeKeys(root, TEMPLATES, false)).toEqual({ updated: [], skipped: [], noMemLimit: ['a'] });
     expect(logging('a')).toEqual({ driver: 'local' });
@@ -118,6 +126,25 @@ describe('migrateComposeKeys (#661, #662)', () => {
     expect(compose('a')).not.toContain('mem_limit');
   });
 
+  it('adds the io.mcctl labels to a compose written before #674, after a backup (#674)', () => {
+    server('a', V662('a'));
+    server('partial', V662('partial').replace('    labels:\n', '    labels:\n      io.mcctl.role: server\n'));
+
+    expect(migrateComposeKeys(root, TEMPLATES, false)).toEqual({ updated: ['a', 'partial'], skipped: [], noMemLimit: ['a', 'partial'] });
+    expect(compose('a')).toBe(labelled(V662('a'), 'a'));
+    expect(labels('a')).toMatchObject({ 'io.mcctl.server': 'a', 'io.mcctl.role': 'server', 'mc-router.host': 'a.local' });
+    expect(backups('a').map((f) => readFileSync(join(dir('a'), f), 'utf-8'))).toEqual([V662('a')]);
+    expect(labels('partial')).toMatchObject({ 'io.mcctl.server': 'partial', 'io.mcctl.role': 'server' });
+  });
+
+  it('leaves labels in list form alone: discovery finds the container through its compose project (#674)', () => {
+    const text = 'services:\n  mc-l:\n    image: x\n    stop_grace_period: 90s\n    logging: { driver: local }\n    labels:\n      - mc-router.host=l.local\n';
+    server('l', text);
+
+    expect(migrateComposeKeys(root, TEMPLATES, false)).toEqual({ updated: [], skipped: [], noMemLimit: ['l'] });
+    expect(compose('l')).toBe(text);
+  });
+
   it('skips a compose it cannot patch safely', () => {
     server('flow', 'services: { mc-flow: { image: x } }\n');
     server('broken', 'services:\n  mc-broken: [\n');
@@ -132,7 +159,10 @@ describe('migrateComposeKeys (#661, #662)', () => {
     const imported = (await repo.load('a'))!;
     await repo.write(imported.document, { expectedRevision: imported.revision });
     // As rendered before #661 and #662: the generated file without the keys (hash no longer matches, like an upgrade edit)
-    writeFileSync(join(dir('a'), 'docker-compose.yml'), compose('a').replace(/^ *stop_grace_period:.*\n/m, '').replace(/^ *logging:\n(?: {6,}.*\n)+/m, ''));
+    writeFileSync(
+      join(dir('a'), 'docker-compose.yml'),
+      compose('a').replace(/^ *stop_grace_period:.*\n/m, '').replace(/^ *logging:\n(?: {6,}.*\n)+/m, '').replace(/^ *io\.mcctl\..*\n/gm, '')
+    );
 
     expect(migrateComposeKeys(root, TEMPLATES, false).updated).toEqual(['a']);
 
@@ -141,5 +171,6 @@ describe('migrateComposeKeys (#661, #662)', () => {
     expect(loaded.document).toEqual(imported.document);
     expect(grace('a')).toBe('90s');
     expect(logging('a')).toEqual({ driver: 'json-file', options: { 'max-size': '50m', 'max-file': '5' } });
+    expect(labels('a')).toMatchObject({ 'io.mcctl.server': 'a', 'io.mcctl.role': 'server' });
   });
 });

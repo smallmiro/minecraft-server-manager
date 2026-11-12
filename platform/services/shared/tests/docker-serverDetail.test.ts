@@ -32,7 +32,10 @@ function fakeExecFile(answer: (args: string[]) => string | null) {
 }
 
 function docker(args: string[]): string | null {
-  if (args[0] === 'ps') return 'mc-alpha\trunning\tUp 2 minutes (healthy)\talpha.local\nmc-beta\texited\tExited (0)\t';
+  // discovery columns first (#674): name, io.mcctl.role, compose project, compose service
+  if (args[0] === 'ps') {
+    return 'mc-alpha\tserver\tp\tmc-alpha\trunning\tUp 2 minutes (healthy)\talpha.local\nmc-beta\tserver\tp\tmc-beta\texited\tExited (0)\t';
+  }
   if (args[0] === 'stats') return '512MiB / 2GiB,12.5%';
   if (args[0] === 'exec') return 'There are 1 of a max of 20 players online: Steve';
   if (args.includes('{{.State.StartedAt}}')) return STARTED;

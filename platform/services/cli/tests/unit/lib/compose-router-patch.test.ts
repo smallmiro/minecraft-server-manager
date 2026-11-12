@@ -208,6 +208,11 @@ describe('patchRouterCompose', () => {
       expect(r.changes).toEqual(expect.arrayContaining(['router.logging added', 'playit.logging added']));
       expect(services(r.content)['router']!['logging']).toEqual(LOGGING);
     });
+
+    it('the bundled template labels the router by role (#674)', () => {
+      const bundled = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../templates/docker-compose.yml'), 'utf-8');
+      expect(services(bundled)['router']!['labels']).toEqual({ 'io.mcctl.role': 'router' });
+    });
   });
 });
 

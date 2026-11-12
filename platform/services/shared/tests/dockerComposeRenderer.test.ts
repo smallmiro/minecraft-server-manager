@@ -168,6 +168,8 @@ describe('docker-compose.yml', () => {
       'mc-router.auto-scale-down': 'false',
       'mc-router.auto-scale-asleep-motd': 'zzz',
       'mc-router.auto-scale-loading-motd': '§a§lServer is starting...§r\n§7Please wait!',
+      'io.mcctl.server': 'survival',
+      'io.mcctl.role': 'server',
     });
   });
 

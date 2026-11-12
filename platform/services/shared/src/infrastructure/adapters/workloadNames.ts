@@ -14,6 +14,15 @@ export function containerNameOf(server: ServerName | string): string {
   return `mc-${valueOf(server)}`;
 }
 
+/** Docker labels mcctl puts on its workloads (#674): role `server` | `router` | `playit`, and the server name. */
+export const ROLE_LABEL = 'io.mcctl.role';
+export const SERVER_LABEL = 'io.mcctl.server';
+
+/** The labels that mark a server's container as mcctl's (#674): discovery selects on them, not on the name. */
+export function serverLabelsOf(server: ServerName | string): Record<string, string> {
+  return { [SERVER_LABEL]: valueOf(server), [ROLE_LABEL]: 'server' };
+}
+
 /** mDNS hostname of a server for mc-router: `<server>.local`. */
 export function serverHostnameOf(server: ServerName | string): string {
   return `${valueOf(server)}.local`;

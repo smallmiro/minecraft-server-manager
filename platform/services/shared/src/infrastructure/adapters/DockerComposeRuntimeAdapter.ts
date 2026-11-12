@@ -5,12 +5,15 @@
  * Never import the facade from this module: the facade imports this file (cycle).
  */
 import { execSync, execFileSync, spawnSync, spawn, execFile } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { basename, join } from 'node:path';
 import { promisify } from 'node:util';
 import type { ContainerStatus, HealthStatus, ContainerStats, PlayerListResult } from '../../types/index.js';
 import { resolveMcctlRoot } from '../../utils/index.js';
+import { parseEnvDocument } from '../../utils/env-file.js';
 import { execCommand, execCommandAsync } from '../process.js';
 import type { ServerName } from '../../domain/value-objects/ServerName.js';
-import { workloadNameOf } from './workloadNames.js';
+import { workloadNameOf, ROLE_LABEL } from './workloadNames.js';
 import {
   RuntimeQueryTimeoutError,
   type IContainerRuntimePort,
@@ -196,27 +199,62 @@ function parseUptime(result: string): { uptime: string; seconds: number } | null
   }
 }
 
-/** `docker ps --format {{.Names}}` output → server workloads (mc-router dropped), sorted. */
-function serverWorkloads(result: string): string[] {
-  if (!result) return [];
+const ROUTER_CONTAINER = 'mc-router';
 
-  return result
-    .split('\n')
-    .filter(name => name && name !== 'mc-router')
-    .sort();
+/**
+ * The compose project `docker compose` uses in `root` (#674): COMPOSE_PROJECT_NAME
+ * from `env`, else from root/.env, else the directory name; normalized as compose does.
+ */
+export function composeProjectName(root: string, env: NodeJS.ProcessEnv): string {
+  let name = env['COMPOSE_PROJECT_NAME'];
+  if (!name) {
+    try {
+      name = parseEnvDocument(readFileSync(join(root, '.env'), 'utf-8')).values.get('COMPOSE_PROJECT_NAME');
+    } catch {
+      // no .env: the directory name
+    }
+  }
+  return (name || basename(root))
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '')
+    .replace(/^[-_]+/, '');
 }
 
-/** `docker ps` argv for list(): all server containers, or running ones only. */
-function listArgs(options?: { running?: boolean }): string[] {
-  return options?.running
-    ? ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}']
-    : ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}'];
+/** `docker ps` columns discovery selects on (#674); callers append their own. */
+const SELECT_FORMAT = `{{.Names}}\t{{.Label "${ROLE_LABEL}"}}\t{{.Label "com.docker.compose.project"}}\t{{.Label "com.docker.compose.service"}}`;
+
+/** `docker ps` argv over every container (running ones only), discovery columns first. */
+function psArgs(format: string, options?: { running?: boolean }): string[] {
+  return ['ps', ...(options?.running ? ['--filter', 'status=running'] : ['-a']), '--format', format];
+}
+
+/**
+ * Whether a `docker ps` row (SELECT_FORMAT columns) is a server workload of
+ * this platform (#674): labelled io.mcctl.role=server or, for containers
+ * created before the labels, an mc-* service of the platform's compose
+ * project. A name that merely contains `mc-` is not one; mc-router never is.
+ */
+function isServerRow([name = '', role, project, service = '']: string[], composeProject: string): boolean {
+  if (role) return role === 'server';
+  return project === composeProject && name.startsWith('mc-') && service.startsWith('mc-') && name !== ROUTER_CONTAINER;
+}
+
+/** `docker ps` rows split into columns, blank lines dropped. */
+const psRows = (result: string): string[][] => result.split('\n').filter(Boolean).map(line => line.split('\t'));
+
+/** `docker ps` (SELECT_FORMAT) output → server workloads, sorted. */
+function serverWorkloads(result: string, composeProject: string): string[] {
+  return psRows(result)
+    .filter(row => isServerRow(row, composeProject))
+    .map(([name]) => name!)
+    .sort();
 }
 
 /**
  * IContainerRuntimePort over the Docker CLI. A ServerName maps to its container (`mc-<server>`, workloadNames.ts);
  * a string is the container name itself (deprecated v2 form, still used by the legacy facade).
- * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart only.
+ * `root` defaults to resolveMcctlRoot() at call time; `env` (default process.env) applies to start/stop/restart
+ * and to the compose project name server discovery falls back on (#674).
  */
 export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /**
@@ -244,13 +282,14 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
   async listStates(options?: { strict?: boolean }): Promise<Map<string, WorkloadState>> {
     const result = await query(
-      ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}'],
+      psArgs(`${SELECT_FORMAT}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}`),
       { strict: options?.strict }
     );
+    const project = this.composeProject();
     const states = new Map<string, WorkloadState>();
-    for (const line of result.split('\n')) {
-      const [name, state, status = '', hostname = ''] = line.split('\t');
-      if (!name || !state) continue;
+    for (const row of psRows(result)) {
+      const [name, , , , state, status = '', hostname = ''] = row;
+      if (!name || !state || !(name === ROUTER_CONTAINER || isServerRow(row, project))) continue;
       states.set(name, {
         status: state.toLowerCase() as ContainerStatus,
         health: healthOfStatusLine(status),
@@ -261,7 +300,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   async listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]> {
-    return serverWorkloads(await query(listArgs(options), { strict: options?.strict }));
+    return serverWorkloads(await query(psArgs(SELECT_FORMAT, options), { strict: options?.strict }), this.composeProject());
   }
 
   async getLogsAsync(name: ServerName | string, lines: number = 50): Promise<string> {
@@ -303,10 +342,10 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /**
-   * Get minecraft server containers (mc-* except mc-router), all or running only
+   * Server containers (io.mcctl.role=server, or a pre-label mc-* service of the compose project), all or running only
    */
   list(options?: { running?: boolean; strict?: boolean }): string[] {
-    const args = listArgs(options);
+    const args = psArgs(SELECT_FORMAT, options);
     let result: string;
     if (options?.strict) {
       const r = spawnSync('docker', args, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
@@ -318,7 +357,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
       result = execCommand('docker', args);
     }
 
-    return serverWorkloads(result);
+    return serverWorkloads(result, this.composeProject());
   }
 
   /**
@@ -494,6 +533,11 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
   private env(): NodeJS.ProcessEnv {
     return this.options.env?.() ?? process.env;
+  }
+
+  /** The compose project of the platform root, as compose() would see it (pre-label fallback, #674). */
+  private composeProject(): string {
+    return composeProjectName(this.options.root ?? resolveMcctlRoot(), this.env());
   }
 
   /**

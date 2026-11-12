@@ -115,7 +115,7 @@ export function getContainerHostname(container: string): string {
 }
 
 /**
- * Get all minecraft server containers (mc-* except mc-router)
+ * Get all minecraft server containers (selected by label, #674)
  */
 export function getMcContainers(): string[] {
   return runtime.list();
