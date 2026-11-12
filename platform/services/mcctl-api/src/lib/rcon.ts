@@ -62,32 +62,6 @@ export async function execRcon(
 }
 
 /**
- * Check if a Docker container is running
- */
-export async function isContainerRunning(containerName: string): Promise<boolean> {
-  const normalizedContainer = getContainerName(containerName);
-
-  return new Promise((resolve) => {
-    const child = spawn('docker', ['inspect', '-f', '{{.State.Running}}', normalizedContainer], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    let output = '';
-    child.stdout.on('data', (data: Buffer) => {
-      output += data.toString();
-    });
-
-    child.on('close', (code: number | null) => {
-      resolve(code === 0 && output.trim() === 'true');
-    });
-
-    child.on('error', () => {
-      resolve(false);
-    });
-  });
-}
-
-/**
  * Execute RCON command by server name (convenience wrapper)
  */
 export async function execRconCommand(serverName: string, command: string): Promise<string> {
