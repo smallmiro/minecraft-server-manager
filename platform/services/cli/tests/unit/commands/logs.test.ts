@@ -182,7 +182,7 @@ describe('logsCommand', () => {
     expect(await done).toBe(0);
   });
 
-  it.each([[true], [undefined as unknown as string, 'missing'], ['-1'], ['0'], ['abc'], ['1.5'], ['']])(
+  it.each<[unknown, string?]>([[true], [undefined, 'missing'], ['-1'], ['0'], ['abc'], ['1.5'], ['']])(
     'rejects invalid --lines %s',
     async (lines) => {
       const runtime = fakeRuntime();

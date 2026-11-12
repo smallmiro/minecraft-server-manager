@@ -94,7 +94,7 @@ describe('BestEffortAuditLogAdapter', () => {
     await adapter.log(entry);
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    const output = errorSpy.mock.calls[0].join(' ');
+    const output = errorSpy.mock.calls[0]!.join(' ');
     expect(output).toContain('[WARN]');
     expect(output).toContain('Audit log unavailable');
     expect(output).toContain('db is locked');
@@ -108,7 +108,7 @@ describe('BestEffortAuditLogAdapter', () => {
     await adapter.log(entry);
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    const output = errorSpy.mock.calls[0].join(' ');
+    const output = errorSpy.mock.calls[0]!.join(' ');
     expect(output).toContain('better-sqlite3 was built for a different Node.js version');
     expect(output).toContain('npm install -g @minecraft-docker/mcctl');
     expect(output).not.toContain('NODE_MODULE_VERSION');

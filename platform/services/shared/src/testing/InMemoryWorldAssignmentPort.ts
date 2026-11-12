@@ -1,10 +1,14 @@
-import type { IWorldAssignmentPort, WorldAssignment, WorldAssignmentSnapshot } from '@minecraft-docker/shared';
-import { WorldAssignmentError, checkAssign, planRelease } from '@minecraft-docker/shared';
+import type {
+  IWorldAssignmentPort,
+  WorldAssignment,
+  WorldAssignmentSnapshot,
+} from '../application/ports/outbound/IWorldAssignmentPort.js';
+import { WorldAssignmentError, checkAssign, planRelease } from '../domain/index.js';
 
 /**
  * In-memory IWorldAssignmentPort: server -> LEVEL, enforcing the shared domain rules.
  */
-export class MockWorldAssignmentPort implements IWorldAssignmentPort {
+export class InMemoryWorldAssignmentPort implements IWorldAssignmentPort {
   readonly levels: Map<string, string>;
   /** server -> SEED written with assign (#734) */
   readonly seeds = new Map<string, string>();

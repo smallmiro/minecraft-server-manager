@@ -5,7 +5,7 @@ import type {
   ConfirmPromptOptions,
   PasswordPromptOptions,
   Spinner,
-} from '../../src/application/ports/outbound/IPromptPort.js';
+} from '@minecraft-docker/shared';
 import {
   ServerName,
   ServerType,

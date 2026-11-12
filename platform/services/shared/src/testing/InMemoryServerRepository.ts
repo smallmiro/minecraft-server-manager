@@ -1,7 +1,7 @@
 import type {
   IServerRepository,
   ServerConfigData,
-} from '../../src/application/ports/outbound/IServerRepository.js';
+} from '../application/ports/outbound/IServerRepository.js';
 import {
   Server,
   ServerName,
@@ -10,12 +10,10 @@ import {
   Memory,
   WorldOptions,
   ServerStatus,
-} from '../../src/domain/index.js';
+} from '../domain/index.js';
 
-/**
- * Mock server data for testing
- */
-export interface MockServerData {
+/** One server of an InMemoryServerRepository. */
+export interface InMemoryServerData {
   name: string;
   type?: string;
   version?: string;
@@ -24,13 +22,11 @@ export interface MockServerData {
   playerCount?: number;
 }
 
-/**
- * Mock Server Repository for testing
- */
-export class MockServerRepository implements IServerRepository {
+/** In-memory IServerRepository: servers built from InMemoryServerData, status as given. */
+export class InMemoryServerRepository implements IServerRepository {
   private servers: Map<string, Server> = new Map();
 
-  constructor(initialServers: MockServerData[] = []) {
+  constructor(initialServers: InMemoryServerData[] = []) {
     for (const data of initialServers) {
       this.addServer(data);
     }
@@ -40,7 +36,7 @@ export class MockServerRepository implements IServerRepository {
   // Testing Helpers
   // ========================================
 
-  addServer(data: MockServerData): void {
+  addServer(data: InMemoryServerData): void {
     const server = Server.create({
       name: ServerName.create(data.name),
       type: ServerType.create(data.type ?? 'PAPER'),

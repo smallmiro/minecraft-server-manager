@@ -111,7 +111,7 @@ describe('mcctl console service enable', () => {
 
     expect(result.exitCode).toBe(0);
     const [sudo, startup, save] = calls();
-    expect(sudo.startsWith(`sudo -n env PATH=${dirname(process.execPath)}:`)).toBe(true);
+    expect(sudo!.startsWith(`sudo -n env PATH=${dirname(process.execPath)}:`)).toBe(true);
     expect(startup).toBe(`pm2 startup -u ${userInfo().username} --hp ${homedir()}`);
     expect(save).toBe('pm2 save');
   });

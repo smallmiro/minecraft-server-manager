@@ -34,7 +34,7 @@ describe('op command', () => {
     vi.clearAllMocks();
     vi.mocked(rcon.isContainerRunning).mockResolvedValue(false);
     vi.mocked(ShellExecutor.prototype.readConfig).mockReturnValue(mockConfig);
-    vi.mocked(ShellExecutor.prototype.writeConfigValue).mockReturnValue(true);
+    vi.mocked(ShellExecutor.prototype.writeConfigValue).mockResolvedValue(true);
     vi.mocked(getContainer).mockReturnValue({
       auditLogPort: {
         log: vi.fn().mockResolvedValue(undefined),

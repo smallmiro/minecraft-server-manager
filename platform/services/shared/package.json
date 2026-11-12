@@ -37,6 +37,10 @@
     "./infrastructure": {
       "import": "./dist/infrastructure/index.js",
       "types": "./dist/infrastructure/index.d.ts"
+    },
+    "./testing": {
+      "import": "./dist/testing/index.js",
+      "types": "./dist/testing/index.d.ts"
     }
   },
   "files": [

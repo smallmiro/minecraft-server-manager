@@ -45,11 +45,12 @@ export const RUNTIME_QUERY_TIMEOUT_MS = 10_000;
  * RuntimeUnavailableError (#669). Past the
  * timeout the child is killed and the query rejects with RuntimeQueryTimeoutError.
  */
-async function query(args: string[], options: { strict?: boolean } = {}): Promise<string> {
+async function query(args: string[], options: { strict?: boolean; timeoutMs?: number } = {}): Promise<string> {
+  const timeout = options.timeoutMs ?? RUNTIME_QUERY_TIMEOUT_MS;
   try {
     const { stdout } = await execFilePromise('docker', args, {
       encoding: 'utf-8',
-      timeout: RUNTIME_QUERY_TIMEOUT_MS,
+      timeout,
       killSignal: 'SIGKILL',
       maxBuffer: 10 * 1024 * 1024,
     });
@@ -57,7 +58,7 @@ async function query(args: string[], options: { strict?: boolean } = {}): Promis
   } catch (error) {
     const failure = error as { killed?: boolean; stderr?: unknown; message?: string };
     if (failure.killed) {
-      throw new RuntimeQueryTimeoutError(`docker ${args[0]} did not answer within ${RUNTIME_QUERY_TIMEOUT_MS} ms`);
+      throw new RuntimeQueryTimeoutError(`docker ${args[0]} did not answer within ${timeout} ms`);
     }
     if (options.strict) {
       throw new RuntimeUnavailableError(`docker ${args[0]} failed: ${String(failure.stderr ?? '').trim() || failure.message}`);
@@ -262,9 +263,15 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   /**
    * @param options.startTimeoutMs how long `start` (docker compose up) may take; default 60 s.
    *   A first start can pull the image (#675: create passes a longer one).
+   * @param options.queryTimeoutMs how long a request-path query may take (#672); default RUNTIME_QUERY_TIMEOUT_MS.
    */
   constructor(
-    private readonly options: { root?: string; env?: () => NodeJS.ProcessEnv; startTimeoutMs?: number } = {}
+    private readonly options: {
+      root?: string;
+      env?: () => NodeJS.ProcessEnv;
+      startTimeoutMs?: number;
+      queryTimeoutMs?: number;
+    } = {}
   ) {}
 
   getStatus(name: ServerName | string): ContainerStatus {
@@ -280,9 +287,9 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
    */
   async getStatusAsync(name: ServerName | string): Promise<ContainerStatus> {
     const container = workloadNameOf(name);
-    const result = await query(['inspect', '-f', '{{.State.Status}}', '--', container]);
+    const result = await this.query(['inspect', '-f', '{{.State.Status}}', '--', container]);
     if (result) return result.toLowerCase() as ContainerStatus;
-    const names = await query(['ps', '-a', '--filter', `name=${container}`, '--format', '{{.Names}}'], { strict: true });
+    const names = await this.query(['ps', '-a', '--filter', `name=${container}`, '--format', '{{.Names}}'], { strict: true });
     if (names.split('\n').includes(container)) {
       throw new RuntimeUnavailableError(`docker inspect failed for existing container ${container}`);
     }
@@ -290,7 +297,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   async listStates(): Promise<Map<string, WorkloadState>> {
-    const result = await query(
+    const result = await this.query(
       psArgs(`${SELECT_FORMAT}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}`),
       { strict: true }
     );
@@ -309,15 +316,15 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   async listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]> {
-    return serverWorkloads(await query(psArgs(SELECT_FORMAT, options), { strict: options?.strict }), this.composeProject());
+    return serverWorkloads(await this.query(psArgs(SELECT_FORMAT, options), { strict: options?.strict }), this.composeProject());
   }
 
   async getLogsAsync(name: ServerName | string, lines: number = 50): Promise<string> {
-    return query(['logs', '--tail', String(lines), '--', workloadNameOf(name)]);
+    return this.query(['logs', '--tail', String(lines), '--', workloadNameOf(name)]);
   }
 
   async getUptimeAsync(name: ServerName | string): Promise<{ uptime: string; seconds: number } | null> {
-    return parseUptime(await query(['inspect', '--format', '{{.State.StartedAt}}', '--', workloadNameOf(name)]));
+    return parseUptime(await this.query(['inspect', '--format', '{{.State.StartedAt}}', '--', workloadNameOf(name)]));
   }
 
   /**
@@ -548,6 +555,11 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
 
   private env(): NodeJS.ProcessEnv {
     return this.options.env?.() ?? process.env;
+  }
+
+  /** query() with this adapter's timeout. */
+  private query(args: string[], options: { strict?: boolean } = {}): Promise<string> {
+    return query(args, { ...options, timeoutMs: this.options.queryTimeoutMs });
   }
 
   /** The compose project of the platform root, as compose() would see it (pre-label fallback, #674). */
