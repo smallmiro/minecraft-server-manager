@@ -4,6 +4,9 @@ import type { IAuditLogPort, AuditLogQueryOptions } from '../../application/port
 import { AuditLog, type AuditLogData, type AuditLogRow } from '../../domain/entities/AuditLog.js';
 import type { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 
+/** Default for AUDIT_RETENTION_DAYS, used when it is unset or not a positive integer. */
+const DEFAULT_RETENTION_DAYS = 90;
+
 /** Aggregate figures for the audit log, computed in SQL. */
 export interface AuditLogStats {
   total: number;
@@ -34,11 +37,22 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
    * @param dbPath - Path to the SQLite database file
    */
   constructor(dbPath: string) {
-    this.sqlite = new LazySqlite(dbPath, (db) => this.migrate(db));
+    // Retention is on by default (#673): AUDIT_AUTO_CLEANUP=false turns it off
+    this.autoCleanupEnabled = process.env.AUDIT_AUTO_CLEANUP !== 'false';
+    const days = Number(process.env.AUDIT_RETENTION_DAYS);
+    this.retentionDays = Number.isInteger(days) && days > 0 ? days : DEFAULT_RETENTION_DAYS;
 
-    // Initialize auto-cleanup settings from environment
-    this.autoCleanupEnabled = process.env.AUDIT_AUTO_CLEANUP === 'true';
-    this.retentionDays = parseInt(process.env.AUDIT_RETENTION_DAYS || '90', 10);
+    // Opening prunes too, so retention applies even when few entries are written
+    this.sqlite = new LazySqlite(dbPath, (db) => {
+      this.migrate(db);
+      if (this.autoCleanupEnabled) {
+        db.prepare('DELETE FROM audit_logs WHERE timestamp < ?').run(this.retentionCutoff(Date.now()).toISOString());
+      }
+    });
+  }
+
+  private retentionCutoff(now: number): Date {
+    return new Date(now - this.retentionDays * 24 * 60 * 60 * 1000);
   }
 
   /** The database handle, opened with the shared settings on first use (#673). */
@@ -119,8 +133,7 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
       this.logCallCount >= this.cleanupCheckInterval ||
       timeSinceLastCleanup >= this.cleanupTimeThreshold
     ) {
-      const cutoffDate = new Date(now - this.retentionDays * 24 * 60 * 60 * 1000);
-      this.deleteOlderThan(cutoffDate).catch((error) => {
+      this.deleteOlderThan(this.retentionCutoff(now)).catch((error) => {
         // Log error but don't throw - auto-cleanup is best-effort
         console.error('Auto-cleanup failed:', error);
       });

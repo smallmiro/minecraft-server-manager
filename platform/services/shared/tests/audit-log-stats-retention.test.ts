@@ -63,3 +63,57 @@ describe('SqliteAuditLogRepository stats and findById (#673)', () => {
     expect(await repo.findById('missing')).toBeNull();
   });
 });
+
+describe('SqliteAuditLogRepository retention default (#673)', () => {
+  let dir: string;
+  let dbPath: string;
+  const saved = { cleanup: process.env.AUDIT_AUTO_CLEANUP, days: process.env.AUDIT_RETENTION_DAYS };
+
+  beforeEach(async () => {
+    dir = mkdtempSync(join(tmpdir(), 'audit-retention-'));
+    dbPath = join(dir, 'audit.db');
+    delete process.env.AUDIT_RETENTION_DAYS;
+    process.env.AUDIT_AUTO_CLEANUP = 'false'; // seeding must not prune
+    const seed = new SqliteAuditLogRepository(dbPath);
+    await seed.log(entry({ id: 'old', timestamp: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000) }));
+    await seed.log(entry({ id: 'new' }));
+    seed.close();
+    delete process.env.AUDIT_AUTO_CLEANUP;
+  });
+
+  afterEach(() => {
+    for (const [key, value] of [['AUDIT_AUTO_CLEANUP', saved.cleanup], ['AUDIT_RETENTION_DAYS', saved.days]] as const) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  const idsAfterOpen = async () => {
+    const repo = new SqliteAuditLogRepository(dbPath);
+    try {
+      return (await repo.findAll()).map((l) => l.id).sort();
+    } finally {
+      repo.close();
+    }
+  };
+
+  test('deletes entries older than 90 days on open with no settings', async () => {
+    expect(await idsAfterOpen()).toEqual(['new']);
+  });
+
+  test('an invalid AUDIT_RETENTION_DAYS falls back to 90', async () => {
+    process.env.AUDIT_RETENTION_DAYS = 'abc';
+    expect(await idsAfterOpen()).toEqual(['new']);
+  });
+
+  test('AUDIT_RETENTION_DAYS widens the window', async () => {
+    process.env.AUDIT_RETENTION_DAYS = '365';
+    expect(await idsAfterOpen()).toEqual(['new', 'old']);
+  });
+
+  test('AUDIT_AUTO_CLEANUP=false keeps everything', async () => {
+    process.env.AUDIT_AUTO_CLEANUP = 'false';
+    expect(await idsAfterOpen()).toEqual(['new', 'old']);
+  });
+});
