@@ -338,7 +338,7 @@ async function printUnhealthyHint(
         log.error(
           `${svc.name}: a native module (e.g. better-sqlite3) was built for a different Node.js version than the one the PM2 daemon runs on.`
         );
-        log.info('Fix: pm2 kill, switch to the Node.js version used to install mcctl (e.g. nvm use 22), then run: mcctl console service start');
+        log.info('Fix: switch to the Node.js version used to install mcctl (e.g. nvm use 22), then run: mcctl console service restart --console --force');
         return;
       }
     } catch {
@@ -441,7 +441,7 @@ async function stopServices(
   }
 
   if (options.force) {
-    log.info('Force stopping console services (killing PM2 daemon)...');
+    log.info('Force stopping console services (deleting their PM2 processes)...');
   } else {
     log.info('Stopping console services...');
   }
@@ -459,11 +459,6 @@ async function stopServices(
         await pm2Adapter.stop(service);
         log.info(`  Stopped ${service}`);
       }
-    }
-
-    if (options.force) {
-      await pm2Adapter.killDaemon();
-      log.info('PM2 daemon killed');
     }
 
     log.info('Console services stopped');
@@ -506,7 +501,7 @@ async function restartServices(
       log.info("Please run 'mcctl console init' to initialize console services");
       return 1;
     }
-    log.info('Force restarting console services (killing PM2 daemon)...');
+    log.info('Force restarting console services (deleting and recreating their PM2 processes)...');
   } else {
     log.info('Restarting console services...');
   }
@@ -516,7 +511,9 @@ async function restartServices(
 
   try {
     if (options.force) {
-      // Force restart: delete all, kill daemon, start fresh
+      // Force restart: delete and start fresh, so the ecosystem config and the
+      // Node.js running mcctl are read again. Only mcctl's processes: the PM2
+      // daemon may run the user's other apps (#650).
       for (const service of services) {
         try {
           await pm2Adapter.delete(service);
@@ -526,13 +523,6 @@ async function restartServices(
         log.info(`  Deleted ${service}`);
       }
 
-      await pm2Adapter.killDaemon();
-      log.info('  PM2 daemon killed');
-
-      // Wait for daemon to fully terminate before reconnecting
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Start fresh (ensureConnected will reconnect to a new PM2 daemon)
       for (const service of services) {
         await pm2Adapter.start(service, { wait: true, waitTimeout: 30000 });
         log.info(`  Started ${service}`);
