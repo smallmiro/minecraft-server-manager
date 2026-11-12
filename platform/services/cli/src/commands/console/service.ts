@@ -11,16 +11,12 @@
 
 import { Paths, colors, log, ProcessInfo, ServiceStatusEnum } from '@minecraft-docker/shared';
 import { followPm2Logs } from '../../infrastructure/pm2-cli.js';
-import { existsSync } from 'node:fs';
 import { select, isCancel } from '@clack/prompts';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
-  checkPm2Installation,
-  getEcosystemConfigPath,
   ecosystemConfigExists,
   PM2_SERVICE_NAMES,
   getAvailableServices,
-  checkServiceAvailability,
 } from '../../lib/pm2-utils.js';
 import { AdminConfigManager } from '../../lib/admin-config.js';
 
@@ -66,21 +62,6 @@ interface ConsoleServiceStatus {
 const API_PORT_DEFAULT = 5001;
 const CONSOLE_PORT_DEFAULT = 5000;
 const HEALTH_RETRY_MS = 15000;
-
-/**
- * Check PM2 is installed
- */
-function ensurePm2Installed(): boolean {
-  const pm2Check = checkPm2Installation();
-
-  if (!pm2Check.installed) {
-    log.error('PM2 is not installed.');
-    log.info('Install PM2 globally with: npm install -g pm2');
-    return false;
-  }
-
-  return true;
-}
 
 type ServiceAction = 'start' | 'stop' | 'restart' | 'logs';
 
@@ -648,11 +629,6 @@ export function deleteAdminImages(): { success: boolean; deleted: string[]; erro
  * Console service command
  */
 export async function consoleServiceCommand(options: ConsoleServiceOptions): Promise<number> {
-  // Check PM2 is installed
-  if (!ensurePm2Installed()) {
-    return 1;
-  }
-
   const paths = new Paths(options.root);
 
   // Check if platform is initialized
