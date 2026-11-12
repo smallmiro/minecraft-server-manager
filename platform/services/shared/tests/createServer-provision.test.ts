@@ -46,10 +46,11 @@ function useCase(opts: { hostIps?: string[]; prompt?: IPromptPort } = {}) {
     { exists: vi.fn(async () => false) } as unknown as IServerRepository,
     new Config(paths),
     {
-      specRepo: new FileServerSpecRepository(paths, undefined, runtime, () => opts.hostIps ?? ['192.168.1.10']),
+      // Async like the API's resolveHostIpsAsync (#672)
+      specRepo: new FileServerSpecRepository(paths, undefined, runtime, async () => opts.hostIps ?? ['192.168.1.10']),
       hostnames,
       runtime,
-      hostIps: () => opts.hostIps ?? ['192.168.1.10'],
+      hostIps: async () => opts.hostIps ?? ['192.168.1.10'],
     },
     undefined,
     undefined,

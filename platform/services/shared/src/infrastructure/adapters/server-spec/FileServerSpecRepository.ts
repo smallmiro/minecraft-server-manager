@@ -4,7 +4,7 @@ import { basename, join } from 'node:path';
 import yaml from 'js-yaml';
 import { Paths } from '../../../utils/index.js';
 import { envRevision, parseEnvDocument } from '../../../utils/env-file.js';
-import { resolveHostIps } from '../../hostIps.js';
+import { resolveHostIpsAsync } from '../../hostIps.js';
 import { atomicWriteFile, type AtomicWriteOptions } from '../../../utils/atomic-write.js';
 import { EXISTING_SERVER_NAME_PATTERN } from '../../../domain/value-objects/ServerName.js';
 import {
@@ -178,13 +178,13 @@ const editConflict = (name: string) =>
 export class FileServerSpecRepository implements IServerSpecRepository {
   /**
    * @param runtime asked whether a server is stopped before its world changes; without it such writes are refused (R7).
-   * @param hostIps the host addresses for nip.io router hosts (default: resolveHostIps).
+   * @param hostIps the host addresses for nip.io router hosts (default: resolveHostIpsAsync, bounded probes, #672).
    */
   constructor(
     private readonly paths: Paths = new Paths(),
     private readonly renderer: ServerSpecRenderer = new DockerComposeRenderer(),
     private readonly runtime?: IContainerRuntimePort,
-    private readonly resolveIps: () => string[] = () => resolveHostIps(paths)
+    private readonly resolveIps: () => string[] | Promise<string[]> = () => resolveHostIpsAsync(paths)
   ) {}
 
   async list(): Promise<ServerSpec[]> {

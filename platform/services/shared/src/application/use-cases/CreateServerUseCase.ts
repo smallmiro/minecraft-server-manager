@@ -58,8 +58,8 @@ export interface ServerProvisionDeps {
   hostnames?: IHostnameRegistrarPort;
   /** Starts the new server unless autoStart is false. */
   runtime?: IContainerRuntimePort;
-  /** Host addresses; the first one is announced for `<name>.local`. */
-  hostIps?: () => string[];
+  /** Host addresses; the first one is announced for `<name>.local`. The API passes the async probe (#672). */
+  hostIps?: () => string[] | Promise<string[]>;
 }
 
 /**
@@ -263,7 +263,7 @@ export class CreateServerUseCase implements ICreateServerUseCase {
 
     run.onProgress?.('configuring', 'Registering mDNS hostname...');
     if (hostnames) {
-      const ip = hostIps?.()[0];
+      const ip = (await hostIps?.())?.[0];
       const result = ip
         ? await hostnames.register(`${name.value}.local`, ip)
         : { status: 'skipped' as const, reason: 'could not determine the host address (set HOST_IP in .env)' };
