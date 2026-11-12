@@ -4,6 +4,16 @@ import type { IAuditLogPort, AuditLogQueryOptions } from '../../application/port
 import { AuditLog, type AuditLogData, type AuditLogRow } from '../../domain/entities/AuditLog.js';
 import type { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
 
+/** Aggregate figures for the audit log, computed in SQL. */
+export interface AuditLogStats {
+  total: number;
+  byAction: Record<string, number>;
+  byStatus: { success: number; failure: number };
+  byActor: Record<string, number>;
+  oldest: Date | null;
+  newest: Date | null;
+}
+
 /**
  * SqliteAuditLogRepository
  * Implements IAuditLogPort using SQLite database storage with better-sqlite3
@@ -174,6 +184,48 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
     const rows = stmt.all(...params);
 
     return rows.map((row) => AuditLog.fromRaw(row));
+  }
+
+  /**
+   * Find one audit log by id
+   */
+  async findById(id: string): Promise<AuditLog | null> {
+    const row = this.db.prepare<[string], AuditLogRow>('SELECT * FROM audit_logs WHERE id = ?').get(id);
+    return row ? AuditLog.fromRaw(row) : null;
+  }
+
+  /**
+   * Totals by action, status and actor, and the oldest and newest timestamps
+   */
+  async stats(): Promise<AuditLogStats> {
+    const totals = this.db
+      .prepare<[], { total: number; success: number | null; failure: number | null; oldest: string | null; newest: string | null }>(
+        `SELECT COUNT(*) AS total,
+                SUM(status = 'success') AS success,
+                SUM(status = 'failure') AS failure,
+                MIN(timestamp) AS oldest,
+                MAX(timestamp) AS newest
+         FROM audit_logs`
+      )
+      .get()!;
+    const countBy = (column: 'action' | 'actor'): Record<string, number> =>
+      Object.fromEntries(
+        this.db
+          .prepare<[], { key: string; count: number }>(
+            `SELECT ${column} AS key, COUNT(*) AS count FROM audit_logs GROUP BY ${column}`
+          )
+          .all()
+          .map((r) => [r.key, r.count])
+      );
+
+    return {
+      total: totals.total,
+      byAction: countBy('action'),
+      byStatus: { success: totals.success ?? 0, failure: totals.failure ?? 0 },
+      byActor: countBy('actor'),
+      oldest: totals.oldest ? new Date(totals.oldest) : null,
+      newest: totals.newest ? new Date(totals.newest) : null,
+    };
   }
 
   /**

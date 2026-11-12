@@ -9,7 +9,7 @@ export { DocsAdapter } from './DocsAdapter.js';
 export { YamlUserRepository } from './YamlUserRepository.js';
 export { openSqlite, LazySqlite } from './sqlite.js';
 export { SqliteUserRepository } from './SqliteUserRepository.js';
-export { SqliteAuditLogRepository } from './SqliteAuditLogRepository.js';
+export { SqliteAuditLogRepository, type AuditLogStats } from './SqliteAuditLogRepository.js';
 export {
   ApiPromptAdapter,
   ApiModeError,

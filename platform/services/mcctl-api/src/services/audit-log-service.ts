@@ -153,55 +153,17 @@ export async function getAuditLogs(query: AuditLogListQuery): Promise<AuditLogLi
  */
 export async function getAuditLogStats(): Promise<AuditLogStatsResponse> {
   const repo = getAuditLogRepository();
-
-  // Get total count
-  const total = await repo.count();
-
-  // Get counts by action
-  const byAction: Record<string, number> = {};
-  for (const action of Object.values(AuditActionEnum)) {
-    const count = await repo.count({ action });
-    if (count > 0) {
-      byAction[action] = count;
-    }
-  }
-
-  // Get counts by status
-  const [successCount, failureCount] = await Promise.all([
-    repo.count({ status: 'success' }),
-    repo.count({ status: 'failure' }),
-  ]);
-
-  // Get all logs for actor aggregation (limited to recent)
-  const recentLogs = await repo.findAll({ limit: 1000 });
-
-  // Aggregate by actor
-  const byActor: Record<string, number> = {};
-  for (const log of recentLogs) {
-    const actor = log.actor;
-    byActor[actor] = (byActor[actor] ?? 0) + 1;
-  }
-
-  // Get recent activity (last 10)
-  const recentActivity = await repo.findAll({ limit: 10 });
-
-  // Get oldest and newest entries
-  const allLogs = await repo.findAll({ limit: 1 });
-  const oldestLogs = await repo.findAll({});
-  const newestEntry = allLogs.length > 0 ? allLogs[0]!.timestamp.toISOString() : null;
-  const oldestEntry = oldestLogs.length > 0 ? oldestLogs[oldestLogs.length - 1]!.timestamp.toISOString() : null;
+  // Aggregated in SQL (#673): no full-table read
+  const [stats, recentActivity] = await Promise.all([repo.stats(), repo.findAll({ limit: 10 })]);
 
   return {
-    total,
-    byAction,
-    byStatus: {
-      success: successCount,
-      failure: failureCount,
-    },
-    byActor,
+    total: stats.total,
+    byAction: stats.byAction,
+    byStatus: stats.byStatus,
+    byActor: stats.byActor,
     recentActivity: recentActivity.map(toEntry),
-    oldestEntry,
-    newestEntry,
+    oldestEntry: stats.oldest?.toISOString() ?? null,
+    newestEntry: stats.newest?.toISOString() ?? null,
   };
 }
 
@@ -211,9 +173,7 @@ export async function getAuditLogStats(): Promise<AuditLogStatsResponse> {
 export async function getAuditLogById(id: string): Promise<AuditLogDetailResponse | null> {
   const repo = getAuditLogRepository();
 
-  // Find the log by ID
-  const allLogs = await repo.findAll({});
-  const log = allLogs.find(l => l.id === id);
+  const log = await repo.findById(id);
 
   if (!log) {
     return null;
