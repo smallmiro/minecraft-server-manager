@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, statSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import yaml from 'js-yaml';
 import type {
   ContainerStatus,
   HealthStatus,
@@ -24,6 +25,7 @@ import {
   DockerPlayitAgentAdapter,
   DockerRuntimeEnvironmentAdapter,
 } from '../infrastructure/adapters/DockerComposeRuntimeAdapter.js';
+import { composeMap } from '../infrastructure/adapters/server-spec/importDockerServer.js';
 import { AvahiHostnameRegistrarAdapter } from '../infrastructure/adapters/AvahiHostnameRegistrarAdapter.js';
 import { McRouterApiAdapter } from '../infrastructure/adapters/McRouterApiAdapter.js';
 import type { IMcRouterApiPort } from '../application/ports/outbound/IMcRouterApiPort.js';
@@ -698,17 +700,25 @@ export function getServerPlayitDomain(serverName: string, serversDir?: string): 
   return domain && domain.trim() ? domain.trim() : null;
 }
 
-/** mc-router.host label in a server docker-compose.yml (read by mcctl-api HostnameService) */
-const ROUTER_HOST_LABEL_REGEX = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
-
 const sameHost = (a: string, b: string | null): boolean => b !== null && a.toLowerCase() === b.toLowerCase();
 
 /**
- * Parse the mc-router.host label of a docker-compose.yml into a host list ([] if absent)
+ * Parse the mc-router.host label of a docker-compose.yml into a host list
+ * ([] if absent, empty or unparseable). Read as YAML (#671): comments,
+ * indentation and the `- key=value` label form do not matter.
  */
 export function parseRouterHosts(composeContent: string): string[] {
-  const value = composeContent.match(ROUTER_HOST_LABEL_REGEX)?.[2];
-  return value ? value.split(',').map((h) => h.trim()).filter(Boolean) : [];
+  let services: unknown;
+  try {
+    services = (yaml.load(composeContent) as { services?: unknown } | null)?.services;
+  } catch {
+    return [];
+  }
+  for (const service of Object.values(services && typeof services === 'object' ? services : {})) {
+    const value = composeMap((service as { labels?: unknown } | null)?.labels).get('mc-router.host');
+    if (value) return value.split(',').map((h) => h.trim()).filter(Boolean);
+  }
+  return [];
 }
 
 /**
