@@ -3,40 +3,33 @@
  * Not runtime-port work (ADR-0001 row 16).
  */
 import { spawn, spawnSync } from 'node:child_process';
+import { accessSync, constants } from 'node:fs';
+import { delimiter, join } from 'node:path';
 
 /**
- * Check if PM2 is installed (globally or as a dependency)
- * @returns Object with installation status and version
+ * The pm2 binary on PATH, if any. The bundled pm2 module serves the
+ * programmatic API without it, but `pm2 logs` and `pm2 startup` need it.
  */
 export function checkPm2Installation(): { installed: boolean; path?: string; version?: string } {
-  // First check if pm2 is available in PATH (global installation)
-  const globalResult = spawnSync('which', ['pm2'], {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-
-  if (globalResult.status === 0 && globalResult.stdout) {
-    const pm2Path = globalResult.stdout.trim();
-
-    // Get version
-    const versionResult = spawnSync('pm2', ['--version'], {
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
+  const pm2Path = (process.env.PATH ?? '')
+    .split(delimiter)
+    .filter(Boolean)
+    .map((dir) => join(dir, 'pm2'))
+    .find((candidate) => {
+      try {
+        accessSync(candidate, constants.X_OK);
+        return true;
+      } catch {
+        return false;
+      }
     });
+  if (!pm2Path) return { installed: false };
 
-    return {
-      installed: true,
-      path: pm2Path,
-      version: versionResult.status === 0 ? versionResult.stdout.trim() : undefined,
-    };
-  }
-
-  // Check if pm2 module can be imported (local installation via npm).
-  // The pm2 programmatic API works without global installation, and pm2 is a
-  // declared dependency, so it's always available via the API.
+  const version = spawnSync(pm2Path, ['--version'], { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] });
   return {
     installed: true,
-    version: 'local',
+    path: pm2Path,
+    version: version.status === 0 ? version.stdout.trim() : undefined,
   };
 }
 
@@ -51,6 +44,12 @@ export function followPm2Logs(services: string[]): Promise<number> {
 
     proc.on('close', (code) => {
       resolve(code ?? 0);
+    });
+
+    // pm2 missing from PATH (ENOENT) or not executable: no 'close' follows
+    proc.on('error', (error) => {
+      console.error(`Failed to run pm2: ${error.message}`);
+      resolve(1);
     });
 
     // Handle Ctrl+C gracefully

@@ -14,6 +14,7 @@ import { followPm2Logs } from '../../infrastructure/pm2-cli.js';
 import { select, isCancel } from '@clack/prompts';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
+  checkPm2Installation,
   ecosystemConfigExists,
   PM2_SERVICE_NAMES,
   getAvailableServices,
@@ -62,6 +63,16 @@ interface ConsoleServiceStatus {
 const API_PORT_DEFAULT = 5001;
 const CONSOLE_PORT_DEFAULT = 5000;
 const HEALTH_RETRY_MS = 15000;
+
+/** The pm2 binary on PATH; logs an install hint when it is missing. */
+function pm2OnPath(): string | undefined {
+  const pm2 = checkPm2Installation();
+  if (!pm2.path) {
+    log.error('PM2 is not on PATH.');
+    log.info('Install PM2 globally with: npm install -g pm2');
+  }
+  return pm2.path;
+}
 
 type ServiceAction = 'start' | 'stop' | 'restart' | 'logs';
 
@@ -585,6 +596,7 @@ async function showLogs(
 
   if (options.follow) {
     // Use pm2 logs command for follow mode
+    if (!pm2OnPath()) return 1;
     return followPm2Logs(services);
   }
 
