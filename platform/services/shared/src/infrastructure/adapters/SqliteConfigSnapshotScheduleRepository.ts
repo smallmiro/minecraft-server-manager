@@ -13,10 +13,11 @@ import type { ConfigSnapshotDatabase } from './ConfigSnapshotDatabase.js';
 export class SqliteConfigSnapshotScheduleRepository
   implements IConfigSnapshotScheduleRepository
 {
-  private readonly db: Database.Database;
+  constructor(private readonly database: ConfigSnapshotDatabase) {}
 
-  constructor(database: ConfigSnapshotDatabase) {
-    this.db = database.getDatabase();
+  /** Opened by ConfigSnapshotDatabase on first use (#673). */
+  private get db(): Database.Database {
+    return this.database.getDatabase();
   }
 
   /**

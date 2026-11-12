@@ -1,14 +1,8 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import type { HostnameInfo, HostnameData } from '../schemas/hostname.js';
-import { validateHostname } from '@minecraft-docker/shared';
+import { parseRouterHosts, validateHostname } from '@minecraft-docker/shared';
 import { updateServer } from '../lib/server-spec.js';
-
-/**
- * Regex for matching mc-router.host label in docker-compose.yml
- * Matches: mc-router.host: "hostname1,hostname2" (single or double quotes)
- */
-const HOST_LABEL_REGEX = /(mc-router\.host:\s*["'])([^"']+)(["'])/;
 
 /**
  * System hostname patterns
@@ -76,19 +70,6 @@ export class HostnameService {
   }
 
   /**
-   * Parse hostnames from docker-compose.yml mc-router.host label
-   */
-  private parseHostnames(content: string): string[] {
-    const match = content.match(HOST_LABEL_REGEX);
-    if (!match) {
-      return [];
-    }
-    const hostValue = match[2];
-    if (!hostValue) return [];
-    return hostValue.split(',').map((h) => h.trim()).filter((h) => h);
-  }
-
-  /**
    * Get hostname data for a server
    */
   getHostnames(serverName: string): HostnameData {
@@ -99,7 +80,7 @@ export class HostnameService {
     }
 
     const content = readFileSync(composePath, 'utf-8');
-    const rawHostnames = this.parseHostnames(content);
+    const rawHostnames = parseRouterHosts(content);
 
     const classified = rawHostnames.map((h) => this.classifyHostname(h, serverName));
     const systemHostnames = classified.filter((h) => h.type === 'system');

@@ -1,12 +1,10 @@
-import { join } from 'path';
 import {
-  SqliteAuditLogRepository,
+  type SqliteAuditLogRepository,
   AuditLog,
   AuditActionEnum,
   type AuditLogData,
   type AuditLogQueryOptions,
 } from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
 import type {
   AuditLogEntry,
   AuditLogBrief,
@@ -16,11 +14,7 @@ import type {
   AuditLogDetailResponse,
   AuditLogPurgeResponse,
 } from '../schemas/audit-log.js';
-
-/**
- * Singleton instance of the audit log repository
- */
-let repository: SqliteAuditLogRepository | null = null;
+import { currentContainer } from '../plugins/container.js';
 
 /**
  * Event listeners for new audit log entries (SSE support)
@@ -28,15 +22,9 @@ let repository: SqliteAuditLogRepository | null = null;
 type AuditLogListener = (log: AuditLogEntry) => void;
 const listeners = new Set<AuditLogListener>();
 
-/**
- * Get or create the audit log repository singleton
- */
+/** The app's repository: audit.db has one handle, owned by the container (#673). */
 export function getAuditLogRepository(): SqliteAuditLogRepository {
-  if (!repository) {
-    const dbPath = join(config.mcctlRoot, 'data', 'audit.db');
-    repository = new SqliteAuditLogRepository(dbPath);
-  }
-  return repository;
+  return currentContainer().auditLogRepository();
 }
 
 /**
@@ -165,55 +153,17 @@ export async function getAuditLogs(query: AuditLogListQuery): Promise<AuditLogLi
  */
 export async function getAuditLogStats(): Promise<AuditLogStatsResponse> {
   const repo = getAuditLogRepository();
-
-  // Get total count
-  const total = await repo.count();
-
-  // Get counts by action
-  const byAction: Record<string, number> = {};
-  for (const action of Object.values(AuditActionEnum)) {
-    const count = await repo.count({ action });
-    if (count > 0) {
-      byAction[action] = count;
-    }
-  }
-
-  // Get counts by status
-  const [successCount, failureCount] = await Promise.all([
-    repo.count({ status: 'success' }),
-    repo.count({ status: 'failure' }),
-  ]);
-
-  // Get all logs for actor aggregation (limited to recent)
-  const recentLogs = await repo.findAll({ limit: 1000 });
-
-  // Aggregate by actor
-  const byActor: Record<string, number> = {};
-  for (const log of recentLogs) {
-    const actor = log.actor;
-    byActor[actor] = (byActor[actor] ?? 0) + 1;
-  }
-
-  // Get recent activity (last 10)
-  const recentActivity = await repo.findAll({ limit: 10 });
-
-  // Get oldest and newest entries
-  const allLogs = await repo.findAll({ limit: 1 });
-  const oldestLogs = await repo.findAll({});
-  const newestEntry = allLogs.length > 0 ? allLogs[0]!.timestamp.toISOString() : null;
-  const oldestEntry = oldestLogs.length > 0 ? oldestLogs[oldestLogs.length - 1]!.timestamp.toISOString() : null;
+  // Aggregated in SQL (#673): no full-table read
+  const [stats, recentActivity] = await Promise.all([repo.stats(), repo.findAll({ limit: 10 })]);
 
   return {
-    total,
-    byAction,
-    byStatus: {
-      success: successCount,
-      failure: failureCount,
-    },
-    byActor,
+    total: stats.total,
+    byAction: stats.byAction,
+    byStatus: stats.byStatus,
+    byActor: stats.byActor,
     recentActivity: recentActivity.map(toEntry),
-    oldestEntry,
-    newestEntry,
+    oldestEntry: stats.oldest?.toISOString() ?? null,
+    newestEntry: stats.newest?.toISOString() ?? null,
   };
 }
 
@@ -223,9 +173,7 @@ export async function getAuditLogStats(): Promise<AuditLogStatsResponse> {
 export async function getAuditLogById(id: string): Promise<AuditLogDetailResponse | null> {
   const repo = getAuditLogRepository();
 
-  // Find the log by ID
-  const allLogs = await repo.findAll({});
-  const log = allLogs.find(l => l.id === id);
+  const log = await repo.findById(id);
 
   if (!log) {
     return null;
@@ -314,8 +262,14 @@ export function notifyNewAuditLog(entry: AuditLogEntry): void {
  * Write an audit log entry and notify SSE listeners
  */
 export async function writeAuditLog(data: AuditLogData): Promise<void> {
-  const repo = getAuditLogRepository();
-  await repo.log(data);
+  // The action being audited has already run: an audit store that cannot be
+  // opened or written must not turn its response into an error (#673).
+  try {
+    await getAuditLogRepository().log(data);
+  } catch (error) {
+    console.error('Audit log write failed:', error);
+    return;
+  }
 
   // Notify SSE listeners
   const log = AuditLog.create(data);
@@ -331,14 +285,4 @@ export async function writeAuditLog(data: AuditLogData): Promise<void> {
     errorMessage: json.errorMessage ?? null,
     timestamp: json.timestamp,
   });
-}
-
-/**
- * Close the repository (for graceful shutdown)
- */
-export function closeAuditLogRepository(): void {
-  if (repository) {
-    repository.close();
-    repository = null;
-  }
 }

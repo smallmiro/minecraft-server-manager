@@ -32,7 +32,7 @@ import {
   type RenderedFile,
   type ServerSpecRenderer,
 } from './DockerComposeRenderer.js';
-import { composeOutsideEdits } from './composeEdits.js';
+import { composeOutsideEdits, writeLeavesCompose } from './composeEdits.js';
 import { planServerWorlds } from './serverWorldPlan.js';
 import { readWorldAssignmentSnapshot } from '../effectiveExtraArgs.js';
 import { acquireFileLock } from '../../backup/lock.js';
@@ -517,7 +517,8 @@ export class FileServerSpecRepository implements IServerSpecRepository {
           plan.push({ path: file.path, content, before: current, backup: current });
         } else {
           const before = previous && this.renderer.render(previous, this.withoutInclude(ctx)).find((f) => f.path === file.path);
-          if (before?.content === file.content) continue; // this write does not change the compose: leave the edits alone
+          // this write does not change the compose: leave the edits alone
+          if (before && writeLeavesCompose(name, header.body, before.content, file.content)) continue;
           throw new ServerSpecError(
             'compose_edited',
             `servers/${name}/docker-compose.yml has edits outside the spec (${outside.join(', ')}) that this change ` +

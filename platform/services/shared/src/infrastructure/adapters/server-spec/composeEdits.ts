@@ -19,8 +19,8 @@ const routerLabels = (labels: Map<string, string | null>) =>
 /**
  * The YAML paths where a server compose differs from the rendered one
  * outside the spec-owned fields (ADR-0003 §3). Spec-owned fields (image,
- * mc-router labels) and known legacy variants (env_file ../../.env, #685)
- * do not count. `environmentMoved`: the compose environment was moved into
+ * mc-router labels) and known legacy variants (env_file ../../.env, #685;
+ * no stop_grace_period, #661; no logging or mem_limit, #662) do not count. `environmentMoved`: the compose environment was moved into
  * the spec (import), so only EULA is compared.
  */
 export function composeOutsideEdits(
@@ -56,6 +56,33 @@ export function composeOutsideEdits(
     if (Array.isArray(theirs['env_file'])) {
       theirs['env_file'] = theirs['env_file'].map((f: unknown) => (f === '../../.env' ? '../global.env' : f));
     }
+    theirs['stop_grace_period'] ??= ours['stop_grace_period'];
+    theirs['logging'] ??= ours['logging'];
+    theirs['mem_limit'] ??= ours['mem_limit'];
   }
   return diff(current, rendered, '');
+}
+
+/**
+ * Whether a write rendering `next` instead of `before` may leave a server
+ * compose with edits outside the spec (`current`) as it is: the renders are
+ * equal, or differ only in mem_limit and `current` has none (written before
+ * #662, so no limit stays no limit). A compose that has a mem_limit is not
+ * left behind: its old limit could be below a new heap.
+ */
+export function writeLeavesCompose(name: string, current: string, before: string, next: string): boolean {
+  if (before === next) return true;
+  const service = `mc-${name}`;
+  const withoutLimit = (text: string): string => {
+    const doc = yaml.load(text) as { services: Record<string, Record<string, unknown>> };
+    delete doc.services[service]!['mem_limit'];
+    return JSON.stringify(doc);
+  };
+  try {
+    const services = (yaml.load(current) as { services?: unknown } | null)?.services;
+    const theirs = isMapping(services) ? services[service] : undefined;
+    return isMapping(theirs) && theirs['mem_limit'] === undefined && withoutLimit(before) === withoutLimit(next);
+  } catch {
+    return false;
+  }
 }

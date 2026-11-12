@@ -437,6 +437,11 @@ export interface UpdateHostnamesResponse {
   recreateRequired: boolean;
 }
 
+export interface ApplyHostnamesResponse {
+  success: boolean;
+  serverName: string;
+}
+
 // ============================================================
 // Router Status Types
 // ============================================================
@@ -1125,6 +1130,8 @@ export interface IMcctlApiClient {
   // Hostname management operations
   getHostnames(serverName: string): Promise<HostnameResponse>;
   updateHostnames(serverName: string, customHostnames: string[]): Promise<UpdateHostnamesResponse>;
+  /** Recreate the server container so saved hostnames reach mc-router (#671). */
+  applyHostnames(serverName: string): Promise<ApplyHostnamesResponse>;
 
   // Mod management operations
   getServerMods(serverName: string): Promise<ModListResponse>;

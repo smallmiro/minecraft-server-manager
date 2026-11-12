@@ -46,6 +46,7 @@ import {
   OperatorActionResponse,
   HostnameResponse,
   UpdateHostnamesResponse,
+  ApplyHostnamesResponse,
   PlayitAgentStatus,
   PlayitActionResponse,
   ModListResponse,
@@ -603,6 +604,13 @@ export class McctlApiAdapter implements IMcctlApiClient {
         method: 'PUT',
         body: JSON.stringify({ customHostnames }),
       }
+    );
+  }
+
+  async applyHostnames(serverName: string): Promise<ApplyHostnamesResponse> {
+    return this.fetch<ApplyHostnamesResponse>(
+      `/api/servers/${encodeURIComponent(serverName)}/hostnames/apply`,
+      { method: 'POST' }
     );
   }
 

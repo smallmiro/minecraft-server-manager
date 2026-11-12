@@ -11,6 +11,7 @@ vi.mock('@/hooks/usePlayit');
 describe('HostnameSection', () => {
   let queryClient: QueryClient;
   const mutateAsync = vi.fn();
+  const applyAsync = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -21,6 +22,8 @@ describe('HostnameSection', () => {
       isLoading: false,
     } as any);
     vi.mocked(mcctl.useUpdateHostnames).mockReturnValue({ mutateAsync, isPending: false } as any);
+    applyAsync.mockResolvedValue({ success: true, serverName: 'survival' });
+    vi.mocked(mcctl.useApplyHostnames).mockReturnValue({ mutateAsync: applyAsync, isPending: false } as any);
     vi.mocked(playit.usePlayitStatus).mockReturnValue({
       data: { servers: [{ serverName: 'survival', playitDomain: 'a.playit.gg' }] },
     } as any);
@@ -52,5 +55,25 @@ describe('HostnameSection', () => {
     await waitFor(() => expect(screen.getAllByText(/stop the server, then start it again/i).length).toBeTruthy());
     expect(screen.getAllByText(/does not apply/i).length).toBeGreaterThan(0);
     expect(spy).toHaveBeenCalledWith({ queryKey: ['playit-status'] });
+  });
+
+  it('applies saved hostnames by recreating the container (#671)', async () => {
+    renderIt();
+    fireEvent.click(screen.getAllByTitle('Remove domain')[1]);
+    fireEvent.click(screen.getByText('Save Hostnames'));
+    fireEvent.click(await screen.findByRole('button', { name: /apply now/i }));
+    await waitFor(() => expect(applyAsync).toHaveBeenCalledWith('survival'));
+    expect(await screen.findByText(/hostnames applied/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /apply now/i })).toBeNull();
+  });
+
+  it('shows the error when applying fails and keeps the apply button', async () => {
+    applyAsync.mockRejectedValue(new Error('recreate failed'));
+    renderIt();
+    fireEvent.click(screen.getAllByTitle('Remove domain')[1]);
+    fireEvent.click(screen.getByText('Save Hostnames'));
+    fireEvent.click(await screen.findByRole('button', { name: /apply now/i }));
+    expect(await screen.findByText('recreate failed')).toBeTruthy();
+    expect(screen.getByRole('button', { name: /apply now/i })).toBeTruthy();
   });
 });

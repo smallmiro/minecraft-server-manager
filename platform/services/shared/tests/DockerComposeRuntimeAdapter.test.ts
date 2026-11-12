@@ -244,7 +244,7 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
 describe('DockerComposeRuntimeAdapter lifecycle', () => {
   const env = () => ({ PATH: '/bin', SECRET: 'x' });
   const runtime = new DockerComposeRuntimeAdapter({ root: '/srv/mc', env });
-  const COMPOSE = { cwd: '/srv/mc', timeout: 60000, env: { PATH: '/bin', SECRET: 'x', COMPOSE_FILE: 'docker-compose.yml' } };
+  const COMPOSE = { cwd: '/srv/mc', timeout: 120000, env: { PATH: '/bin', SECRET: 'x', COMPOSE_FILE: 'docker-compose.yml' } };
   const failure = () => Object.assign(new Error('Command failed'), { stdout: ' o \n', stderr: ' e \n' });
 
   it('start runs compose up -d in the root with COMPOSE_FILE', async () => {
@@ -270,6 +270,34 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
     expect(execFile).toHaveBeenCalledWith('docker', ['compose', 'restart', 'mc-a'], COMPOSE, expect.any(Function));
   });
 
+  it('recreate force-recreates a running container and keeps it running (#671)', async () => {
+    vi.mocked(spawn).mockReturnValueOnce(fakeChild(0, 'running\n'));
+    execFileCalls({});
+    expect(await runtime.recreate(ServerName.create('alpha'))).toEqual({ success: true, stdout: '', stderr: '' });
+    expect(spawn).toHaveBeenCalledWith('docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-alpha'], expect.anything());
+    expect(execFile).toHaveBeenCalledWith(
+      'docker',
+      ['compose', 'up', '-d', '--force-recreate', '--no-deps', 'mc-alpha'],
+      COMPOSE,
+      expect.any(Function)
+    );
+  });
+
+  it.each(['exited', 'created', 'not_found'])(
+    'recreate leaves a %s container stopped: created, not started (auto-scale wakes it, #671)',
+    async (state) => {
+      vi.mocked(spawn).mockReturnValueOnce(state === 'not_found' ? fakeChild(1) : fakeChild(0, `${state}\n`));
+      execFileCalls({});
+      expect((await runtime.recreate(ServerName.create('alpha'))).success).toBe(true);
+      expect(execFile).toHaveBeenCalledWith(
+        'docker',
+        ['compose', 'up', '--no-start', '--force-recreate', '--no-deps', 'mc-alpha'],
+        COMPOSE,
+        expect.any(Function)
+      );
+    }
+  );
+
   it('stop runs docker stop -- <name> with env and no timeout', async () => {
     execFileCalls({});
     expect(await runtime.stop('mc-a')).toEqual({ success: true, stdout: '', stderr: '' });
@@ -292,7 +320,7 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
     expect(execFile).toHaveBeenLastCalledWith(
       'docker',
       ['compose', 'up', '-d', 'mc-a'],
-      { cwd: '/opt/mcctl', timeout: 60000, env: { ...process.env, COMPOSE_FILE: 'docker-compose.yml' } },
+      { cwd: '/opt/mcctl', timeout: 120000, env: { ...process.env, COMPOSE_FILE: 'docker-compose.yml' } },
       expect.any(Function)
     );
     await defaults.stop('mc-a');
@@ -304,7 +332,7 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
 describe('DockerComposeRuntimeAdapter.remove', () => {
   const env = () => ({ PATH: '/bin' });
   const runtime = new DockerComposeRuntimeAdapter({ root: '/srv/mc', env });
-  const COMPOSE = { cwd: '/srv/mc', timeout: 60000, env: { PATH: '/bin', COMPOSE_FILE: 'docker-compose.yml' } };
+  const COMPOSE = { cwd: '/srv/mc', timeout: 120000, env: { PATH: '/bin', COMPOSE_FILE: 'docker-compose.yml' } };
   const argv = () => vi.mocked(execFile).mock.calls.map((c) => c[1]);
   const alpha = ServerName.create('alpha');
 

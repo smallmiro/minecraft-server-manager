@@ -3,16 +3,22 @@
  * Not runtime-port work (ADR-0001 row 15): the shared network and the router
  * service belong to the compose project (on k8s: Helm, #641).
  */
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 
-/** Make sure the `minecraft-net` bridge network exists. */
-export function ensureMinecraftNetwork(): 'exists' | 'created' | 'failed' {
+/**
+ * Make sure the shared bridge network exists. Name and subnet come from the
+ * project's `.env` (MINECRAFT_NETWORK / MINECRAFT_SUBNET), as the compose file does.
+ */
+export function ensureMinecraftNetwork(
+  name = 'minecraft-net',
+  subnet = '172.28.0.0/16'
+): 'exists' | 'created' | 'failed' {
   try {
-    execSync('docker network inspect minecraft-net', { stdio: 'pipe' });
+    execFileSync('docker', ['network', 'inspect', name], { stdio: 'pipe' });
     return 'exists';
   } catch {
     try {
-      execSync('docker network create --driver bridge --subnet 172.28.0.0/16 minecraft-net', {
+      execFileSync('docker', ['network', 'create', '--driver', 'bridge', '--subnet', subnet, name], {
         stdio: 'pipe',
       });
       return 'created';

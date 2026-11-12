@@ -244,6 +244,35 @@ describe('upgradeCommand', () => {
     expect(prompts.log.warn).toHaveBeenCalledWith(expect.stringContaining('mcctl stop a && mcctl start a'));
   });
 
+  it('adds stop_grace_period and logging to existing servers after a backup, and tells about mem_limit (#661, #662)', async () => {
+    const baseExists = mockExistsSync.getMockImplementation()!;
+    const baseRead = mockReadFileSync.getMockImplementation()!;
+    const compose = '/mock/root/servers/a/docker-compose.yml';
+    mockExistsSync.mockImplementation(
+      (path: string) => ['/mock/root/servers', compose].includes(String(path)) || baseExists(path)
+    );
+    mockReadFileSync.mockImplementation((path: string) => {
+      const p = String(path);
+      if (p === '/mock/templates/servers/_template/docker-compose.yml') {
+        return 'services:\n  mc-template:\n    stop_grace_period: 90s\n    logging:\n      driver: json-file\n';
+      }
+      return p === compose ? 'services:\n  mc-a:\n    image: x\n' : baseRead(path);
+    });
+    const servers = [{ name: 'a', isDirectory: () => true }];
+    mockReaddirSync.mockReturnValueOnce(servers).mockReturnValueOnce(servers); // env_file (#685), then #661
+
+    await upgradeCommand({ root: '/mock/root', nonInteractive: true });
+
+    expect(mockCopyFileSync).toHaveBeenCalledWith(compose, expect.stringMatching(/docker-compose\.yml\.bak-\d{14}$/));
+    expect(mockWriteFileSync).toHaveBeenCalledWith(
+      compose,
+      'services:\n  mc-a:\n    stop_grace_period: "90s"\n    logging:\n      driver: "json-file"\n    image: x\n'
+    );
+    expect(prompts.log.success).toHaveBeenCalledWith(expect.stringContaining('stop_grace_period and logging'));
+    expect(prompts.log.warn).toHaveBeenCalledWith(expect.stringContaining('docker stop -t 90 mc-a && mcctl start a'));
+    expect(prompts.log.info).toHaveBeenCalledWith(expect.stringMatching(/No memory limit on: a\b[\s\S]*mcctl migrate spec <name>/));
+  });
+
   it('should copy template files to servers/_template', async () => {
     setupBaseMocks();
 

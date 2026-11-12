@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync, readFileSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import yaml from 'js-yaml';
 import { playitCommand } from '../../../src/commands/playit.js';
 import * as promptsModule from '@clack/prompts';
 import * as shared from '@minecraft-docker/shared';
@@ -371,6 +372,8 @@ describe('mcctl playit subcommand', () => {
 
     it('should add playit service to docker-compose.yml if missing', async () => {
       createInitializedPlatform(false);
+      // A services map to add to (#671: a file without one is not patched)
+      writeFileSync(join(testRoot, 'docker-compose.yml'), 'services:\n  router:\n    image: itzg/mc-router:1.47.1\n');
 
       vi.mocked(shared.getPlayitAgentStatus).mockResolvedValueOnce({
         enabled: false,
@@ -395,6 +398,10 @@ describe('mcctl playit subcommand', () => {
       expect(composeContent).toContain('playit-cloud/playit-agent');
       expect(composeContent).toContain('PLAYIT_SECRET_KEY');
       expect(composeContent).toContain('profiles:');
+      // Log rotation, as for router and servers (#662)
+      const service = `services:\n${composeContent.slice(composeContent.indexOf('  playit:'))}`;
+      const playit = (yaml.load(service) as { services: Record<string, Record<string, unknown>> }).services['playit']!;
+      expect(playit['logging']).toEqual({ driver: 'json-file', options: { 'max-size': '50m', 'max-file': '5' } });
     });
 
     it('should not duplicate playit service if already exists in docker-compose.yml', async () => {

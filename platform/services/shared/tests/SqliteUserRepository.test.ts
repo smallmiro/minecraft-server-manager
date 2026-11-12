@@ -27,8 +27,9 @@ describe('SqliteUserRepository', () => {
     await rm(testDir, { recursive: true, force: true });
   });
 
-  test('should create database and tables on initialization', async () => {
+  test('should create database and tables on first use', async () => {
     repository = new SqliteUserRepository(testDbPath);
+    await repository.count();
 
     // Database file should be created
     expect(existsSync(testDbPath)).toBeTruthy();

@@ -6,8 +6,9 @@
  * Lifetimes match what the routes did before the container existed:
  * - a method that builds per call is a factory (per request, or once per
  *   plugin when a route calls it at registration);
- * - a memoized method (marked "one per app") opens its SQLite handle on the
- *   first call and `close()` releases it when the app closes.
+ * - a memoized method (marked "one per app") is built on its first call. Its
+ *   SQLite handle opens on the first query (#673), so a database that cannot
+ *   be opened fails only that feature, and `close()` releases it.
  */
 import { join } from 'node:path';
 import type { FastifyPluginAsync } from 'fastify';
@@ -23,12 +24,15 @@ import {
   ConfigEnvWorldAssignmentAdapter,
   ConfigSnapshotDatabase,
   ConfigSnapshotScheduleUseCaseImpl,
+  ConfigSnapshotUseCaseImpl,
   CreateServerUseCase,
   DeleteServerUseCase,
   DockerComposeRuntimeAdapter,
   DockerRuntimeEnvironmentAdapter,
   DockerServerConsoleAdapter,
   FileServerSpecRepository,
+  FileSystemConfigFileCollector,
+  FileSystemConfigSnapshotStorage,
   GetServerSummariesUseCase,
   GitWorldBackupAdapter,
   Paths,
@@ -38,6 +42,7 @@ import {
   PrismarineWorldDataReader,
   RconCliAdapter,
   ServerRepository,
+  SqliteAuditLogRepository,
   SqliteBackupScheduleRepository,
   SqliteConfigSnapshotRepository,
   SqliteConfigSnapshotScheduleRepository,
@@ -51,6 +56,7 @@ import {
   type IBackupScheduleUseCase,
   type IConfigSnapshotRepository,
   type IConfigSnapshotScheduleUseCase,
+  type IConfigSnapshotUseCase,
   type IContainerRuntimePort,
   type ICreateServerUseCase,
   type IGetServerSummariesUseCase,
@@ -65,7 +71,6 @@ import {
 } from '@minecraft-docker/shared';
 import { config, childProcessEnv } from '../config/index.js';
 import { resolveBlueMapDockerDir } from '../lib/docker-dir.js';
-import { closeConfigSnapshotDatabase } from '../services/config-snapshot-service.js';
 
 /** Request-specific values for the world use case's prompt adapter. */
 export interface WorldUseCaseOptions {
@@ -97,6 +102,10 @@ export interface ApiContainer {
   configSnapshotScheduleUseCase(): IConfigSnapshotScheduleUseCase;
   /** One per app (config-snapshots.db, shared with configSnapshotScheduleUseCase). */
   configSnapshotRepository(): IConfigSnapshotRepository;
+  /** One per app (config-snapshots.db, shared with the two above). */
+  configSnapshotUseCase(): IConfigSnapshotUseCase;
+  /** One per app (data/audit.db). */
+  auditLogRepository(): SqliteAuditLogRepository;
   /** One per app (players.db). */
   playerSessionUseCase(): IPlayerSessionUseCase;
   /** One per app, on top of playerSessionUseCase. */
@@ -140,6 +149,19 @@ export function createApiContainer(): ApiContainer & { close(): void } {
     () => new ConfigSnapshotScheduleUseCaseImpl(new SqliteConfigSnapshotScheduleRepository(configSnapshotDatabase.get()))
   );
   const configSnapshotRepository = once(() => new SqliteConfigSnapshotRepository(configSnapshotDatabase.get()));
+  const configSnapshotUseCase = once(() => {
+    const at = root();
+    const paths = new Paths(at);
+    return new ConfigSnapshotUseCaseImpl(
+      configSnapshotRepository.get(),
+      new FileSystemConfigSnapshotStorage(join(at, 'backups', 'meta', 'config-snapshot-storage')),
+      new FileSystemConfigFileCollector(paths.servers),
+      // A restored config.env is checked against the world assignments (#670)
+      new ConfigEnvWorldAssignmentAdapter(paths),
+      runtimeAt(at)
+    );
+  });
+  const auditLogRepository = once(() => new SqliteAuditLogRepository(join(root(), 'data', 'audit.db')));
   const playerSessionRepository = once(
     () => new SqlitePlayerSessionRepository(join(root(), 'data', 'players.db'))
   );
@@ -229,6 +251,8 @@ export function createApiContainer(): ApiContainer & { close(): void } {
     backupScheduleUseCase: backupScheduleUseCase.get,
     configSnapshotScheduleUseCase: configSnapshotScheduleUseCase.get,
     configSnapshotRepository: configSnapshotRepository.get,
+    configSnapshotUseCase: configSnapshotUseCase.get,
+    auditLogRepository: auditLogRepository.get,
     playerSessionUseCase: playerSessionUseCase.get,
     playerManagementUseCase: playerManagementUseCase.get,
     userRepository: () => new YamlUserRepository(join(root(), 'users.yaml')),
@@ -240,9 +264,21 @@ export function createApiContainer(): ApiContainer & { close(): void } {
       backupScheduleRepository.value()?.close();
       configSnapshotDatabase.value()?.close();
       playerSessionRepository.value()?.close();
-      closeConfigSnapshotDatabase();
+      auditLogRepository.value()?.close();
     },
   };
+}
+
+let current: ApiContainer | undefined;
+
+/**
+ * The running app's container, for the audit-log and config-snapshot service
+ * modules that routes call directly (#673). They reach the container's handle
+ * instead of opening the database a second time.
+ */
+export function currentContainer(): ApiContainer {
+  if (!current) throw new Error('No app container: build the app with buildApp() first');
+  return current;
 }
 
 export interface ContainerPluginOptions {
@@ -258,7 +294,9 @@ const containerPlugin: FastifyPluginAsync<ContainerPluginOptions> = async (fasti
   const defaults = createApiContainer();
   const container: ApiContainer = { ...defaults, ...opts.container };
   fastify.decorate('container', container);
+  current = container;
   fastify.addHook('onClose', async () => {
+    if (current === container) current = undefined;
     defaults.close();
   });
 };

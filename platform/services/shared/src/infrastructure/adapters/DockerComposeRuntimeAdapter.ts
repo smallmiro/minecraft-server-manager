@@ -397,6 +397,18 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /**
+   * `compose up --force-recreate` (#671): labels are fixed at container
+   * creation, so router host changes need a new container. A stopped one is
+   * only created (`--no-start`): mc-router auto-scale reads its labels and
+   * wakes it, as before.
+   */
+  async recreate(name: ServerName | string): Promise<RuntimeActionResult> {
+    const container = workloadNameOf(name);
+    const run = (await this.getStatusAsync(name)) === 'running' ? '-d' : '--no-start';
+    return this.compose(['compose', 'up', run, '--force-recreate', '--no-deps', container], this.options.startTimeoutMs);
+  }
+
+  /**
    * delete-server.sh step 1 (#735): `docker ps -a` decides whether the
    * container exists; a container of the compose project is stopped and
    * removed with compose, any other with `docker rm -f`.
@@ -484,8 +496,12 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     return this.options.env?.() ?? process.env;
   }
 
-  /** Copied from mcctl-api executeServerAction */
-  private compose(args: string[], timeout = 60000): Promise<RuntimeActionResult> {
+  /**
+   * Copied from mcctl-api executeServerAction. The default outlasts the
+   * servers' 90s stop_grace_period (#661): a stop that takes the full grace
+   * period must not be reported as a failure, nor cut a restart short.
+   */
+  private compose(args: string[], timeout = 120000): Promise<RuntimeActionResult> {
     return this.run(args, {
       cwd: this.options.root ?? resolveMcctlRoot(),
       timeout,

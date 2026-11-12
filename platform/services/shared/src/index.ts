@@ -28,7 +28,7 @@ export {
 } from './types/index.js';
 
 // Re-export utilities
-export { Paths, Config, colors, log, getPackageRoot, formatWorldBytes, isTelemetryEnabled, resolveMcctlRoot } from './utils/index.js';
+export { Paths, Config, colors, log, getPackageRoot, formatWorldBytes, isTelemetryEnabled, resolveMcctlRoot, SQLITE_BUSY_TIMEOUT_MS, applySqliteSettings } from './utils/index.js';
 
 // Re-export docker utilities
 export {

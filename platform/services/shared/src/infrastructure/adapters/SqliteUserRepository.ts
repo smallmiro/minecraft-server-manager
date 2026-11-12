@@ -1,6 +1,5 @@
-import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type Database from 'better-sqlite3';
+import { LazySqlite } from './sqlite.js';
 import * as bcrypt from 'bcryptjs';
 import type { IUserRepository } from '../../application/ports/outbound/IUserRepository.js';
 import { User } from '../../domain/entities/User.js';
@@ -25,35 +24,27 @@ interface UserRow {
  */
 export class SqliteUserRepository implements IUserRepository {
   private static readonly SALT_ROUNDS = 10;
-  private readonly db: Database.Database;
+  private readonly sqlite: LazySqlite;
 
   /**
    * Create a new SqliteUserRepository
    * @param dbPath - Path to the SQLite database file
    */
   constructor(dbPath: string) {
-    // Ensure directory exists
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+    this.sqlite = new LazySqlite(dbPath, (db) => this.migrate(db));
+  }
 
-    // Open database connection
-    this.db = new Database(dbPath);
-
-    // Enable WAL mode for better concurrency
-    this.db.pragma('journal_mode = WAL');
-
-    // Run migrations
-    this.migrate();
+  /** The database handle, opened with the shared settings on first use (#673). */
+  private get db(): Database.Database {
+    return this.sqlite.get();
   }
 
   /**
    * Run database migrations
    * Creates tables and indexes if they don't exist
    */
-  private migrate(): void {
-    this.db.exec(`
+  private migrate(db: Database.Database): void {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL COLLATE NOCASE,
@@ -182,7 +173,7 @@ export class SqliteUserRepository implements IUserRepository {
    * Should be called when the repository is no longer needed
    */
   close(): void {
-    this.db.close();
+    this.sqlite.close();
   }
 
   /**

@@ -8,6 +8,7 @@ import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
+import { migrateComposeKeys } from '../lib/server-compose-keys-migration.js';
 import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
 import { serverSpecReport } from '../lib/server-config.js';
 import { handleLegacyScripts } from '../lib/legacy-scripts.js';
@@ -108,6 +109,34 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
     prompts.log.warn(
       'Existing containers keep the old environment until recreated:\n' +
         serverEnv.migrated.map((name) => `  mcctl stop ${name} && mcctl start ${name}`).join('\n')
+    );
+  }
+
+  // --- Step 2b2: server template keys: stop grace period (#661), log rotation (#662) ---
+  const composeKeys = migrateComposeKeys(paths.root, paths.templates, !!options.dryRun);
+  if (composeKeys.updated.length > 0) {
+    prompts.log.success(
+      `${options.dryRun ? 'Would add' : 'Added'} missing stop_grace_period and logging to: ${composeKeys.updated.join(', ')}` +
+        (options.dryRun ? '' : ' (backup: docker-compose.yml.bak-<time> in each server directory)')
+    );
+    // A container keeps the stop timeout it was created with, even when stopped by `mcctl stop`
+    prompts.log.warn(
+      "Existing containers keep Docker's 10s stop timeout and an unrotated log until recreated. When a server is idle:\n" +
+        composeKeys.updated.map((name) => `  docker stop -t 90 mc-${name} && mcctl start ${name}`).join('\n')
+    );
+  }
+  if (composeKeys.skipped.length > 0) {
+    prompts.log.warn(
+      'Could not update automatically; copy stop_grace_period and logging from servers/_template/docker-compose.yml ' +
+        `into the mc-<name> service of: ${composeKeys.skipped.join(', ')}`
+    );
+  }
+  // Not added here: a limit below what a (modded) server really uses gets it OOM-killed mid-save (#662)
+  if (composeKeys.noMemLimit.length > 0) {
+    prompts.log.info(
+      `No memory limit on: ${composeKeys.noMemLimit.join(', ')}. mcctl upgrade does not add one. ` +
+        'New servers get mem_limit = MEMORY + max(2G, MEMORY/2); an existing server gets it the next time its ' +
+        'server.yaml is written. To add it now: mcctl migrate spec <name>, then recreate the server when idle.'
     );
   }
 
@@ -288,7 +317,7 @@ function updateTemplateFiles(
 }
 
 /**
- * Patch the user's docker-compose.yml: mc-router image tag and group_add only.
+ * Patch the user's docker-compose.yml: mc-router image tag and group_add, router and playit logging only.
  * Everything else (extra services, ports, comments) is left untouched.
  */
 async function migrateComposeFile(
@@ -310,7 +339,8 @@ async function migrateComposeFile(
   if (result.skipped) {
     prompts.log.warn(
       'Could not patch mc-router in docker-compose.yml automatically. For mc-router 1.46+, set:\n' +
-      '    image: itzg/mc-router:<tag from template>\n    group_add:\n      - "${DOCKER_GID:-999}"',
+      '    image: itzg/mc-router:<tag from template>\n    group_add:\n      - "${DOCKER_GID:-999}"\n' +
+      'and copy the logging block of the template router into the router and playit services.',
     );
     return { changed: false };
   }
@@ -349,6 +379,9 @@ async function migrateComposeFile(
   prompts.log.success(`docker-compose.yml updated (backup: ${backup}).`);
 
   recreateRouter(paths);
+  if (result.changes.includes('playit.logging added')) {
+    prompts.log.info('playit-agent gets log rotation when recreated: mcctl playit stop && mcctl playit start');
+  }
   return { changed: true };
 }
 

@@ -1,6 +1,5 @@
-import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type Database from 'better-sqlite3';
+import { LazySqlite } from './sqlite.js';
 import type { IBackupScheduleRepository } from '../../application/ports/outbound/IBackupScheduleRepository.js';
 import {
   BackupSchedule,
@@ -14,34 +13,26 @@ import {
 export class SqliteBackupScheduleRepository
   implements IBackupScheduleRepository
 {
-  private readonly db: Database.Database;
+  private readonly sqlite: LazySqlite;
 
   /**
    * Create a new SqliteBackupScheduleRepository
    * @param dbPath - Path to the SQLite database file
    */
   constructor(dbPath: string) {
-    // Ensure directory exists
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+    this.sqlite = new LazySqlite(dbPath, (db) => this.migrate(db));
+  }
 
-    // Open database connection
-    this.db = new Database(dbPath);
-
-    // Enable WAL mode for better concurrency
-    this.db.pragma('journal_mode = WAL');
-
-    // Run migrations
-    this.migrate();
+  /** The database handle, opened with the shared settings on first use (#673). */
+  private get db(): Database.Database {
+    return this.sqlite.get();
   }
 
   /**
    * Run database migrations
    */
-  private migrate(): void {
-    this.db.exec(`
+  private migrate(db: Database.Database): void {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS backup_schedules (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
@@ -142,6 +133,6 @@ export class SqliteBackupScheduleRepository
    * Close the database connection
    */
   close(): void {
-    this.db.close();
+    this.sqlite.close();
   }
 }

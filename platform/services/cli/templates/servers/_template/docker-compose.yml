@@ -31,6 +31,15 @@ services:
     image: itzg/minecraft-server:java25
     container_name: mc-template
     restart: "no"
+    # Longer than the image's STOP_DURATION (60s): docker stop / compose stop
+    # must not kill the server while it saves the world (#661).
+    stop_grace_period: 90s
+    # Rotate the container log (docker logs): at most 5 files of 50MB (#662)
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     tty: true
     stdin_open: true
     # Platform keys listed in ../global.env, then this server's config.env

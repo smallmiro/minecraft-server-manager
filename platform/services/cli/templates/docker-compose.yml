@@ -71,6 +71,12 @@ services:
     # v1.46+ runs as non-root: join the docker socket's group (auto-set by mcctl init/upgrade)
     group_add:
       - "${DOCKER_GID:-999}"
+    # Rotate the container log (docker logs): at most 5 files of 50MB (#662)
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     networks:
       - minecraft-net
 

@@ -168,6 +168,31 @@ describe('mc-router.host label helpers', () => {
   test('parseRouterHosts returns [] when label is missing', () => {
     expect(dockerHelpers.parseRouterHosts('services:\n  mc-x:\n    image: foo\n')).toEqual([]);
   });
+
+  // #671: the label is read as YAML, not matched as text
+  test('parseRouterHosts ignores a commented-out label and other indentation', () => {
+    const edited = `services:
+  mc-survival:
+    labels:
+        # mc-router.host: "old.example.com"
+        mc-router.host: survival.local,mc.example.com
+`;
+    expect(dockerHelpers.parseRouterHosts(edited)).toEqual(['survival.local', 'mc.example.com']);
+  });
+
+  test('parseRouterHosts reads the list form of labels', () => {
+    const list = `services:
+  mc-survival:
+    labels:
+      - "mc-router.host=survival.local,mc.example.com"
+`;
+    expect(dockerHelpers.parseRouterHosts(list)).toEqual(['survival.local', 'mc.example.com']);
+  });
+
+  test('parseRouterHosts returns [] for an empty label or a file that does not parse', () => {
+    expect(dockerHelpers.parseRouterHosts('services:\n  mc-x:\n    labels:\n      mc-router.host: ""\n')).toEqual([]);
+    expect(dockerHelpers.parseRouterHosts('services: [\n')).toEqual([]);
+  });
 });
 
 describe('resolvePlayitDomain', () => {
