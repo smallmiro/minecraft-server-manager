@@ -1,4 +1,4 @@
-import { Paths, log, colors, formatAssignmentWarnings } from '@minecraft-docker/shared';
+import { Paths, log, colors, formatAssignmentWarnings, formatInternalWorldWarnings } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
 
 /**
@@ -127,6 +127,8 @@ async function worldList(
       .then(formatAssignmentWarnings, (error: unknown) => [
         error instanceof Error ? error.message : String(error),
       ]);
+    // Worlds still inside a server directory need mcctl migrate worlds (#655)
+    warnings.push(...formatInternalWorldWarnings(await container.worldRepository.findServerInternalWorlds()));
     const printWarnings = () => warnings.forEach((warning) => log.warn(warning));
 
     if (options.json) {

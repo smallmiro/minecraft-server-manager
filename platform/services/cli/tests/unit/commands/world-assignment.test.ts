@@ -72,6 +72,7 @@ beforeEach(() => {
   state.container = {
     promptPort: prompt,
     worldAssignmentPort: assignments,
+    worldRepository: new WorldRepository(paths, assignments),
     worldManagementUseCase: new WorldManagementUseCase(
       prompt,
       new WorldRepository(paths, assignments),
@@ -197,6 +198,15 @@ describe('mcctl world list', () => {
     await worldCommand({ root, subCommand: 'list' });
 
     expect(output.join('\n')).toMatch(/Cannot read the world assignment of 'broken'/);
+  });
+
+  it('says a server with its world inside servers/<n>/data needs migration (#655)', async () => {
+    server('alpha', 'LEVEL=alpha\n');
+    mkdirSync(join(root, 'servers', 'alpha', 'data', 'alpha'), { recursive: true });
+
+    expect(await worldCommand({ root, subCommand: 'list', json: true })).toBe(0);
+
+    expect(output.join('\n')).toMatch(/servers\/alpha\/data\/alpha: needs migration \(mcctl migrate worlds --server alpha\)/);
   });
 });
 
