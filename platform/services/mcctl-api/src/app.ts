@@ -5,6 +5,7 @@ import { config } from './config/index.js';
 import authPlugin from './plugins/auth.js';
 import swaggerPlugin from './plugins/swagger.js';
 import containerPlugin, { type ApiContainer } from './plugins/container.js';
+import { endSseStreams } from './lib/sse.js';
 import serversRoutes from './routes/servers.js';
 import serverActionsRoutes from './routes/servers/actions.js';
 import serverConfigRoutes from './routes/servers/config.js';
@@ -30,6 +31,13 @@ export interface BuildAppOptions {
   /** Replaces members of the production container (tests pass fakes, #667). */
   container?: Partial<ApiContainer>;
 }
+
+/**
+ * How long close waits for requests still running before cutting them (#650).
+ * Short: the onClose hooks after it may wait AUTO_BACKUP_CLOSE_WAIT_MS, and PM2's
+ * kill_timeout leaves 10s beyond that. Mutable so tests can lower it.
+ */
+export const shutdownLimits = { drainMs: 5_000 };
 
 export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyInstance> {
   const app = Fastify({
@@ -116,6 +124,15 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   // Register API routes
   await app.register(authRoutes);
   await app.register(consoleRoutes);
+
+  // Close (#650): Fastify answers new requests 503, then server.close() waits
+  // for every open connection before the onClose hooks (auto-backup wait,
+  // databases) run. SSE streams never end on their own, so end them; cut the
+  // requests still running after the drain timeout.
+  app.addHook('preClose', async () => {
+    endSseStreams();
+    setTimeout(() => app.server.closeAllConnections(), shutdownLimits.drainMs).unref();
+  });
 
   // Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {

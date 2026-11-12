@@ -126,11 +126,4 @@ export interface IServiceManagerPort {
    * Resurrect saved processes
    */
   resurrect(): Promise<void>;
-
-  /**
-   * Kill the process manager daemon
-   * Stops all processes and terminates the daemon itself.
-   * After calling this, a new connect() is needed to restart operations.
-   */
-  killDaemon(): Promise<void>;
 }

@@ -18,7 +18,6 @@ import { getContainer } from '../../infrastructure/index.js';
 import { AdminConfigManager } from '../../lib/admin-config.js';
 import { Pm2ServiceManagerAdapter } from '../../infrastructure/adapters/Pm2ServiceManagerAdapter.js';
 import {
-  checkPm2Installation,
   ECOSYSTEM_CONFIG_FILE,
   PM2_SERVICE_NAMES,
 } from '../../lib/pm2-utils.js';
@@ -48,11 +47,6 @@ async function stopAndRemoveProcesses(paths: Paths): Promise<{
   message: string;
   stopped: string[];
 }> {
-  const pm2Check = checkPm2Installation();
-  if (!pm2Check.installed) {
-    return { success: true, message: 'PM2 not installed', stopped: [] };
-  }
-
   const pm2Adapter = new Pm2ServiceManagerAdapter(paths);
   const stopped: string[] = [];
 
