@@ -268,14 +268,14 @@ This document defines the requirements for a Docker-based multi-server Minecraft
 - **Criteria**:
   - Each server consumes only allocated memory (configurable)
   - Container startup time < 60 seconds
-  - Lock acquisition < 1 second
+  - World assignment checks answer within 1 second
 
 #### NFR-002: Reliability
 - **Description**: Data integrity and availability
 - **Criteria**:
   - World data never corrupted by concurrent access
   - Graceful shutdown preserves all data
-  - Lock files cleaned up on abnormal termination
+  - Assignment state is derived from `LEVEL`, so no lock files remain after abnormal termination
 
 #### NFR-003: Operability
 - **Description**: Ease of management and monitoring

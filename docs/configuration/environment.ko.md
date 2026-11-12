@@ -43,8 +43,8 @@ mcctl config myserver --command-block # 커맨드 블록 활성화
 | `HOST_IP` | 호스트 머신 IP 주소 | 자동 감지 | `mcctl init` |
 | `HOST_IPS` | VPN mesh용 다중 IP (쉼표 구분) | - | 수동 |
 | `DOCKER_GID` | non-root mc-router(1.46+)용 Docker 소켓 그룹 ID | `999` | `mcctl init` / `mcctl upgrade` |
-| `MINECRAFT_NETWORK` | compose 파일이 연결하는 Docker 네트워크 이름. `mcctl init`이 `minecraft-net`을 만듭니다 | `minecraft-net` | 수동 |
-| `MINECRAFT_SUBNET` | mcctl이 읽지 않습니다. `mcctl init`은 `minecraft-net`을 서브넷 `172.28.0.0/16`으로 만듭니다 | `172.28.0.0/16` | - |
+| `MINECRAFT_NETWORK` | compose 파일이 연결하는 Docker 네트워크 이름. 없으면 `mcctl init`이 만듭니다 | `minecraft-net` | 수동 |
+| `MINECRAFT_SUBNET` | `MINECRAFT_NETWORK` 네트워크가 아직 없을 때 `mcctl init`이 만드는 Docker 네트워크의 서브넷(기본값 `172.28.0.0/16`). 이미 있는 네트워크는 서브넷을 유지합니다 | `172.28.0.0/16` | - |
 
 !!! tip "다중 네트워크 접속 (Tailscale/ZeroTier)"
     LAN과 VPN에서 동시에 접속하려면 `HOST_IPS`를 사용하세요:
@@ -131,7 +131,7 @@ mcctl-api는 시작할 때 `.env`에서 이 키들을 읽습니다. 변경은 `m
 | `LOG_LEVEL` | **mcctl-api 전용** (dotenv, cwd = MCCTL_ROOT) | `api` |
 | `BETTER_AUTH_SECRET` (시크릿, 삭제 불가), `BETTER_AUTH_BASE_URL` | mcctl-console은 시작 시 `.env`에서 이 두 인증 키를 읽으며, 비어 있지 않은 값은 `ecosystem.config.cjs`에 해당 키가 더 이상 없을 때만 사용됩니다(ecosystem에 있는 동안은 ecosystem 값이 우선하고, `.env`와 다르면 경고를 로그에 남깁니다). `mcctl upgrade`가 이 키들을 `.env`로 옮깁니다. 시크릿을 바꾸면 모든 사용자가 로그아웃됩니다. base URL 미설정 시 `http://localhost:<console port>` | `console`: `mcctl console service restart --console` |
 
-**읽기 전용 키:** `MINECRAFT_NETWORK` (mcctl은 `minecraft-net`만 만듭니다. 이름을 바꾸려면 `mcctl down`, `docker network create <name>`, `.env` 수정, `mcctl up` 순서로 진행), `MINECRAFT_SUBNET` (mcctl이 읽지 않으며, 네트워크는 만들 때의 서브넷을 유지), `COMPOSE_PROJECT_NAME` (변경하면 기존 컨테이너와 네트워크가 고아가 되므로 CLI 전용).
+**읽기 전용 키:** `MINECRAFT_NETWORK` (`mcctl init`이 이 이름의 네트워크를 만듭니다. 이름을 바꾸려면 `mcctl down`, `docker network create <name>`, `.env` 수정, `mcctl up` 순서로 진행), `MINECRAFT_SUBNET` (`mcctl init`이 네트워크를 만들 때만 사용하며, 이미 있는 네트워크는 서브넷을 유지), `COMPOSE_PROJECT_NAME` (변경하면 기존 컨테이너와 네트워크가 고아가 되므로 CLI 전용).
 
 **Runtime-managed (PM2):** `AUTH_MODE`(api)는 `ecosystem.config.cjs`에서 옵니다. 변경하려면 `mcctl console init`을 다시 실행하세요. 이전 버전에서 생성된 ecosystem 파일은 `BETTER_AUTH_SECRET`, `BETTER_AUTH_BASE_URL`도 주입하지만 ecosystem에 정의돼 있는 동안은 ecosystem 값이 `.env`보다 우선하고 Platform Settings에는 읽기 전용으로 표시됩니다. `mcctl upgrade`를 실행하면 두 키가 `.env`로 옮겨지고(시크릿은 그대로라 세션 유지, 백업 `ecosystem.config.cjs.bak-<타임스탬프>` 생성), 이후 `mcctl console service restart --console`로 적용합니다.
 
@@ -312,15 +312,19 @@ mcctl stop myserver && mcctl start myserver
 
 | 변수 | 설명 | 기본값 | 관리 |
 |------|------|--------|------|
-| `AUDIT_AUTO_CLEANUP` | 오래된 감사 로그 자동 삭제 | `false` (미설정) | 수동 |
+| `AUDIT_AUTO_CLEANUP` | 오래된 감사 로그 자동 삭제 | `true` (`false`로 설정하지 않으면 켜짐) | 수동 |
 | `AUDIT_RETENTION_DAYS` | 감사 로그 보관 일수 | `90` | 수동 |
 
 **AUDIT_AUTO_CLEANUP:**
-- `true`: 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 로그를 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지나면)
-- 미설정 또는 `false`: 자동 정리 비활성화 (`mcctl audit purge`를 통한 수동 삭제만 가능)
+- 미설정 또는 `false`가 아닌 값(기본값): 데이터베이스를 열 때와 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 로그를 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지나면)
+- `false`: 자동 정리 비활성화 (`mcctl audit purge`를 통한 수동 삭제만 가능)
+
+!!! warning "업그레이드 주의"
+    자동 정리는 예전에는 꺼져 있었습니다. 업그레이드 후 첫 시작에 90일이 넘은 감사 로그가 삭제됩니다. 로그를 유지하려면 mcctl-api를 재시작하기 전에 `.env`에 `AUDIT_AUTO_CLEANUP=false`를 설정하거나 `AUDIT_RETENTION_DAYS`를 늘리십시오.
 
 **AUDIT_RETENTION_DAYS:**
 - 자동 정리 전에 감사 로그를 보관할 일수
+- 기본값: 90일 (잘못된 값이어도 90일)
 - 권장값: 규정 준수 요구사항에 따라 30-180일
 - 프로덕션 환경: 90일 이상
 
@@ -331,9 +335,11 @@ mcctl stop myserver && mcctl start myserver
 
 **예제:**
 ```bash
-# 사용자 지정 보관 정책 설정
+# 사용자 지정 보관 정책 설정 (자동 정리는 기본으로 켜져 있습니다)
 echo "AUDIT_RETENTION_DAYS=180" >> ~/minecraft-servers/.env
-echo "AUDIT_AUTO_CLEANUP=true" >> ~/minecraft-servers/.env
+
+# 또는 감사 로그를 계속 보관
+echo "AUDIT_AUTO_CLEANUP=false" >> ~/minecraft-servers/.env
 
 # mcctl-api를 재시작하여 적용
 mcctl console service restart --api

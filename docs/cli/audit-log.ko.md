@@ -196,7 +196,7 @@ mcctl audit purge --days 180 --force
 ```bash
 # ~/minecraft-servers/.env
 
-# 오래된 로그 자동 삭제 (기본값: 꺼짐)
+# 오래된 로그 자동 삭제 (기본값: 켜짐). false로 설정하면 로그를 계속 보관합니다
 AUDIT_AUTO_CLEANUP=true
 
 # 보관 기간 (일) (기본값: 90)
@@ -204,8 +204,8 @@ AUDIT_RETENTION_DAYS=90
 ```
 
 **AUDIT_AUTO_CLEANUP:**
-- `true`: 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 항목을 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지났을 때)
-- 설정하지 않거나 다른 값(기본값): 자동 정리 없음. `mcctl audit purge`를 사용합니다
+- 설정하지 않거나 `false`가 아닌 값(기본값): 데이터베이스를 열 때와 새 항목을 기록하는 동안 `AUDIT_RETENTION_DAYS`보다 오래된 항목을 삭제합니다(새 항목 100개마다, 또는 마지막 정리 후 24시간이 지났을 때). 이 기본값이 적용된 버전으로 업그레이드한 뒤 첫 시작에 90일이 넘은 항목이 삭제됩니다
+- `false`: 자동 정리 없음. `mcctl audit purge`를 사용합니다
 
 mcctl-api는 두 변수를 `<root>/.env`에서 읽으므로 자동 정리는 mcctl-api에서 실행됩니다. CLI는 셸 환경 변수에서만 읽습니다.
 

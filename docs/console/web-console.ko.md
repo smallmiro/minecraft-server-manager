@@ -523,7 +523,7 @@ Options 탭 상단의 **Hostnames / Domains** 카드는 이 서버로의 연결 
 - **System Hostnames (read-only)** -- 자동 생성된 호스트명 (예: `botagent.local`, `botagent.192.168.xx.xx.nip.io`)
 - **Custom Domains** -- 사용자 정의 커스텀 도메인 이름. 각 도메인에 삭제 버튼이 있습니다. 서버에 playit.gg 도메인이 있으면 여기에 **playit** 칩과 함께 표시됩니다. 이 도메인을 지우면 서버의 playit.gg 도메인이 해제되고, 같은 저장에서 새 도메인 하나로 바꾸면 그 도메인이 playit.gg 도메인이 됩니다
 - 추가 커스텀 호스트명을 입력하는 **+ Add Domain** 버튼. `.local` 또는 `.nip.io`로 끝나는 도메인은 시스템 호스트명 전용이므로 사용할 수 없습니다
-- 목록을 저장하는 **Save Hostnames** 버튼. 호스트명 변경은 서버 컨테이너를 재생성해야 적용됩니다. 서버를 중지한 뒤 다시 시작하거나(**Restart**로는 적용되지 않습니다) `docker compose up -d`를 실행하세요
+- 목록을 저장하는 **Save Hostnames** 버튼. 호스트명 변경은 서버 컨테이너를 재생성해야 적용됩니다. 저장 직후 나타나는 경고의 **Apply now**를 누르거나(실행 중인 서버는 재시작되어 플레이어 접속이 끊기고, 정지된 서버는 컨테이너만 다시 만들어져 정지 상태로 남습니다), 서버를 중지한 뒤 다시 시작하세요(**Restart**로는 적용되지 않습니다). 이 버튼은 같은 세션에서 저장한 직후에만 나타나며, 이전에 저장한 호스트명은 여전히 중지 후 시작이 필요합니다
 
 #### 설정 섹션
 
@@ -988,7 +988,7 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
     mcctl console service restart --console --force
     ```
 
-    `--force`는 PM2 데몬을 종료하므로 PM2가 관리하는 다른 앱도 함께 중지됩니다([`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart) 참조). `mcctl console init --force`는 이 설정이 없는 새 `ecosystem.config.cjs`를 작성합니다.
+    `--force`는 mcctl 프로세스만 삭제하고 다시 만들며, PM2 데몬과 다른 앱은 건드리지 않습니다([`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart) 참조). `mcctl console init --force`는 이 설정이 없는 새 `ecosystem.config.cjs`를 작성합니다.
 
 ---
 

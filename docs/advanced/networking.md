@@ -437,7 +437,7 @@ networks:
     name: ${MINECRAFT_NETWORK:-minecraft-net}
 ```
 
-`MINECRAFT_SUBNET` in `.env` is not used.
+`mcctl init` creates this network with `MINECRAFT_SUBNET` from `.env` (default `172.28.0.0/16`) when it does not exist yet; an existing network keeps its subnet.
 
 ### Port Mapping
 

@@ -614,12 +614,25 @@ Each hostname is 1 to 253 characters of letters, digits, `-` and `.`, is stored 
 | Field | Description |
 |-------|-------------|
 | `success` | `true` |
-| `recreateRequired` | Always `true`: the new label applies when the container is recreated. Stop and start the server; a restart does not apply it |
+| `recreateRequired` | Always `true`: the new label applies when the container is recreated. Call [`POST .../hostnames/apply`](#post-apiserversnamehostnamesapply), or stop and start the server; a restart does not apply it |
 | `playitDomain` | `PLAYIT_DOMAIN` after the change. It stays when it is still listed; when it was removed, a single newly added hostname replaces it, otherwise it is cleared. A server without a playit.gg domain keeps none |
 
 **Errors:** `400` invalid or duplicate hostname; `404` server or `docker-compose.yml` not found; `409` `server.yaml` write refused.
 
 Each change writes a `server.hostname` audit entry.
+
+### POST /api/servers/:name/hostnames/apply
+
+Applies the saved hostnames to mc-router by recreating the server's container from its saved `docker-compose.yml`. The Web Console calls it from **Apply now** after you save hostnames. There is no request body.
+
+- A **running** server is recreated with `docker compose up -d --force-recreate --no-deps`: it restarts and its players are disconnected.
+- A **stopped** server is only recreated (`--no-start`): it stays stopped and mc-router starts it on the next connection.
+
+```json
+{ "success": true, "serverName": "survival" }
+```
+
+**Errors:** `404` server not found; `500` the recreate failed (the message includes the compose output); the call writes a `server.hostname` audit entry with `details.applied` set to `true`.
 
 ---
 
@@ -2442,7 +2455,7 @@ Returns statistics over all entries. There are no query parameters.
 |-------|-------------|
 | `byAction` | Count per action that occurs |
 | `byStatus` | Count of `success` and `failure` |
-| `byActor` | Count per actor among the newest 1000 entries |
+| `byActor` | Count per actor over all entries |
 | `recentActivity` | The 10 newest entries |
 | `oldestEntry`, `newestEntry` | Timestamps, or `null` when there are no entries |
 

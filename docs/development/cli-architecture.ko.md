@@ -110,6 +110,18 @@ export interface IConfigSnapshotUseCase {
 
 **Outbound 포트**(`application/ports/outbound/`)에는 `IPromptPort`, `IContainerRuntimePort`, `IServerConsolePort`, `IWorldBackupPort`, `IWorldAssignmentPort`, `IServerSpecRepository`, `IServerRepository`, `IWorldRepository`, `IDocProvider`, `IAuditLogPort`, `IRconPort`, `IModSourcePort`, `IServiceManagerPort`와 스냅샷/백업 저장소가 있습니다. `IPromptPort`와 `IDocProvider`는 outbound 포트입니다.
 
+## 컨테이너 런타임 포트
+
+Minecraft 서버 컨테이너를 시작, 중지, 조회, 재생성하는 모든 동작은 `IContainerRuntimePort`(`shared/src/application/ports/outbound/`)를 거칩니다. 어댑터 밖의 코드는 `docker`를 직접 호출하지 않습니다. 결정 기록은 [ADR-0001](adr/0001-container-runtime-ports.md)입니다.
+
+- **어댑터.** `DockerComposeRuntimeAdapter`(`shared/src/infrastructure/adapters/`)가 `docker`와 `docker compose`로 구현합니다. 다른 런타임은 어댑터를 하나 더 만들면 되고, 커맨드와 라우트는 바뀌지 않습니다.
+- **이름.** 메서드는 `ServerName`을 받고, 어댑터가 이를 워크로드(`mc-<name>`)로 대응시킵니다. 일반 문자열은 워크로드 이름 자체입니다(`mc-router`, `playit-agent`).
+- **조회 방식 두 가지.** 동기 조회(`getStatus`, `list` 등)는 CLI용이며 Docker에 물을 수 없으면 `not_found`나 `[]`로 답합니다. mcctl-api의 요청 경로는 비동기 조회(`getStatusAsync`, `listAsync`, `listStates` 등)를 쓰며, 이벤트 루프를 막지 않고 타임아웃(`RUNTIME_QUERY_TIMEOUT_MS`, 10초) 뒤에 종료됩니다.
+- **Fail-closed.** 런타임에 물을 수 없으면(응답 없음, 조회 실패, 타임아웃) `getStatusAsync`, `listStates`, `strict: true`인 `list`/`listAsync`가 "없음"을 돌려주는 대신 `RuntimeUnavailableError`로 reject합니다(타임아웃은 하위 클래스 `RuntimeQueryTimeoutError`). 월드 초기화, 스냅샷 복원, `mcctl migrate`, `mcctl down`처럼 상태를 바꾸는 호출자는 이 오류에서 멈춥니다. mcctl-api는 `Retry-After: 5`와 함께 `503`으로 답합니다(`sendRuntimeUnavailable`, 그리고 라우트에서 새어 나온 경우를 위한 오류 핸들러). "확인할 수 없음"을 "중지됨"으로 보고하지 마십시오.
+- **라벨로 발견.** 서버 컨테이너는 이름이 아니라 라벨로 찾습니다: `io.mcctl.role=server`와 `io.mcctl.server=<name>`(router는 `io.mcctl.role=router`, playit-agent는 `playit`). 라벨이 생기기 전에 만든 컨테이너는 이름과 서비스가 `mc-`로 시작하고 `mc-router`가 아니면 compose 프로젝트로 찾습니다(셸의 `COMPOSE_PROJECT_NAME`, 없으면 루트 `.env`, 없으면 루트 디렉터리 이름. compose 파일의 `name:` 키는 읽지 않습니다). `mcctl upgrade`가 기존 서버에 라벨을 추가하며, 컨테이너를 다시 만들 때 적용됩니다.
+- **재생성.** `recreate()`는 저장된 compose 정의로 컨테이너를 다시 만들어 바뀐 라벨(`mc-router.host` 호스트명)이 적용되게 합니다. 실행 중인 서버는 다시 실행되고, 그 밖의 서버는 시작하지 않고 만들기만 합니다(`POST /api/servers/:name/hostnames/apply`).
+- **계약 테스트.** `@minecraft-docker/shared/testing`의 `runtimeContract(label, makeRuntime)`는 포트의 동작(상태 조회와 타임아웃, fail-closed 조회, 라벨 발견, `recreate()`)을 테스트로 적어 둔 것이다. `FakeContainerRuntime`과 `DockerComposeRuntimeAdapter`에 같은 스위트를 돌리고(`shared/tests/runtime-contract.test.ts`), 새 어댑터도 같은 스위트를 통과해야 한다. 단위 테스트는 호스트의 Docker에 닿지 않는다. 각 패키지의 vitest setup이 컨테이너가 없는 테스트용 `docker`를 `PATH` 맨 앞에 둔다(`installTestDocker()`).
+
 ## 어댑터
 
 | 포트 | 어댑터 | 패키지 |
@@ -144,6 +156,25 @@ const useCase = container.configSnapshotUseCase; // created on first access
 - `Container.create(options?)`는 새 인스턴스를 만듭니다.
 - `Container.createWithAdapters(...)`는 사용자 지정 어댑터를 주입합니다(테스트용).
 - `resetContainer()`는 전역 인스턴스를 초기화합니다(테스트용).
+
+## mcctl-api 컴포지션 루트
+
+mcctl-api는 어댑터와 유스케이스를 한 곳, Fastify 플러그인 `mcctl-api/src/plugins/container.ts`(CLI `Container`에 해당)에서 만듭니다. 라우트는 어댑터를 직접 만들지 않고 데코레이트된 인스턴스에서 가져옵니다.
+
+```typescript
+// 라우트 핸들러 안에서
+const runtime = fastify.container.containerRuntime();
+```
+
+만드는 비용이 작은 멤버는 팩토리(호출마다 하나)이고, SQLite 핸들을 가진 멤버는 처음 쓸 때 만들어져 앱이 살아 있는 동안 유지됩니다. 핸들은 첫 쿼리에서 열리므로, 열 수 없는 데이터베이스는 그것이 필요한 기능만 실패시킵니다. `buildApp()`은 라우트보다 먼저 컨테이너를 등록하므로 컨테이너의 `onClose`(데이터베이스 닫기)가 라우트의 `onClose` 뒤에 실행됩니다.
+
+테스트는 모듈을 mock하는 대신 멤버를 가짜로 바꿉니다.
+
+```typescript
+const app = await buildApp({ container: { containerRuntime: () => fakeRuntime } });
+```
+
+`BuildAppOptions.container`는 `Partial<ApiContainer>`이며, 생략한 멤버는 운영용 어댑터가 됩니다.
 
 ## 새 커맨드 추가하기
 

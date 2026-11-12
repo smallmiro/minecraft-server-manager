@@ -18,7 +18,7 @@ mcctl init [options]
 |--------|-------------|
 | `--root <path>` | Custom data directory |
 | `--skip-validation` | Skip the prerequisite checks (Node.js, Docker, Docker Compose, avahi) |
-| `--skip-docker` | Do not create the `minecraft-net` Docker network |
+| `--skip-docker` | Do not create the Docker network (`MINECRAFT_NETWORK`, default `minecraft-net`) |
 | `--reconfigure` | Change the settings of an initialized platform, such as the host IP address(es), timezone and RCON password |
 | `--playit-key <key>` | Enable playit.gg with this `PLAYIT_SECRET_KEY` (no question) |
 | `--no-playit` | Do not enable playit.gg (no question) |
@@ -53,7 +53,7 @@ mcctl --root /opt/minecraft init
 └── backups/
 ```
 
-`mcctl init` asks which host IP address(es) to use (`HOST_IP`, `HOST_IPS` in `.env`) and whether to enable playit.gg. It writes a random 24-character `RCON_PASSWORD` to `.env`. On a platform that is already initialized it changes nothing and points to `mcctl init --reconfigure`.
+`mcctl init` asks which host IP address(es) to use (`HOST_IP`, `HOST_IPS` in `.env`) and whether to enable playit.gg. It writes a random 24-character `RCON_PASSWORD` to `.env`. It creates the Docker network named by `MINECRAFT_NETWORK` (default `minecraft-net`) with the subnet `MINECRAFT_SUBNET` (default `172.28.0.0/16`) from `.env`, unless the network already exists; `--skip-docker` skips this. On a platform that is already initialized it changes nothing and points to `mcctl init --reconfigure`.
 
 ---
 
@@ -89,7 +89,9 @@ mcctl down
 mcctl down
 ```
 
-Stops all mc-* containers and runs `docker compose down`, which removes the containers. The `minecraft-net` network is declared `external` and is kept.
+Stops the running containers mcctl manages, one by one, then runs `docker compose down`, which removes the containers of the compose project. A container belongs to mcctl when it carries the label `io.mcctl.server` or `io.mcctl.role` (a server from before the labels existed is found by the compose project and the `mc-` name prefix), so unrelated containers that merely have `mc-` in their name are left alone. The network (`MINECRAFT_NETWORK`, default `minecraft-net`) is declared `external` and is kept.
+
+If the list of containers cannot be read, or stopping any container or `docker compose down` fails, the command exits with a non-zero code and the audit log records a failure. `mcctl start --all` and `mcctl stop --all` behave the same way.
 
 ---
 
@@ -305,6 +307,14 @@ mcctl status router
     mcctl status --watch --interval 2
     ```
 
+!!! warning "Worlds that need migration"
+    After the overview, `mcctl status` prints a warning to stderr (so `--json` stays clean) for each server whose world is still inside its server directory:
+
+    ```text
+    [WARN] Server 'survival' keeps its world in servers/survival/data/world: needs migration (mcctl migrate worlds --server survival)
+    ```
+
+    `servers/<name>/data/<LEVEL> was left behind by an earlier migration of '<name>': needs migration (...)` means an earlier `mcctl migrate worlds` run left a copy behind. `mcctl world list` prints the same warnings. See [Moving a world out of a server](#moving-a-world-out-of-a-server).
 ---
 
 ### mcctl update
@@ -454,11 +464,17 @@ mcctl upgrade [options]
 8. Adds `installId` to `.mcctl.json` if it is missing (an existing value is kept)
 9. (v3.0.0+) If `<root>/scripts` exists, prints its path, a warning that it is unused since v3.0.0 and may hold files you edited yourself, and the link to the [script to mcctl table](../advanced/upgrade-runbook.md#v300-scripts). In a terminal it asks `Remove <path>?` (default `N`) and deletes only on `y`. With `--non-interactive` or without a terminal it prints a hint (`rm -r <path>`) and deletes nothing. With `--dry-run` it only prints `Would ask before removing <path>.`. A symbolic link is unlinked, never followed. There is no option to skip the question.
 
-**docker-compose.yml router patch:** only the `router` service's `image` tag and `group_add` entry are aligned with the bundled template. Other services, ports, comments, and line endings are kept.
+10. Adds the keys that are missing from each server's `docker-compose.yml`: `stop_grace_period: 90s`, the `logging` block (`json-file`, `max-size: "50m"`, `max-file: "5"`) and the labels `io.mcctl.server: "<name>"` and `io.mcctl.role: "server"`. Each changed file is backed up as `docker-compose.yml.bak-<timestamp>` in the server directory. `--dry-run` only lists the servers. A file it cannot edit safely (a list-style `labels:`, for example) is left alone and the command prints the keys to copy from `servers/_template/docker-compose.yml`
+11. Does not add `mem_limit`: a limit below what a modded server really uses gets it killed while saving. It lists the servers without one; to apply the rule now run `mcctl migrate spec <name>` and recreate the server (see [Container memory limit](../configuration/server-yaml.md#container-memory-limit))
+
+!!! warning "Existing containers keep their old settings"
+    A container keeps the stop timeout, log settings and labels it was created with. Until you recreate it, it uses Docker's 10 second stop timeout and the old log settings. When a server is idle, run the command the upgrade prints: `docker stop -t 90 mc-<name> && mcctl start <name>`. Servers without labels are still found through the compose project. If you raised `STOP_DURATION` (or `STOP_SERVER_ANNOUNCE_DELAY`) of a server above 90 seconds, raise its `stop_grace_period` as well.
+
+**docker-compose.yml router patch:** the `router` service's `image` tag and `group_add` entry are aligned with the bundled template, and the `router` and `playit` services get the `logging` block when they have none. Other services, ports, comments, and line endings are kept.
 
 - A line diff is shown, then you are asked to confirm (`--non-interactive` applies without asking, `--dry-run` shows the diff only)
 - The original file is backed up as `docker-compose.yml.bak-<timestamp>` and restored if writing fails
-- After a successful patch, mc-router is recreated with `docker compose up -d router` (running servers are not affected)
+- After a successful patch, mc-router is recreated with `docker compose up -d router` (running servers are not affected). playit-agent gets the log settings when you recreate it: `mcctl playit stop && mcctl playit start`
 - If the file cannot be patched automatically, a warning shows the lines to add by hand
 - If the compose update fails, the remaining steps still run and the command exits with code `1`
 
@@ -787,7 +803,7 @@ Connect to server RCON console. This is the same interactive session as [`mcctl 
 mcctl console <name>
 ```
 
-The subcommands `mcctl console init`, `service`, `user`, `api` and `remove` manage the Management Console instead; see [Console CLI Commands](../console/cli-commands.md). `mcctl admin <subcommand>` is a deprecated alias for them. A server with one of these names is reached with `mcctl rcon <name>`.
+The subcommands `mcctl console init`, `service`, `user`, `api` and `remove` manage the Management Console instead; see [Console CLI Commands](../console/cli-commands.md). `mcctl admin <subcommand>` is a deprecated alias for them. A server with one of these names is reached with `mcctl rcon <name>`. `mcctl console service enable` (new) registers PM2 to start at boot; see [Console CLI Commands](../console/cli-commands.md#mcctl-console-service-enable).
 
 !!! note "Since v3.0.0: TCP RCON instead of `docker exec`"
     `mcctl console` connects to the server's RCON port over TCP (the container address, `RCON_PORT` and `RCON_PASSWORD`), like `mcctl rcon`. It used to run `docker exec -i mc-<name> rcon-cli`. The server must be running and its RCON port reachable from the host running `mcctl`. Type `exit` or `quit`, or press `Ctrl+C`/`Ctrl+D`, to leave. Piped input runs line by line (`printf 'list\n' | mcctl console myserver`). The session ends when the server closes the connection (for example after `stop`); a connection error exits with code 1.
@@ -1344,6 +1360,42 @@ A world is assigned to a server by the server's `LEVEL` in `servers/<name>/confi
 - **Fail-closed.** If any server's `config.env` cannot be read, or its `LEVEL` cannot be interpreted safely, every assignment change and world delete/reset is refused until it is fixed. Unsafe values are path separators, `.` or `..`, quotes, control characters, Compose interpolation such as `${VAR}` outside single quotes, and an unsupported `--universe` location. Legacy names such as `My World` are still accepted as existing values; new names must be letters, digits, `-` or `_`.
 - **Older installs.** Duplicate assignments are reported, not fixed: see [`mcctl world list`](#mcctl-world-list).
 
+#### Where a server keeps its world
+
+A server uses a world in one of two places, set by `EXTRA_ARGS` in `config.env`:
+
+| Place | `EXTRA_ARGS` | World folder |
+|-------|--------------|--------------|
+| Shared `worlds/` (the model of this page) | contains `--universe /worlds/` | `worlds/<LEVEL>` |
+| Inside the server (servers created before the shared directory) | no `--universe` | `servers/<name>/data/<LEVEL>` |
+
+Only a world in `worlds/` can be assigned, released or shared between servers. A server created with `mcctl create` already uses `worlds/`.
+
+#### Moving a world out of a server
+
+Run [`mcctl migrate worlds`](#mcctl-migrate-worlds) for a server whose world is inside `servers/<name>/data/`. `mcctl status` and `mcctl world list` name these servers with `needs migration`.
+
+```bash
+mcctl migrate status                                   # which servers need it
+mcctl migrate worlds --server survival --dry-run --backup   # the real plan, nothing changed
+mcctl migrate worlds --server survival --backup
+mcctl start survival                                   # the migration removed the container
+```
+
+#### Recovering after an earlier `mcctl migrate worlds`
+
+Versions before this change could set `LEVEL` and `EXTRA_ARGS` without moving the world, or move only part of it. A server in that state starts with a new, empty world in `worlds/<LEVEL>`. Check each server `mcctl status` lists:
+
+1. Run `mcctl status` and note the servers with `needs migration`.
+2. If `worlds/<LEVEL>` does not exist (the server has not been started since), run `mcctl migrate worlds --server <name>`, then `mcctl start <name>`.
+3. If `worlds/<LEVEL>` exists (the server was started and made an empty world):
+    1. `mcctl stop <name>`.
+    2. Move the empty `worlds/<LEVEL>`, `worlds/<LEVEL>_nether` and `worlds/<LEVEL>_the_end` aside, for example to `worlds/<LEVEL>.empty`. Check first that nothing was built or played in them since the start.
+    3. Run `mcctl migrate worlds --server <name>` again, or move `servers/<name>/data/<LEVEL>` (and `_nether`, `_the_end`) into `worlds/` by hand.
+    4. `mcctl start <name>` and check that the original world is loaded.
+
+Keep the moved-aside folders until you are sure. `mcctl world delete` removes them later.
+
 ---
 
 ### mcctl world new
@@ -1480,6 +1532,9 @@ mcctl world list [options]
       }
     ]
     ```
+
+!!! warning "Worlds that need migration"
+    `mcctl world list` also prints the `needs migration` warnings described under [`mcctl status`](#mcctl-status) for worlds that are still inside a server directory.
 
 !!! info "Duplicate assignments"
     If an older install has two servers on the same world, `mcctl world list` shows `assigned: a, b` and prints a warning for each duplicate (and for each server whose `config.env` cannot be read). Nothing is fixed automatically: assign another world to all but one of the servers. `isLocked` and `lockedBy` remain in the JSON output as aliases for "assigned".
@@ -1984,7 +2039,7 @@ mcctl migrate status
 Migration Status:
 
   survival: needs migration
-    Missing EXTRA_ARGS=--universe /worlds/
+    World in servers/survival/data/world
   creative: up to date
 
 1 server(s) need migration.
@@ -2007,9 +2062,9 @@ mcctl migrate worlds [options]
 |--------|-------------|
 | `--all` | Migrate all servers without selection |
 | `--server <name>` | Migrate only this server |
-| `--dry-run` | Preview changes without applying |
-| `--backup` | Create backup before migration |
-| `--force` | Skip confirmation prompts |
+| `--dry-run` | Show the plan each server would really get; change nothing. Exit code 1 if a server would be refused |
+| `--backup` | Copy the world to `backups/migrate/<server>-<time>/` before moving it |
+| `--force` | Skip the confirmation prompts, and stop running servers without asking |
 
 **Examples:**
 
@@ -2034,28 +2089,38 @@ mcctl migrate worlds [options]
     DRY RUN - No changes will be made
 
     Would migrate: survival
-      1. Stop server if running
-      2. Move world: servers/survival/data/world → worlds/survival
-      3. Update config.env:
-         - Add: EXTRA_ARGS=--universe /worlds/
-         - Set: LEVEL=survival
+      1. Remove container mc-survival (mcctl start survival creates it again)
+      2. Move servers/survival/data/world → worlds/survival
+      3. Set LEVEL=survival and EXTRA_ARGS=--universe /worlds/ in config.env
     ```
+
+    A server that would be refused prints `Would not migrate: <name>: <reason>` and the command exits with code 1.
 
 === "With Backup"
     ```bash
     mcctl migrate worlds --all --backup
     ```
 
-**What Migration Does:**
+**What migration does, per server:**
 
-1. **Stops server** if running
-2. **Moves world data** from `servers/<name>/data/world` to `worlds/<server-name>/`
-3. **Updates config.env**:
-   - Adds `EXTRA_ARGS=--universe /worlds/`
-   - Sets `LEVEL=<server-name>`
-4. **Detects existing worlds** with case-insensitive matching
+1. Reads the world from `LEVEL` (default `world`). The split dimension folders `<LEVEL>_nether` and `<LEVEL>_the_end` (Paper, Spigot) move with it; Vanilla keeps its dimensions inside the world folder.
+2. **Removes the server's container** before anything is moved, so mc-router cannot start it with the old settings and create a new world. This is why you must run `mcctl start <server>` afterwards (the summary prints it).
+3. With `--backup`, copies the world folders to `backups/migrate/<server>-<time>/`.
+4. Moves the folders to `worlds/<LEVEL>`. When `LEVEL` is the default `world`, the world takes the server name (`worlds/<server>`), because `worlds/world` would clash between servers.
+5. Sets `LEVEL` and `EXTRA_ARGS=--universe /worlds/` (kept if already present) in `config.env`.
 
-If the resulting `LEVEL` is used by another server, or a server's assignment cannot be determined, the migration of that server is refused before any data is moved (see [World Assignment Rules](#world-assignment-rules)).
+A server with no world in `data/` only gets the settings changed.
+
+**The migration of a server stops, and changes nothing, when:**
+
+- the world named by `LEVEL` does not exist in `data/` but another folder there holds a world (set `LEVEL` to the world the server uses, then run again);
+- the world folder is a symbolic link (move what it points to by hand);
+- `worlds/<LEVEL>` (or its `_nether` / `_the_end`) already exists, for example because the server was started with an empty world after an earlier migration (keep one copy, move the other aside; see [Recovering after an earlier `mcctl migrate worlds`](#recovering-after-an-earlier-mcctl-migrate-worlds));
+- the result would give a world to two servers, or a server's assignment cannot be determined ([World Assignment Rules](#world-assignment-rules));
+- the container cannot be removed, or Docker cannot be queried (the migration does not go on while Docker does not answer);
+- `data/` and `worlds/` are on different file systems (the rename fails; any step done is undone).
+
+If moving fails halfway, the folders already moved are moved back. `mcctl migrate status` shows `cannot tell` for a server whose `config.env` cannot be read.
 
 !!! info "World Storage Change"
     New servers created with `mcctl create` already use the `/worlds/` directory structure.

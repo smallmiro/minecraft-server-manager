@@ -79,6 +79,14 @@ mcctl migrate spec --all             # 가져오고 파일 쓰기
 - `unsupported_spec_version`: 더 새로운 mcctl이 쓴 파일입니다. mcctl을 업그레이드하세요.
 - `locked`: 다른 mcctl 프로세스가 `servers/compose.yml`을 바꾸거나 서버를 삭제하는 중입니다. 끝난 뒤 다시 시도하세요.
 
-## 서버 생성
+## 컨테이너 제한, 중지 시간, 로그 {#container-memory-limit}
+
+`server.yaml` 필드에 없는 컨테이너 compose 설정입니다.
+
+- **메모리 제한.** 새 서버와 `server.yaml`을 다시 쓰는 서버에는 `mem_limit` = 힙 + max(2G, 힙 / 2)가 들어갑니다. 힙은 `env`에 `MAX_MEMORY`가 있으면 그 값, 없으면 `memory`입니다. JVM은 힙 외에도 메모리(metaspace, code cache, 스레드 스택, direct buffer)가 필요하며, 제한을 넘어 종료된 컨테이너는 월드를 저장하다 멈춥니다. 예: `512M`은 `2560m`, `2G`는 `4g`, `4G`는 `6g`, `6G`는 `9g`, `8G`는 `12g`입니다. `memory`가 없거나 단위 없는 값(퍼센트, 숫자만)이면, 또는 `env`의 값에 `-Xmx`나 `-XX:MaxRAM`이 들어 있으면 제한을 두지 않습니다(`servers/global.env`의 `JVM_OPTS`는 판단에 반영하지 않습니다). swap이 켜진 호스트에서는 컨테이너가 `mem_limit`만큼 swap도 쓸 수 있습니다.
+- **중지 시간.** `stop_grace_period: 90s`는 서버가 월드를 저장할 시간을 줍니다. itzg는 `STOP_DURATION`(기본 60초)까지 기다리는데, Docker 기본값 10초면 그 전에 강제 종료됩니다. `STOP_DURATION`(또는 `STOP_SERVER_ANNOUNCE_DELAY`)을 90초보다 길게 늘렸다면 서버의 `docker-compose.yml`에서 `stop_grace_period`도 늘립니다. mc-router는 `AUTO_SCALE_DOWN_AFTER`로 정한 유휴 시간이 지나면 서버를 중지하며, 중지 자체를 기다리는 60초는 mc-router에 고정되어 있습니다.
+- **로그 회전.** 서버, mc-router, playit-agent는 `json-file` 드라이버와 `max-size: "50m"`, `max-file: "5"`를 사용합니다. `docker logs`는 컨테이너당 최대 250 MB만 보관합니다.
+
+`memory`를 바꾸면 `mem_limit`도 바뀝니다. 손으로 고친 `mem_limit`는 손으로 고친 경우(위 참조)에 해당하므로, [`mcctl migrate spec`](../cli/commands.md#mcctl-migrate-spec)에 `--force`를 주지 않으면 mcctl이 그 위에 compose 파일을 다시 쓰지 않습니다. compose 설정은 컨테이너를 다시 만들어야 적용됩니다. `mcctl migrate spec <name>` 후 서버를 중지하고 `mcctl start <name>`을 실행합니다.
 
 `mcctl create`와 웹 콘솔은 `server.yaml`과 위 파일을 쓰고, avahi에 `<이름>.local`을 등록하며(실패는 경고), `--no-start`가 없으면 서버를 시작합니다. 서버가 만들어지기 전에 실패하면 아무것도 남기지 않아서 같은 생성을 바로 다시 시도할 수 있습니다. 서버는 만들어졌지만 시작하지 못하면 서버는 그대로 둡니다. CLI는 원인과 함께 종료 코드 1로 끝나고 콘솔도 알려 줍니다. `mcctl start <이름>`으로 시작하세요.

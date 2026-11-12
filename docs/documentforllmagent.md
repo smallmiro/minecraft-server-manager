@@ -909,7 +909,7 @@ mcctl migrate spec <server>       # Import a server into server.yaml and render 
 mcctl migrate spec --all [--dry-run] [--force] [--json]
 ```
 
-`migrate worlds` moves the world to `worlds/<server>`, adds `EXTRA_ARGS=--universe /worlds/` and sets `LEVEL=<server>`. `migrate spec` is idempotent (`synced` when nothing changed); `--force` re-renders from `server.yaml` over hand edits of the generated files (keeps `.bak`); a server whose world or image cannot be determined is `refused` (exit 1). Servers without `server.yaml` are also imported automatically on their first change by mcctl.
+`migrate worlds` removes the server's container, moves the world (with `_nether`/`_the_end`) to `worlds/<LEVEL>` (`worlds/<server>` when `LEVEL` is the default `world`), then sets `LEVEL` and `EXTRA_ARGS=--universe /worlds/`. `migrate spec` is idempotent (`synced` when nothing changed); `--force` re-renders from `server.yaml` over hand edits of the generated files (keeps `.bak`); a server whose world or image cannot be determined is `refused` (exit 1). Servers without `server.yaml` are also imported automatically on their first change by mcctl.
 
 ---
 
@@ -960,11 +960,12 @@ mcctl console service start --console # Start API + Console (console needs API)
 mcctl console service stop            # Prompts: "All services" or "Console only"
 mcctl console service stop --api      # Stop ALL services (console depends on API)
 mcctl console service stop --console  # Stop console only
-mcctl console service stop --force    # Delete PM2 processes and kill the PM2 daemon
+mcctl console service stop --force    # Delete the mcctl PM2 processes (the PM2 daemon is not killed)
 
 # Restart services
 mcctl console service restart         # Interactive prompt
-mcctl console service restart --force # Kill PM2 daemon and restart fresh
+mcctl console service restart --force # Delete and recreate the mcctl PM2 processes from ecosystem.config.cjs (current Node.js as interpreter); the PM2 daemon is not killed
+mcctl console service enable          # Start PM2 and the saved services at boot (pm2 startup + pm2 save, needs sudo); undo: pm2 unstartup
 
 # Status and logs
 mcctl console service status          # Show PM2 process status
@@ -1052,7 +1053,7 @@ mcctl audit purge --dry-run            # Preview without deleting
 mcctl audit purge --force              # Skip confirmation
 ```
 
-The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest first, and `--action` takes the full name (e.g. `player.whitelist.add`). Old entries are removed only by `purge` or by the optional auto-cleanup (`AUDIT_AUTO_CLEANUP=true`, off by default; see Configuration).
+The CLI and mcctl-api write to `<root>/data/audit.db`; `list` shows the newest first, and `--action` takes the full name (e.g. `player.whitelist.add`). Old entries are removed only by `purge` or by the auto-cleanup (on by default: `AUDIT_RETENTION_DAYS`, default 90; `AUDIT_AUTO_CLEANUP=false` turns it off; see Configuration).
 
 ---
 
@@ -1194,7 +1195,7 @@ Located at `~/minecraft-servers/.env`:
 HOST_IP=192.168.1.100               # Your server's IP (set by mcctl init)
 HOST_IPS=192.168.1.100,100.64.0.5   # Multiple IPs (VPN mesh); used instead of HOST_IP when set
 MINECRAFT_NETWORK=minecraft-net
-MINECRAFT_SUBNET=172.28.0.0/16      # not read by mcctl; mcctl init creates minecraft-net on this subnet
+MINECRAFT_SUBNET=172.28.0.0/16      # subnet used when mcctl init creates the network (an existing network keeps its subnet)
 DOCKER_GID=999                      # docker.sock group for mc-router (set by mcctl init / mcctl upgrade)
 
 # Defaults
@@ -1226,7 +1227,7 @@ STATS_ANALYZE_TIMEOUT_MS=600000      # ore/block statistics scan (10 min)
 SWAGGER_ENABLED=true                 # serve /docs under NODE_ENV=production
 
 # Audit Logs (read by mcctl-api from this file; the CLI reads only its shell environment)
-AUDIT_AUTO_CLEANUP=true              # Default off; true deletes logs older than AUDIT_RETENTION_DAYS while logs are written
+AUDIT_AUTO_CLEANUP=true              # Default on; false disables deleting logs older than AUDIT_RETENTION_DAYS (runs when the DB is opened and while logs are written)
 AUDIT_RETENTION_DAYS=90
 ```
 
@@ -2765,11 +2766,11 @@ If the error mentions an unreadable world assignment, fix the `LEVEL` line in th
 - Check crashes: `pm2 logs mcctl-api --lines 100`
 - Verify dependencies: `cd ~/minecraft-servers/.services 2>/dev/null || cd ~/minecraft-servers; npm ls @minecraft-docker/mcctl-api`
 - PM2 restarts a service that grows past `max_memory_restart` (`500M`): raise it in `ecosystem.config.cjs`
-- A plain `mcctl console service restart` keeps the env and options PM2 already has. After editing `ecosystem.config.cjs`, use `mcctl console service restart --force` (deletes the processes, kills the PM2 daemon and starts the selected services from the file); `.env` changes need only a plain restart
+- A plain `mcctl console service restart` keeps the env and options PM2 already has. After editing `ecosystem.config.cjs`, use `mcctl console service restart --force` (deletes the mcctl processes and creates them again from the file; the PM2 daemon is not killed); `.env` changes need only a plain restart
 
 #### Console returns 500 after a Node.js change
 
-`pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`: the native `better-sqlite3` module was built for another Node.js version than the PM2 daemon runs. `mcctl console service status` prints the steps: `pm2 kill`, switch to the Node.js version mcctl was installed with (e.g. `nvm use 22`), then `mcctl console service start --console`.
+`pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`: the native `better-sqlite3` module was built for another Node.js version than the PM2 daemon runs. `mcctl console service status` prints the steps: switch to the Node.js version mcctl was installed with (e.g. `nvm use 22`), then `mcctl console service restart --console --force` (and `mcctl console service enable` again if the services must survive a reboot).
 
 #### SSE not working (real-time updates)
 
@@ -3092,7 +3093,7 @@ A: Recommended JVM garbage collection tuning for Minecraft. Reduces GC pause tim
 A: A record of operations from the CLI, mcctl-api and the web console (servers, players, worlds, mods, playit, router, settings, files, schedules). View with `mcctl audit list` or in Web Console. Logs are kept until `mcctl audit purge` or the optional auto-cleanup removes them.
 
 **Q: How do I configure audit retention?**
-A: `AUDIT_AUTO_CLEANUP=true` (default off) and `AUDIT_RETENTION_DAYS` (default 90) in `.env`, read by mcctl-api (the CLI reads only its shell environment). Cleanup runs while logs are written (every 100 entries or 24 hours). Or run `mcctl audit purge --days <n>`.
+A: Cleanup is on by default; `AUDIT_RETENTION_DAYS` (default 90) and `AUDIT_AUTO_CLEANUP=false` (to disable) in `.env`, read by mcctl-api (the CLI reads only its shell environment). Cleanup runs while logs are written (every 100 entries or 24 hours). Or run `mcctl audit purge --days <n>`.
 
 **Q: What actions are tracked?**
 A: `server.` create, delete, start, stop, restart, config, hostname; `player.` whitelist.add, whitelist.remove, whitelist.toggle, ban, unban, op, op.level, deop, kick; `world.` create, delete, assign, release, map.render; `mod.` add, remove; `playit.` start, stop; `router.restart`; `platform.settings.update`; `file.` read, write, delete, mkdir, rename, upload, download; `backup.schedule.` create, update, delete, enable, disable, run; `config.snapshot.` create, delete, restore; `config.snapshot.schedule.` create, update, delete, enable, disable; `audit.purge`. Filter with the full name, e.g. `mcctl audit list --action player.ban`.

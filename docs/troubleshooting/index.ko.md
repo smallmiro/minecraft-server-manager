@@ -234,13 +234,30 @@ mcctl upgrade                                    # 소켓에서 DOCKER_GID를 �
 mcctl router start                               # 새 그룹으로 mc-router를 다시 만듦
 ```
 
+### 예전 `mcctl migrate worlds` 뒤 서버가 빈 월드로 시작함
+
+**증상:** 월드가 있던 서버가 새 빈 월드로 시작하거나, `mcctl status` / `mcctl world list`가 해당 서버에 `needs migration`을 표시합니다.
+
+**원인:** 예전 `mcctl migrate worlds`가 월드를 옮기지 않고(또는 일부만 옮기고) 서버의 `LEVEL`과 `EXTRA_ARGS`만 설정했습니다. 그러면 서버가 `worlds/<LEVEL>`에 새 월드를 만듭니다. 원래 월드는 `servers/<name>/data/<LEVEL>`에 그대로 있습니다.
+
+**진단:**
+
+```bash
+mcctl status                       # "needs migration"인 서버 목록
+ls worlds/ servers/<name>/data     # 원래 월드 옆에 worlds/<LEVEL>이 있는지 확인
+```
+
+**해결:** 서버를 중지하고, `worlds/<LEVEL>`(및 `_nether`, `_the_end`)이 있으면 비어 있는 그 폴더를 옆으로 치운 뒤 `mcctl migrate worlds --server <name>`을 실행하고 서버를 시작합니다. 전체 절차는 [예전 `mcctl migrate worlds`를 실행한 설치 복구](../cli/commands.md#recovering-after-an-earlier-mcctl-migrate-worlds)에 있습니다. 원래 월드가 로드되는 것을 확인하기 전에는 치워 둔 폴더를 삭제하지 마십시오.
+
+**영향 버전:** 이 수정이 들어간 버전 이전에 `mcctl migrate worlds`를 실행한 설치([changelog](https://github.com/smallmiro/minecraft-server-manager/blob/main/CHANGELOG.md)의 `[Unreleased]` 참조).
+
 ### Node.js를 바꾼 뒤 웹 콘솔이 500을 반환함
 
 **증상:** 콘솔 페이지가 HTTP 500을 반환하고, `pm2 logs mcctl-console`에 `NODE_MODULE_VERSION` 또는 `ERR_DLOPEN_FAILED`가 보입니다.
 
 **원인:** 네이티브 모듈 `better-sqlite3`가 PM2 데몬이 실행하는 것과 다른 Node.js 버전으로 빌드되었습니다.
 
-**조치:** `mcctl console service status`가 절차를 출력합니다. `pm2 kill`, mcctl을 설치할 때 쓴 Node.js 버전으로 전환(예: `nvm use 22`), 그다음 `mcctl console service start`를 실행합니다. [업그레이드 런북 4단계](../advanced/upgrade-runbook.ko.md#4-api--console-재시작-필요-시)도 참조하세요.
+**조치:** `mcctl console service status`가 절차를 출력합니다. mcctl을 설치할 때 쓴 Node.js 버전으로 전환(예: `nvm use 22`)한 뒤 `mcctl console service restart --console --force`를 실행합니다. 재부팅 후에도 서비스가 복구되어야 하면 `mcctl console service enable`을 다시 실행합니다. [업그레이드 런북 4단계](../advanced/upgrade-runbook.ko.md#4-api--console-재시작-필요-시)도 참조하세요.
 
 ### `mcctl console`이 접속하지 못함
 

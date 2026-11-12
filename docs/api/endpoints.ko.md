@@ -614,12 +614,25 @@ data: {"type":"connection-closed","data":{"timestamp":"2026-10-25T10:31:00.000Z"
 | 필드 | 설명 |
 |------|------|
 | `success` | `true` |
-| `recreateRequired` | 항상 `true`: 새 레이블은 컨테이너를 다시 만들 때 적용됩니다. 서버를 정지했다가 시작하세요. 재시작으로는 적용되지 않습니다 |
+| `recreateRequired` | 항상 `true`: 새 레이블은 컨테이너를 다시 만들 때 적용됩니다. [`POST .../hostnames/apply`](#post-apiserversnamehostnamesapply)를 호출하거나 서버를 정지했다가 시작하세요. 재시작으로는 적용되지 않습니다 |
 | `playitDomain` | 변경 후의 `PLAYIT_DOMAIN`. 목록에 남아 있으면 유지되고, 빠졌으면 새로 추가된 호스트명이 하나일 때 그 이름으로 바뀌며 그 밖에는 지워집니다. playit.gg 도메인이 없던 서버는 계속 없습니다 |
 
 **오류:** 잘못되었거나 중복된 호스트명이면 `400`, 서버 또는 `docker-compose.yml`이 없으면 `404`, `server.yaml` 기록이 거부되면 `409`.
 
 변경마다 `server.hostname` 감사 로그가 남습니다.
+
+### POST /api/servers/:name/hostnames/apply
+
+서버의 저장된 `docker-compose.yml`로 컨테이너를 다시 만들어 저장된 호스트명을 mc-router에 적용합니다. 웹 콘솔은 호스트명을 저장한 뒤 **Apply now**에서 이 라우트를 호출합니다. 요청 본문은 없습니다.
+
+- **실행 중인** 서버는 `docker compose up -d --force-recreate --no-deps`로 다시 만들어지며, 재시작되어 플레이어 접속이 끊깁니다.
+- **정지된** 서버는 컨테이너만 다시 만들어지고(`--no-start`) 정지 상태로 남으며, 다음 접속 때 mc-router가 시작합니다.
+
+```json
+{ "success": true, "serverName": "survival" }
+```
+
+**오류:** 서버가 없으면 `404`, 재생성이 실패하면 `500`(메시지에 compose 출력 포함). 호출하면 `details.applied`가 `true`인 `server.hostname` 감사 로그가 남습니다.
 
 ---
 
@@ -2442,7 +2455,7 @@ kind 판정:
 |------|------|
 | `byAction` | 나타나는 액션별 개수 |
 | `byStatus` | `success`와 `failure`의 개수 |
-| `byActor` | 최근 1000개 항목 안의 주체별 개수 |
+| `byActor` | 전체 항목의 주체별 개수 |
 | `recentActivity` | 최근 항목 10개 |
 | `oldestEntry`, `newestEntry` | 타임스탬프. 항목이 없으면 `null` |
 

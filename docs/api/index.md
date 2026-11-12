@@ -198,7 +198,7 @@ Errors use one JSON shape:
 | `PayloadTooLarge` | 413 | File or upload over the size limit |
 | `InternalServerError` | 500 | The operation failed; `message` says why |
 | `BadGateway` | 502 | Client-only mod detection failed (`GET /api/mods/:slug/client-only`) |
-| `ServiceUnavailable` | 503 | Docker could not be queried (backup routes) |
+| `ServiceUnavailable` | 503 | The container runtime did not answer, a timeout included (server list, status, detail, logs, exec, router and playit status, world reset, snapshot restore, backup routes). The reply has `Retry-After: 5`. "Cannot tell" is never reported as "stopped" or "absent". Also: too many open event streams, and any request while the API shuts down |
 
 A few routes use other names (the legacy routes, block statistics, server actions); their sections say so.
 
@@ -230,7 +230,7 @@ An unknown route answers `404` with `{"message": "Route GET:/api/unknown not fou
 | 413 | Too large |
 | 500 | Operation failed |
 | 502 | Upstream mod source failed |
-| 503 | Docker could not be queried |
+| 503 | Docker could not be queried, too many event streams, or the API is shutting down (`Retry-After: 5` when retrying helps) |
 
 ## Server-Sent Events { #sse }
 
@@ -244,6 +244,9 @@ Routes that stream use `Content-Type: text/event-stream`. There are two message 
 - **Heartbeat.** Long-lived streams send the comment line `: heartbeat` every 30 seconds. The audit log stream sends `event: heartbeat` with `{"timestamp": "..."}` instead. The map render and block statistics streams end with their job and send no heartbeat.
 - **Polling interval.** Streams that poll take `interval` in milliseconds (1000 to 60000, default 5000): server status, player roster, live player positions and router status.
 - **Disconnect.** Closing the connection stops the polling or the `docker logs` process behind it. A server create keeps running after the client disconnects; a block statistics analysis is cancelled.
+- **Limits.** At most 100 streams are open at once; the 101st request gets `503` with `Retry-After: 5`. A stream is closed by the server after 1 hour; `EventSource` reconnects on its own (the Web Console waits 3 seconds between attempts). A client that left while the handler was still working gets no stream.
+- **Errors inside a stream.** The player roster stream skips a poll that failed and goes on with the next one. The log stream with `follow=true` sends `connection-closed` and ends when `docker logs` cannot run.
+- **Shutdown.** On `SIGTERM` the API ends all open streams, answers new requests with `503`, waits 5 seconds for running requests, then cuts the rest. An automatic backup that is running is waited for up to 120 seconds, 125 seconds in total, below the `kill_timeout` of 130 seconds in `ecosystem.config.cjs`.
 - **Browsers.** The browser `EventSource` API cannot add request headers, so it cannot send `X-API-Key`. Use it only when the API needs no header (`disabled` or `ip-whitelist`); otherwise read the stream with a client that sets headers, such as `curl -N` or `fetch` with a stream reader. The Web Console relays the streams to signed-in users through its own routes.
 
 ```bash
