@@ -120,6 +120,7 @@ Minecraft 서버 컨테이너를 시작, 중지, 조회, 재생성하는 모든 
 - **Fail-closed.** 런타임에 물을 수 없으면(응답 없음, 조회 실패, 타임아웃) `getStatusAsync`, `listStates`, `strict: true`인 `list`/`listAsync`가 "없음"을 돌려주는 대신 `RuntimeUnavailableError`로 reject합니다(타임아웃은 하위 클래스 `RuntimeQueryTimeoutError`). 월드 초기화, 스냅샷 복원, `mcctl migrate`, `mcctl down`처럼 상태를 바꾸는 호출자는 이 오류에서 멈춥니다. mcctl-api는 `Retry-After: 5`와 함께 `503`으로 답합니다(`sendRuntimeUnavailable`, 그리고 라우트에서 새어 나온 경우를 위한 오류 핸들러). "확인할 수 없음"을 "중지됨"으로 보고하지 마십시오.
 - **라벨로 발견.** 서버 컨테이너는 이름이 아니라 라벨로 찾습니다: `io.mcctl.role=server`와 `io.mcctl.server=<name>`(router는 `io.mcctl.role=router`, playit-agent는 `playit`). 라벨이 생기기 전에 만든 컨테이너는 이름과 서비스가 `mc-`로 시작하고 `mc-router`가 아니면 compose 프로젝트로 찾습니다(셸의 `COMPOSE_PROJECT_NAME`, 없으면 루트 `.env`, 없으면 루트 디렉터리 이름. compose 파일의 `name:` 키는 읽지 않습니다). `mcctl upgrade`가 기존 서버에 라벨을 추가하며, 컨테이너를 다시 만들 때 적용됩니다.
 - **재생성.** `recreate()`는 저장된 compose 정의로 컨테이너를 다시 만들어 바뀐 라벨(`mc-router.host` 호스트명)이 적용되게 합니다. 실행 중인 서버는 다시 실행되고, 그 밖의 서버는 시작하지 않고 만들기만 합니다(`POST /api/servers/:name/hostnames/apply`).
+- **계약 테스트.** `@minecraft-docker/shared/testing`의 `runtimeContract(label, makeRuntime)`는 포트의 동작(상태 조회와 타임아웃, fail-closed 조회, 라벨 발견, `recreate()`)을 테스트로 적어 둔 것이다. `FakeContainerRuntime`과 `DockerComposeRuntimeAdapter`에 같은 스위트를 돌리고(`shared/tests/runtime-contract.test.ts`), 새 어댑터도 같은 스위트를 통과해야 한다. 단위 테스트는 호스트의 Docker에 닿지 않는다. 각 패키지의 vitest setup이 컨테이너가 없는 테스트용 `docker`를 `PATH` 맨 앞에 둔다(`installTestDocker()`).
 
 ## 어댑터
 
