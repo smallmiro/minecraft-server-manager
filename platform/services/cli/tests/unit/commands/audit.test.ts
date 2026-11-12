@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { AuditLog, IAuditLogPort } from '@minecraft-docker/shared';
+import type { AuditLogData, IAuditLogPort } from '@minecraft-docker/shared';
 
 // Mock IAuditLogPort
 const mockLog = vi.fn().mockResolvedValue(undefined);
@@ -105,7 +105,7 @@ describe('audit command', () => {
 
   describe('list subcommand', () => {
     it('should list audit logs with default limit (50)', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2025-01-25T10:00:00Z'),
@@ -230,7 +230,7 @@ describe('audit command', () => {
     });
 
     it('should display logs with success status in green', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2025-01-25T10:00:00Z'),
@@ -251,7 +251,7 @@ describe('audit command', () => {
     });
 
     it('should display logs with failure status in red', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2025-01-25T10:00:00Z'),
@@ -282,7 +282,7 @@ describe('audit command', () => {
 
   describe('purge subcommand', () => {
     it('should purge logs older than default 90 days', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-10-01T10:00:00Z'),
@@ -317,7 +317,7 @@ describe('audit command', () => {
     });
 
     it('should purge logs older than specified --days', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-12-01T10:00:00Z'),
@@ -342,12 +342,12 @@ describe('audit command', () => {
 
       expect(exitCode).toBe(0);
       expect(mockDeleteOlderThan).toHaveBeenCalled();
-      const cutoffDate = mockDeleteOlderThan.mock.calls[0][0];
+      const cutoffDate = mockDeleteOlderThan.mock.calls[0]![0];
       expect(cutoffDate).toBeInstanceOf(Date);
     });
 
     it('should purge logs before specified --before date', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-12-01T10:00:00Z'),
@@ -375,7 +375,7 @@ describe('audit command', () => {
     });
 
     it('should perform dry-run with --dry-run flag (no actual deletion)', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-10-01T10:00:00Z'),
@@ -404,7 +404,7 @@ describe('audit command', () => {
     });
 
     it('should skip confirmation with --force flag', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-10-01T10:00:00Z'),
@@ -431,7 +431,7 @@ describe('audit command', () => {
     });
 
     it('should cancel purge when user declines confirmation', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-10-01T10:00:00Z'),
@@ -458,7 +458,7 @@ describe('audit command', () => {
     });
 
     it('should cancel purge when user cancels prompt', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-10-01T10:00:00Z'),
@@ -493,7 +493,7 @@ describe('audit command', () => {
     });
 
     it('should log the purge action to audit log', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2024-10-01T10:00:00Z'),
@@ -539,7 +539,7 @@ describe('audit command', () => {
 
   describe('stats subcommand', () => {
     it('should display statistics summary', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2025-01-25T10:00:00Z'),
@@ -606,7 +606,7 @@ describe('audit command', () => {
     });
 
     it('should display action counts sorted by frequency', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2025-01-25T10:00:00Z'),
@@ -652,7 +652,7 @@ describe('audit command', () => {
     });
 
     it('should display actor counts sorted by frequency', async () => {
-      const mockLogs: AuditLog[] = [
+      const mockLogs: AuditLogData[] = [
         {
           id: '1',
           timestamp: new Date('2025-01-25T10:00:00Z'),

@@ -1,7 +1,7 @@
 import type {
   IServerRepository,
   ServerConfigData,
-} from '../../src/application/ports/outbound/IServerRepository.js';
+} from '@minecraft-docker/shared';
 import {
   Server,
   ServerName,

@@ -53,9 +53,9 @@ describe('mcctl world delete <world>', () => {
     setTty(true);
 
     expect(await run()).toBe(0);
-    expect(confirm.mock.calls[0][0]).toMatchObject({ initialValue: false });
-    expect(confirm.mock.calls[0][0].message).toContain('myworld');
-    expect(confirm.mock.calls[0][0].message).toContain('1 MB');
+    expect(confirm.mock.calls[0]![0]).toMatchObject({ initialValue: false });
+    expect(confirm.mock.calls[0]![0].message).toContain('myworld');
+    expect(confirm.mock.calls[0]![0].message).toContain('1 MB');
     expect(deleteWorldByName).toHaveBeenCalledOnce();
   });
 

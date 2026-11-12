@@ -56,8 +56,8 @@ describe('Pm2ServiceManagerAdapter', () => {
         cb(undefined, [{ name: 'mcctl-api', pm_id: 0, pm2_env: { status: 'online', pm_uptime: now - 60_000 } }])
       );
       const [info] = await adapter.status();
-      expect(info.uptime).toBeGreaterThanOrEqual(60_000);
-      expect(info.uptime).toBeLessThan(65_000);
+      expect(info!.uptime).toBeGreaterThanOrEqual(60_000);
+      expect(info!.uptime).toBeLessThan(65_000);
     });
   });
 });

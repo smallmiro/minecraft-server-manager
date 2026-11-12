@@ -144,4 +144,9 @@ export class MockWorldRepository implements IWorldRepository {
     const world = this.worlds.get(name);
     return world?.seed ?? null;
   }
+
+  /** Creates the world as `create` does; the zip is not read. */
+  async importFromZip(name: string, _zipPath: string): Promise<World> {
+    return this.create(name);
+  }
 }

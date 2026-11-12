@@ -115,7 +115,7 @@ describe('consoleServiceCommand health probe', () => {
       url.endsWith('/health') ? { ok: false, status: 500 } : { ok: true, status: 200 }
     );
     expect(await consoleServiceCommand({ subCommand: 'status', json: true })).toBe(1);
-    const out = JSON.parse(logSpy.mock.calls[0][0] as string);
+    const out = JSON.parse(logSpy.mock.calls[0]![0] as string);
     expect(out.api.health).toBe('HTTP 500');
     expect(out.healthy).toBe(false);
   });
@@ -126,13 +126,13 @@ describe('consoleServiceCommand health probe', () => {
       return { ok: true, status: 200 };
     });
     expect(await consoleServiceCommand({ subCommand: 'status', json: true })).toBe(1);
-    expect(JSON.parse(logSpy.mock.calls[0][0] as string).console.health).toBe('unreachable');
+    expect(JSON.parse(logSpy.mock.calls[0]![0] as string).console.health).toBe('unreachable');
 
     mockFetch.mockResolvedValue({ ok: false, status: 401 });
     // api /health 401 is non-2xx -> only console is tolerant
     logSpy.mockClear();
     await consoleServiceCommand({ subCommand: 'status', json: true });
-    expect(JSON.parse(logSpy.mock.calls[0][0] as string).console.health).toBeUndefined();
+    expect(JSON.parse(logSpy.mock.calls[0]![0] as string).console.health).toBeUndefined();
   });
 
   it('status: prints native module hint when error log has NODE_MODULE_VERSION', async () => {
