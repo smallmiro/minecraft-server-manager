@@ -1,16 +1,28 @@
-import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type Database from 'better-sqlite3';
+import { LazySqlite } from './sqlite.js';
 import type { IAuditLogPort, AuditLogQueryOptions } from '../../application/ports/outbound/IAuditLogPort.js';
 import { AuditLog, type AuditLogData, type AuditLogRow } from '../../domain/entities/AuditLog.js';
 import type { AuditActionEnum } from '../../domain/value-objects/AuditAction.js';
+
+/** Default for AUDIT_RETENTION_DAYS, used when it is unset or not a positive integer. */
+const DEFAULT_RETENTION_DAYS = 90;
+
+/** Aggregate figures for the audit log, computed in SQL. */
+export interface AuditLogStats {
+  total: number;
+  byAction: Record<string, number>;
+  byStatus: { success: number; failure: number };
+  byActor: Record<string, number>;
+  oldest: Date | null;
+  newest: Date | null;
+}
 
 /**
  * SqliteAuditLogRepository
  * Implements IAuditLogPort using SQLite database storage with better-sqlite3
  */
 export class SqliteAuditLogRepository implements IAuditLogPort {
-  private readonly db: Database.Database;
+  private readonly sqlite: LazySqlite;
   private logCallCount = 0;
   private lastCleanupTime = Date.now();
 
@@ -25,32 +37,35 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
    * @param dbPath - Path to the SQLite database file
    */
   constructor(dbPath: string) {
-    // Ensure directory exists
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+    // Retention is on by default (#673): AUDIT_AUTO_CLEANUP=false turns it off
+    this.autoCleanupEnabled = process.env.AUDIT_AUTO_CLEANUP !== 'false';
+    const days = Number(process.env.AUDIT_RETENTION_DAYS);
+    this.retentionDays = Number.isInteger(days) && days > 0 ? days : DEFAULT_RETENTION_DAYS;
 
-    // Open database connection
-    this.db = new Database(dbPath);
+    // Opening prunes too, so retention applies even when few entries are written
+    this.sqlite = new LazySqlite(dbPath, (db) => {
+      this.migrate(db);
+      if (this.autoCleanupEnabled) {
+        db.prepare('DELETE FROM audit_logs WHERE timestamp < ?').run(this.retentionCutoff(Date.now()).toISOString());
+      }
+    });
+  }
 
-    // Enable WAL mode for better concurrency
-    this.db.pragma('journal_mode = WAL');
+  private retentionCutoff(now: number): Date {
+    return new Date(now - this.retentionDays * 24 * 60 * 60 * 1000);
+  }
 
-    // Run migrations
-    this.migrate();
-
-    // Initialize auto-cleanup settings from environment
-    this.autoCleanupEnabled = process.env.AUDIT_AUTO_CLEANUP === 'true';
-    this.retentionDays = parseInt(process.env.AUDIT_RETENTION_DAYS || '90', 10);
+  /** The database handle, opened with the shared settings on first use (#673). */
+  private get db(): Database.Database {
+    return this.sqlite.get();
   }
 
   /**
    * Run database migrations
    * Creates tables and indexes if they don't exist
    */
-  private migrate(): void {
-    this.db.exec(`
+  private migrate(db: Database.Database): void {
+    db.exec(`
       CREATE TABLE IF NOT EXISTS audit_logs (
         id TEXT PRIMARY KEY,
         action TEXT NOT NULL,
@@ -118,8 +133,7 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
       this.logCallCount >= this.cleanupCheckInterval ||
       timeSinceLastCleanup >= this.cleanupTimeThreshold
     ) {
-      const cutoffDate = new Date(now - this.retentionDays * 24 * 60 * 60 * 1000);
-      this.deleteOlderThan(cutoffDate).catch((error) => {
+      this.deleteOlderThan(this.retentionCutoff(now)).catch((error) => {
         // Log error but don't throw - auto-cleanup is best-effort
         console.error('Auto-cleanup failed:', error);
       });
@@ -183,6 +197,48 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
     const rows = stmt.all(...params);
 
     return rows.map((row) => AuditLog.fromRaw(row));
+  }
+
+  /**
+   * Find one audit log by id
+   */
+  async findById(id: string): Promise<AuditLog | null> {
+    const row = this.db.prepare<[string], AuditLogRow>('SELECT * FROM audit_logs WHERE id = ?').get(id);
+    return row ? AuditLog.fromRaw(row) : null;
+  }
+
+  /**
+   * Totals by action, status and actor, and the oldest and newest timestamps
+   */
+  async stats(): Promise<AuditLogStats> {
+    const totals = this.db
+      .prepare<[], { total: number; success: number | null; failure: number | null; oldest: string | null; newest: string | null }>(
+        `SELECT COUNT(*) AS total,
+                SUM(status = 'success') AS success,
+                SUM(status = 'failure') AS failure,
+                MIN(timestamp) AS oldest,
+                MAX(timestamp) AS newest
+         FROM audit_logs`
+      )
+      .get()!;
+    const countBy = (column: 'action' | 'actor'): Record<string, number> =>
+      Object.fromEntries(
+        this.db
+          .prepare<[], { key: string; count: number }>(
+            `SELECT ${column} AS key, COUNT(*) AS count FROM audit_logs GROUP BY ${column}`
+          )
+          .all()
+          .map((r) => [r.key, r.count])
+      );
+
+    return {
+      total: totals.total,
+      byAction: countBy('action'),
+      byStatus: { success: totals.success ?? 0, failure: totals.failure ?? 0 },
+      byActor: countBy('actor'),
+      oldest: totals.oldest ? new Date(totals.oldest) : null,
+      newest: totals.newest ? new Date(totals.newest) : null,
+    };
   }
 
   /**
@@ -283,6 +339,6 @@ export class SqliteAuditLogRepository implements IAuditLogPort {
    * Should be called when the repository is no longer needed
    */
   close(): void {
-    this.db.close();
+    this.sqlite.close();
   }
 }

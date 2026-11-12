@@ -309,6 +309,7 @@ export { formatWorldBytes } from './format.js';
 
 export * from './env-file.js';
 export * from './atomic-write.js';
+export * from './sqlite-settings.js';
 
 /**
  * Console output utilities with colors

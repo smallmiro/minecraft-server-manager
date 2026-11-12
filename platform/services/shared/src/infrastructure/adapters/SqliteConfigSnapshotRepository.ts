@@ -36,10 +36,11 @@ interface ConfigSnapshotDbRow {
  * in a separate config_snapshot_files table with CASCADE delete.
  */
 export class SqliteConfigSnapshotRepository implements IConfigSnapshotRepository {
-  private readonly db: Database.Database;
+  constructor(private readonly database: ConfigSnapshotDatabase) {}
 
-  constructor(database: ConfigSnapshotDatabase) {
-    this.db = database.getDatabase();
+  /** Opened by ConfigSnapshotDatabase on first use (#673). */
+  private get db(): Database.Database {
+    return this.database.getDatabase();
   }
 
   /**

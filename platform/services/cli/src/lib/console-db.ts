@@ -1,7 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-import { existsSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
+import { openSqlite } from '@minecraft-docker/shared';
 
 // ============================================================
 // Types
@@ -147,15 +146,7 @@ export class ConsoleDatabase {
   private db: Database.Database;
 
   constructor(dbPath: string) {
-    // Ensure parent directory exists
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
-
-    this.db = new Database(dbPath);
-    this.db.pragma('journal_mode = WAL');
-    this.db.pragma('foreign_keys = ON');
+    this.db = openSqlite(dbPath, (db) => db.pragma('foreign_keys = ON'));
   }
 
   /**

@@ -114,10 +114,11 @@ describe('ConfigSnapshotDatabase', () => {
     database.close();
   });
 
-  test('should create directory if not exists', () => {
+  test('should create directory if not exists on first use', () => {
     const nestedDir = join(testDir, 'nested', 'deep');
     const dbPath = join(nestedDir, 'test.db');
     const database = new ConfigSnapshotDatabase(dbPath);
+    database.getDatabase();
 
     expect(existsSync(nestedDir)).toBeTruthy();
 
