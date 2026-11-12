@@ -138,10 +138,13 @@ describe('BlueMapCliRenderer', () => {
       ...runPrefix,
       '-v', `${join(mapsDir, '-lobby', 'config')}:/work/config`,
       '-v', `${join(mapsDir, '.bluemap-data')}:/work/data`,
+      // The render ends inside the container after 2h (#672)
+      '--entrypoint', 'timeout',
       '-v', `${web}:/work/web`,
       '-v', `${join(worldsDir, '-lobby')}:/worlds/overworld:ro`,
       '-v', `${join(worldsDir, '-lobby_nether')}:/worlds/nether:ro`,
-      '--', IMAGE, '-c', '/work/config', '-r', '-g', '-m', 'overworld,nether',
+      '--', IMAGE, '-k', '30s', '2h', 'java', '-jar', '/opt/bluemap/bluemap-cli.jar',
+      '-c', '/work/config', '-r', '-g', '-m', 'overworld,nether',
     ]);
   });
 
@@ -267,5 +270,15 @@ describe('BlueMapCliRenderer', () => {
 
     expect(err).toBeInstanceOf(MapRenderError);
     expect((err as Error).message).toMatch(/render exploded/);
+  });
+
+  it('reports a render stopped by its time limit (#672)', async () => {
+    mkRegion(join(worldsDir, 'w', 'region'));
+    vi.stubEnv('FAKE_RENDER_EXIT', '124');
+
+    const err = await renderer().renderWorld('w').catch((e: unknown) => e);
+
+    expect(err).toBeInstanceOf(MapRenderError);
+    expect((err as Error).message).toMatch(/timed out after 2h/);
   });
 });

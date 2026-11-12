@@ -18,6 +18,12 @@ const IMAGE = 'mcctl-bluemap:5.22';
  * container limit for its heap by default, so let it use 75%.
  */
 const MEMORY_ARGS = ['--memory', '2g', '-e', 'JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=75'];
+// The render ends inside the container (coreutils `timeout` wraps the image's
+// java entrypoint), so the container stops and --rm removes it; killing only
+// the docker CLI would leave it running (#672). Exit 124 means the limit hit.
+// ponytail: fixed limit, make it an option if huge worlds need longer.
+const RENDER_TIME_LIMIT = '2h';
+const RENDER_ENTRYPOINT = ['-k', '30s', RENDER_TIME_LIMIT, 'java', '-jar', '/opt/bluemap/bluemap-cli.jar'];
 
 /** Map id -> Minecraft dimension id, viewer name, and viewer order. */
 const MAPS: Record<Dimension, { dimension: string; name: string; sorting: number }> = {
@@ -157,7 +163,7 @@ export class BlueMapCliRenderer implements IMapRenderer {
     const renderArgs = ['-c', '/work/config', '-r', '-g', '-m', maps.join(',')];
     if (options?.force) renderArgs.push('-f');
     const { code, stdout, stderr } = await this.docker(
-      [...run, '-v', `${webDir}:/work/web`, ...worldMounts, '--', IMAGE, ...renderArgs],
+      [...run, '--entrypoint', 'timeout', '-v', `${webDir}:/work/web`, ...worldMounts, '--', IMAGE, ...RENDER_ENTRYPOINT, ...renderArgs],
       (line) => {
         const progress = onProgress && parseProgressLine(line);
         if (progress) onProgress(progress);
@@ -165,6 +171,7 @@ export class BlueMapCliRenderer implements IMapRenderer {
     );
     if (code !== 0) {
       const detail = (stderr.trim() || stdout.trim()).slice(-500) || `exit code ${code}`;
+      if (code === 124) throw new MapRenderError(`Map render timed out after ${RENDER_TIME_LIMIT}`);
       const hint = code === 137 ? ' (killed: out of memory?)' : '';
       throw new MapRenderError(`Map render failed${hint}: ${detail}`);
     }
