@@ -19,7 +19,10 @@ import {
   DockerRuntimeEnvironmentAdapter,
   RUNTIME_QUERY_TIMEOUT_MS,
 } from '../src/infrastructure/adapters/DockerComposeRuntimeAdapter.js';
-import { RuntimeQueryTimeoutError } from '../src/application/ports/outbound/IContainerRuntimePort.js';
+import {
+  RuntimeQueryTimeoutError,
+  RuntimeUnavailableError,
+} from '../src/application/ports/outbound/IContainerRuntimePort.js';
 import { ServerName } from '../src/domain/value-objects/ServerName.js';
 
 const PIPE = { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] };
@@ -140,7 +143,7 @@ describe('DockerComposeRuntimeAdapter (leaf queries)', () => {
 
   it('list({ strict: true }) throws when docker fails, so "none running" and "cannot tell" differ (#732)', () => {
     vi.mocked(spawnSync).mockReturnValue(exited(1));
-    expect(() => runtime.list({ running: true, strict: true })).toThrow();
+    expect(() => runtime.list({ running: true, strict: true })).toThrow(RuntimeUnavailableError);
     vi.mocked(spawnSync).mockReturnValue(exited(0, ''));
     expect(runtime.list({ running: true, strict: true })).toEqual([]);
     vi.mocked(spawnSync).mockReturnValue(exited(0, 'mc-b\nmc-router\nmc-a\n'));
@@ -290,7 +293,8 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
   it.each(['exited', 'created', 'not_found'])(
     'recreate leaves a %s container stopped: created, not started (auto-scale wakes it, #671)',
     async (state) => {
-      execFileCalls(state === 'not_found' ? new Error('exit 1') : { stdout: `${state}\n` }, {});
+      if (state === 'not_found') execFileCalls(new Error('exit 1'), { stdout: '' }, {});
+      else execFileCalls({ stdout: `${state}\n` }, {});
       expect((await runtime.recreate(ServerName.create('alpha'))).success).toBe(true);
       expect(execFile).toHaveBeenCalledWith(
         'docker',
@@ -300,6 +304,14 @@ describe('DockerComposeRuntimeAdapter lifecycle', () => {
       );
     }
   );
+
+  it('recreate fails, without touching the container, when its state cannot be read (#669)', async () => {
+    execFileCalls(new Error('exit 1'), new Error('Cannot connect to the Docker daemon'));
+    const result = await runtime.recreate(ServerName.create('alpha'));
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/Cannot connect/);
+    expect(vi.mocked(execFile).mock.calls.map(([, args]) => (args as string[])[0])).toEqual(['inspect', 'ps']);
+  });
 
   it('stop runs docker stop -- <name> with env and no timeout', async () => {
     execFileCalls({});
@@ -891,14 +903,15 @@ describe('async request-path queries (#672)', () => {
     expect(spawnSync).not.toHaveBeenCalled();
   });
 
-  it('listStates with strict rejects when docker fails, so "no containers" and "cannot tell" differ', async () => {
+  it('listStates rejects with RuntimeUnavailableError when docker fails: "no containers" and "cannot tell" differ (#669)', async () => {
     execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { code: 1, stderr: 'daemon down' }));
-    await expect(runtime.listStates({ strict: true })).rejects.toThrow(/daemon down/);
+    const failure = runtime.listStates();
+    await expect(failure).rejects.toBeInstanceOf(RuntimeUnavailableError);
+    await expect(failure).rejects.toThrow(/daemon down/);
   });
 
-  it('listStates without strict keeps the D1 contract of list(): a failed docker ps reads as no containers', async () => {
-    execFileCalls(Object.assign(new Error('Cannot connect to the Docker daemon'), { code: 1, stderr: 'daemon down' }));
-    expect(await runtime.listStates()).toEqual(new Map());
+  it('a timeout is one kind of RuntimeUnavailableError (#669)', () => {
+    expect(new RuntimeQueryTimeoutError('x')).toBeInstanceOf(RuntimeUnavailableError);
   });
 
   it('a hung docker is killed at the timeout and rejects with RuntimeQueryTimeoutError, never a sentinel', async () => {
@@ -910,13 +923,30 @@ describe('async request-path queries (#672)', () => {
     await expect(runtime.listAsync()).rejects.toBeInstanceOf(RuntimeQueryTimeoutError);
   });
 
-  it('getStatusAsync keeps its sentinel and mapping, now with a timeout', async () => {
-    execFileCalls({ stdout: 'Running\n' }, new Error('No such object'));
+  it('getStatusAsync maps the state, with a timeout', async () => {
+    execFileCalls({ stdout: 'Running\n' });
     expect(await runtime.getStatusAsync('mc-a')).toBe('running');
     expect(argvOf()).toEqual(['docker', ['inspect', '-f', '{{.State.Status}}', '--', 'mc-a']]);
     expect(vi.mocked(execFile).mock.calls[0]?.[2]).toEqual(QUERY);
-    expect(await runtime.getStatusAsync('mc-a')).toBe('not_found');
     expect(spawn).not.toHaveBeenCalled();
+  });
+
+  it('getStatusAsync is not_found only when docker ps answers without the container (#669)', async () => {
+    execFileCalls(new Error('No such object'), { stdout: 'mc-ab\nmc-a-old\n' });
+    expect(await runtime.getStatusAsync('mc-a')).toBe('not_found');
+    expect(argvOf(1)).toEqual(['docker', ['ps', '-a', '--filter', 'name=mc-a', '--format', '{{.Names}}']]);
+  });
+
+  it('getStatusAsync rejects with RuntimeUnavailableError when docker cannot be asked (#669)', async () => {
+    execFileCalls(
+      new Error('Cannot connect'),
+      Object.assign(new Error('Cannot connect'), { code: 1, stderr: 'daemon down' }),
+      new Error('inspect broke'),
+      { stdout: 'mc-a\n' }
+    );
+    await expect(runtime.getStatusAsync('mc-a')).rejects.toBeInstanceOf(RuntimeUnavailableError);
+    // ps lists it, so the failed inspect was not "absent"
+    await expect(runtime.getStatusAsync('mc-a')).rejects.toBeInstanceOf(RuntimeUnavailableError);
   });
 
   it('getLogsAsync tails like getLogs and returns "" on failure', async () => {
@@ -949,7 +979,7 @@ describe('async request-path queries (#672)', () => {
       ['ps', '--filter', 'name=mc-', '--filter', 'status=running', '--format', '{{.Names}}'],
     ]);
     expect(await runtime.listAsync()).toEqual([]);
-    await expect(runtime.listAsync({ running: true, strict: true })).rejects.toThrow();
+    await expect(runtime.listAsync({ running: true, strict: true })).rejects.toBeInstanceOf(RuntimeUnavailableError);
   });
 });
 

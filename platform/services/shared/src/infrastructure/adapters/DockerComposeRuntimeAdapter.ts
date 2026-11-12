@@ -13,6 +13,7 @@ import type { ServerName } from '../../domain/value-objects/ServerName.js';
 import { workloadNameOf } from './workloadNames.js';
 import {
   RuntimeQueryTimeoutError,
+  RuntimeUnavailableError,
   type IContainerRuntimePort,
   type RuntimeActionResult,
   type WorkloadState,
@@ -37,7 +38,8 @@ export const RUNTIME_QUERY_TIMEOUT_MS = 10_000;
 
 /**
  * Awaited `docker <args>` for request paths (#672): trimmed stdout. A non-zero
- * exit is '' (the D1 sentinel) unless `strict`, where it rejects. Past the
+ * exit is '' (the D1 sentinel) unless `strict`, where it rejects with
+ * RuntimeUnavailableError (#669). Past the
  * timeout the child is killed and the query rejects with RuntimeQueryTimeoutError.
  */
 async function query(args: string[], options: { strict?: boolean } = {}): Promise<string> {
@@ -55,7 +57,7 @@ async function query(args: string[], options: { strict?: boolean } = {}): Promis
       throw new RuntimeQueryTimeoutError(`docker ${args[0]} did not answer within ${RUNTIME_QUERY_TIMEOUT_MS} ms`);
     }
     if (options.strict) {
-      throw new Error(`docker ${args[0]} failed: ${String(failure.stderr ?? '').trim() || failure.message}`);
+      throw new RuntimeUnavailableError(`docker ${args[0]} failed: ${String(failure.stderr ?? '').trim() || failure.message}`);
     }
     return '';
   }
@@ -233,19 +235,26 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
   }
 
   /**
-   * Async `docker inspect` (the pre-#665 ServerRepository query, with `--`).
-   * Non-zero exit → 'not_found'; otherwise the lower-cased state.
+   * Async `docker inspect` (the pre-#665 ServerRepository query, with `--`):
+   * the lower-cased state. inspect fails alike for an absent container and an
+   * unreachable runtime, so a failure is 'not_found' only when a strict
+   * `docker ps -a` answers without the container (#669).
    */
   async getStatusAsync(name: ServerName | string): Promise<ContainerStatus> {
-    const result = await query(['inspect', '-f', '{{.State.Status}}', '--', workloadNameOf(name)]);
-    if (!result) return 'not_found';
-    return result.toLowerCase() as ContainerStatus;
+    const container = workloadNameOf(name);
+    const result = await query(['inspect', '-f', '{{.State.Status}}', '--', container]);
+    if (result) return result.toLowerCase() as ContainerStatus;
+    const names = await query(['ps', '-a', '--filter', `name=${container}`, '--format', '{{.Names}}'], { strict: true });
+    if (names.split('\n').includes(container)) {
+      throw new RuntimeUnavailableError(`docker inspect failed for existing container ${container}`);
+    }
+    return 'not_found';
   }
 
-  async listStates(options?: { strict?: boolean }): Promise<Map<string, WorkloadState>> {
+  async listStates(): Promise<Map<string, WorkloadState>> {
     const result = await query(
       ['ps', '-a', '--filter', 'name=mc-', '--format', '{{.Names}}\t{{.State}}\t{{.Status}}\t{{.Label "mc-router.host"}}'],
-      { strict: options?.strict }
+      { strict: true }
     );
     const states = new Map<string, WorkloadState>();
     for (const line of result.split('\n')) {
@@ -311,7 +320,7 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
     if (options?.strict) {
       const r = spawnSync('docker', args, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] });
       if (r.error || r.status !== 0) {
-        throw new Error(`docker ps failed: ${r.error?.message ?? (r.stderr || `exit ${r.status}`).trim()}`);
+        throw new RuntimeUnavailableError(`docker ps failed: ${r.error?.message ?? (r.stderr || `exit ${r.status}`).trim()}`);
       }
       result = (r.stdout ?? '').trim();
     } else {
@@ -404,7 +413,13 @@ export class DockerComposeRuntimeAdapter implements IContainerRuntimePort {
    */
   async recreate(name: ServerName | string): Promise<RuntimeActionResult> {
     const container = workloadNameOf(name);
-    const run = (await this.getStatusAsync(name)) === 'running' ? '-d' : '--no-start';
+    let status: ContainerStatus;
+    try {
+      status = await this.getStatusAsync(name);
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+    const run = status === 'running' ? '-d' : '--no-start';
     return this.compose(['compose', 'up', run, '--force-recreate', '--no-deps', container], this.options.startTimeoutMs);
   }
 

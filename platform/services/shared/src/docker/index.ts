@@ -382,8 +382,8 @@ function routesOf(
  * Request paths call this, so every docker query is awaited and bounded (#672):
  * one `docker ps` gives every state and host label, labels are inspected only
  * for hosted containers, and health comes from the same API answer. A docker
- * timeout rejects with RuntimeQueryTimeoutError; a failed docker reads as no
- * containers, as on the sync path (fail-closed is #669's decision).
+ * that cannot be asked rejects with RuntimeUnavailableError (a timeout with
+ * its RuntimeQueryTimeoutError), never an empty router (#669).
  */
 export async function getRouterDetailInfoAsync(
   options: { routerApi?: IMcRouterApiPort } = {}
@@ -621,8 +621,8 @@ export function serverExists(serverName: string, serversDir?: string): boolean {
 // ---------------------------------------------------------------------------
 // Async status queries for API request paths (#672). One `docker ps` answers
 // every status, health and existence check; concurrent callers share it and a
-// success is reused for STATES_TTL_MS. A failed docker reads as no containers,
-// as on the sync path; a timeout rejects and is not cached.
+// success is reused for STATES_TTL_MS. A docker that cannot be asked (failed or
+// timed out) rejects with RuntimeUnavailableError and is not cached (#669).
 // ---------------------------------------------------------------------------
 
 const STATES_TTL_MS = 2_000;
@@ -729,8 +729,7 @@ export async function getDetailedServerInfoFromConfig(
 /**
  * Get detailed server info (works for both running containers and config-only servers).
  * API request path: awaited, bounded docker queries only (#672); a docker
- * timeout rejects with RuntimeQueryTimeoutError, a failed docker falls back to
- * config as on the sync path (#669 decides fail-closed).
+ * that cannot be asked rejects with RuntimeUnavailableError (#669).
  */
 export async function getServerDetailedInfo(
   serverName: string,

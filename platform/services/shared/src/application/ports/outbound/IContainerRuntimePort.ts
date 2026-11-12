@@ -49,17 +49,20 @@ export interface WorkloadState {
  * (`mc-<server>`, `mc-router`, `playit-agent`); that form is @deprecated for
  * servers and is narrowed once every caller passes a ServerName (#667; router
  * and playit-agent need #641 first).
- * D1 contract: "absent" and "runtime unreachable" are NOT distinguished (A7 changes this).
- * Synchronous methods remain for the CLI. Request paths use the async ones
- * (#672): they run as awaited child processes with a timeout and reject with
- * RuntimeQueryTimeoutError when it passes; other failures keep the sentinels.
+ * D1 contract: the synchronous methods do NOT distinguish "absent" from
+ * "runtime unreachable"; they remain for the CLI. Request paths use the async
+ * ones (#672): awaited child processes with a timeout that reject with
+ * RuntimeQueryTimeoutError when it passes. getStatusAsync and listStates
+ * reject with RuntimeUnavailableError on any failure (#669); the other async
+ * queries keep their sentinels for other failures.
  */
 export interface IContainerRuntimePort {
   /** 'not_found' when absent or when the runtime cannot be queried. */
   getStatus(name: ServerName | string): ContainerStatus;
   /**
-   * getStatus without blocking the event loop (#665): same sentinel, the query
-   * runs as an awaited child process. For callers on request paths.
+   * getStatus without blocking the event loop (#665), for callers on request
+   * paths. 'not_found' only when the runtime answers without the workload; a
+   * runtime that cannot be asked rejects with RuntimeUnavailableError (#669).
    */
   getStatusAsync(name: ServerName | string): Promise<ContainerStatus>;
   /** 'none' without a healthcheck, 'unknown' on failure. */
@@ -67,8 +70,9 @@ export interface IContainerRuntimePort {
   exists(name: ServerName | string): boolean;
   /** Server workloads (mc-* except mc-router), sorted. [] on failure. */
   /**
-   * With `strict: true` (#732) a failed query throws instead of returning [], so
-   * "none running" and "cannot tell" differ. Default callers keep the D1 contract.
+   * With `strict: true` (#732) a failed query throws RuntimeUnavailableError
+   * instead of returning [], so "none running" and "cannot tell" differ.
+   * Default callers keep the D1 contract.
    */
   list(options?: { running?: boolean; strict?: boolean }): string[];
   /** Last `lines` lines (default 50). '' on failure. */
@@ -85,10 +89,10 @@ export interface IContainerRuntimePort {
   listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]>;
   /**
    * Every `mc-*` workload (mc-router included) keyed by container name, from
-   * one runtime query (#672). Like list(): a failed query is an empty map
-   * unless `strict`, where it rejects. A timeout always rejects.
+   * one runtime query (#672). A failed query rejects with
+   * RuntimeUnavailableError, never an empty map (#669).
    */
-  listStates(options?: { strict?: boolean }): Promise<Map<string, WorkloadState>>;
+  listStates(): Promise<Map<string, WorkloadState>>;
 
   /** Create the workload if missing, then run it. */
   start(name: ServerName | string): Promise<RuntimeActionResult>;

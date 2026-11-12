@@ -3,11 +3,12 @@
  * (#665) and maps it to ServerStatus exactly as the old `docker inspect` did.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { Paths } from '../src/utils/index.js';
 import { ServerRepository } from '../src/infrastructure/adapters/ServerRepository.js';
+import { DockerComposeRuntimeAdapter } from '../src/infrastructure/adapters/DockerComposeRuntimeAdapter.js';
 import { ServerName, ServerStatus } from '../src/domain/index.js';
 import type { IContainerRuntimePort } from '../src/application/ports/index.js';
 import type { ContainerStatus } from '../src/types/index.js';
@@ -54,6 +55,27 @@ describe('ServerRepository runtime status (#665)', () => {
     await new ServerRepository(new Paths(root), runtime).getStatus('alpha');
     expect(runtime.getStatusAsync).toHaveBeenCalledWith(ServerName.fromExisting('alpha'));
     expect(runtime.getStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe('ServerRepository status while the Docker daemon is down (#669)', () => {
+  const savedPath = process.env.PATH;
+  afterEach(() => {
+    process.env.PATH = savedPath;
+  });
+
+  it('is UNKNOWN, not STOPPED', async () => {
+    const bin = join(root, 'bin');
+    mkdirSync(bin);
+    writeFileSync(
+      join(bin, 'docker'),
+      '#!/bin/sh\necho "Cannot connect to the Docker daemon at unix:///var/run/docker.sock" >&2\nexit 1\n'
+    );
+    chmodSync(join(bin, 'docker'), 0o755);
+    process.env.PATH = `${bin}${delimiter}${savedPath}`;
+    const repo = new ServerRepository(new Paths(root), new DockerComposeRuntimeAdapter());
+    expect(await repo.getStatus('alpha')).toBe(ServerStatus.UNKNOWN);
+    expect((await repo.findByName('alpha'))?.status).toBe(ServerStatus.UNKNOWN);
   });
 });
 
