@@ -76,7 +76,8 @@ export async function executeServerAction(
 
   const options: ExecFileOptions = {
     cwd: mcctlRoot,
-    timeout: 60000, // 60 second timeout
+    // Outlasts the servers' 90s stop_grace_period (#661) so a slow stop is not reported as failed
+    timeout: 120000,
     // Ensure Docker Compose uses the correct compose file
     env: childProcessEnv({ COMPOSE_FILE: 'docker-compose.yml' }),
   };

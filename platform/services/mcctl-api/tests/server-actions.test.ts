@@ -293,7 +293,7 @@ describe('Server Action Routes', () => {
         'docker',
         args,
         expect.objectContaining({
-          timeout: 60000,
+          timeout: 120000,
           env: expect.objectContaining({ COMPOSE_FILE: 'docker-compose.yml' }),
         }),
         expect.any(Function)

@@ -19,8 +19,8 @@ const routerLabels = (labels: Map<string, string | null>) =>
 /**
  * The YAML paths where a server compose differs from the rendered one
  * outside the spec-owned fields (ADR-0003 §3). Spec-owned fields (image,
- * mc-router labels) and known legacy variants (env_file ../../.env, #685)
- * do not count. `environmentMoved`: the compose environment was moved into
+ * mc-router labels) and known legacy variants (env_file ../../.env, #685;
+ * no stop_grace_period, #661) do not count. `environmentMoved`: the compose environment was moved into
  * the spec (import), so only EULA is compared.
  */
 export function composeOutsideEdits(
@@ -56,6 +56,7 @@ export function composeOutsideEdits(
     if (Array.isArray(theirs['env_file'])) {
       theirs['env_file'] = theirs['env_file'].map((f: unknown) => (f === '../../.env' ? '../global.env' : f));
     }
+    theirs['stop_grace_period'] ??= ours['stop_grace_period'];
   }
   return diff(current, rendered, '');
 }
