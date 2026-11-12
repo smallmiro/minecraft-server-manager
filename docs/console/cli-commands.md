@@ -586,6 +586,7 @@ Manage Management Console lifecycle via PM2.
 | `restart` | Restart Management Console |
 | `status` | Show service status |
 | `logs` | View service logs |
+| `enable` | Start PM2, and the saved services, at boot |
 
 Without a subcommand, `mcctl console service` shows the status.
 
@@ -665,7 +666,7 @@ mcctl console service stop [options]
 |--------|-------------|
 | `--api` | Stop mcctl-api. mcctl-console is stopped too, because the console cannot run without the API |
 | `--console` | Stop only mcctl-console |
-| `--force` | Delete the PM2 processes and kill the PM2 daemon (this stops every process PM2 manages, not only the mcctl services) |
+| `--force` | Delete the mcctl PM2 processes instead of stopping them. The PM2 daemon and other apps it manages are not touched |
 
 Without `--api` or `--console`, the command asks whether to stop "All services" or "Console only" when both services are installed.
 
@@ -696,7 +697,7 @@ mcctl console service restart [options]
 |--------|-------------|
 | `--api` | Restart only mcctl-api |
 | `--console` | Restart mcctl-console. mcctl-api is restarted too, because the console depends on it |
-| `--force` | Delete the mcctl PM2 processes, kill the PM2 daemon, start the selected mcctl services again, then save the PM2 process list (`pm2 save`). Everything else PM2 manages (other apps, and an mcctl service you did not select) is stopped with the daemon, is not started again, and is missing from the saved list |
+| `--force` | Delete the selected mcctl PM2 processes, create them again from `ecosystem.config.cjs` with the Node.js running `mcctl` as interpreter, then save the PM2 process list (`pm2 save`). The PM2 daemon and other apps it manages are not touched. To reset the daemon itself, run `pm2 kill` yourself |
 
 Without `--api` or `--console`, the command asks whether to restart "API only" or "API + Console" when both services are installed.
 
@@ -791,7 +792,24 @@ For each online service, the command checks over HTTP that it answers: mcctl-api
 
 - `status` exits with code 1 when an installed service is not online or fails its check. When neither service is registered in PM2, it prints `Services not running` and exits with 0.
 - `start` and `restart` repeat the checks for up to 15 seconds and exit with code 1 if a service is still not healthy.
-- If the PM2 error log shows a native module built for another Node.js version (`NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`), the command also prints how to recover: run `pm2 kill`, switch to the Node.js version used to install mcctl (for example `nvm use 22`), then run `mcctl console service start`.
+- If the PM2 error log shows a native module built for another Node.js version (`NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`), the command also prints how to recover: switch to the Node.js version used to install mcctl (for example `nvm use 22`), then run `mcctl console service restart --console --force`.
+
+### mcctl console service enable
+
+Make PM2 start at boot and bring back the services you started, so the console and API survive a reboot.
+
+```bash
+mcctl console service enable
+```
+
+It runs two steps:
+
+1. `sudo env PATH=<directory of the Node.js running mcctl>:$PATH pm2 startup -u <user> --hp <home>` registers PM2 with systemd (Linux) or launchd (macOS). Without a terminal it runs `sudo -n`, so it fails instead of waiting for a password; as root it runs without `sudo`.
+2. `pm2 save` stores the current process list. `mcctl console service start` saves it too, so the services you started come back after a reboot.
+
+If a step fails, the command prints the line to run yourself and exits with code 1. PM2 must be on `PATH` (otherwise it prints an install hint and exits with code 1). `PM2_HOME` is supported only when its directory is named `.pm2`.
+
+Run it with the same Node.js that installed mcctl (for example `nvm use 22` on a home server): the unit keeps the absolute path of that Node.js, and `better-sqlite3` was built for it. After you switch Node.js versions or move the nvm directory, run `mcctl console service restart --console --force`, then `mcctl console service enable` again. To undo: `pm2 unstartup`.
 
 ### mcctl console service logs
 

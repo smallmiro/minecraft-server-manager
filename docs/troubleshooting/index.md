@@ -240,7 +240,7 @@ mcctl router start                               # recreate mc-router with the n
 
 **Cause:** The native `better-sqlite3` module was built for a different Node.js version than the one the PM2 daemon runs.
 
-**Fix:** `mcctl console service status` prints the steps: `pm2 kill`, switch to the Node.js version you installed mcctl with (for example `nvm use 22`), then `mcctl console service start`. See also [Upgrade Runbook, step 4](../advanced/upgrade-runbook.md#4-restart-api--console-if-needed).
+**Fix:** `mcctl console service status` prints the steps: switch to the Node.js version you installed mcctl with (for example `nvm use 22`), then run `mcctl console service restart --console --force`. If the services should also come back after a reboot, run `mcctl console service enable` again. See also [Upgrade Runbook, step 4](../advanced/upgrade-runbook.md#4-restart-api--console-if-needed).
 
 ### `mcctl console` Cannot Connect
 

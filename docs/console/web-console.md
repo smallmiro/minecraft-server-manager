@@ -988,7 +988,7 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
     mcctl console service restart --console --force
     ```
 
-    `--force` kills the PM2 daemon, so other apps managed by PM2 stop as well (see [`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart)). `mcctl console init --force` writes a new `ecosystem.config.cjs` without this setting.
+    `--force` deletes and recreates only the mcctl processes; the PM2 daemon and other apps are untouched (see [`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart)). `mcctl console init --force` writes a new `ecosystem.config.cjs` without this setting.
 
 ---
 

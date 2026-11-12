@@ -988,7 +988,7 @@ Console usage analytics is on (anonymous install ID and page paths, sent to Goog
     mcctl console service restart --console --force
     ```
 
-    `--force`는 PM2 데몬을 종료하므로 PM2가 관리하는 다른 앱도 함께 중지됩니다([`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart) 참조). `mcctl console init --force`는 이 설정이 없는 새 `ecosystem.config.cjs`를 작성합니다.
+    `--force`는 mcctl 프로세스만 삭제하고 다시 만들며, PM2 데몬과 다른 앱은 건드리지 않습니다([`mcctl console service restart`](cli-commands.md#mcctl-console-service-restart) 참조). `mcctl console init --force`는 이 설정이 없는 새 `ecosystem.config.cjs`를 작성합니다.
 
 ---
 

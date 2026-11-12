@@ -960,11 +960,12 @@ mcctl console service start --console # Start API + Console (console needs API)
 mcctl console service stop            # Prompts: "All services" or "Console only"
 mcctl console service stop --api      # Stop ALL services (console depends on API)
 mcctl console service stop --console  # Stop console only
-mcctl console service stop --force    # Delete PM2 processes and kill the PM2 daemon
+mcctl console service stop --force    # Delete the mcctl PM2 processes (the PM2 daemon is not killed)
 
 # Restart services
 mcctl console service restart         # Interactive prompt
-mcctl console service restart --force # Kill PM2 daemon and restart fresh
+mcctl console service restart --force # Delete and recreate the mcctl PM2 processes from ecosystem.config.cjs (current Node.js as interpreter); the PM2 daemon is not killed
+mcctl console service enable          # Start PM2 and the saved services at boot (pm2 startup + pm2 save, needs sudo); undo: pm2 unstartup
 
 # Status and logs
 mcctl console service status          # Show PM2 process status
@@ -2765,11 +2766,11 @@ If the error mentions an unreadable world assignment, fix the `LEVEL` line in th
 - Check crashes: `pm2 logs mcctl-api --lines 100`
 - Verify dependencies: `cd ~/minecraft-servers/.services 2>/dev/null || cd ~/minecraft-servers; npm ls @minecraft-docker/mcctl-api`
 - PM2 restarts a service that grows past `max_memory_restart` (`500M`): raise it in `ecosystem.config.cjs`
-- A plain `mcctl console service restart` keeps the env and options PM2 already has. After editing `ecosystem.config.cjs`, use `mcctl console service restart --force` (deletes the processes, kills the PM2 daemon and starts the selected services from the file); `.env` changes need only a plain restart
+- A plain `mcctl console service restart` keeps the env and options PM2 already has. After editing `ecosystem.config.cjs`, use `mcctl console service restart --force` (deletes the mcctl processes and creates them again from the file; the PM2 daemon is not killed); `.env` changes need only a plain restart
 
 #### Console returns 500 after a Node.js change
 
-`pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`: the native `better-sqlite3` module was built for another Node.js version than the PM2 daemon runs. `mcctl console service status` prints the steps: `pm2 kill`, switch to the Node.js version mcctl was installed with (e.g. `nvm use 22`), then `mcctl console service start --console`.
+`pm2 logs mcctl-console` shows `NODE_MODULE_VERSION` or `ERR_DLOPEN_FAILED`: the native `better-sqlite3` module was built for another Node.js version than the PM2 daemon runs. `mcctl console service status` prints the steps: switch to the Node.js version mcctl was installed with (e.g. `nvm use 22`), then `mcctl console service restart --console --force` (and `mcctl console service enable` again if the services must survive a reboot).
 
 #### SSE not working (real-time updates)
 

@@ -240,7 +240,7 @@ mcctl router start                               # 새 그룹으로 mc-router를
 
 **원인:** 네이티브 모듈 `better-sqlite3`가 PM2 데몬이 실행하는 것과 다른 Node.js 버전으로 빌드되었습니다.
 
-**조치:** `mcctl console service status`가 절차를 출력합니다. `pm2 kill`, mcctl을 설치할 때 쓴 Node.js 버전으로 전환(예: `nvm use 22`), 그다음 `mcctl console service start`를 실행합니다. [업그레이드 런북 4단계](../advanced/upgrade-runbook.ko.md#4-api--console-재시작-필요-시)도 참조하세요.
+**조치:** `mcctl console service status`가 절차를 출력합니다. mcctl을 설치할 때 쓴 Node.js 버전으로 전환(예: `nvm use 22`)한 뒤 `mcctl console service restart --console --force`를 실행합니다. 재부팅 후에도 서비스가 복구되어야 하면 `mcctl console service enable`을 다시 실행합니다. [업그레이드 런북 4단계](../advanced/upgrade-runbook.ko.md#4-api--console-재시작-필요-시)도 참조하세요.
 
 ### `mcctl console`이 접속하지 못함
 

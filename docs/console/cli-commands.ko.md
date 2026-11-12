@@ -586,6 +586,7 @@ PM2를 통해 Management Console 수명주기를 관리합니다.
 | `restart` | Management Console 재시작 |
 | `status` | 서비스 상태 표시 |
 | `logs` | 서비스 로그 보기 |
+| `enable` | 부팅 시 PM2와 저장된 서비스를 시작 |
 
 하위 명령어 없이 `mcctl console service`를 실행하면 상태를 표시합니다.
 
@@ -665,7 +666,7 @@ mcctl console service stop [options]
 |--------|-------------|
 | `--api` | mcctl-api 중지. 콘솔은 API 없이 실행될 수 없으므로 mcctl-console도 함께 중지됨 |
 | `--console` | mcctl-console만 중지 |
-| `--force` | PM2 프로세스를 삭제하고 PM2 데몬을 종료 (mcctl 서비스뿐 아니라 PM2가 관리하는 모든 프로세스가 중지됨) |
+| `--force` | 중지하는 대신 mcctl PM2 프로세스를 삭제합니다. PM2 데몬과 PM2가 관리하는 다른 앱은 건드리지 않습니다 |
 
 `--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "All services"와 "Console only" 중 무엇을 중지할지 묻습니다.
 
@@ -696,7 +697,7 @@ mcctl console service restart [options]
 |--------|-------------|
 | `--api` | mcctl-api만 재시작 |
 | `--console` | mcctl-console 재시작. 콘솔은 API에 의존하므로 mcctl-api도 함께 재시작됨 |
-| `--force` | mcctl PM2 프로세스를 삭제하고 PM2 데몬을 종료한 뒤, 선택한 mcctl 서비스를 다시 시작하고 PM2 프로세스 목록을 저장 (`pm2 save`). PM2가 관리하던 나머지(다른 앱, 선택하지 않은 mcctl 서비스)는 데몬과 함께 중지되고 다시 시작되지 않으며 저장된 목록에서도 빠짐 |
+| `--force` | 선택한 mcctl PM2 프로세스를 삭제한 뒤 `ecosystem.config.cjs`에서 다시 만들고(interpreter는 `mcctl`을 실행 중인 Node.js), PM2 프로세스 목록을 저장 (`pm2 save`). PM2 데몬과 PM2가 관리하는 다른 앱은 건드리지 않습니다. 데몬 자체를 초기화하려면 직접 `pm2 kill`을 실행합니다 |
 
 `--api`나 `--console`을 지정하지 않으면, 두 서비스가 모두 설치된 경우 "API only"와 "API + Console" 중 무엇을 재시작할지 묻습니다.
 
@@ -791,7 +792,24 @@ PM2에 등록되지 않은 서비스는 JSON 출력에서 `null`입니다.
 
 - `status`는 설치된 서비스가 온라인이 아니거나 확인에 실패하면 종료 코드 1로 끝납니다. 두 서비스 모두 PM2에 등록되어 있지 않으면 `Services not running`을 출력하고 종료 코드 0으로 끝납니다.
 - `start`와 `restart`는 최대 15초 동안 확인을 반복하며, 그래도 정상이 아닌 서비스가 있으면 종료 코드 1로 끝납니다.
-- PM2 오류 로그에 다른 Node.js 버전용으로 빌드된 네이티브 모듈(`NODE_MODULE_VERSION` 또는 `ERR_DLOPEN_FAILED`)이 보이면 복구 방법도 출력합니다. `pm2 kill`을 실행하고, mcctl을 설치할 때 쓴 Node.js 버전으로 전환한 뒤(예: `nvm use 22`), `mcctl console service start`를 실행하세요.
+- PM2 오류 로그에 다른 Node.js 버전용으로 빌드된 네이티브 모듈(`NODE_MODULE_VERSION` 또는 `ERR_DLOPEN_FAILED`)이 보이면 복구 방법도 출력합니다. mcctl을 설치할 때 쓴 Node.js 버전으로 전환한 뒤(예: `nvm use 22`), `mcctl console service restart --console --force`를 실행하세요.
+
+### mcctl console service enable
+
+부팅 시 PM2가 시작되고 시작해 둔 서비스가 복구되도록 설정합니다. 재부팅 후에도 콘솔과 API가 살아납니다.
+
+```bash
+mcctl console service enable
+```
+
+두 단계를 실행합니다.
+
+1. `sudo env PATH=<mcctl을 실행 중인 Node.js의 디렉터리>:$PATH pm2 startup -u <user> --hp <home>`으로 PM2를 systemd(Linux) 또는 launchd(macOS)에 등록합니다. 터미널이 없으면 `sudo -n`으로 실행하므로 비밀번호를 기다리지 않고 실패합니다. root이면 `sudo` 없이 실행합니다.
+2. `pm2 save`로 현재 프로세스 목록을 저장합니다. `mcctl console service start`도 목록을 저장하므로, 시작해 둔 서비스는 재부팅 후 복구됩니다.
+
+단계가 실패하면 직접 실행할 한 줄을 출력하고 종료 코드 1로 끝납니다. PM2가 `PATH`에 있어야 하며, 없으면 설치 안내를 출력하고 종료 코드 1로 끝납니다. `PM2_HOME`은 디렉터리 이름이 `.pm2`일 때만 지원합니다.
+
+mcctl을 설치한 것과 같은 Node.js로 실행합니다(홈랩에서는 예: `nvm use 22`). 등록된 유닛이 그 Node.js의 절대 경로를 유지하며, `better-sqlite3`도 그 버전에 맞춰 빌드되어 있습니다. Node.js 버전을 바꾸거나 nvm 디렉터리를 옮긴 뒤에는 `mcctl console service restart --console --force`를 실행하고 `mcctl console service enable`을 다시 실행합니다. 되돌리려면 `pm2 unstartup`을 실행합니다.
 
 ### mcctl console service logs
 
