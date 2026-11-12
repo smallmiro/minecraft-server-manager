@@ -45,8 +45,9 @@ function fakeDocker(fake: FakeDocker) {
     if (cmd === 'curl') return exited(0, '200');
     if (cmd !== 'docker') return exited(1);
     if (args[0] === 'ps' && args[args.length - 1]?.includes('{{.State}}')) {
+      // discovery columns first (#674): name, io.mcctl.role, compose project, compose service
       const line = (name: string, state: string, labels: Record<string, string> | null) =>
-        [name, state, state === 'running' ? 'Up 1 hour' : 'Exited (0)', labels?.['mc-router.host'] ?? ''].join('\t');
+        [name, labels ? 'server' : 'router', 'minecraft', name, state, state === 'running' ? 'Up 1 hour' : 'Exited (0)', labels?.['mc-router.host'] ?? ''].join('\t');
       return exited(
         0,
         [
@@ -55,7 +56,9 @@ function fakeDocker(fake: FakeDocker) {
         ].join('\n')
       );
     }
-    if (args[0] === 'ps') return exited(0, ['mc-router', ...Object.keys(containers)].join('\n'));
+    if (args[0] === 'ps') {
+      return exited(0, ['mc-router\trouter\tminecraft\trouter', ...Object.keys(containers).map(n => `${n}\tserver\tminecraft\t${n}`)].join('\n'));
+    }
     const format = args[2];
     const name = args[args.length - 1];
     if (name === 'mc-router') {

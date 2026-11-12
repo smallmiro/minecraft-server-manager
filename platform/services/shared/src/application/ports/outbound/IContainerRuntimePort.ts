@@ -54,8 +54,9 @@ export interface IContainerRuntimePort {
   /** 'none' without a healthcheck, 'unknown' on failure. */
   getHealth(name: ServerName | string): HealthStatus;
   exists(name: ServerName | string): boolean;
-  /** Server workloads (mc-* except mc-router), sorted. [] on failure. */
   /**
+   * Server workloads, sorted. [] on failure. Selected by label (io.mcctl.role=server, #674), not by a
+   * name match; containers created before the label are found through the compose project.
    * With `strict: true` (#732) a failed query throws instead of returning [], so
    * "none running" and "cannot tell" differ. Default callers keep the D1 contract.
    */
@@ -73,7 +74,7 @@ export interface IContainerRuntimePort {
   getLogsAsync(name: ServerName | string, lines?: number): Promise<string>;
   listAsync(options?: { running?: boolean; strict?: boolean }): Promise<string[]>;
   /**
-   * Every `mc-*` workload (mc-router included) keyed by container name, from
+   * Every server workload (as list() selects them) and mc-router, keyed by container name, from
    * one runtime query (#672). Like list(): a failed query is an empty map
    * unless `strict`, where it rejects. A timeout always rejects.
    */
