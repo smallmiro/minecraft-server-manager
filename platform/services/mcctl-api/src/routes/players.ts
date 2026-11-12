@@ -114,12 +114,17 @@ function serializeSessionHistory(history: SessionHistory): SessionHistoryRespons
   };
 }
 
+/** How long a Mojang profile lookup may take (#672). */
+const MOJANG_TIMEOUT_MS = 10_000;
+
 /**
  * Look up UUID from Mojang API. Returns empty string on failure.
  */
 async function lookupUuid(playerName: string): Promise<string> {
   try {
-    const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(playerName)}`);
+    const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(playerName)}`, {
+      signal: AbortSignal.timeout(MOJANG_TIMEOUT_MS),
+    });
     if (!response.ok) return '';
     const data = await response.json() as { id: string; name: string };
     return data.id.replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, '$1-$2-$3-$4-$5');
@@ -390,7 +395,9 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       // Fetch from Mojang API
-      const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+      const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`, {
+        signal: AbortSignal.timeout(MOJANG_TIMEOUT_MS),
+      });
 
       if (response.status === 404) {
         return reply.code(404).send({ error: 'NotFound', message: `Player '${username}' not found` });
