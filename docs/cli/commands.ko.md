@@ -18,7 +18,7 @@ mcctl init [options]
 |--------|-------------|
 | `--root <path>` | 사용자 지정 데이터 디렉토리 |
 | `--skip-validation` | 사전 요구사항 확인(Node.js, Docker, Docker Compose, avahi) 건너뛰기 |
-| `--skip-docker` | `minecraft-net` Docker 네트워크를 만들지 않음 |
+| `--skip-docker` | Docker 네트워크(`MINECRAFT_NETWORK`, 기본값 `minecraft-net`)를 만들지 않음 |
 | `--reconfigure` | 이미 초기화된 플랫폼의 설정 변경 (호스트 IP 주소, 타임존, RCON 비밀번호 등) |
 | `--playit-key <key>` | 이 `PLAYIT_SECRET_KEY`로 playit.gg 활성화 (묻지 않음) |
 | `--no-playit` | playit.gg를 켜지 않음 (묻지 않음) |
@@ -53,7 +53,7 @@ mcctl --root /opt/minecraft init
 └── backups/
 ```
 
-`mcctl init`은 사용할 호스트 IP 주소(`.env`의 `HOST_IP`, `HOST_IPS`)와 playit.gg 사용 여부를 묻습니다. `.env`에는 무작위 24자 `RCON_PASSWORD`를 기록합니다. 이미 초기화된 플랫폼에서는 아무것도 바꾸지 않고 `mcctl init --reconfigure`를 안내합니다.
+`mcctl init`은 사용할 호스트 IP 주소(`.env`의 `HOST_IP`, `HOST_IPS`)와 playit.gg 사용 여부를 묻습니다. `.env`에는 무작위 24자 `RCON_PASSWORD`를 기록합니다. 같은 네트워크가 이미 있지 않으면 `.env`의 `MINECRAFT_NETWORK`(기본값 `minecraft-net`) 이름과 `MINECRAFT_SUBNET`(기본값 `172.28.0.0/16`) 서브넷으로 Docker 네트워크를 만듭니다. `--skip-docker`를 주면 만들지 않습니다. 이미 초기화된 플랫폼에서는 아무것도 바꾸지 않고 `mcctl init --reconfigure`를 안내합니다.
 
 ---
 
@@ -89,7 +89,9 @@ mcctl down
 mcctl down
 ```
 
-모든 mc-* 컨테이너를 중지하고 `docker compose down`을 실행하며, 이때 컨테이너가 제거됩니다. `minecraft-net` 네트워크는 `external`로 선언되어 있어 남습니다.
+mcctl이 관리하는 실행 중인 컨테이너를 하나씩 중지한 뒤 `docker compose down`을 실행하며, 이때 compose 프로젝트의 컨테이너가 제거됩니다. 라벨 `io.mcctl.server` 또는 `io.mcctl.role`이 있는 컨테이너가 mcctl 관리 대상입니다(라벨이 생기기 전의 서버는 compose 프로젝트와 `mc-` 이름 접두사로 찾습니다). 그래서 이름에 `mc-`가 들어 있을 뿐인 다른 컨테이너는 건드리지 않습니다. 네트워크(`MINECRAFT_NETWORK`, 기본값 `minecraft-net`)는 `external`로 선언되어 있어 남습니다.
+
+컨테이너 목록을 읽을 수 없거나, 컨테이너 중지 또는 `docker compose down`이 하나라도 실패하면 0이 아닌 종료 코드로 끝나고 감사 로그에 실패로 기록됩니다. `mcctl start --all`, `mcctl stop --all`도 마찬가지입니다.
 
 ---
 
@@ -305,6 +307,14 @@ mcctl status router
     mcctl status --watch --interval 2
     ```
 
+!!! warning "마이그레이션이 필요한 월드"
+    개요 출력 뒤에, 월드가 아직 서버 디렉터리 안에 있는 서버마다 stderr로 경고를 출력합니다(`--json` 출력은 깨끗하게 유지됩니다).
+
+    ```text
+    [WARN] Server 'survival' keeps its world in servers/survival/data/world: needs migration (mcctl migrate worlds --server survival)
+    ```
+
+    `servers/<name>/data/<LEVEL> was left behind by an earlier migration of '<name>': needs migration (...)`는 예전 `mcctl migrate worlds`가 사본을 남겼다는 뜻입니다. `mcctl world list`도 같은 경고를 출력합니다. [서버 안의 월드 옮기기](#moving-a-world-out-of-a-server)를 참조하세요.
 ---
 
 ### mcctl update
@@ -454,11 +464,17 @@ mcctl upgrade [options]
 8. `.mcctl.json`에 `installId`가 없으면 추가합니다 (기존 값은 유지)
 9. (v3.0.0 이상) `<root>/scripts`가 있으면 경로, v3.0.0부터 쓰지 않으며 직접 고친 파일이 있을 수 있다는 경고, [스크립트 → mcctl 대응표](../advanced/upgrade-runbook.ko.md#v300-scripts) 링크를 출력합니다. 터미널에서는 `Remove <path>?`(기본값 `N`)를 묻고 `y`일 때만 삭제합니다. `--non-interactive`이거나 터미널이 없으면 힌트(`rm -r <path>`)만 출력하고 아무것도 지우지 않습니다. `--dry-run`이면 `Would ask before removing <path>.`만 출력합니다. 심볼릭 링크는 링크만 지우고 따라가지 않습니다. 확인을 건너뛰는 옵션은 없습니다.
 
-**docker-compose.yml router 패치:** `router` 서비스의 `image` 태그와 `group_add` 항목만 번들 템플릿에 맞춥니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.
+10. 각 서버의 `docker-compose.yml`에 빠진 키를 추가합니다: `stop_grace_period: 90s`, `logging` 블록(`json-file`, `max-size: "50m"`, `max-file: "5"`), 라벨 `io.mcctl.server: "<name>"`와 `io.mcctl.role: "server"`. 바뀐 파일은 서버 디렉터리에 `docker-compose.yml.bak-<timestamp>`로 백업됩니다. `--dry-run`은 대상 서버만 나열합니다. 안전하게 고칠 수 없는 파일(예: 리스트 형식 `labels:`)은 건드리지 않고, `servers/_template/docker-compose.yml`에서 복사할 키를 안내합니다
+11. `mem_limit`는 추가하지 않습니다. 모드 서버가 실제로 쓰는 양보다 작은 제한은 저장 중에 서버를 죽이기 때문입니다. 제한이 없는 서버만 알려 주며, 규칙을 지금 적용하려면 `mcctl migrate spec <name>`을 실행하고 서버를 다시 만듭니다([컨테이너 제한, 중지 시간, 로그](../configuration/server-yaml.ko.md#container-memory-limit) 참조)
+
+!!! warning "기존 컨테이너는 이전 설정을 유지합니다"
+    컨테이너는 만들어질 때의 중지 시간, 로그 설정, 라벨을 유지합니다. 다시 만들 때까지는 Docker 기본 중지 시간 10초와 이전 로그 설정을 씁니다. 서버가 유휴 상태일 때 업그레이드가 출력하는 명령을 실행합니다: `docker stop -t 90 mc-<name> && mcctl start <name>`. 라벨이 없는 서버도 compose 프로젝트로 계속 찾습니다. 서버의 `STOP_DURATION`(또는 `STOP_SERVER_ANNOUNCE_DELAY`)을 90초보다 길게 늘렸다면 `stop_grace_period`도 함께 늘립니다.
+
+**docker-compose.yml router 패치:** `router` 서비스의 `image` 태그와 `group_add` 항목을 번들 템플릿에 맞추고, `router`와 `playit` 서비스에 `logging` 블록이 없으면 추가합니다. 다른 서비스, 포트, 주석, 줄바꿈 형식은 그대로 유지됩니다.
 
 - 줄 단위 diff를 보여 준 뒤 적용 여부를 확인합니다 (`--non-interactive`는 확인 없이 적용, `--dry-run`은 diff만 표시)
 - 원본은 `docker-compose.yml.bak-<timestamp>`로 백업되며, 쓰기에 실패하면 복원됩니다
-- 패치가 적용되면 `docker compose up -d router`로 mc-router를 재생성합니다 (실행 중인 서버는 영향을 받지 않음)
+- 패치가 적용되면 `docker compose up -d router`로 mc-router를 재생성합니다 (실행 중인 서버는 영향을 받지 않음). playit-agent는 다시 만들 때 로그 설정을 받습니다: `mcctl playit stop && mcctl playit start`
 - 자동 패치가 불가능하면 직접 추가할 줄을 안내하는 경고를 표시합니다
 - compose 갱신에 실패해도 나머지 단계는 계속 진행하며, 명령은 종료 코드 `1`로 끝납니다
 
@@ -787,7 +803,7 @@ mcctl logs router
 mcctl console <name>
 ```
 
-하위 명령 `mcctl console init`, `service`, `user`, `api`, `remove`는 관리 콘솔을 관리합니다. 자세한 내용은 [콘솔 CLI 명령어](../console/cli-commands.ko.md)에 있습니다. `mcctl admin <subcommand>`는 이 명령들의 deprecated 별칭입니다. 이름이 이 하위 명령과 같은 서버에는 `mcctl rcon <name>`으로 접속합니다.
+하위 명령 `mcctl console init`, `service`, `user`, `api`, `remove`는 관리 콘솔을 관리합니다. 자세한 내용은 [콘솔 CLI 명령어](../console/cli-commands.ko.md)에 있습니다. `mcctl admin <subcommand>`는 이 명령들의 deprecated 별칭입니다. 이름이 이 하위 명령과 같은 서버에는 `mcctl rcon <name>`으로 접속합니다. `mcctl console service enable`(신규)은 부팅 시 PM2가 시작되도록 등록합니다. [콘솔 CLI 명령어](../console/cli-commands.ko.md#mcctl-console-service-enable)를 참조하세요.
 
 !!! note "v3.0.0부터: `docker exec` 대신 TCP RCON"
     `mcctl console`은 `mcctl rcon`처럼 서버의 RCON 포트에 TCP로 연결합니다(컨테이너 주소, `RCON_PORT`, `RCON_PASSWORD`). 예전에는 `docker exec -i mc-<name> rcon-cli`를 실행했습니다. 서버가 실행 중이어야 하고, `mcctl`을 실행하는 호스트에서 RCON 포트에 닿아야 합니다. `exit`나 `quit`을 입력하거나 `Ctrl+C`/`Ctrl+D`를 누르면 끝납니다. 파이프 입력은 한 줄씩 실행합니다(`printf 'list\n' | mcctl console myserver`). 서버가 연결을 끊으면(예: `stop` 뒤) 세션이 끝나고, 연결 오류는 종료 코드 1로 끝납니다.
@@ -1344,6 +1360,42 @@ mcctl player online --all
 - **안전 우선(fail-closed).** 어떤 서버의 `config.env`를 읽을 수 없거나 `LEVEL`을 안전하게 해석할 수 없으면, 문제를 고칠 때까지 모든 할당 변경과 월드 삭제·초기화가 거부됩니다. 안전하지 않은 값은 경로 구분자, `.` 또는 `..`, 따옴표, 제어 문자, 작은따옴표 밖의 `${VAR}` 같은 Compose 보간, 지원하지 않는 `--universe` 위치입니다. `My World` 같은 레거시 이름은 기존 값으로는 계속 허용되며, 새 이름은 영문자, 숫자, `-`, `_`만 쓸 수 있습니다.
 - **이전 설치.** 중복 할당은 고치지 않고 알려 줍니다. [`mcctl world list`](#mcctl-world-list)를 참고하세요.
 
+#### 서버가 월드를 두는 위치 { #where-a-server-keeps-its-world }
+
+서버는 `config.env`의 `EXTRA_ARGS`에 따라 두 곳 중 한 곳에 월드를 둡니다.
+
+| 위치 | `EXTRA_ARGS` | 월드 폴더 |
+|------|--------------|-----------|
+| 공유 `worlds/` (이 페이지의 모델) | `--universe /worlds/` 포함 | `worlds/<LEVEL>` |
+| 서버 안 (공유 디렉터리 이전에 만든 서버) | `--universe` 없음 | `servers/<name>/data/<LEVEL>` |
+
+`worlds/`에 있는 월드만 할당, 해제, 서버 간 이동을 할 수 있습니다. `mcctl create`로 만든 서버는 이미 `worlds/`를 사용합니다.
+
+#### 서버 안의 월드 옮기기 { #moving-a-world-out-of-a-server }
+
+월드가 `servers/<name>/data/` 안에 있는 서버는 [`mcctl migrate worlds`](#mcctl-migrate-worlds)를 실행합니다. `mcctl status`와 `mcctl world list`가 이런 서버를 `needs migration`으로 알려 줍니다.
+
+```bash
+mcctl migrate status                                   # 필요한 서버 확인
+mcctl migrate worlds --server survival --dry-run --backup   # 실제 계획만 표시, 변경 없음
+mcctl migrate worlds --server survival --backup
+mcctl start survival                                   # 마이그레이션이 컨테이너를 제거했습니다
+```
+
+#### 예전 `mcctl migrate worlds`를 실행한 설치 복구 { #recovering-after-an-earlier-mcctl-migrate-worlds }
+
+이 변경 이전 버전은 월드를 옮기지 않고 `LEVEL`과 `EXTRA_ARGS`만 바꾸거나 일부만 옮길 수 있었습니다. 그 상태의 서버는 `worlds/<LEVEL>`에 새 빈 월드를 만들어 시작합니다. `mcctl status`가 알려 주는 서버마다 확인합니다.
+
+1. `mcctl status`를 실행해 `needs migration` 서버를 확인합니다.
+2. `worlds/<LEVEL>`이 없으면(그 뒤로 서버를 시작하지 않은 경우) `mcctl migrate worlds --server <name>`을 실행하고 `mcctl start <name>`을 실행합니다.
+3. `worlds/<LEVEL>`이 있으면(서버를 시작해 빈 월드가 만들어진 경우):
+    1. `mcctl stop <name>`을 실행합니다.
+    2. 빈 `worlds/<LEVEL>`, `worlds/<LEVEL>_nether`, `worlds/<LEVEL>_the_end`를 `worlds/<LEVEL>.empty` 같은 이름으로 치웁니다. 먼저 시작 이후 그 안에서 건설이나 플레이가 없었는지 확인합니다.
+    3. `mcctl migrate worlds --server <name>`을 다시 실행하거나, `servers/<name>/data/<LEVEL>`(과 `_nether`, `_the_end`)을 `worlds/`로 직접 옮깁니다.
+    4. `mcctl start <name>`을 실행하고 원래 월드가 로드되는지 확인합니다.
+
+치워 둔 폴더는 확신이 설 때까지 보관합니다. 나중에 `mcctl world delete`로 지울 수 있습니다.
+
 ---
 
 ### mcctl world new
@@ -1480,6 +1532,9 @@ mcctl world list [options]
       }
     ]
     ```
+
+!!! warning "마이그레이션이 필요한 월드"
+    `mcctl world list`는 월드가 아직 서버 디렉터리 안에 있으면 [`mcctl status`](#mcctl-status)에서 설명한 `needs migration` 경고도 출력합니다.
 
 !!! info "중복 할당"
     이전 설치에서 두 서버가 같은 월드를 쓰고 있으면 `mcctl world list`가 `assigned: a, b`로 표시하고, 중복마다(그리고 `config.env`를 읽을 수 없는 서버마다) 경고를 출력합니다. 자동으로 고치지 않으므로, 한 서버만 남기고 나머지 서버에는 다른 월드를 할당하세요. JSON 출력의 `isLocked`와 `lockedBy`는 "할당됨"의 별칭으로 남아 있습니다.
@@ -1985,7 +2040,7 @@ mcctl migrate status
 Migration Status:
 
   survival: needs migration
-    Missing EXTRA_ARGS=--universe /worlds/
+    World in servers/survival/data/world
   creative: up to date
 
 1 server(s) need migration.
@@ -2008,9 +2063,9 @@ mcctl migrate worlds [options]
 |--------|-------------|
 | `--all` | 선택 없이 모든 서버 마이그레이션 |
 | `--server <name>` | 이 서버만 마이그레이션 |
-| `--dry-run` | 변경 사항을 적용하지 않고 미리보기 |
-| `--backup` | 마이그레이션 전 백업 생성 |
-| `--force` | 확인 프롬프트 건너뛰기 |
+| `--dry-run` | 각 서버가 실제로 받게 될 계획을 표시하고 아무것도 바꾸지 않음. 거부될 서버가 있으면 종료 코드 1 |
+| `--backup` | 옮기기 전에 월드를 `backups/migrate/<server>-<time>/`에 복사 |
+| `--force` | 확인 프롬프트를 건너뛰고, 실행 중인 서버도 묻지 않고 중지 |
 
 **예제:**
 
@@ -2035,28 +2090,38 @@ mcctl migrate worlds [options]
     DRY RUN - No changes will be made
 
     Would migrate: survival
-      1. Stop server if running
-      2. Move world: servers/survival/data/world → worlds/survival
-      3. Update config.env:
-         - Add: EXTRA_ARGS=--universe /worlds/
-         - Set: LEVEL=survival
+      1. Remove container mc-survival (mcctl start survival creates it again)
+      2. Move servers/survival/data/world → worlds/survival
+      3. Set LEVEL=survival and EXTRA_ARGS=--universe /worlds/ in config.env
     ```
+
+    거부될 서버는 `Would not migrate: <name>: <reason>`을 출력하고 명령은 종료 코드 1로 끝납니다.
 
 === "백업과 함께"
     ```bash
     mcctl migrate worlds --all --backup
     ```
 
-**마이그레이션 수행 내용:**
+**서버별 마이그레이션 수행 내용:**
 
-1. 서버가 실행 중이면 **서버 중지**
-2. `servers/<name>/data/world`에서 `worlds/<server-name>/`으로 **월드 데이터 이동**
-3. **config.env 업데이트**:
-   - `EXTRA_ARGS=--universe /worlds/` 추가
-   - `LEVEL=<server-name>` 설정
-4. 대소문자 무시로 **기존 월드 탐지**
+1. `LEVEL`(기본값 `world`)의 월드를 읽습니다. 분리된 차원 폴더 `<LEVEL>_nether`, `<LEVEL>_the_end`(Paper, Spigot)도 함께 옮기며, Vanilla는 차원을 월드 폴더 안에 둡니다.
+2. 무엇이든 옮기기 전에 **서버 컨테이너를 제거**합니다. mc-router가 이전 설정으로 서버를 시작해 새 월드를 만들지 못하게 하려는 것입니다. 그래서 끝난 뒤 `mcctl start <server>`를 직접 실행해야 합니다(요약에 출력됩니다).
+3. `--backup`이면 월드 폴더를 `backups/migrate/<server>-<time>/`에 복사합니다.
+4. 폴더를 `worlds/<LEVEL>`로 옮깁니다. `LEVEL`이 기본값 `world`이면 `worlds/world`가 서버끼리 충돌하므로 서버 이름(`worlds/<server>`)을 씁니다.
+5. `config.env`에 `LEVEL`과 `EXTRA_ARGS=--universe /worlds/`(이미 있으면 유지)를 설정합니다.
 
-결과 `LEVEL`을 다른 서버가 사용 중이거나 서버의 할당을 확인할 수 없으면, 데이터를 옮기기 전에 해당 서버의 마이그레이션을 거부합니다([월드 할당 규칙](#world-assignment-rules) 참고).
+`data/`에 월드가 없는 서버는 설정만 바뀝니다.
+
+**다음 경우 해당 서버의 마이그레이션은 아무것도 바꾸지 않고 중단됩니다.**
+
+- `LEVEL`이 가리키는 월드가 `data/`에 없는데 다른 폴더에 월드가 있는 경우(`LEVEL`을 서버가 쓰는 월드로 고친 뒤 다시 실행)
+- 월드 폴더가 심볼릭 링크인 경우(가리키는 대상을 직접 옮김)
+- `worlds/<LEVEL>`(또는 `_nether`, `_the_end`)이 이미 있는 경우. 예: 예전 마이그레이션 뒤 빈 월드로 서버를 시작한 경우(한쪽 사본을 남기고 다른 쪽을 치움. [예전 `mcctl migrate worlds`를 실행한 설치 복구](#recovering-after-an-earlier-mcctl-migrate-worlds) 참조)
+- 결과가 두 서버에 같은 월드를 주거나 서버의 할당을 확인할 수 없는 경우([월드 할당 규칙](#world-assignment-rules))
+- 컨테이너를 제거할 수 없거나 Docker에 질의할 수 없는 경우(Docker가 응답하지 않으면 진행하지 않음)
+- `data/`와 `worlds/`가 서로 다른 파일 시스템에 있는 경우(rename 실패. 이미 한 단계는 되돌림)
+
+이동 도중 실패하면 이미 옮긴 폴더는 되돌립니다. `config.env`를 읽을 수 없는 서버는 `mcctl migrate status`에 `cannot tell`로 표시됩니다.
 
 !!! info "월드 저장 경로 변경"
     `mcctl create`로 생성된 새 서버는 이미 `/worlds/` 디렉토리 구조를 사용합니다.

@@ -79,6 +79,16 @@ Other errors a write can stop with:
 - `unsupported_spec_version`: the file was written by a newer mcctl; upgrade mcctl.
 - `locked`: another mcctl process is changing `servers/compose.yml` or deleting the server; retry when it is done.
 
+## Container limits, stop time and logs {#container-memory-limit}
+
+Compose settings of the container that are not in `server.yaml` fields:
+
+- **Memory limit.** A new server, and a server whose `server.yaml` is written again, gets `mem_limit` = heap + max(2G, heap / 2). The heap is `MAX_MEMORY` if set in `env`, else `memory`. The JVM needs memory beyond the heap (metaspace, code cache, thread stacks, direct buffers), and a container killed for exceeding its limit stops mid-save. Examples: `512M` gives `2560m`, `2G` gives `4g`, `4G` gives `6g`, `6G` gives `9g`, `8G` gives `12g`. There is no limit when `memory` is missing or not a size with a unit (a percentage, a bare number), or when a value in `env` contains `-Xmx` or `-XX:MaxRAM` (`JVM_OPTS` in `servers/global.env` is not considered). On a host with swap enabled, the container may use as much swap as `mem_limit`.
+- **Stop time.** `stop_grace_period: 90s` gives the server time to save the world: itzg waits up to `STOP_DURATION` (60 seconds by default) for it, and Docker's default of 10 seconds would kill it first. If you raise `STOP_DURATION` (or `STOP_SERVER_ANNOUNCE_DELAY`) above 90 seconds, raise `stop_grace_period` in the server's `docker-compose.yml` too. mc-router stops an idle server after the idle time set by `AUTO_SCALE_DOWN_AFTER`; the 60 seconds it waits for the stop itself is fixed in mc-router.
+- **Log rotation.** Servers, mc-router and playit-agent use the `json-file` driver with `max-size: "50m"` and `max-file: "5"`: `docker logs` keeps at most 250 MB per container.
+
+Changing `memory` also changes `mem_limit`. A `mem_limit` you edited by hand is a hand edit (see above), so mcctl refuses to rewrite the compose file over it unless you pass `--force` to [`mcctl migrate spec`](../cli/commands.md#mcctl-migrate-spec). Settings in a compose file apply only after the container is recreated: stop the server, then `mcctl start <name>` after `mcctl migrate spec <name>`.
+
 ## Creating a server
 
 `mcctl create` and the Web Console write `server.yaml` and the files above, register `<name>.local` with avahi (a failure is a warning), and start the server unless `--no-start` is given. If anything fails before the server exists, nothing is left behind and the same create can be retried at once. If the server is created but does not start, it stays created: the CLI exits 1 with the cause, and the console says so; start it with `mcctl start <name>`.
