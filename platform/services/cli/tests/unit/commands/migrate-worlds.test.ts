@@ -1,9 +1,10 @@
 /**
- * `mcctl migrate worlds` checks and stops running servers through the
- * runtime port (#668, ADR-0001 row 14) instead of `docker inspect` / `docker stop`.
+ * `mcctl migrate worlds` checks running servers and removes their containers
+ * through the runtime port (#668, ADR-0001 row 14), and moves the world the
+ * server really uses (#655).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, rmSync, unlinkSync } from 'node:fs';
+import { chmodSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, readFileSync, readdirSync, rmSync, unlinkSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +13,7 @@ import {
   FileServerSpecRepository,
   Paths,
   ServerName,
+  WorldRepository,
   type IContainerRuntimePort,
   type ServerSpecDocument,
 } from '@minecraft-docker/shared';
@@ -19,6 +21,7 @@ import {
 const runtime = {
   getStatusAsync: vi.fn(),
   stop: vi.fn(),
+  remove: vi.fn(),
 };
 let root = '';
 
@@ -27,6 +30,7 @@ vi.mock('../../../src/infrastructure/index.js', () => ({
     containerRuntime: runtime,
     promptPort: { isCancel: () => false, confirm: vi.fn(), select: vi.fn() },
     worldAssignmentPort: new ConfigEnvWorldAssignmentAdapter(new Paths(root)),
+    worldRepository: new WorldRepository(new Paths(root), undefined, runtime as unknown as IContainerRuntimePort),
   }),
 }));
 
@@ -54,8 +58,12 @@ beforeEach(() => {
   writeFileSync(join(root, 'servers', 'alpha', 'data', 'world', 'level.dat'), 'x');
   runtime.getStatusAsync.mockReset();
   runtime.stop.mockReset();
+  runtime.remove.mockReset();
+  runtime.remove.mockResolvedValue({ success: true });
   vi.spyOn(console, 'log').mockImplementation(() => undefined);
 });
+
+const logged = () => vi.mocked(console.log).mock.calls.map((c) => String(c[0])).join('\n');
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -63,33 +71,35 @@ afterEach(() => {
 });
 
 describe('migrate worlds (runtime port)', () => {
-  it('stops a running server through the runtime port before moving its world', async () => {
+  it('removes a running server\'s container through the runtime port before moving its world', async () => {
     runtime.getStatusAsync.mockResolvedValue('running');
-    let finishStop!: () => void;
-    runtime.stop.mockReturnValue(new Promise((resolve) => (finishStop = () => resolve({ success: true }))));
+    let finishRemove!: () => void;
+    runtime.remove.mockReturnValue(new Promise((resolve) => (finishRemove = () => resolve({ success: true }))));
 
     const migrating = migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
-    await vi.waitFor(() => expect(runtime.stop).toHaveBeenCalled());
+    await vi.waitFor(() => expect(runtime.remove).toHaveBeenCalled());
     await new Promise((r) => setTimeout(r, 20));
-    // Not moved while the stop is still running
+    // Not moved while the removal is still running
     expect(existsSync(join(root, 'servers', 'alpha', 'data', 'world', 'level.dat'))).toBe(true);
-    finishStop();
+    finishRemove();
     const code = await migrating;
 
     expect(code).toBe(0);
-    const stopped = runtime.stop.mock.calls[0]![0] as ServerName;
-    expect(stopped).toBeInstanceOf(ServerName);
-    expect(stopped.value).toBe('alpha');
+    const removed = runtime.remove.mock.calls[0]![0] as ServerName;
+    expect(removed).toBeInstanceOf(ServerName);
+    expect(removed.value).toBe('alpha');
     expect(existsSync(join(root, 'worlds', 'alpha', 'level.dat'))).toBe(true);
   });
 
-  it('does not stop a server that is not running', async () => {
+  it('removes the container of a stopped server too, so mc-router cannot start it during the move (#655)', async () => {
     runtime.getStatusAsync.mockResolvedValue('exited');
 
     const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
 
     expect(code).toBe(0);
+    expect(runtime.remove).toHaveBeenCalledTimes(1);
     expect(runtime.stop).not.toHaveBeenCalled();
+    expect(logged()).toContain('mcctl start alpha');
   });
 
   it('moves the world back and leaves the config as it was when the compose cannot be written', async () => {
@@ -125,8 +135,6 @@ describe('migrate worlds (runtime port)', () => {
         return repo;
       };
     }
-
-    const logged = () => vi.mocked(console.log).mock.calls.map((c) => String(c[0])).join('\n');
 
     beforeEach(() => runtime.getStatusAsync.mockResolvedValue('exited'));
 
@@ -222,13 +230,212 @@ describe('migrate worlds (runtime port)', () => {
     });
   });
 
-  it('fails without migrating when the stop fails', async () => {
-    runtime.getStatusAsync.mockResolvedValue('running');
-    runtime.stop.mockResolvedValue({ success: false, error: 'boom' });
+  it('fails without migrating when the runtime cannot remove the container', async () => {
+    runtime.getStatusAsync.mockResolvedValue('not_found');
+    runtime.remove.mockResolvedValue({ success: false, error: 'Cannot list Docker containers (is Docker running?)' });
 
     const code = await migrateCommand({ root, subCommand: 'worlds', all: true, force: true });
 
     expect(code).toBe(1);
     expect(existsSync(join(root, 'servers', 'alpha', 'data', 'world', 'level.dat'))).toBe(true);
+    expect(existsSync(join(root, 'worlds', 'alpha'))).toBe(false);
+    expect(readFileSync(join(root, 'servers', 'alpha', 'config.env'), 'utf-8')).toBe('TYPE=PAPER\n');
+    expect(logged()).toContain('is Docker running?');
+  });
+});
+
+describe('migrate worlds finds the world by LEVEL (#655)', () => {
+  const alpha = () => join(root, 'servers', 'alpha');
+  const data = (...p: string[]) => join(alpha(), 'data', ...p);
+  const worlds = (...p: string[]) => join(root, 'worlds', ...p);
+  const config = () => readFileSync(join(alpha(), 'config.env'), 'utf-8');
+  /** alpha with `configEnv` and these folders in data/ (each with a file in it). */
+  function alphaWith(configEnv: string, folders: string[]): void {
+    writeFileSync(join(alpha(), 'config.env'), configEnv);
+    rmSync(data(), { recursive: true, force: true });
+    for (const f of folders) {
+      mkdirSync(data(f), { recursive: true });
+      writeFileSync(data(f, f.endsWith('_nether') || f.endsWith('_the_end') ? 'region.mca' : 'level.dat'), f);
+    }
+  }
+  const migrate = (extra: Record<string, unknown> = {}) =>
+    migrateCommand({ root, subCommand: 'worlds', serverName: 'alpha', force: true, ...extra });
+
+  beforeEach(() => runtime.getStatusAsync.mockResolvedValue('exited'));
+
+  it('moves data/<LEVEL>, not data/world, and keeps LEVEL', async () => {
+    alphaWith('TYPE=PAPER\nLEVEL=alpha\n', ['alpha', 'world']);
+
+    expect(await migrate()).toBe(0);
+
+    expect(readFileSync(worlds('alpha', 'level.dat'), 'utf-8')).toBe('alpha');
+    expect(existsSync(data('alpha'))).toBe(false);
+    expect(config()).toMatch(/^LEVEL=alpha$/m);
+    expect(config()).toMatch(/^EXTRA_ARGS=--universe \/worlds\/$/m);
+  });
+
+  it('moves the split dimension folders of Paper/Spigot with it', async () => {
+    alphaWith('TYPE=PAPER\nLEVEL=survival\n', ['survival', 'survival_nether', 'survival_the_end']);
+
+    expect(await migrate()).toBe(0);
+
+    expect(readFileSync(worlds('survival_nether', 'region.mca'), 'utf-8')).toBe('survival_nether');
+    expect(readFileSync(worlds('survival_the_end', 'region.mca'), 'utf-8')).toBe('survival_the_end');
+    expect(config()).toMatch(/^LEVEL=survival$/m);
+  });
+
+  it('names the dimension folders after the final LEVEL when the default world is renamed', async () => {
+    alphaWith('TYPE=PAPER\n', ['world', 'world_nether', 'world_the_end']);
+
+    expect(await migrate()).toBe(0);
+
+    expect(config()).toMatch(/^LEVEL=alpha$/m);
+    expect(readFileSync(worlds('alpha', 'level.dat'), 'utf-8')).toBe('world');
+    expect(readFileSync(worlds('alpha_nether', 'region.mca'), 'utf-8')).toBe('world_nether');
+    expect(readFileSync(worlds('alpha_the_end', 'region.mca'), 'utf-8')).toBe('world_the_end');
+  });
+
+  it('keeps the dimensions of a vanilla world inside its folder', async () => {
+    alphaWith('TYPE=VANILLA\nLEVEL=alpha\n', ['alpha']);
+    mkdirSync(data('alpha', 'DIM-1'));
+    mkdirSync(data('alpha', 'DIM1'));
+
+    expect(await migrate()).toBe(0);
+
+    expect(existsSync(worlds('alpha', 'DIM-1'))).toBe(true);
+    expect(existsSync(worlds('alpha', 'DIM1'))).toBe(true);
+  });
+
+  it('changes only the config of a server that has not created a world yet', async () => {
+    alphaWith('TYPE=PAPER\nLEVEL=alpha\n', []);
+
+    expect(await migrate()).toBe(0);
+
+    expect(config()).toMatch(/^EXTRA_ARGS=--universe \/worlds\/$/m);
+    expect(existsSync(worlds('alpha'))).toBe(false);
+  });
+
+  it('moves a copy an earlier migrate left in data/ to where the server already looks', async () => {
+    alphaWith('TYPE=PAPER\nLEVEL=alpha\nEXTRA_ARGS=--universe /worlds/\n', ['alpha']);
+
+    expect(await migrate()).toBe(0);
+
+    expect(readFileSync(worlds('alpha', 'level.dat'), 'utf-8')).toBe('alpha');
+    expect(config()).toMatch(/^LEVEL=alpha$/m);
+  });
+
+  describe('changes nothing and stops', () => {
+    function expectUnchanged(configEnv: string, folders: string[]): void {
+      expect(config()).toBe(configEnv);
+      for (const f of folders) expect(existsSync(data(f))).toBe(true);
+      expect(existsSync(join(alpha(), 'server.yaml'))).toBe(false);
+      expect(runtime.remove).not.toHaveBeenCalled();
+    }
+
+    it('when data/<LEVEL> is missing but data/ holds another world', async () => {
+      alphaWith('TYPE=PAPER\nLEVEL=alpha\n', ['world']);
+
+      expect(await migrate()).toBe(1);
+
+      expectUnchanged('TYPE=PAPER\nLEVEL=alpha\n', ['world']);
+      expect(logged()).toMatch(/servers\/alpha\/data\/alpha.*world/);
+    });
+
+    it('when data/<LEVEL> is a symbolic link', async () => {
+      alphaWith('TYPE=PAPER\nLEVEL=alpha\n', []);
+      mkdirSync(join(root, 'elsewhere'));
+      writeFileSync(join(root, 'elsewhere', 'level.dat'), 'x');
+      mkdirSync(data(), { recursive: true });
+      symlinkSync(join(root, 'elsewhere'), data('alpha'));
+
+      expect(await migrate()).toBe(1);
+
+      expect(config()).toBe('TYPE=PAPER\nLEVEL=alpha\n');
+      expect(runtime.remove).not.toHaveBeenCalled();
+      expect(logged()).toMatch(/symbolic link/);
+    });
+
+    it.each(['alpha', 'alpha_nether', 'alpha_the_end'])('when worlds/%s already exists', async (taken) => {
+      alphaWith('TYPE=PAPER\nLEVEL=alpha\n', ['alpha', 'alpha_nether']);
+      mkdirSync(worlds(taken), { recursive: true });
+
+      expect(await migrate()).toBe(1);
+
+      expectUnchanged('TYPE=PAPER\nLEVEL=alpha\n', ['alpha', 'alpha_nether']);
+      expect(readdirSync(worlds())).toEqual([taken]);
+      expect(logged()).toContain(`worlds/${taken} already exists`);
+    });
+
+    it('when a server already started on an empty worlds/<LEVEL> after an earlier migrate', async () => {
+      const configEnv = 'TYPE=PAPER\nLEVEL=alpha\nEXTRA_ARGS=--universe /worlds/\n';
+      alphaWith(configEnv, ['alpha']);
+      mkdirSync(worlds('alpha'), { recursive: true });
+
+      expect(await migrate()).toBe(1);
+
+      expectUnchanged(configEnv, ['alpha']);
+    });
+
+    it('when EXTRA_ARGS would still keep the world in data/', async () => {
+      const configEnv = 'TYPE=PAPER\nLEVEL=alpha\nEXTRA_ARGS=--universe /data\n';
+      alphaWith(configEnv, ['alpha']);
+
+      expect(await migrate()).toBe(1);
+
+      expectUnchanged(configEnv, ['alpha']);
+      expect(existsSync(worlds('alpha'))).toBe(false);
+    });
+  });
+
+  it('keeps --backup copies outside data/', async () => {
+    alphaWith('TYPE=PAPER\nLEVEL=alpha\n', ['alpha', 'alpha_nether']);
+
+    expect(await migrate({ backup: true })).toBe(0);
+
+    expect(existsSync(data())).toBe(true);
+    expect(readdirSync(data())).toEqual([]);
+    const [backup, ...more] = readdirSync(join(root, 'backups', 'migrate'));
+    expect(more).toEqual([]);
+    expect(backup).toMatch(/^alpha-/);
+    expect(readFileSync(join(root, 'backups', 'migrate', backup!, 'alpha', 'level.dat'), 'utf-8')).toBe('alpha');
+    expect(existsSync(join(root, 'backups', 'migrate', backup!, 'alpha_nether', 'region.mca'))).toBe(true);
+  });
+
+  describe('--dry-run', () => {
+    it('shows the real moves and the final LEVEL, and changes nothing', async () => {
+      alphaWith('TYPE=PAPER\n', ['world', 'world_nether']);
+
+      expect(await migrate({ dryRun: true })).toBe(0);
+
+      const text = logged();
+      expect(text).toContain(`${data('world')} → ${worlds('alpha')}`);
+      expect(text).toContain(`${data('world_nether')} → ${worlds('alpha_nether')}`);
+      expect(text).toContain('LEVEL=alpha');
+      expect(text).toContain('Remove container mc-alpha');
+      expect(existsSync(data('world', 'level.dat'))).toBe(true);
+      expect(config()).toBe('TYPE=PAPER\n');
+      expect(runtime.remove).not.toHaveBeenCalled();
+      expect(runtime.getStatusAsync).not.toHaveBeenCalled();
+    });
+
+    it('shows why a server would not be migrated and fails', async () => {
+      alphaWith('TYPE=PAPER\nLEVEL=alpha\n', ['alpha']);
+      mkdirSync(worlds('alpha'), { recursive: true });
+
+      expect(await migrate({ dryRun: true })).toBe(1);
+
+      expect(logged()).toContain('worlds/alpha already exists');
+    });
+  });
+
+  it('migrate status reports the world by LEVEL', async () => {
+    alphaWith('TYPE=PAPER\nLEVEL=alpha\nEXTRA_ARGS=--universe /worlds/\n', ['alpha']);
+
+    expect(await migrateCommand({ root, subCommand: 'status', json: true })).toBe(0);
+
+    const report = JSON.parse(logged()) as { servers: Array<{ name: string; needsMigration: boolean; currentWorldPath?: string }> };
+    expect(report.servers).toEqual([
+      expect.objectContaining({ name: 'alpha', needsMigration: true, currentWorldPath: data('alpha') }),
+    ]);
   });
 });

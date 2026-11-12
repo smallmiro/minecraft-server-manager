@@ -9,6 +9,7 @@ import {
   formatBytes,
   getMcContainers,
   containerExists,
+  formatInternalWorldWarnings,
 } from '@minecraft-docker/shared';
 import type {
   PlatformStatus,
@@ -16,6 +17,7 @@ import type {
   RouterDetailInfo,
 } from '@minecraft-docker/shared';
 import { ShellExecutor } from '../lib/shell.js';
+import { getContainer } from '../infrastructure/index.js';
 
 export interface StatusCommandOptions {
   json?: boolean;
@@ -423,6 +425,10 @@ export async function statusCommand(options: StatusCommandOptions): Promise<numb
       formatTable(status);
     }
   }
+
+  // Worlds still inside a server directory need mcctl migrate worlds (#655); stderr keeps --json clean
+  const internal = await getContainer(options.root).worldRepository.findServerInternalWorlds();
+  for (const warning of formatInternalWorldWarnings(internal)) log.warn(warning);
 
   return 0;
 }

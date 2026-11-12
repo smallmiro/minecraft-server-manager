@@ -58,6 +58,7 @@ export type {
   ServerConfigData,
   IWorldRepository,
   WorldWithServerStatus,
+  ServerInternalWorld,
   ServerStatus,
   WorldAvailabilityCategory,
   IModSourcePort,

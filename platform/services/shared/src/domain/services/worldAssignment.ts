@@ -259,3 +259,14 @@ export function formatAssignmentWarnings(report: {
     ),
   ];
 }
+
+/** One line per world inside a server directory (#655): it needs `mcctl migrate worlds`. */
+export function formatInternalWorldWarnings(worlds: { server: string; world: string; inUse: boolean }[]): string[] {
+  return worlds.map(({ server, world, inUse }) => {
+    const where = `servers/${server}/data/${world}`;
+    const run = `mcctl migrate worlds --server ${server}`;
+    return inUse
+      ? `Server '${server}' keeps its world in ${where}: needs migration (${run})`
+      : `${where} was left behind by an earlier migration of '${server}': needs migration (${run})`;
+  });
+}
