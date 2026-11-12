@@ -172,25 +172,44 @@ export class ShellExecutor {
     return this.dockerCompose(['up', '-d']);
   }
 
+  /** Lines printed by `docker <args>`, or null when docker fails (never mistaken for an empty list). */
+  private dockerLines(args: string[]): Promise<string[] | null> {
+    return new Promise((resolve) => {
+      execFile('docker', args, { cwd: this.paths.root, env: { ...process.env, ...this.env } }, (err, stdout) =>
+        resolve(err ? null : stdout.split('\n').map((l) => l.trim()).filter(Boolean))
+      );
+    });
+  }
+
+  /** Run `docker compose <verb> <mc-* services>`; a failed service listing is a failure. */
+  private async composeOnMcServices(verb: string[]): Promise<number> {
+    const services = await this.dockerLines(['compose', 'config', '--services']);
+    if (!services) {
+      log.error('Failed to list compose services');
+      return 1;
+    }
+    const mc = services.filter((s) => s.startsWith('mc-'));
+    return mc.length ? this.dockerCompose([...verb, ...mc]) : 0;
+  }
+
   /**
    * Stop all infrastructure
    */
   async down(): Promise<number> {
     log.info('Stopping all infrastructure...');
     // First stop all mc-* containers (including those from included compose files)
-    await new Promise<void>((resolve) => {
-      const child = spawn('sh', ['-c',
-        'docker ps --filter "name=mc-" --format "{{.Names}}" | xargs -r docker stop'
-      ], {
-        cwd: this.paths.root,
-        stdio: 'inherit',
-        env: { ...process.env, ...this.env },
+    const names = await this.dockerLines(['ps', '--filter', 'name=mc-', '--format', '{{.Names}}']);
+    let failed = names === null;
+    for (const name of names ?? []) {
+      const code = await new Promise<number>((resolve) => {
+        const child = spawn('docker', ['stop', name], { cwd: this.paths.root, stdio: 'inherit' });
+        child.on('close', (c) => resolve(c ?? 0));
+        child.on('error', () => resolve(1));
       });
-      child.on('close', () => resolve());
-      child.on('error', () => resolve());
-    });
+      failed ||= code !== 0;
+    }
     // Then run docker compose down to clean up network
-    return this.dockerCompose(['down']);
+    return (await this.dockerCompose(['down'])) || (failed ? 1 : 0);
   }
 
   /**
@@ -199,26 +218,7 @@ export class ShellExecutor {
    */
   async startAll(): Promise<number> {
     log.info('Starting all Minecraft servers...');
-    // Get all mc-* services from compose config and start them
-    // This works even if containers haven't been created yet
-    return new Promise((resolve) => {
-      const child = spawn('sh', ['-c',
-        'docker compose config --services | grep "^mc-" | xargs -r docker compose up -d'
-      ], {
-        cwd: this.paths.root,
-        stdio: 'inherit',
-        env: { ...process.env, ...this.env },
-      });
-
-      child.on('close', (code) => {
-        resolve(code ?? 0);
-      });
-
-      child.on('error', (err) => {
-        log.error(`Failed to start servers: ${err.message}`);
-        resolve(1);
-      });
-    });
+    return this.composeOnMcServices(['up', '-d']);
   }
 
   /**
@@ -227,25 +227,7 @@ export class ShellExecutor {
    */
   async stopAll(): Promise<number> {
     log.info('Stopping all Minecraft servers...');
-    // Get all mc-* services from compose config and stop them
-    return new Promise((resolve) => {
-      const child = spawn('sh', ['-c',
-        'docker compose config --services | grep "^mc-" | xargs -r docker compose stop'
-      ], {
-        cwd: this.paths.root,
-        stdio: 'inherit',
-        env: { ...process.env, ...this.env },
-      });
-
-      child.on('close', (code) => {
-        resolve(code ?? 0);
-      });
-
-      child.on('error', (err) => {
-        log.error(`Failed to stop servers: ${err.message}`);
-        resolve(1);
-      });
-    });
+    return this.composeOnMcServices(['stop']);
   }
 
   /**
