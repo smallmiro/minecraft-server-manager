@@ -15,7 +15,7 @@ import {
   fetchLatestVersionForced,
   isUpdateAvailable,
 } from '../lib/update-checker.js';
-import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
+import { atomicWriteFileSync, parseEnvDocument } from '@minecraft-docker/shared/utils';
 import { rerenderServers } from '../lib/server-config.js';
 import { ensurePlayitService } from './playit.js';
 
@@ -345,11 +345,15 @@ export async function initCommand(options: {
   if (!options.skipDocker) {
     console.log(colors.cyan('[6/6] Setting up Docker network...'));
 
-    const network = ensureMinecraftNetwork();
+    const envPath = join(paths.root, '.env');
+    const envValues = existsSync(envPath) ? parseEnvDocument(readFileSync(envPath, 'utf-8')).values : new Map<string, string>();
+    const networkName = envValues.get('MINECRAFT_NETWORK') || undefined;
+    const network = ensureMinecraftNetwork(networkName, envValues.get('MINECRAFT_SUBNET') || undefined);
+    const shownName = networkName ?? 'minecraft-net';
     if (network === 'exists') {
-      console.log('  ✓ Network minecraft-net already exists');
+      console.log(`  ✓ Network ${shownName} already exists`);
     } else if (network === 'created') {
-      console.log('  ✓ Created network: minecraft-net');
+      console.log(`  ✓ Created network: ${shownName}`);
     } else {
       log.warn('Failed to create Docker network (may already exist)');
     }

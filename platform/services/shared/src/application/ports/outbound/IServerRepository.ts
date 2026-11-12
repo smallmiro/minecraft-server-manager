@@ -11,7 +11,7 @@ export interface IServerRepository {
   findAll(): Promise<Server[]>;
 
   /**
-   * Find server by name
+   * Find server by name. Null when absent; rejects when it exists with an invalid config (#657).
    */
   findByName(name: string): Promise<Server | null>;
 

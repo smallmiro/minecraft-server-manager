@@ -21,6 +21,17 @@ import type { IContainerRuntimePort } from '../../application/ports/outbound/ICo
 // By file path, not the facade or the barrel (ADR-0001 dependency rules)
 import { DockerComposeRuntimeAdapter } from './DockerComposeRuntimeAdapter.js';
 
+/** The server directory exists but its config cannot become a Server (#657). */
+export class InvalidServerConfigError extends Error {
+  constructor(
+    readonly serverName: string,
+    reason: string
+  ) {
+    super(`Server '${serverName}' has an invalid configuration: ${reason}`);
+    this.name = 'InvalidServerConfigError';
+  }
+}
+
 /**
  * ServerRepository
  * Implements IServerRepository for server data access
@@ -48,9 +59,14 @@ export class ServerRepository implements IServerRepository {
     const servers: Server[] = [];
 
     for (const name of names) {
-      const server = await this.findByName(name);
-      if (server) {
-        servers.push(server);
+      try {
+        const server = await this.findByName(name);
+        if (server) {
+          servers.push(server);
+        }
+      } catch (error) {
+        // ponytail: invalid servers are left out of lists (callers need a valid Server); findByName reports them
+        if (!(error instanceof InvalidServerConfigError)) throw error;
       }
     }
 
@@ -58,11 +74,15 @@ export class ServerRepository implements IServerRepository {
   }
 
   /**
-   * Find server by name
+   * Find server by name. Null when there is no such server; throws
+   * InvalidServerConfigError when it exists but its config is unreadable or invalid.
    */
   async findByName(name: string): Promise<Server | null> {
     const config = await this.getConfig(name);
     if (!config) {
+      if (existsSync(join(this.serversDir, name, 'config.env'))) {
+        throw new InvalidServerConfigError(name, 'config.env could not be read');
+      }
       return null;
     }
 
@@ -102,8 +122,8 @@ export class ServerRepository implements IServerRepository {
       // TODO: Get player count from docker exec or RCON
 
       return server;
-    } catch {
-      return null;
+    } catch (error) {
+      throw new InvalidServerConfigError(name, error instanceof Error ? error.message : String(error));
     }
   }
 

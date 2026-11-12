@@ -2,9 +2,11 @@
 
 import { buildApp } from './app.js';
 import { config } from './config/index.js';
+import { installProcessErrorHandlers } from './process-errors.js';
 
 async function main() {
   const app = await buildApp();
+  installProcessErrorHandlers(app.log);
 
   try {
     await app.listen({
