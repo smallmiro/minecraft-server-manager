@@ -70,9 +70,9 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 
 import { ServerSpecError } from '@minecraft-docker/shared';
 import { writeAuditLog } from '../src/services/audit-log-service.js';
-import { serverProvision } from '../src/routes/servers.js';
+import { provision, provisionContainer } from './fake-provision.js';
 
-const realDeleteUseCase = serverProvision.deleteUseCase;
+const realDeleteUseCase = provision.delete;
 
 const at = (...p: string[]) => join(ROOT, ...p);
 const SECRET = 'top-secret-sudo';
@@ -84,7 +84,7 @@ describe('DELETE /api/servers/:name (#735)', () => {
     const { config } = await import('../src/config/index.js');
     (config as { mcctlRoot: string }).mcctlRoot = ROOT;
     const { buildApp } = await import('../src/app.js');
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
     await app.ready();
   });
 
@@ -100,7 +100,7 @@ describe('DELETE /api/servers/:name (#735)', () => {
     fakes.removeResult = { success: true };
     fakes.unregisterResult = { status: 'changed' };
     fakes.onRemove = undefined;
-    serverProvision.deleteUseCase = realDeleteUseCase;
+    provision.delete = realDeleteUseCase;
     rmSync(at('servers'), { recursive: true, force: true });
     rmSync(at('worlds'), { recursive: true, force: true });
     mkdirSync(at('servers', 'alpha', 'data', 'alpha'), { recursive: true });
@@ -194,7 +194,7 @@ describe('DELETE /api/servers/:name (#735)', () => {
   describe('a server directory left behind is a warning on a 200 (#735 review)', () => {
     const leftover = "servers/alpha/ was removed from servers/compose.yml but could not be fully deleted (EACCES); remove what is left with: sudo rm -rf '/srv/servers/alpha'";
     const stub = (hostname: { status: 'changed' } | { status: 'skipped'; reason: string }) => {
-      serverProvision.deleteUseCase = () => ({
+      provision.delete = () => ({
         deprovision: async () => ({ level: 'alpha', movedWorlds: ['alpha'], deletedWorlds: [], warning: leftover, hostname }),
       });
     };
@@ -224,7 +224,7 @@ describe('DELETE /api/servers/:name (#735)', () => {
   });
 
   it('an invalid_spec refusal is 400, like create', async () => {
-    serverProvision.deleteUseCase = () => ({
+    provision.delete = () => ({
       deprovision: () => Promise.reject(new ServerSpecError('invalid_spec', 'servers/alpha/server.yaml: bad', 'alpha')),
     });
     const response = await app.inject({ method: 'DELETE', url: '/api/servers/alpha' });

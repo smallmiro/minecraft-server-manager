@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
-import { fakeProvision } from './fake-provision.js';
+import { fakeProvision, provisionContainer } from './fake-provision.js';
 
 // Mock child_process module
 vi.mock('child_process', async (importOriginal) => {
@@ -165,7 +165,7 @@ MEMORY=4G
 `;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: provisionContainer });
   });
 
   afterAll(async () => {

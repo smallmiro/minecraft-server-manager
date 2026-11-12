@@ -6,8 +6,6 @@ import {
   ServerAction,
 } from '../../utils/docker-compose.js';
 import { writeAuditLog } from '../../services/audit-log-service.js';
-import { createWorldBackupPort } from '../../lib/world-backup.js';
-import { config } from '../../config/index.js';
 import {
   AuditActionEnum,
   AUTO_BACKUP_CLOSE_WAIT_MS,
@@ -142,7 +140,7 @@ async function handleServerAction(
   // failure is logged and never fails the stop
   if (action === 'stop') {
     const log = request.log;
-    const running = autoBackupOnStop(createWorldBackupPort(config.mcctlRoot), serverName, {
+    const running = autoBackupOnStop(request.server.container.worldBackupPort(), serverName, {
       signal: backups.shutdown.signal,
     }).then((auto) => {
       if (auto.status === 'done') log.info({ server: serverName, commit: auto.outcome.commit }, 'Auto-backup on stop complete');

@@ -30,6 +30,7 @@ vi.mock('../src/services/audit-log-service.js', () => ({
 }));
 
 import authPlugin from '../src/plugins/auth.js';
+import containerPlugin from '../src/plugins/container.js';
 import { routerPlugin, clampLogTail } from '../src/routes/router.js';
 import { getRouterDetailInfoAsync } from '@minecraft-docker/shared';
 
@@ -61,6 +62,7 @@ describe('Router SSE streams (#769)', () => {
   beforeAll(async () => {
     app = Fastify({ logger: false });
     await app.register(authPlugin, { config: { mode: 'api-key', apiKey: API_KEY } });
+    await app.register(containerPlugin);
     await app.register(routerPlugin);
     await app.listen({ port: 0, host: '127.0.0.1' });
     port = (app.server.address() as AddressInfo).port;

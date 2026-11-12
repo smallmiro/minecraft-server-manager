@@ -1,6 +1,7 @@
 import type {
   IWorldRepository,
   WorldWithServerStatus,
+  ServerInternalWorld,
 } from '@minecraft-docker/shared';
 import { World } from '@minecraft-docker/shared';
 
@@ -102,6 +103,10 @@ export class MockWorldRepository implements IWorldRepository {
 
   async listNames(): Promise<string[]> {
     return Array.from(this.worlds.keys());
+  }
+
+  async findServerInternalWorlds(): Promise<ServerInternalWorld[]> {
+    return [];
   }
 
   async findAllWithServerStatus(): Promise<WorldWithServerStatus[]> {

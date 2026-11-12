@@ -24,6 +24,7 @@ export type {
 export type {
   IWorldRepository,
   WorldWithServerStatus,
+  ServerInternalWorld,
   ServerStatus,
   WorldAvailabilityCategory,
 } from './IWorldRepository.js';

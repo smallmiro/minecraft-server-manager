@@ -23,7 +23,10 @@ const state = vi.hoisted(() => ({ container: undefined as unknown, status: 'exit
 vi.mock('../../../src/infrastructure/di/container.js', () => ({
   getContainer: () => state.container,
 }));
-vi.mock('../../../src/lib/rcon.js', () => ({ isContainerRunning: async () => false }));
+vi.mock('../../../src/lib/rcon.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../src/lib/rcon.js')>()),
+  isContainerRunning: async () => false,
+}));
 
 import { configCommand } from '../../../src/commands/config.js';
 import { worldCommand } from '../../../src/commands/world.js';
@@ -72,6 +75,9 @@ beforeEach(() => {
   state.container = {
     promptPort: prompt,
     worldAssignmentPort: assignments,
+    worldRepository: new WorldRepository(paths, assignments),
+    // migrate removes the container before it moves the world (#655)
+    containerRuntime: { ...runtime, remove: async () => ({ success: true }) },
     worldManagementUseCase: new WorldManagementUseCase(
       prompt,
       new WorldRepository(paths, assignments),
@@ -197,6 +203,15 @@ describe('mcctl world list', () => {
     await worldCommand({ root, subCommand: 'list' });
 
     expect(output.join('\n')).toMatch(/Cannot read the world assignment of 'broken'/);
+  });
+
+  it('says a server with its world inside servers/<n>/data needs migration (#655)', async () => {
+    server('alpha', 'LEVEL=alpha\n');
+    mkdirSync(join(root, 'servers', 'alpha', 'data', 'alpha'), { recursive: true });
+
+    expect(await worldCommand({ root, subCommand: 'list', json: true })).toBe(0);
+
+    expect(output.join('\n')).toMatch(/servers\/alpha\/data\/alpha: needs migration \(mcctl migrate worlds --server alpha\)/);
   });
 });
 

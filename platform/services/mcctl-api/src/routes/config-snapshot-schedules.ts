@@ -1,16 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { join } from 'path';
-import {
-  ConfigSnapshotScheduleUseCaseImpl,
-  SqliteConfigSnapshotScheduleRepository,
-  SqliteConfigSnapshotRepository,
-  ConfigSnapshotDatabase,
-  ConfigSnapshotSchedulerService,
-  type IConfigSnapshotScheduleUseCase,
-} from '@minecraft-docker/shared';
+import { ConfigSnapshotSchedulerService } from '@minecraft-docker/shared';
 import { AuditActionEnum } from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
 import { getConfigSnapshotUseCase } from '../services/config-snapshot-service.js';
 import {
@@ -62,13 +53,9 @@ interface DeleteScheduleRoute {
 const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
   fastify: FastifyInstance
 ) => {
-  // Initialize repository and use case via shared ConfigSnapshotDatabase
-  const dbPath = join(config.mcctlRoot, 'backups', 'meta', 'config-snapshots.db');
-  const database = new ConfigSnapshotDatabase(dbPath);
-  const scheduleRepository = new SqliteConfigSnapshotScheduleRepository(database);
-  const snapshotRepository = new SqliteConfigSnapshotRepository(database);
-  const useCase: IConfigSnapshotScheduleUseCase =
-    new ConfigSnapshotScheduleUseCaseImpl(scheduleRepository);
+  // The container owns config-snapshots.db and closes it after this plugin's onClose
+  const useCase = fastify.container.configSnapshotScheduleUseCase();
+  const snapshotRepository = fastify.container.configSnapshotRepository();
 
   // Initialize config snapshot scheduler service
   const snapshotUseCase = getConfigSnapshotUseCase();
@@ -82,7 +69,6 @@ const configSnapshotSchedulesPlugin: FastifyPluginAsync = async (
 
   fastify.addHook('onClose', async () => {
     scheduler.shutdown();
-    database.close();
   });
 
   /**

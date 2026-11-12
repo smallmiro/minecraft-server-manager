@@ -6,6 +6,7 @@ import {
   unrestoredFiles,
   type IContainerRuntimePort,
   type IWorldAssignmentPort,
+  type IWorldRepository,
   type WorldAssignmentSnapshot,
 } from '@minecraft-docker/shared';
 import { getContainer } from '../infrastructure/index.js';
@@ -78,7 +79,7 @@ async function migrationStatus(
   paths: Paths,
   options: MigrateCommandOptions
 ): Promise<number> {
-  const servers = await scanServers(paths);
+  const servers = await scanServers(paths, getContainer(options.root));
 
   if (servers.length === 0) {
     console.log('No servers found.');
@@ -99,7 +100,9 @@ async function migrationStatus(
   for (const server of servers) {
     const status = server.needsMigration
       ? colors.yellow('needs migration')
-      : colors.green('up to date');
+      : server.reason
+        ? colors.red(server.reason)
+        : colors.green('up to date');
 
     console.log(`  ${colors.cyan(server.name)}: ${status}`);
     if (server.needsMigration && server.reason) {
@@ -130,7 +133,7 @@ async function migrateWorlds(
   const prompt = container.promptPort;
 
   try {
-    const servers = await scanServers(paths);
+    const servers = await scanServers(paths, container);
     const needsMigration = servers.filter(s => s.needsMigration);
 
     if (needsMigration.length === 0) {
@@ -207,26 +210,35 @@ async function migrateWorlds(
       return 0;
     }
 
-    // Dry run mode
+    // Dry run mode: the plan each server would really get, without touching anything
     if (options.dryRun) {
       console.log('');
       console.log(colors.yellow('DRY RUN - No changes will be made'));
       console.log('');
 
+      let refusedCount = 0;
       for (const server of serversToMigrate) {
-        console.log(colors.bold(`Would migrate: ${server.name}`));
-        console.log(`  1. Stop server if running`);
-        if (options.backup) {
-          console.log(`  2. Backup world data`);
+        try {
+          const plan = await planMigration(paths, server.name, container.worldAssignmentPort);
+          const steps = [`Remove container mc-${server.name} (mcctl start ${server.name} creates it again)`];
+          if (options.backup && plan.moves.length > 0) {
+            steps.push(`Back up to ${path.join(paths.backups, 'migrate', `${server.name}-<time>`)}`);
+          }
+          if (plan.moves.length === 0) {
+            steps.push(`No world in servers/${server.name}/data to move; the server will use ${path.join(paths.worlds, plan.level)}`);
+          }
+          for (const [from, to] of plan.moves) steps.push(`Move ${from} → ${to}`);
+          steps.push(`Set LEVEL=${plan.level} and EXTRA_ARGS=${plan.extraArgs} in config.env`);
+          console.log(colors.bold(`Would migrate: ${server.name}`));
+          steps.forEach((step, n) => console.log(`  ${n + 1}. ${step}`));
+        } catch (error) {
+          refusedCount++;
+          console.log(colors.red(`Would not migrate: ${server.name}: ${error instanceof Error ? error.message : String(error)}`));
         }
-        console.log(`  ${options.backup ? '3' : '2'}. Move world: ${server.currentWorldPath} → ${server.targetWorldPath}`);
-        console.log(`  ${options.backup ? '4' : '3'}. Update config.env:`);
-        console.log(`     - Add: EXTRA_ARGS=--universe /worlds/`);
-        console.log(`     - Set: LEVEL=${server.name}`);
         console.log('');
       }
 
-      return 0;
+      return refusedCount > 0 ? 1 : 0;
     }
 
     // Confirm migration
@@ -279,25 +291,22 @@ async function migrateWorlds(
         console.log(colors.dim('--force: Stopping servers automatically...'));
       }
 
-      // Stop running servers
-      for (const name of runningServers) {
-        console.log(`Stopping ${name}...`);
-        await stopServer(container.containerRuntime, name);
-      }
+      // migrateServer stops and removes each container before it moves anything
     }
 
     // Perform migration
     console.log('');
-    let successCount = 0;
     let failCount = 0;
+    const migrated: string[] = [];
 
     for (const server of serversToMigrate) {
       console.log(colors.bold(`Migrating: ${server.name}`));
 
       try {
-        await migrateServer(paths, server, options.backup ?? false, container.worldAssignmentPort);
+        const plan = await planMigration(paths, server.name, container.worldAssignmentPort);
+        await migrateServer(paths, server.name, plan, options.backup ?? false, container.containerRuntime);
         console.log(colors.green(`  ✓ Migration complete`));
-        successCount++;
+        migrated.push(server.name);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         console.log(colors.red(`  ✗ Migration failed: ${message}`));
@@ -309,15 +318,16 @@ async function migrateWorlds(
 
     // Summary
     console.log(colors.bold('Migration Summary:'));
-    console.log(`  Success: ${colors.green(String(successCount))}`);
+    console.log(`  Success: ${colors.green(String(migrated.length))}`);
     if (failCount > 0) {
       console.log(`  Failed: ${colors.red(String(failCount))}`);
     }
     console.log('');
 
-    if (runningServers.length > 0 && successCount > 0) {
-      console.log(colors.dim('Servers were stopped for migration.'));
-      console.log(colors.dim(`Start them with: mcctl start --all`));
+    if (migrated.length > 0) {
+      // Removed so mc-router could not start them with their old settings; start creates them again
+      console.log('Their containers were removed for the migration. Start the servers with:');
+      for (const name of migrated) console.log(`  mcctl start ${name}`);
       console.log('');
     }
 
@@ -335,177 +345,187 @@ async function migrateWorlds(
 }
 
 /**
- * Scan servers and check migration status
+ * Scan servers and check migration status: a server needs migration while
+ * its world (LEVEL) is read from data/, or while servers/<n>/data/<LEVEL>
+ * still holds a world (#655).
  */
-async function scanServers(paths: Paths): Promise<ServerMigrationInfo[]> {
-  const serversDir = paths.servers;
-  const worldsDir = paths.worlds;
-
-  if (!fs.existsSync(serversDir)) {
-    return [];
-  }
-
-  const entries = fs.readdirSync(serversDir, { withFileTypes: true });
-  const servers: ServerMigrationInfo[] = [];
-
-  for (const entry of entries) {
-    // Skip template and non-directories
-    if (!entry.isDirectory() || entry.name === '_template') {
-      continue;
-    }
-
-    const serverName = entry.name;
-    const serverDir = path.join(serversDir, serverName);
-    const configPath = path.join(serverDir, 'config.env');
-    const dataDir = path.join(serverDir, 'data');
-    const worldDir = path.join(dataDir, 'world');
-
-    // Check if config.env exists
-    if (!fs.existsSync(configPath)) {
-      continue;
-    }
-
-    // Read config.env
-    const configContent = fs.readFileSync(configPath, 'utf-8');
-    const hasExtraArgs = configContent.includes('EXTRA_ARGS=') &&
-                         configContent.includes('--universe');
-
-    // Get LEVEL value
-    const levelValue = parseEnvDocument(configContent).values.get('LEVEL') ?? 'world';
-
-    // Check if world exists in server's data directory
-    const worldExistsInData = fs.existsSync(worldDir) &&
-                              fs.statSync(worldDir).isDirectory() &&
-                              !fs.lstatSync(worldDir).isSymbolicLink();
-
-    // Determine if migration is needed
-    let needsMigration = false;
-    let reason: string | undefined;
-
-    if (!hasExtraArgs) {
-      needsMigration = true;
-      reason = 'Missing EXTRA_ARGS=--universe /worlds/';
-    } else if (worldExistsInData) {
-      needsMigration = true;
-      reason = 'World data still in server directory';
-    }
-
-    const targetWorldPath = path.join(worldsDir, serverName);
-
-    servers.push({
-      name: serverName,
-      needsMigration,
+async function scanServers(
+  paths: Paths,
+  container: { worldAssignmentPort: IWorldAssignmentPort; worldRepository: IWorldRepository }
+): Promise<ServerMigrationInfo[]> {
+  const { assignments, undetermined } = await container.worldAssignmentPort.snapshot();
+  const inData = new Map((await container.worldRepository.findServerInternalWorlds()).map((w) => [w.server, w]));
+  const servers: ServerMigrationInfo[] = assignments.map((a) => {
+    const left = inData.get(a.server);
+    const where = `servers/${a.server}/data/${a.world}`;
+    const reason = left
+      ? a.internal ? `World in ${where}` : `An earlier migration left the world in ${where}`
+      : a.internal ? 'Missing EXTRA_ARGS=--universe /worlds/' : undefined;
+    return {
+      name: a.server,
+      needsMigration: !!reason,
       reason,
-      currentWorldPath: worldExistsInData ? worldDir : undefined,
-      targetWorldPath,
-      hasExtraArgs,
-      levelValue,
-    });
+      currentWorldPath: left?.path,
+      targetWorldPath: path.join(paths.worlds, finalLevel(a)),
+      hasExtraArgs: !a.internal,
+      levelValue: a.world,
+    };
+  });
+  for (const name of undetermined) {
+    servers.push({ name, needsMigration: false, reason: `Cannot tell where the world is: check servers/${name}/config.env` });
+  }
+  return servers.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** LEVEL after migration: the default name `world` would clash in worlds/, so it takes the server name. */
+function finalLevel(a: { server: string; world: string; internal?: boolean }): string {
+  return a.internal && a.world === 'world' ? a.server : a.world;
+}
+
+interface MigrationPlan {
+  level: string;
+  extraArgs: string;
+  config: string;
+  /** [from, to]: data/<LEVEL> and the split dimension folders of Paper/Spigot */
+  moves: Array<[string, string]>;
+  before: WorldAssignmentSnapshot;
+  intended: WorldAssignmentSnapshot;
+}
+
+const DIMENSION_SUFFIXES = ['', '_nether', '_the_end'];
+
+/**
+ * What migrating `name` would do. Throws, before anything is changed, when
+ * the world cannot be found, a target in worlds/ exists, or the result breaks
+ * the world assignments (#670). Vanilla keeps DIM-1/DIM1 inside the world
+ * folder, so they move with it.
+ */
+async function planMigration(paths: Paths, name: string, assignments: IWorldAssignmentPort): Promise<MigrationPlan> {
+  const before = await assignments.snapshot();
+  const current = before.assignments.find((a) => a.server === name);
+  if (!current) throw new Error(`Cannot tell which world ${name} uses: check servers/${name}/config.env`);
+  const level = finalLevel(current);
+  const rel = (p: string) => path.relative(paths.root, p);
+  const kind = (p: string) => fs.lstatSync(p, { throwIfNoEntry: false });
+  const data = path.join(paths.serverDir(name), 'data');
+  const source = path.join(data, current.world);
+
+  const moves: Array<[string, string]> = [];
+  if (kind(source)?.isSymbolicLink()) {
+    throw new Error(`${rel(source)} is a symbolic link; move the world it points to into worlds/ by hand`);
+  }
+  if (kind(source)?.isDirectory()) {
+    for (const suffix of DIMENSION_SUFFIXES) {
+      if (suffix === '' || kind(source + suffix)?.isDirectory()) {
+        moves.push([source + suffix, path.join(paths.worlds, level + suffix)]);
+      }
+    }
+    const taken = DIMENSION_SUFFIXES.map((suffix) => path.join(paths.worlds, level + suffix)).find((p) => kind(p));
+    if (taken) {
+      throw new Error(
+        `${rel(taken)} already exists while the world of ${name} is still in ${rel(source)}; ` +
+          `nothing was changed: keep one copy (move the other out of the way), then run again`
+      );
+    }
+  } else {
+    // No world under LEVEL: refuse if data/ holds one under another name rather than leave it behind
+    const other = (fs.existsSync(data) ? fs.readdirSync(data, { withFileTypes: true }) : [])
+      .filter((e) => e.isDirectory())
+      .map((e) => path.join(data, e.name))
+      .find((p) => fs.existsSync(path.join(p, 'level.dat')) || DIMENSION_SUFFIXES.slice(1).some((s) => p === source + s));
+    if (other) {
+      throw new Error(
+        `${rel(source)} (LEVEL=${current.world}) does not exist, but ${rel(other)} holds a world; ` +
+          `nothing was changed: set LEVEL in servers/${name}/config.env to the world the server uses, then run again`
+      );
+    }
   }
 
-  return servers;
+  const config = proposeConfig(fs.readFileSync(path.join(paths.serverDir(name), 'config.env'), 'utf-8'), level);
+  const intended = await assignments.preview(name, config);
+  const refused = checkProposed(intended, name);
+  if (refused) throw refused;
+  const after = intended.assignments.find((a) => a.server === name);
+  if (after?.world !== level || after.internal) {
+    throw new Error(
+      `EXTRA_ARGS in servers/${name}/config.env would still keep the world in data/; ` +
+        `nothing was changed: make it use --universe /worlds/, then run again`
+    );
+  }
+  const extraArgs = parseEnvDocument(config).values.get('EXTRA_ARGS') ?? '--universe /worlds/';
+  return { level, extraArgs, config, moves, before, intended };
+}
+
+/** Undo steps in reverse order; returns the messages of those that failed. */
+function undoAll(undo: Array<() => void>): string[] {
+  const failed: string[] = [];
+  for (const step of undo.reverse()) {
+    try {
+      step();
+    } catch (e) {
+      failed.push((e as Error).message);
+    }
+  }
+  return failed;
 }
 
 /**
- * Migrate a single server
+ * Migrate a single server by its plan. The container is removed first: mc-router
+ * auto-scale only starts existing containers, and an old one would start with the
+ * old settings and make a new, empty world while the old one is moved.
  */
 async function migrateServer(
   paths: Paths,
-  server: ServerMigrationInfo,
+  name: string,
+  plan: MigrationPlan,
   createBackup: boolean,
-  assignments: IWorldAssignmentPort
+  runtime: IContainerRuntimePort
 ): Promise<void> {
-  const serversDir = paths.servers;
-  const worldsDir = paths.worlds;
-
-  const serverDir = path.join(serversDir, server.name);
-  const configPath = path.join(serverDir, 'config.env');
-  const sourceWorldDir = path.join(serverDir, 'data', 'world');
-  const targetWorldDir = path.join(worldsDir, server.name);
-
-  // Decide the new config.env first and check it against the world
-  // assignments (#670) before anything is moved or written.
-  const willMoveWorld =
-    fs.existsSync(sourceWorldDir) &&
-    fs.statSync(sourceWorldDir).isDirectory() &&
-    !fs.lstatSync(sourceWorldDir).isSymbolicLink();
-  const keepsLevel =
-    !!server.levelValue && server.levelValue !== 'world' && fs.existsSync(path.join(worldsDir, server.levelValue));
-  const newLevelValue = keepsLevel
-    ? server.levelValue!
-    : willMoveWorld
-      ? server.name
-      : findExistingWorldName(worldsDir, server.levelValue, server.name);
-  const newConfig = proposeConfig(fs.readFileSync(configPath, 'utf-8'), newLevelValue);
-  const intended = await assignments.preview(server.name, newConfig);
-  const refused = checkProposed(intended, server.name);
-  if (refused) {
-    throw refused;
-  }
-  const before = await assignments.snapshot();
-
-  // Ensure worlds directory exists
-  if (!fs.existsSync(worldsDir)) {
-    fs.mkdirSync(worldsDir, { recursive: true });
+  const where = `servers/${name}`;
+  const removed = await runtime.remove(serverOfContainer(`mc-${name}`));
+  if (!removed.success) {
+    throw new Error(`${removed.error ?? `Failed to remove container mc-${name}`}; nothing was changed`);
   }
 
-  // Step 1: Backup if requested
-  if (createBackup && fs.existsSync(sourceWorldDir)) {
-    const backupDir = path.join(serverDir, 'data', `world_backup_${Date.now()}`);
-    console.log(`  Creating backup: ${path.basename(backupDir)}`);
-    await copyDirectory(sourceWorldDir, backupDir);
+  if (createBackup && plan.moves.length > 0) {
+    const backupDir = path.join(paths.backups, 'migrate', `${name}-${Date.now()}`);
+    console.log(`  Creating backup: ${backupDir}`);
+    try {
+      for (const [from] of plan.moves) fs.cpSync(from, path.join(backupDir, path.basename(from)), { recursive: true });
+    } catch (error) {
+      throw new Error(`Backup failed: ${(error as Error).message}; the world was not moved (start the server with mcctl start ${name})`);
+    }
   }
 
-  // Every move is undone if the spec write below is refused (import refused, locked,
+  // Every move is undone if a later move or the spec write below is refused (import refused, locked,
   // invalid spec): a moved world with the old LEVEL would make the server start a new one.
   const undo: Array<() => void> = [];
-
-  // Step 2: Move world data if it exists in server directory
-  if (fs.existsSync(sourceWorldDir) && fs.statSync(sourceWorldDir).isDirectory()) {
-    // Check if it's a symlink
-    if (fs.lstatSync(sourceWorldDir).isSymbolicLink()) {
-      console.log(`  World is already a symlink, removing...`);
-      const link = fs.readlinkSync(sourceWorldDir);
-      fs.unlinkSync(sourceWorldDir);
-      undo.push(() => fs.symlinkSync(link, sourceWorldDir));
-    } else {
-      // Check if target already exists
-      if (fs.existsSync(targetWorldDir)) {
-        throw new Error(`Target world directory already exists: ${targetWorldDir}`);
-      }
-
-      console.log(`  Moving world data to worlds/${server.name}`);
-      fs.renameSync(sourceWorldDir, targetWorldDir);
-      undo.push(() => fs.renameSync(targetWorldDir, sourceWorldDir));
+  fs.mkdirSync(paths.worlds, { recursive: true });
+  try {
+    for (const [from, to] of plan.moves) {
+      if (fs.existsSync(to)) throw new Error(`${to} appeared during the migration`);
+      console.log(`  Moving ${from} → ${to}`);
+      fs.renameSync(from, to);
+      undo.push(() => fs.renameSync(to, from));
     }
+  } catch (error) {
+    const failed = undoAll(undo);
+    const note = failed.length > 0
+      ? `moving the world back failed: ${failed.join('; ')}; move it back to ${where}/data by hand`
+      : 'the world was moved back';
+    if (error instanceof Error) error.message += ` (${note})`;
+    throw error;
   }
 
-  // Also move world_nether and world_the_end if they exist (Vanilla server)
-  const dimensionWorlds = ['world_nether', 'world_the_end'];
-  for (const dimWorld of dimensionWorlds) {
-    const sourceDimDir = path.join(serverDir, 'data', dimWorld);
-    const targetDimDir = path.join(worldsDir, `${server.name}_${dimWorld.replace('world_', '')}`);
-
-    if (fs.existsSync(sourceDimDir) &&
-        fs.statSync(sourceDimDir).isDirectory() &&
-        !fs.lstatSync(sourceDimDir).isSymbolicLink()) {
-      console.log(`  Moving ${dimWorld} to worlds/`);
-      if (!fs.existsSync(targetDimDir)) {
-        fs.renameSync(sourceDimDir, targetDimDir);
-        undo.push(() => fs.renameSync(targetDimDir, sourceDimDir));
-      }
-    }
-  }
-
-  // Step 3: Update the ServerSpec (#675): world.storage universe, LEVEL; config.env is rendered
+  // Update the ServerSpec (#675): world.storage universe, LEVEL; config.env is rendered
   console.log(`  Updating config.env`);
-  console.log(`  Setting LEVEL=${newLevelValue}`);
-  const proposed = parseEnvDocument(newConfig).values;
+  console.log(`  Setting LEVEL=${plan.level}`);
+  const { level, before, intended } = plan;
   try {
     await writeServerConfig(
       paths,
-      server.name,
-      { set: { LEVEL: newLevelValue, EXTRA_ARGS: proposed.get('EXTRA_ARGS') ?? '--universe /worlds/' } },
+      name,
+      { set: { LEVEL: level, EXTRA_ARGS: plan.extraArgs } },
       { allowStorageChange: true }
     );
   } catch (error) {
@@ -515,30 +535,22 @@ async function migrateServer(
     // where that spec puts it, so the world and the files match once it is run.
     const left = unrestoredFiles(error).length > 0;
     const { spec, storageClash } = left
-      ? await specNow(paths, server.name, before, intended)
+      ? await specNow(paths, name, before, intended)
       : { spec: 'earlier' as const, storageClash: false };
-    const where = `servers/${server.name}`;
     // mcctl migrate spec refuses a storage change, so it cannot settle a server.yaml whose storage
     // the absorbed config.env contradicts: that server.yaml has to go and the migration run again.
     const rerender = storageClash
       ? `${where}/server.yaml was written by this run and disagrees with ${where}/config.env; ` +
         `remove it, then run mcctl migrate worlds again`
-      : `fix the cause and run mcctl migrate spec ${server.name} before you start the server`;
+      : `fix the cause and run mcctl migrate spec ${name} before you start the server`;
     let note: string;
     if (spec === 'migrated') {
-      note = `${where}/server.yaml keeps the new world settings, so the world stays in worlds/${server.name}; ${rerender}`;
+      note = `${where}/server.yaml keeps the new world settings, so the world stays in worlds/${level}; ${rerender}`;
     } else if (spec === 'unknown') {
-      note = `could not tell which world the spec of ${server.name} now uses, so the world was left in worlds/${server.name}; ` +
+      note = `could not tell which world the spec of ${name} now uses, so the world was left in worlds/${level}; ` +
         `check world in ${where}/server.yaml and LEVEL and EXTRA_ARGS in ${where}/config.env and move the world to match by hand`;
     } else {
-      const failed: string[] = [];
-      for (const step of undo.reverse()) {
-        try {
-          step();
-        } catch (e) {
-          failed.push((e as Error).message);
-        }
-      }
+      const failed = undoAll(undo);
       note = failed.length > 0
         ? `moving the world back failed: ${failed.join('; ')}; move it back to ${where}/data by hand`
         : `the world was moved back${left ? `; ${rerender}` : ''}`;
@@ -614,89 +626,4 @@ function proposeConfig(content: string, newLevelValue: string): string {
   }
 
   return configContent;
-}
-
-/**
- * Find existing world name in worlds directory
- * Checks: current LEVEL value, server name, case-insensitive matches
- */
-function findExistingWorldName(
-  worldsDir: string,
-  currentLevel: string | undefined,
-  serverName: string
-): string {
-  if (!fs.existsSync(worldsDir)) {
-    return serverName;
-  }
-
-  const worldDirs = fs.readdirSync(worldsDir, { withFileTypes: true })
-    .filter(d => d.isDirectory() && !d.name.startsWith('.'))
-    .map(d => d.name);
-
-  // 1. Check if current LEVEL value exists in worlds/
-  if (currentLevel && currentLevel !== 'world') {
-    const exactMatch = worldDirs.find(w => w === currentLevel);
-    if (exactMatch) {
-      return exactMatch;
-    }
-  }
-
-  // 2. Check if server name exists (exact match)
-  const serverMatch = worldDirs.find(w => w === serverName);
-  if (serverMatch) {
-    return serverMatch;
-  }
-
-  // 3. Check case-insensitive match for server name
-  const caseInsensitiveMatch = worldDirs.find(
-    w => w.toLowerCase() === serverName.toLowerCase()
-  );
-  if (caseInsensitiveMatch) {
-    return caseInsensitiveMatch;
-  }
-
-  // 4. Check case-insensitive match for current LEVEL
-  if (currentLevel && currentLevel !== 'world') {
-    const levelCaseMatch = worldDirs.find(
-      w => w.toLowerCase() === currentLevel.toLowerCase()
-    );
-    if (levelCaseMatch) {
-      return levelCaseMatch;
-    }
-  }
-
-  // 5. Default to server name
-  return serverName;
-}
-
-/**
- * Stop a server through the runtime port
- */
-async function stopServer(runtime: IContainerRuntimePort, name: string): Promise<void> {
-  const result = await runtime.stop(serverOfContainer(`mc-${name}`));
-  if (!result.success) {
-    throw new Error(`Failed to stop container mc-${name}`);
-  }
-}
-
-/**
- * Copy directory recursively
- */
-async function copyDirectory(source: string, target: string): Promise<void> {
-  if (!fs.existsSync(target)) {
-    fs.mkdirSync(target, { recursive: true });
-  }
-
-  const entries = fs.readdirSync(source, { withFileTypes: true });
-
-  for (const entry of entries) {
-    const sourcePath = path.join(source, entry.name);
-    const targetPath = path.join(target, entry.name);
-
-    if (entry.isDirectory()) {
-      await copyDirectory(sourcePath, targetPath);
-    } else {
-      fs.copyFileSync(sourcePath, targetPath);
-    }
-  }
 }
