@@ -1,8 +1,7 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import type { WorldBackupError } from '@minecraft-docker/shared';
-import { config } from '../config/index.js';
-import { createWorldBackupPort, backupErrorStatus, shortHash } from '../lib/world-backup.js';
+import { backupErrorStatus, shortHash } from '../lib/world-backup.js';
 import {
   BackupStatusResponseSchema,
   BackupPushRequestSchema,
@@ -36,7 +35,7 @@ const errorResponses = {
  * All work goes through IWorldBackupPort; there is no script lookup.
  */
 const backupPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
-  const backup = createWorldBackupPort(config.mcctlRoot);
+  const backup = fastify.container.worldBackupPort();
 
   const sendError = (reply: FastifyReply, error: WorldBackupError) => {
     const { status, error: name } = backupErrorStatus(error.code);

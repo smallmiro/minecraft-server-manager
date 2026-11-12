@@ -1,28 +1,11 @@
 /**
- * World backup port for the API (ADR-0001 "Backup Port", #732).
- * Replaces the old backup.sh script and raw git calls.
+ * World backup helpers for the API (ADR-0001 "Backup Port", #732). The port
+ * itself comes from the container (fastify.container.worldBackupPort).
  */
-import {
-  GitWorldBackupAdapter,
-  DockerComposeRuntimeAdapter,
-  DockerRuntimeEnvironmentAdapter,
-  DockerServerConsoleAdapter,
-  type IWorldBackupPort,
-  type WorldBackupErrorCode,
-} from '@minecraft-docker/shared';
-import { childProcessEnv } from '../config/index.js';
+import type { WorldBackupErrorCode } from '@minecraft-docker/shared';
 
 /** Scheduled pushes and prunes wait this long for another backup operation. */
 export const SCHEDULED_LOCK_WAIT_MS = 600_000;
-
-export function createWorldBackupPort(root: string): IWorldBackupPort {
-  return new GitWorldBackupAdapter({
-    root,
-    runtime: new DockerComposeRuntimeAdapter({ root, env: () => childProcessEnv() }),
-    environment: new DockerRuntimeEnvironmentAdapter(),
-    console: new DockerServerConsoleAdapter(),
-  });
-}
 
 /** HTTP status and error name for a port error code. */
 export function backupErrorStatus(code: WorldBackupErrorCode): { status: number; error: string } {

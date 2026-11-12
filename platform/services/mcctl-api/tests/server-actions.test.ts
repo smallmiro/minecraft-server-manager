@@ -23,10 +23,7 @@ const backupPort = {
   status: vi.fn(),
   push: vi.fn(),
 };
-vi.mock('../src/lib/world-backup.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../src/lib/world-backup.js')>();
-  return { ...actual, createWorldBackupPort: vi.fn(() => backupPort) };
-});
+const withBackupPort = { logger: false, container: { worldBackupPort: () => backupPort as never } };
 
 function autoOnStop(enabled: boolean) {
   backupPort.status.mockResolvedValue({
@@ -55,7 +52,7 @@ describe('Server Action Routes', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp(withBackupPort);
   });
 
   afterAll(async () => {
@@ -179,7 +176,7 @@ describe('Server Action Routes', () => {
     });
 
     it('close waits for a running auto-backup so its save-on recovery finishes (#734 review)', async () => {
-      const local = await buildApp({ logger: false });
+      const local = await buildApp(withBackupPort);
       mockCompose(null, 'Stopping mc-myserver...', '');
       autoOnStop(true);
       let finishPush!: () => void;
@@ -210,7 +207,7 @@ describe('Server Action Routes', () => {
       const defaults = { ...autoBackupCloseLimits };
       Object.assign(autoBackupCloseLimits, { abortAfterMs: 30, waitMs: 5_000 });
       try {
-        const local = await buildApp({ logger: false });
+        const local = await buildApp(withBackupPort);
         mockCompose(null, 'Stopping mc-myserver...', '');
         autoOnStop(true);
         let signal: AbortSignal | undefined;
@@ -339,7 +336,7 @@ describe('Server Action Routes - Response Format', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp(withBackupPort);
   });
 
   afterAll(async () => {
