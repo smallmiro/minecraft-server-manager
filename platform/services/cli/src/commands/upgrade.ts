@@ -8,6 +8,7 @@ import { diffEnvFiles, applyEnvDiff } from '../lib/env-diff.js';
 import { detectDockerGid, setDockerGid } from '../lib/docker-gid.js';
 import { patchRouterCompose } from '../lib/compose-router-patch.js';
 import { migrateServerEnv } from '../lib/server-env-migration.js';
+import { migrateStopGrace } from '../lib/server-stop-grace-migration.js';
 import { migrateConsoleAuthEnv } from '../lib/console-auth-migration.js';
 import { serverSpecReport } from '../lib/server-config.js';
 import { handleLegacyScripts } from '../lib/legacy-scripts.js';
@@ -108,6 +109,25 @@ export async function upgradeCommand(options: UpgradeCommandOptions): Promise<nu
     prompts.log.warn(
       'Existing containers keep the old environment until recreated:\n' +
         serverEnv.migrated.map((name) => `  mcctl stop ${name} && mcctl start ${name}`).join('\n')
+    );
+  }
+
+  // --- Step 2b2: servers wait for the world save when stopped (#661) ---
+  const stopGrace = migrateStopGrace(paths.root, paths.templates, !!options.dryRun);
+  if (stopGrace.updated.length > 0) {
+    prompts.log.success(
+      `${options.dryRun ? 'Would add' : 'Added'} stop_grace_period to: ${stopGrace.updated.join(', ')}` +
+        (options.dryRun ? '' : ' (backup: docker-compose.yml.bak-<time> in each server directory)')
+    );
+    // A container keeps the stop timeout it was created with, even when stopped by `mcctl stop`
+    prompts.log.warn(
+      "Existing containers still get Docker's 10s stop timeout until recreated. When a server is idle:\n" +
+        stopGrace.updated.map((name) => `  docker stop -t 90 mc-${name} && mcctl start ${name}`).join('\n')
+    );
+  }
+  if (stopGrace.skipped.length > 0) {
+    prompts.log.warn(
+      `Could not add stop_grace_period automatically; add "stop_grace_period: 90s" to the mc-<name> service of: ${stopGrace.skipped.join(', ')}`
     );
   }
 
