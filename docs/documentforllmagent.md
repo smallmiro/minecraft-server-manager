@@ -909,7 +909,7 @@ mcctl migrate spec <server>       # Import a server into server.yaml and render 
 mcctl migrate spec --all [--dry-run] [--force] [--json]
 ```
 
-`migrate worlds` moves the world to `worlds/<server>`, adds `EXTRA_ARGS=--universe /worlds/` and sets `LEVEL=<server>`. `migrate spec` is idempotent (`synced` when nothing changed); `--force` re-renders from `server.yaml` over hand edits of the generated files (keeps `.bak`); a server whose world or image cannot be determined is `refused` (exit 1). Servers without `server.yaml` are also imported automatically on their first change by mcctl.
+`migrate worlds` removes the server's container, moves the world (with `_nether`/`_the_end`) to `worlds/<LEVEL>` (`worlds/<server>` when `LEVEL` is the default `world`), then sets `LEVEL` and `EXTRA_ARGS=--universe /worlds/`. `migrate spec` is idempotent (`synced` when nothing changed); `--force` re-renders from `server.yaml` over hand edits of the generated files (keeps `.bak`); a server whose world or image cannot be determined is `refused` (exit 1). Servers without `server.yaml` are also imported automatically on their first change by mcctl.
 
 ---
 
@@ -1195,7 +1195,7 @@ Located at `~/minecraft-servers/.env`:
 HOST_IP=192.168.1.100               # Your server's IP (set by mcctl init)
 HOST_IPS=192.168.1.100,100.64.0.5   # Multiple IPs (VPN mesh); used instead of HOST_IP when set
 MINECRAFT_NETWORK=minecraft-net
-MINECRAFT_SUBNET=172.28.0.0/16      # not read by mcctl; mcctl init creates minecraft-net on this subnet
+MINECRAFT_SUBNET=172.28.0.0/16      # subnet used when mcctl init creates the network (an existing network keeps its subnet)
 DOCKER_GID=999                      # docker.sock group for mc-router (set by mcctl init / mcctl upgrade)
 
 # Defaults

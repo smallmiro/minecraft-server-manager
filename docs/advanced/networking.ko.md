@@ -437,7 +437,7 @@ networks:
     name: ${MINECRAFT_NETWORK:-minecraft-net}
 ```
 
-`.env`의 `MINECRAFT_SUBNET`은 사용되지 않습니다.
+이 네트워크가 아직 없으면 `mcctl init`이 `.env`의 `MINECRAFT_SUBNET`(기본값 `172.28.0.0/16`)으로 만듭니다. 이미 있는 네트워크는 서브넷을 유지합니다.
 
 ### 포트 매핑
 
