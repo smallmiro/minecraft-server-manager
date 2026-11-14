@@ -51,7 +51,7 @@ services:
   router:
     # Pinned to v1.47.1 for production stability.
     # Check releases: https://github.com/itzg/mc-router/releases
-    image: itzg/mc-router:1.47.1
+    image: itzg/mc-router:1.56.0
     container_name: mc-router
     restart: unless-stopped
     # mcctl finds its containers by this label, not by name (#674)
