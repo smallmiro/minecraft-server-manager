@@ -29,20 +29,6 @@ function getPlatformPath(): string {
 }
 
 // ============================================================
-// Server Name Handling
-// ============================================================
-
-export function sanitizeServerName(name: string): string {
-  // Decode URI component if encoded
-  try {
-    name = decodeURIComponent(name);
-  } catch {
-    // If decoding fails, use as-is
-  }
-  return name.trim();
-}
-
-// ============================================================
 // Docker Compose Commands
 // ============================================================
 

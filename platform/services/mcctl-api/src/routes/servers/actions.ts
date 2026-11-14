@@ -1,10 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import {
-  sanitizeServerName,
-  executeServerAction,
-  ServerAction,
-} from '../../utils/docker-compose.js';
+import { executeServerAction, ServerAction } from '../../utils/docker-compose.js';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   AuditActionEnum,
@@ -29,6 +25,16 @@ export const autoBackupCloseLimits = {
 interface AutoBackups {
   running: Set<Promise<unknown>>;
   shutdown: AbortController;
+}
+
+/** The route's name parameter, URI-decoded when it can be, and trimmed. */
+function sanitizeServerName(name: string): string {
+  try {
+    name = decodeURIComponent(name);
+  } catch {
+    // If decoding fails, use as-is
+  }
+  return name.trim();
 }
 
 /** True when `p` settles within `ms`. */
