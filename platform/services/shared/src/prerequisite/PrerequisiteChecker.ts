@@ -1,9 +1,9 @@
-import { spawnSync } from 'node:child_process';
 import {
   getDockerVersion,
   getDockerComposeVersion,
   getAvahiStatus,
 } from '../docker/index.js';
+import { execCommand } from '../infrastructure/process.js';
 
 export interface PrerequisiteResult {
   name: string;
@@ -99,12 +99,8 @@ function checkAvahiPrerequisite(): PrerequisiteResult {
 function checkPm2Prerequisite(): PrerequisiteResult {
   const required = '6.0.0';
 
-  const whichResult = spawnSync('which', ['pm2'], {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-
-  if (whichResult.status !== 0 || !whichResult.stdout?.trim()) {
+  // execCommand returns '' when the command fails or exits non-zero
+  if (!execCommand('which', ['pm2'])) {
     return {
       name: 'PM2',
       installed: false,
@@ -115,12 +111,7 @@ function checkPm2Prerequisite(): PrerequisiteResult {
     };
   }
 
-  const versionResult = spawnSync('pm2', ['--version'], {
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-
-  const version = versionResult.status === 0 ? versionResult.stdout?.trim() : undefined;
+  const version = execCommand('pm2', ['--version']) || undefined;
 
   return {
     name: 'PM2',
