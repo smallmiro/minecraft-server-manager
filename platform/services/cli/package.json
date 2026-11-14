@@ -63,7 +63,7 @@
     "@minecraft-docker/mod-source-modrinth": "workspace:*",
     "@minecraft-docker/shared": "workspace:*",
     "better-sqlite3": "^12.6.2",
-    "commander": "^12.0.0",
+    "commander": "^15.1.0",
     "js-yaml": "^4.1.0",
     "picocolors": "^1.1.0",
     "pm2": "^6.0.14",
