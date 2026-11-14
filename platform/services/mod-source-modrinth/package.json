@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@minecraft-docker/shared": "workspace:*",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.2"
   },
   "devDependencies": {
     "@types/node": "^22.13.1",
