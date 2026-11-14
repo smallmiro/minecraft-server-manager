@@ -70,7 +70,7 @@ jobs:
                   HOST: '0.0.0.0',
                   MCCTL_ROOT: '${{ github.workspace }}/platform',
                   MCCTL_JWT_SECRET: 'test-secret-for-e2e',
-                  # The specs call the API without credentials (#876)
+                  // The specs call the API without credentials (#876)
                   AUTH_MODE: 'disabled',
                 },
                 instances: 1,
@@ -89,7 +89,7 @@ jobs:
                   PORT: 5000,
                   NEXT_PUBLIC_API_URL: 'http://localhost:5001',
                   DO_NOT_TRACK: '1',
-                  # Better Auth rejects its default secret in production (#876)
+                  // Better Auth rejects its default secret in production (#876)
                   BETTER_AUTH_SECRET: 'e2e-only-secret-not-for-production-0123456789',
                 },
                 instances: 1,
