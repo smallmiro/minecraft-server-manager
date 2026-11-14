@@ -12,10 +12,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# issues: write lets the failure step open or comment on the e2e-failure issue (#876)
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   e2e:
     name: E2E Tests
-    runs-on: ubuntu-latest
+    # Pinned: Playwright does not support chromium on ubuntu-latest (26.04) (#876)
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
@@ -64,6 +70,8 @@ jobs:
                   HOST: '0.0.0.0',
                   MCCTL_ROOT: '${{ github.workspace }}/platform',
                   MCCTL_JWT_SECRET: 'test-secret-for-e2e',
+                  // The specs call the API without credentials (#876)
+                  AUTH_MODE: 'disabled',
                 },
                 instances: 1,
                 exec_mode: 'fork',
@@ -73,7 +81,8 @@ jobs:
               },
               {
                 name: 'mcctl-console',
-                script: 'node_modules/.bin/next',
+                // .bin/next is a shell shim; PM2 runs scripts with node (#876)
+                script: 'node_modules/next/dist/bin/next',
                 args: 'start -p 5000',
                 cwd: '${{ github.workspace }}/platform/services/mcctl-console',
                 env: {
@@ -81,6 +90,8 @@ jobs:
                   PORT: 5000,
                   NEXT_PUBLIC_API_URL: 'http://localhost:5001',
                   DO_NOT_TRACK: '1',
+                  // Better Auth rejects its default secret in production (#876)
+                  BETTER_AUTH_SECRET: 'e2e-only-secret-not-for-production-0123456789',
                 },
                 instances: 1,
                 exec_mode: 'fork',
@@ -102,7 +113,7 @@ jobs:
           echo "Waiting for mcctl-api..."
           timeout 60 bash -c 'until curl -s http://localhost:5001/health > /dev/null; do sleep 2; done' || {
             echo "mcctl-api health check failed"
-            pm2 logs mcctl-api --lines 50
+            pm2 logs mcctl-api --lines 50 --nostream
             exit 1
           }
           echo "mcctl-api is ready"
@@ -110,13 +121,16 @@ jobs:
           echo "Waiting for mcctl-console..."
           timeout 60 bash -c 'until curl -s http://localhost:5000 > /dev/null; do sleep 2; done' || {
             echo "mcctl-console health check failed"
-            pm2 logs mcctl-console --lines 50
+            pm2 logs mcctl-console --lines 50 --nostream
             exit 1
           }
           echo "mcctl-console is ready"
 
       - name: Run E2E tests
         working-directory: e2e
+        # A step timeout fails the step, so the failure steps below still run.
+        # The job timeout would cancel the run instead, and failure() is false then (#876).
+        timeout-minutes: 25
         run: pnpm test
         env:
           CI: true
