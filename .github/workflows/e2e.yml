@@ -112,7 +112,7 @@ jobs:
           echo "Waiting for mcctl-api..."
           timeout 60 bash -c 'until curl -s http://localhost:5001/health > /dev/null; do sleep 2; done' || {
             echo "mcctl-api health check failed"
-            pm2 logs mcctl-api --lines 50
+            pm2 logs mcctl-api --lines 50 --nostream
             exit 1
           }
           echo "mcctl-api is ready"
@@ -120,7 +120,7 @@ jobs:
           echo "Waiting for mcctl-console..."
           timeout 60 bash -c 'until curl -s http://localhost:5000 > /dev/null; do sleep 2; done' || {
             echo "mcctl-console health check failed"
-            pm2 logs mcctl-console --lines 50
+            pm2 logs mcctl-console --lines 50 --nostream
             exit 1
           }
           echo "mcctl-console is ready"
