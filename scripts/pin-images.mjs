@@ -41,6 +41,7 @@ for (const entry of pins.images) {
 
 // The release record must equal what the BlueMap image is built from.
 const from = /^FROM\s+(\S+?)@(sha256:\S+)\s*$/m.exec(readFileSync(dockerfile, 'utf-8'));
+if (!from) missing.push('platform/docker/bluemap/Dockerfile: FROM is not pinned by digest (<image>@sha256:...)');
 const base = from && pins.images.find((e) => e.image === from[1]);
 if (base && base.digest !== from[2]) {
   missing.push(
