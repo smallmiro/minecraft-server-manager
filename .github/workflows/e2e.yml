@@ -154,7 +154,8 @@ jobs:
 
       - name: Collect error logs on failure
         id: collect-logs
-        if: failure()
+        # cancelled(): a run that hits timeout-minutes is cancelled, not failed (#876)
+        if: failure() || cancelled()
         run: |
           mkdir -p /tmp/e2e-error-logs
 
@@ -177,7 +178,7 @@ jobs:
           echo "failed_count=${FAILED_COUNT:-0}" >> "$GITHUB_OUTPUT"
 
       - name: Create bug issue on failure
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RUN_ID: ${{ github.run_id }}
