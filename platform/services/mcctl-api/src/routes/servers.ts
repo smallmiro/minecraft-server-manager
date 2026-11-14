@@ -56,7 +56,7 @@ import {
   type DeleteServerRequest,
 } from '../schemas/server.js';
 import { PlayerLocationsResponseSchema } from '../schemas/world-info.js';
-import { getContainerName, RCON_TIMEOUT_MS } from '../lib/rcon.js';
+import { getContainerName, RCON_TIMEOUT_MS, runRcon } from '../lib/rcon.js';
 import { openSse } from '../lib/sse.js';
 import { worldFailure } from '../lib/world-use-case.js';
 import { serverSpecFailure } from '../lib/server-spec.js';
@@ -620,25 +620,10 @@ const serversPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
         });
       }
 
-      // Import and use execRcon dynamically to avoid circular dependency
-      const { spawn } = await import('node:child_process');
-
-      const output = await new Promise<string>((resolve, reject) => {
-        // '--': rcon-cli never reads the command as a flag (#728)
-        const child = spawn('docker', ['exec', containerName, 'rcon-cli', '--', command], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          timeout: RCON_TIMEOUT_MS,
-          killSignal: 'SIGKILL',
-        });
-        let stdout = '';
-        child.stdout?.on('data', (data) => { stdout += data.toString(); });
-        child.on('close', () => {
-          // `killed`: spawn's timeout ended it (#672)
-          if (child.killed) reject(new Error(`RCON command timed out after ${RCON_TIMEOUT_MS} ms`));
-          else resolve(stdout.trim());
-        });
-        child.on('error', () => { resolve(''); });
-      });
+      // stdout only, whatever the exit code; a failed spawn is an empty output
+      const result = await runRcon(fastify.container.serverConsole(), containerName, command);
+      if (!result) throw new Error(`RCON command timed out after ${RCON_TIMEOUT_MS} ms`);
+      const output = result.stdout.trim();
 
       return reply.send({
         success: true,

@@ -17,7 +17,7 @@ let rconMockImpl: (server: string, command: string) => Promise<string>;
 
 // Mock rcon module
 vi.mock('../src/lib/rcon.js', () => ({
-  execRconCommand: vi.fn(async (server: string, command: string) => {
+  execRconCommand: vi.fn(async (_console: unknown, server: string, command: string) => {
     rconCommands.push({ server, command });
     return rconMockImpl(server, command);
   }),

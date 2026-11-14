@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from 'vites
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
 import { fakeProvision, type ProvisionCall, provisionContainer } from './fake-provision.js';
+import { FakeServerConsole } from './fake-console.js';
 
 // Mock node:child_process for spawn
 vi.mock('node:child_process', async (importOriginal) => {
@@ -139,9 +140,14 @@ const mockedSpawn = vi.mocked(spawn);
 
 describe('Server Routes', () => {
   let app: FastifyInstance;
+  // POST /exec runs RCON through fastify.container.serverConsole() (#875)
+  let serverConsole = new FakeServerConsole();
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false, container: provisionContainer });
+    app = await buildApp({
+      logger: false,
+      container: { ...provisionContainer, serverConsole: () => serverConsole },
+    });
   });
 
   afterAll(async () => {
@@ -389,8 +395,13 @@ describe('Server Routes', () => {
   });
 
   describe('POST /api/servers/:name/exec', () => {
+    beforeEach(() => {
+      serverConsole = new FakeServerConsole();
+    });
+
     it('should execute RCON command', async () => {
       mockedContainerExists.mockReturnValue(true);
+      serverConsole.reply = async () => ({ exitCode: 0, stdout: 'There are 0 of a max of 20 players online:\n', stderr: '' });
 
       const response = await app.inject({
         method: 'POST',
@@ -399,13 +410,40 @@ describe('Server Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.success).toBe(true);
+      expect(response.json()).toEqual({ success: true, output: 'There are 0 of a max of 20 players online:' });
+      expect(serverConsole.calls.map(({ name, args }) => ({ name, args }))).toEqual([
+        { name: 'mc-survival', args: ['list'] },
+      ]);
     });
 
-    it('passes a command starting with - after --, so rcon-cli never reads it as a flag (#728)', async () => {
+    it('returns stdout only, whatever the exit code', async () => {
       mockedContainerExists.mockReturnValue(true);
-      vi.mocked(spawn).mockClear();
+      serverConsole.reply = async () => ({ exitCode: 1, stdout: '', stderr: 'Error: dial tcp: connection refused' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/api/servers/survival/exec',
+        payload: { command: 'list' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ success: true, output: '' });
+    });
+
+    it('aborts the command at the RCON timeout (#672)', async () => {
+      mockedContainerExists.mockReturnValue(true);
+
+      await app.inject({
+        method: 'POST',
+        url: '/api/servers/survival/exec',
+        payload: { command: 'list' },
+      });
+
+      expect(serverConsole.calls[0].signal).toBeInstanceOf(AbortSignal);
+    });
+
+    it('passes a command starting with - as one argument, which the adapter puts after rcon-cli\'s -- (#728)', async () => {
+      mockedContainerExists.mockReturnValue(true);
 
       await app.inject({
         method: 'POST',
@@ -413,11 +451,7 @@ describe('Server Routes', () => {
         payload: { command: '--host=evil.example' },
       });
 
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith(
-        'docker',
-        ['exec', 'mc-survival', 'rcon-cli', '--', '--host=evil.example'],
-        expect.anything()
-      );
+      expect(serverConsole.calls[0].args).toEqual(['--host=evil.example']);
     });
 
     it('should return 404 for non-existent server', async () => {

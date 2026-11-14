@@ -63,6 +63,7 @@ import {
   type IMapRenderer,
   type IPlayerManagementUseCase,
   type IPlayerSessionUseCase,
+  type IServerConsolePort,
   type IWorldAssignmentPort,
   type IWorldBackupPort,
   type IWorldInfoUseCase,
@@ -88,6 +89,8 @@ export interface ApiContainer {
   /** GET /api/servers?include=summary. One per app: its 10s TTL cache lives on it (#764). */
   serverSummariesUseCase(): IGetServerSummariesUseCase;
   containerRuntime(): IContainerRuntimePort;
+  /** RCON commands (`docker exec ... rcon-cli`, #875). */
+  serverConsole(): IServerConsolePort;
   worldRepository(): IWorldRepository;
   worldAssignmentPort(): IWorldAssignmentPort;
   worldManagementUseCase(options?: WorldUseCaseOptions): WorldManagementUseCase;
@@ -207,6 +210,7 @@ export function createApiContainer(): ApiContainer & { close(): void } {
     },
     serverSummariesUseCase: serverSummaries.get,
     containerRuntime: () => runtimeAt(root()),
+    serverConsole: () => new DockerServerConsoleAdapter(),
     worldRepository: () => new WorldRepository(new Paths()),
     worldAssignmentPort: () => new ConfigEnvWorldAssignmentAdapter(new Paths()),
     worldManagementUseCase(options) {
