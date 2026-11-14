@@ -28,6 +28,12 @@ const run = () =>
     env: { ...process.env, PATH: `${join(root, 'bin')}:${process.env.PATH}` },
   });
 
+const writeDockerfile = (digest: string) =>
+  writeFileSync(
+    join(root, 'platform', 'docker', 'bluemap', 'Dockerfile'),
+    `FROM eclipse-temurin:25-jre@${digest}\nWORKDIR /work\n`
+  );
+
 const writePins = (images: string[]) =>
   writeFileSync(
     pinsPath(),
@@ -42,6 +48,8 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'pin-images-'));
   mkdirSync(join(root, 'scripts'));
   mkdirSync(join(root, 'bin'));
+  mkdirSync(join(root, 'platform', 'docker', 'bluemap'), { recursive: true });
+  writeDockerfile(D);
   copyFileSync(join(REPO_ROOT, 'scripts', 'pin-images.mjs'), join(root, 'scripts', 'pin-images.mjs'));
   writeFileSync(join(root, 'bin', 'docker'), FAKE_DOCKER);
   chmodSync(join(root, 'bin', 'docker'), 0o755);
@@ -71,5 +79,24 @@ describe('pin-images.mjs', () => {
     expect(r.status).toBe(1);
     expect(r.stderr).toContain('c/noarm:2: no linux/arm64');
     expect(r.stderr).not.toContain('a/b:1');
+  });
+
+  it('exits 1 with both digests when the Dockerfile base digest is behind the registry', () => {
+    const old = 'sha256:' + 'b'.repeat(64);
+    writePins(['eclipse-temurin:25-jre']);
+    writeDockerfile(old);
+    const r = run();
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('Dockerfile base digest is behind the registry');
+    expect(r.stderr).toContain(old);
+    expect(r.stderr).toContain(D);
+    // the list and the table are still written
+    expect(JSON.parse(readFileSync(pinsPath(), 'utf-8')).images[0].digest).toBe(D);
+    expect(r.stdout).toContain('eclipse-temurin:25-jre');
+  });
+
+  it('exits 0 when the Dockerfile base digest matches the registry', () => {
+    writePins(['eclipse-temurin:25-jre']);
+    expect(run().status).toBe(0);
   });
 });
