@@ -54,7 +54,7 @@ import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
 import { OpsJsonService } from '../services/OpsJsonService.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
-import { PlayerSessionCollectorService } from '../services/player-session-collector.js';
+import { PlayerSessionCollectorService, runtimeLogFetcher } from '../services/player-session-collector.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 
 // Route interfaces
@@ -153,7 +153,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     playerSessionUseCase,
     () => getAllServersAsync(join(config.mcctlRoot, 'servers')),
     getContainerStatusAsync,
-    undefined,
+    runtimeLogFetcher(fastify.container.containerRuntime()),
     fastify.log
   );
   if (config.nodeEnv !== 'test') {
