@@ -81,7 +81,8 @@ jobs:
               },
               {
                 name: 'mcctl-console',
-                script: 'node_modules/.bin/next',
+                // .bin/next is a shell shim; PM2 runs scripts with node (#876)
+                script: 'node_modules/next/dist/bin/next',
                 args: 'start -p 5000',
                 cwd: '${{ github.workspace }}/platform/services/mcctl-console',
                 env: {
