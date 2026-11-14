@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hostnames Apply** - `POST /api/servers/:name/hostnames/apply` recreates the container so changed hostnames reach mc-router; the console has an **Apply now** action.
 - **`MINECRAFT_NETWORK` and `MINECRAFT_SUBNET`** are written by `mcctl init`.
 - **Container limits in `server.yaml`** - Memory limit rule, `stop_grace_period` and log rotation; see [server.yaml](docs/configuration/server-yaml.md#container-memory-limit).
+- **Image pin list** - `image-pins.json` records the digest and platforms of every image mcctl uses, `scripts/pin-images.mjs <version>` refreshes it at release time, Dependabot watches npm, the BlueMap base image and the template `mc-router`, and the BlueMap base image is pinned by digest. `javaNN` tags stay unpinned on purpose; see [Java Versions and Image Tags](docs/configuration/server-types.md#java-versions-and-image-tags).
 
 ### Changed
 - **Fail-closed runtime queries** - When Docker cannot be asked, state-changing operations stop with `RuntimeUnavailableError` instead of treating the server as absent, and mcctl-api answers `503` with `Retry-After: 5`.

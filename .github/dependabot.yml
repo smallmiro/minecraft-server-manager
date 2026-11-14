@@ -1,0 +1,38 @@
+version: 2
+updates:
+  # npm: pnpm 9 workspace at the root (pnpm-lock.yaml). Minor and patch bumps
+  # come as one PR a week; major bumps stay separate so they get a real review.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  # BlueMap base image (digest-pinned FROM). BlueMap 5.x is a Java 25 build,
+  # so eclipse-temurin must not jump to another major.
+  - package-ecosystem: docker
+    directory: /platform/docker/bluemap
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: eclipse-temurin
+        update-types: [version-update:semver-major]
+
+  # mc-router in the CLI template. Real directories only: platform/docker-compose.yml
+  # and platform/servers/_template are symlinks to these and would be seen twice.
+  # itzg/minecraft-server is ignored: the javaNN tag floats on purpose and
+  # McVersion picks the Java version (#663).
+  - package-ecosystem: docker-compose
+    directories:
+      - /platform/services/cli/templates
+      - /platform/services/cli/templates/servers/_template
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: itzg/minecraft-server
+
+  # github-actions is left out: a workflow change PR cannot be merged with the
+  # current token (no workflow scope).

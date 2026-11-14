@@ -549,6 +549,8 @@ Forge 1.16.5 이하는 더 새로운 Java에서 실패하므로 `java8`이 필�
 
 `mcctl update`는 각 서버의 태그를 `VERSION`에 맞춰 이 표의 태그로 바꿉니다. 고정하지 않은 `itzg/minecraft-server` 태그는 모두 바꾸므로 `latest`나 `java21-graalvm`도 바뀝니다. `itzg/minecraft-server:2026.10.0-java21`처럼 릴리스 버전으로 시작하는 태그나 다이제스트(`itzg/minecraft-server:java21@sha256:…`)는 고정된 것으로 보고 유지하며, 그 Java가 `VERSION`에 필요한 버전보다 낮으면 경고합니다. `VERSION`이 스냅샷처럼 mcctl이 읽을 수 없는 값이면 태그를 그대로 둡니다. 다른 이미지는 바꾸지 않습니다.
 
+`javaNN` 태그는 일부러 고정하지 않으므로 itzg의 수정이 서버에 바로 반영됩니다. mcctl 릴리스마다 확인한 이미지 digest를 저장소의 [`image-pins.json`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/image-pins.json)에 기록합니다. 아직 이 파일이 들어간 릴리스가 없어 링크는 `develop` 브랜치를 가리킵니다. 릴리스에 포함되면 `https://github.com/smallmiro/minecraft-server-manager/blob/v<version>/image-pins.json`에서 `<version>`을 릴리스 태그로 바꿔 보십시오. 서버를 알려진 이미지에 묶으려면 그 digest를 `image:`에 `itzg/minecraft-server:java21@sha256:…` 형식으로 쓰십시오. 위에서 설명한 대로 `mcctl update`는 이를 유지합니다.
+
 | 오류 | 원인 | 해결 |
 |------|------|------|
 | `class file version 69.0` | Java 25 필요 | `java25` 태그 사용 |

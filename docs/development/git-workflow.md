@@ -119,6 +119,8 @@ Releases are run by maintainers, usually through the `release-manager` agent.
 
 1. **Branch**: create `release/<version>` from `develop`.
 2. **Prepare**: in one `chore(release): bump version to v<version>` commit, bump the version in the root and all five package `package.json` files, add the version to `CHANGELOG.md`, copy it to `platform/services/cli/CHANGELOG.md`, update the Changelog section of `platform/services/cli/README.md` (shown on the npm page), and update `README.md` and `docs/documentforllmagent.md` as needed.
+
+    Before the bump commit, merge any open Dependabot docker PRs, then run `node scripts/pin-images.mjs <version>`. It reads the registry only, updates the digest and platforms of every image in `image-pins.json`, and prints a table for the release notes. It exits with code 1 when an image has no `linux/arm64` or `linux/amd64`, or when the `platform/docker/bluemap/Dockerfile` `FROM` line has no digest or a digest behind the registry; hold the release then. Include the updated `image-pins.json` in the bump commit and paste the table into the release notes.
 3. **Merge and tag**: merge the release branch into `develop`, then create and push an annotated tag.
 
     ```bash
@@ -128,6 +130,10 @@ Releases are run by maintainers, usually through the `release-manager` agent.
 
 4. **CI**: the `v*` tag triggers `.github/workflows/release.yml`, which builds the workspace, publishes the five packages to npm, creates the GitHub Release, and deploys the MkDocs site to GitHub Pages.
 5. **Verify**: check that `npm view <package> version` returns the new version for all five packages. CI generates the release notes from the commit list, so apply curated notes only after CI finishes (`gh release edit v<version> --notes-file ...`).
+
+### Dependency Updates
+
+`.github/dependabot.yml` runs Dependabot weekly. It groups npm minor and patch bumps into one PR (major bumps stay separate), and covers the BlueMap base image digest and the `mc-router` image in the CLI templates. It ignores `itzg/minecraft-server` and major `eclipse-temurin` bumps. A `mc-router` version PR must also update `image-pins.json`, or CI fails.
 
 ### CI Workflows
 

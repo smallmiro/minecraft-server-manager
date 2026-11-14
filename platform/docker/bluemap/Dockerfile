@@ -10,11 +10,15 @@
 # base image MUST be a Java 25 runtime. Earlier JREs fail with
 # UnsupportedClassVersionError.
 #
+# The base image is pinned by digest (#663); Dependabot raises the digest (and
+# the tag within Java 25) as a PR. the release script
+# (scripts/pin-images.mjs) checks image-pins.json against it.
+#
 # The renderer builds the image on demand (only when missing). Run it as the
 # host user so generated files stay owned by the caller:
 #   docker run --rm --user "$(id -u):$(id -g)" mcctl-bluemap:<ver> -c /work/config -r -g
 # =============================================================================
-FROM eclipse-temurin:25-jre
+FROM eclipse-temurin:25-jre@sha256:a640968ae55027b322cedd5f8228b01a84baff0b9e9360e47601c6a111ba1699
 
 # Pinned BlueMap CLI release. Bump both values together; verify the checksum
 # against the GitHub release asset before changing.

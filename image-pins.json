@@ -1,0 +1,68 @@
+{
+  "release": "unreleased",
+  "checkedAt": "2026-11-14",
+  "images": [
+    {
+      "image": "eclipse-temurin:25-jre",
+      "digest": "sha256:a640968ae55027b322cedd5f8228b01a84baff0b9e9360e47601c6a111ba1699",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64/v8",
+        "linux/ppc64le",
+        "linux/s390x"
+      ]
+    },
+    {
+      "image": "ghcr.io/playit-cloud/playit-agent:0.16",
+      "digest": "sha256:84856ec88558fe68bbebe3df7bb089c7265e069c80712d53a186c87bb5277676",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ]
+    },
+    {
+      "image": "itzg/mc-router:1.47.1",
+      "digest": "sha256:177433dd91507339924d60205a19ae9a289afd0e69dbad54e1a55d497f7523f8",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm/v6",
+        "linux/arm64"
+      ]
+    },
+    {
+      "image": "itzg/minecraft-server:java8",
+      "digest": "sha256:9f3f0c76e3db68e2edfd33a500c319af33f2aacdddff900105af3ad2bbc2b38d",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm/v7",
+        "linux/arm64"
+      ]
+    },
+    {
+      "image": "itzg/minecraft-server:java17",
+      "digest": "sha256:ad131f26bde3d6c0839fd862fa707ae4e62ea00f52a970f5517a028bcd9bfeb7",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm/v7",
+        "linux/arm64"
+      ]
+    },
+    {
+      "image": "itzg/minecraft-server:java21",
+      "digest": "sha256:4ab5210150b3fa0f5ece85be5398b4ade95d4c111c0242e0c922ec929efd1ae9",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64"
+      ]
+    },
+    {
+      "image": "itzg/minecraft-server:java25",
+      "digest": "sha256:7d4a888284c2f8d468f620f2534de648cb8eacba48df8d4d20b6ad1ef201f3a3",
+      "platforms": [
+        "linux/amd64",
+        "linux/arm64",
+        "linux/riscv64"
+      ]
+    }
+  ]
+}
