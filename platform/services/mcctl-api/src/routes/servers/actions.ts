@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
-import { executeServerAction, ServerAction } from '../../utils/docker-compose.js';
 import { writeAuditLog } from '../../services/audit-log-service.js';
 import {
   AuditActionEnum,
@@ -26,6 +25,8 @@ interface AutoBackups {
   running: Set<Promise<unknown>>;
   shutdown: AbortController;
 }
+
+type ServerAction = 'start' | 'stop' | 'restart';
 
 /** The route's name parameter, URI-decoded when it can be, and trimmed. */
 function sanitizeServerName(name: string): string {
@@ -107,8 +108,7 @@ async function handleServerAction(
     request.log.warn({ server: serverName }, `Server name does not follow the naming rule: ${ruleViolation}`);
   }
 
-  // Execute the action
-  const result = await executeServerAction(serverName, action);
+  const result = await request.server.container.containerRuntime()[action](ServerName.fromExisting(serverName));
   // The next status read sees the change instead of the 2s cached snapshot (#672)
   invalidateContainerStates();
 
