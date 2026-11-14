@@ -2,13 +2,16 @@
 // Refresh image-pins.json (#663): node scripts/pin-images.mjs <version>
 // Re-reads digest and linux platforms of every listed image, rewrites the file,
 // prints a markdown table for the release notes. Exit 1 when an image lacks
-// linux/arm64 or linux/amd64 (hold the release). Reads the registry only.
+// linux/arm64 or linux/amd64, or when the BlueMap Dockerfile base digest differs
+// from the registry's (hold the release). Reads the registry only.
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const file = join(dirname(fileURLToPath(import.meta.url)), '..', 'image-pins.json');
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const file = join(root, 'image-pins.json');
+const dockerfile = join(root, 'platform', 'docker', 'bluemap', 'Dockerfile');
 const version = process.argv[2];
 if (!version) {
   console.error('usage: node scripts/pin-images.mjs <version>');
@@ -36,6 +39,15 @@ for (const entry of pins.images) {
   }
 }
 
+// The release record must equal what the BlueMap image is built from.
+const from = /^FROM\s+(\S+?)@(sha256:\S+)\s*$/m.exec(readFileSync(dockerfile, 'utf-8'));
+const base = from && pins.images.find((e) => e.image === from[1]);
+if (base && base.digest !== from[2]) {
+  missing.push(
+    `Dockerfile base digest is behind the registry: merge the Dependabot PR or update the FROM line\n    ${base.image}\n    Dockerfile: ${from[2]}\n    registry:   ${base.digest}`
+  );
+}
+
 pins.release = version;
 pins.checkedAt = new Date().toISOString().slice(0, 10);
 writeFileSync(file, `${JSON.stringify(pins, null, 2)}\n`);
@@ -46,6 +58,6 @@ for (const { image, digest, platforms } of pins.images) {
 }
 
 if (missing.length > 0) {
-  console.error(`\nMissing platforms (hold the release):\n${missing.map((m) => `  ${m}`).join('\n')}`);
+  console.error(`\nHold the release:\n${missing.map((m) => `  ${m}`).join('\n')}`);
   process.exit(1);
 }

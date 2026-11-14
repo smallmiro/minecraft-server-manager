@@ -86,6 +86,7 @@ You will execute the following steps in order:
 - Ensure README.md contains accurate version info, features, and quick start guide
 
 **Step 3.7: Pin Images (#663)**
+- 실행 전에 열린 Dependabot docker PR(BlueMap digest)을 먼저 머지한다. Dockerfile digest가 레지스트리와 달라 종료 코드 1이 나와도 릴리스를 보류한다
 - release 브랜치에서 `node scripts/pin-images.mjs {VERSION}`을 실행한다 (레지스트리 조회만 함, Docker 로그인·pull 불필요)
 - 이미지가 linux/arm64 또는 linux/amd64를 빠뜨려 종료 코드 1이면 **릴리스를 보류**하고 사용자에게 보고한다 (누락 목록은 stderr)
 - 갱신된 `image-pins.json`을 버전 bump 커밋에 포함한다 (git 태그마다 그 릴리스의 고정 목록이 남는다)

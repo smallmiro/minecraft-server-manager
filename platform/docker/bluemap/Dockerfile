@@ -11,8 +11,8 @@
 # UnsupportedClassVersionError.
 #
 # The base image is pinned by digest (#663); Dependabot raises the digest (and
-# the tag within Java 25) as a PR. image-pins.json lists the same digest, and a
-# test keeps the two equal.
+# the tag within Java 25) as a PR. the release script
+# (scripts/pin-images.mjs) checks image-pins.json against it.
 #
 # The renderer builds the image on demand (only when missing). Run it as the
 # host user so generated files stay owned by the caller:
