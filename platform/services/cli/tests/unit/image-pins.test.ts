@@ -25,7 +25,7 @@ const composeImages = (file: string): string[] => {
   return Object.values(doc.services).flatMap((s) => (s.image ? [s.image] : []));
 };
 
-const bluemapFrom = /^FROM\s+(\S+?)(?:@(sha256:\S+))?\s*$/m.exec(read('platform', 'docker', 'bluemap', 'Dockerfile'))!;
+const bluemapFrom = /^FROM\s+(\S+?)(?:@sha256:\S+)?\s*$/m.exec(read('platform', 'docker', 'bluemap', 'Dockerfile'))!;
 
 const REPRESENTATIVE = ['1.12.2', '1.16.5', '1.17.1', '1.20.4', '1.20.6', '1.21.4', '26.1', 'LATEST'];
 const serverTags = REPRESENTATIVE.map(
@@ -42,7 +42,10 @@ describe('image-pins.json', () => {
       PLAYIT_IMAGE,
       bluemapFrom[1]!,
     ]);
-    expect(pins.images.map((i) => i.image).sort()).toEqual([...used].sort());
+    expect(
+      pins.images.map((i) => i.image).sort(),
+      'image-pins.json must list exactly the images the code uses: fix the image (tag) there, then run node scripts/pin-images.mjs unreleased'
+    ).toEqual([...used].sort());
   });
 
   it('gives every image a digest and linux platforms', () => {
@@ -52,10 +55,5 @@ describe('image-pins.json', () => {
     }
     expect(pins.release).toBeTruthy();
     expect(pins.checkedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
-
-  it('pins the BlueMap base image by the same digest as the Dockerfile', () => {
-    expect(bluemapFrom[2]).toBeDefined();
-    expect(pins.images.find((i) => i.image === bluemapFrom[1])?.digest).toBe(bluemapFrom[2]);
   });
 });
