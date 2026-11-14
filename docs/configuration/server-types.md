@@ -549,6 +549,8 @@ To change the image, edit `image:` in `server.yaml`, run `mcctl migrate spec <na
 
 `mcctl update` sets each server's tag to the one in this table for its `VERSION`. It replaces every `itzg/minecraft-server` tag that is not pinned, so `latest` or `java21-graalvm` is replaced too. A tag that starts with a release version, such as `itzg/minecraft-server:2026.10.0-java21`, or a digest (`itzg/minecraft-server:java21@sha256:…`) is pinned: `mcctl update` keeps it, and warns when its Java is older than `VERSION` needs. When `VERSION` is a snapshot or another value mcctl cannot read, the tag is left as it is. Other images are not changed.
 
+The `javaNN` tags are deliberately not pinned, so itzg fixes reach your servers right away. Each mcctl release records the image digests it was checked against in [`image-pins.json`](https://github.com/smallmiro/minecraft-server-manager/blob/develop/image-pins.json) in the repository. No release contains this file yet, so the link points to the `develop` branch; once releases include it, open `https://github.com/smallmiro/minecraft-server-manager/blob/v<version>/image-pins.json` with the release tag in place of `<version>`. To keep a server on a known image, write that digest in `image:` as `itzg/minecraft-server:java21@sha256:…`; `mcctl update` keeps it, as described above.
+
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `class file version 69.0` | Java 25 required | Use the `java25` tag |

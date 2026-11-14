@@ -2167,7 +2167,7 @@ MODS_FILE=/data/mods.txt
 | Forge 1.17.x | Java 16/17 | `java17` |
 | **Forge 1.16.5 and below** | **Java 8** | `java8` **(required, higher fails)** |
 
-New servers get the tag for their `VERSION` (`java25` for `LATEST`, no `VERSION` and versions McVersion cannot read). `mcctl update` sets each unpinned `itzg/minecraft-server` tag to the tag for its `VERSION` (`java8` up to 1.16.5, `java17` for 1.17-1.20.4, `java21` for 1.20.5-1.21.x, `java25` for 26.x/`LATEST`) and keeps pinned tags: a release tag such as `2026.10.0-java21`, or a digest. To change a server's image yourself, set `image:` in `servers/<name>/server.yaml`, run `mcctl migrate spec <name>`, then stop and start the server.
+New servers get the tag for their `VERSION` (`java25` for `LATEST`, no `VERSION` and versions McVersion cannot read). `mcctl update` sets each unpinned `itzg/minecraft-server` tag to the tag for its `VERSION` (`java8` up to 1.16.5, `java17` for 1.17-1.20.4, `java21` for 1.20.5-1.21.x, `java25` for 26.x/`LATEST`) and keeps pinned tags: a release tag such as `2026.10.0-java21`, or a digest. To change a server's image yourself, set `image:` in `servers/<name>/server.yaml`, run `mcctl migrate spec <name>`, then stop and start the server. The `javaNN` tags float on purpose; each release records the image digests it was checked against in `image-pins.json` at the repository root.
 
 **Available Image Tags:**
 
