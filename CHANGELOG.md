@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`mcctl down`** scope and **`mcctl upgrade`** additions (`DOCKER_GID`, `stop_grace_period`, log rotation, labels) are described in [CLI Commands](docs/cli/commands.md).
 - **Audit log cleanup** defaults to on with a 90-day retention.
 - **SSE and shutdown** - SSE connections are limited and closed on shutdown; mcctl-api shuts down gracefully and logs unhandled process errors.
+- **Server stop from the console or API** runs `docker stop` (honoring the container's `stop_grace_period`) instead of `docker compose stop`, as `mcctl stop` already does. RCON, player session logs and server start/stop/restart in mcctl-api go through the container runtime port, and `child_process` outside `src/infrastructure/` is a lint error in every package (#875).
 
 ### Fixed
 - **Documentation** - CLAUDE.md and the docs no longer say `scripts/` is absent (`scripts/upgrade-v3.sh` is the release helper); PRD completion marks and the lock-file wording match the LEVEL-based assignment.

@@ -335,12 +335,12 @@ Production code that imports `child_process` outside `src/infrastructure/**` (23
 
 | # | Location | Current command | Target | Owner | Note for the migration |
 |---|----------|-----------------|--------|-------|------------------------|
-| 1 | api `lib/rcon.ts:33` | `docker exec <c> rcon-cli <cmd>` | `console.command(name, [cmd])` | D2 | caller keeps `output = stdout \|\| stderr`; adds `--` |
+| 1 | api `lib/rcon.ts:33` | `docker exec <c> rcon-cli <cmd>` | `console.command(name, [cmd])` | D2, done (#875) | caller keeps `output = stdout \|\| stderr`; adds `--` |
 | 2 | api `lib/rcon.ts:71` | `docker inspect -f {{.State.Running}}` | `runtime.getStatus(name) === 'running'` | D2 | a paused container is `Running=true` but status `paused` |
 | 3 | api `routes/servers.ts:581` | `docker logs -f --tail 0` (SSE) | `runtime.followLogs` + `AbortController` | D2 | spawn errors no longer go unhandled |
-| 4 | api `routes/servers.ts:666` | `docker exec <c> rcon-cli <cmd>` | `console.command` | D2 | caller keeps `stdout.trim()` |
-| 5 | api `services/player-session-collector.ts:30` | `docker logs --timestamps --since --tail` | `runtime.readLogs` (fits the existing `LogFetcher`) | D2 | same argv plus `--` |
-| 6 | api `utils/docker-compose.ts:85` | `docker compose up -d / stop / restart` | `runtime.start` / `.stop` / `.restart` | D2 | `stop` changes from compose stop to `docker stop` (open question 2) |
+| 4 | api `routes/servers.ts:666` | `docker exec <c> rcon-cli <cmd>` | `console.command` | D2, done (#875) | caller keeps `stdout.trim()` |
+| 5 | api `services/player-session-collector.ts:30` | `docker logs --timestamps --since --tail` | `runtime.readLogs` (fits the existing `LogFetcher`) | D2, done (#875) | same argv plus `--` |
+| 6 | api `utils/docker-compose.ts:85` | `docker compose up -d / stop / restart` | `runtime.start` / `.stop` / `.restart` | D2, done (#875) | `stop` changes from compose stop to `docker stop` (open question 2) |
 | 7 | api `routes/servers.ts:1111` | facade `stopContainer` (sync) | `runtime.stop` | D2 | becomes awaited |
 | 8 | api `routes/servers.ts:61,858` (create and delete routes), `routes/backup.ts`, `services/backup-scheduler.ts` | `create-server.sh`, `delete-server.sh`, `backup.sh`, `git` | not a runtime port; move under `mcctl-api/src/infrastructure/` | D2; backup paths: #732 | needed before the rule becomes an error. #732 removes the backup ones (see [Backup Port](#backup-port-732-s3)); #675 and #735 removed create and delete (TypeScript use cases, no script) |
 | 9 | cli `lib/rcon.ts:16` | `docker inspect -f {{.State.Running}}` | `runtime.getStatusAsync` in `running`/`paused`/`restarting` | D3, done (#668) | `isContainerRunning` keeps the `{{.State.Running}}` meaning (paused and restarting count as running); the server comes from `serverOfContainer` |
@@ -353,7 +353,7 @@ Production code that imports `child_process` outside `src/infrastructure/**` (23
 | 16 | cli `commands/console/init.ts`, `console/service.ts`, `update.ts`, `lib/pm2-utils.ts`, `lib/banner.ts` | `npm`, `pm2`, `git` | not a runtime port; move under `cli/src/infrastructure/` | D3, done (#668) | `infrastructure/npm.ts`, `infrastructure/pm2-cli.ts`. `banner.ts` `getGitHash` was deleted: its `require()` never ran in the ESM build |
 | 17 | shared `ServerRepository.ts:115` | facade `execCommandAsync('docker', ['inspect', ...])` | `runtime.getStatus` | D4 | done (#665) |
 | 18 | shared `WorldRepository.ts:299` | facade `getContainerStatus` | `runtime.getStatus` | D4 | done (#665) |
-| 19 | shared `prerequisite/PrerequisiteChecker.ts:1` | `which pm2`, `pm2 --version` | not a runtime port; move the probe under `infrastructure/` | D4 | the only shared finding left after D1 |
+| 19 | shared `prerequisite/PrerequisiteChecker.ts:1` | `which pm2`, `pm2 --version` | not a runtime port; move the probe under `infrastructure/` | D4, done (#875) | the only shared finding left after D1; now `execCommand` from `infrastructure/process.ts` |
 | — | shared `RconCliAdapter`, `BlueMapCliRenderer`, `ShellAdapter` | `docker exec`, scripts | already infrastructure adapters | D4 / #715 | allowed by the lint rule |
 
 ## Lint Rule
@@ -384,6 +384,7 @@ Config files: `platform/services/{shared,cli,mcctl-api}/.eslintrc.json` (ESLint 
 - **Measured on 2026-10-23** with this exact config (dry run): shared **2** (`docker/index.ts`, `prerequisite/PrerequisiteChecker.ts`), cli **12**, mcctl-api **9** (6 files, including 3 dynamic `import()`s in `routes/servers.ts`). Total 23. After D1: shared **1**, total **22**. The override correctly exempts `RconCliAdapter` and `BlueMapCliRenderer`.
 - **Becoming an error**: per package, in the issue that brings the package to zero (cli: D3, mcctl-api: D2, shared: D4). Rows 8, 15, 16, and 19 above are not runtime work but still block the error.
 - **cli is an error since #668** (0 findings). No port method was added: the CLI uses `getStatusAsync`, `getStatus`, `list`, `stop`, and `console.command` as they are.
+- **mcctl-api and shared are errors since #875** (0 findings each), so every package now fails `pnpm lint` on a new finding. No port method was added. mcctl-api: RCON (`lib/rcon.ts`, `POST /api/servers/:name/exec`, the console and player routes) calls `IServerConsolePort.command` from `ApiContainer.serverConsole()` and aborts it with `AbortSignal.timeout` (the old 30 s limit and timeout message stay); the session collector reads logs with `runtime.readLogs`; start/stop/restart call `runtime.start`/`.stop`/`.restart`, and `utils/docker-compose.ts` is gone. shared: `PrerequisiteChecker` runs `which pm2` and `pm2 --version` through `execCommand` in `infrastructure/process.ts`.
 
 ## Alignment with #715 (Script Removal)
 
@@ -428,7 +429,7 @@ Review checklist: `git grep -n "docker/index" src/infrastructure/adapters/Docker
 ## Open Questions
 
 1. **Reserved ports** (resolved 2026-10-23): created as two type-only files with the sketched signatures and a placeholder `ServerSpec` that D5 will replace (decision 3). `IWorldAssignmentPort` was finalized by #670 (ADR-0002).
-2. **API stop semantics**: moving `executeServerAction('stop')` (`docker compose stop`) to `runtime.stop` (`docker stop`) is a small behaviour change. The two differ only for containers that are not in the compose project. Option A (recommended): accept it in D2 as a separate, labelled commit. Option B: make `stop` compose-based and change `mcctl.sh`-parity callers instead.
+2. **API stop semantics**: moving `executeServerAction('stop')` (`docker compose stop`) to `runtime.stop` (`docker stop`) is a small behaviour change. The two differ only for containers that are not in the compose project. Option A (recommended): accept it in D2 as a separate, labelled commit. Option B: make `stop` compose-based and change `mcctl.sh`-parity callers instead. **Resolved by #875 (option A)**: the API route calls `runtime.stop` (`docker stop`), as the CLI does. The container's `StopTimeout`, which compose sets from `stop_grace_period`, bounds the stop instead of the old 120 s client timeout.
 3. **Owner of the composites**: none of D2, D4, or #667 names the 12 facade composites. D2's acceptance criterion "route tests with a fake container" needs them injectable. Recommendation: add "turn the composites into an application query service built from ports" to D4 (shared, core-agent), and land it before D2's route migration. **#665 did not do this**: none of its acceptance criteria needs it. It stays open for D2 (#667).
 4. **Order of signature changes**: D2, D3, and D4 run in parallel (P3), but D4 changes port parameters to `ServerName`. Option A (recommended): land D4's signature change first, then D2/D3. Option B: run them in parallel and let the compiler-driven fix-ups happen at merge. **Resolved by #665**: the parameters were widened, not replaced, so D2/D3 compile either way and can move call sites to `ServerName` at their own pace.
 5. **Scope of the error flip**: rows 8, 15, 16, and 19 (script, git, npm, and pm2 runners) are not runtime work. Confirm they belong to D2/D3/D4, or else the rule stays a warning for that package. **The script part is closed by #736** (v3.0.0): every script runner is gone (`execScript`, `execScriptInteractive`, `ShellAdapter`, `IShellPort`), so no script row is left in the table above. The git, npm and pm2 runners are not script work; the CLI's moved under `src/infrastructure/` in #668.
@@ -759,7 +760,7 @@ Settled at re-review: option names CLI `--allow-missing` / API `allowMissing`; `
 | Pre-delete stop | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: `runtime.stop` when given (CLI), then `delete-server.sh`. Since #735 there is no separate stop: `deprovision` stops and removes the container with `runtime.remove` ([S7](#script-removal-s7-delete-serversh-735)) |
 | API | `new ShellAdapter({ paths })` in `lib/world-use-case.ts` | none: the API no longer resolves `<root>/scripts` for world operations |
 
-`IShellPort`/`ShellAdapter` `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status` keep their v2 signatures and return `mcctl.sh was removed (#734); use …` without running a script (removed in #736). The API stop route keeps `executeServerAction` (`docker compose stop`); open question 2 is unchanged.
+`IShellPort`/`ShellAdapter` `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status` keep their v2 signatures and return `mcctl.sh was removed (#734); use …` without running a script (removed in #736). The API stop route kept `executeServerAction` (`docker compose stop`) until #875 resolved open question 2.
 
 ## Script Removal S7: `delete-server.sh` (#735)
 

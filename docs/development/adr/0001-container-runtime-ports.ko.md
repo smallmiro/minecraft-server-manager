@@ -104,9 +104,9 @@ v2 멤버인 `getAssignment`(deprecated, v3.0.0 #736에서 `snapshot()` + `holde
 
 | 패키지 | 지금(2026-10-23 측정) | D1 후 | error로 바꾸는 이슈 |
 |--------|------------------|-------|-------------------|
-| shared | 2 | 1 (`PrerequisiteChecker` pm2 점검) | D4 |
+| shared | 2 | 1 (`PrerequisiteChecker` pm2 점검) | D4 (#875에서 0건, error로 전환) |
 | cli | 12 | 12 | D3 (#668에서 0건, error로 전환) |
-| mcctl-api | 9 (파일 6개) | 9 | D2 |
+| mcctl-api | 9 (파일 6개) | 9 | D2 (#875에서 0건, error로 전환) |
 | 합계 | 23 | 22 | |
 
 스크립트, git, npm, pm2를 실행하는 곳은 런타임 포트 대상이 아닙니다. 그래도 error로 바꾸기 전에 각 패키지의 `src/infrastructure/` 아래로 옮겨야 합니다.
@@ -125,6 +125,17 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 | `lib/shell.ts`(`ShellExecutor`), `init.ts` 네트워크·라우터 재시작, `upgrade.ts` 라우터 재생성 | 런타임 포트 대상이 아니다. 동작을 바꾸지 않고 `infrastructure/ShellExecutor.ts`(`lib/shell.ts`가 다시 export), `infrastructure/compose-project.ts`로 옮겼다 |
 | `update.ts`, `console/init.ts`의 npm, `pm2-utils.ts`, `console/service.ts`의 pm2 | `infrastructure/npm.ts`, `infrastructure/pm2-cli.ts`로 옮겼다 |
 | `banner.ts` `getGitHash`(git) | ESM 빌드에서 `require()`가 없어 항상 `undefined`를 돌려주던 죽은 코드라 지웠다 |
+
+### mcctl-api·shared 정리(#875)
+
+두 패키지의 `child_process` 사용을 0으로 줄이고 규칙을 **error**로 바꿨습니다. 이제 세 패키지 모두 새 위반이 생기면 `pnpm lint`가 실패합니다. 포트에 메서드를 더하지 않았습니다.
+
+| 호출 지점 | 바뀐 곳 |
+|-----------|---------|
+| api `lib/rcon.ts`, `POST /api/servers/:name/exec`, console·players 라우트의 RCON | `ApiContainer.serverConsole()`의 `IServerConsolePort.command`. `AbortSignal.timeout`으로 30초 제한과 타임아웃 메시지를 그대로 유지한다 |
+| api `services/player-session-collector.ts` `docker logs` | `runtime.readLogs(name, { since, tail: 10000 })` |
+| api `utils/docker-compose.ts`(start·stop·restart 라우트) | `runtime.start`·`.stop`·`.restart`. 파일은 삭제했다. stop은 `docker stop`이 된다(쟁점 2) |
+| shared `PrerequisiteChecker`의 `which pm2`, `pm2 --version` | `infrastructure/process.ts`의 `execCommand` |
 
 ## #715(스크립트 제거)와의 정합
 
@@ -154,7 +165,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 ## 확인이 필요한 쟁점
 
 1. **예약 포트**(2026-10-23 해결): 이슈 본문대로 타입 전용 파일 두 개로 만들었다(결정 3). `IWorldAssignmentPort`는 #670에서 확정했다(ADR-0002).
-2. **API stop 의미**: `executeServerAction('stop')`(compose stop)을 `runtime.stop`(`docker stop`)으로 옮기면 동작이 조금 바뀐다(compose 프로젝트 밖의 컨테이너에서만 다르다). D2에서 별도 커밋으로 받아들이는 안을 권장한다.
+2. **API stop 의미**: `executeServerAction('stop')`(compose stop)을 `runtime.stop`(`docker stop`)으로 옮기면 동작이 조금 바뀐다(compose 프로젝트 밖의 컨테이너에서만 다르다). D2에서 별도 커밋으로 받아들이는 안을 권장한다. **#875에서 이 안으로 해결했다.** API 라우트가 CLI처럼 `runtime.stop`(`docker stop`)을 부른다. 예전의 120초 클라이언트 타임아웃 대신 compose가 `stop_grace_period`로 정한 컨테이너의 `StopTimeout`이 정지 시간을 제한한다.
 3. **합성 함수 담당**: 합성 함수 12개를 맡은 이슈가 없다. D2의 "가짜 컨테이너로 라우트 테스트"를 하려면 주입할 수 있어야 한다. D4에 넣고 D2보다 먼저 끝내는 안을 권장한다. **#665에서는 하지 않았다.** 완료 조건에 필요하지 않기 때문이다. D2(#667)의 쟁점으로 남는다.
 4. **시그니처 변경 순서**: D4가 포트 인자를 `ServerName`으로 바꾼다. D4를 먼저 하고 D2·D3을 하는 안을 권장한다. **#665로 해결됐다.** 인자를 바꾸지 않고 넓혔으므로 D2·D3은 어느 쪽이든 컴파일되고, 호출처를 `ServerName`으로 옮기는 시점을 스스로 정할 수 있다.
 5. **error 전환 범위**: 스크립트·git·npm·pm2 실행 위치를 옮기는 일이 D2·D3·D4 범위인지 확인이 필요하다. **스크립트 부분은 #736(v3.0.0)으로 닫혔다.** 스크립트 실행기(`execScript`, `execScriptInteractive`, `ShellAdapter`, `IShellPort`)가 모두 없어져서 위 표에 스크립트 행이 남지 않는다. git·npm·pm2 실행기는 스크립트 작업이 아니다. CLI의 것은 #668에서 `src/infrastructure/` 아래로 옮겼다.
@@ -291,7 +302,7 @@ cli의 `child_process` 사용 11곳(파일 11개)을 0으로 줄이고 규칙을
 | 삭제 전 정지 | `IShellPort.stopServer` | `DeleteServerUseCase(..., runtime?)`: 주어지면 `runtime.stop`(CLI) 뒤 `delete-server.sh`. #735부터는 따로 멈추지 않고 `deprovision`이 `runtime.remove`로 컨테이너를 멈추고 지운다([S7](#스크립트-제거-s7-delete-serversh735)) |
 | API | `lib/world-use-case.ts`의 `new ShellAdapter({ paths })` | 없음. 월드 작업에서 `<root>/scripts`를 찾지 않는다 |
 
-`IShellPort`/`ShellAdapter`의 `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status`는 v2 시그니처를 유지하고, 스크립트를 실행하지 않고 `mcctl.sh was removed (#734); use …`를 돌려준다(#736에서 삭제). API 정지 라우트는 `executeServerAction`(`docker compose stop`)을 그대로 쓴다. 쟁점 2는 바뀌지 않았다.
+`IShellPort`/`ShellAdapter`의 `startServer`, `stopServer`, `serverStatus`, `setServerConfig`, `logs`, `console`, `status`는 v2 시그니처를 유지하고, 스크립트를 실행하지 않고 `mcctl.sh was removed (#734); use …`를 돌려준다(#736에서 삭제). API 정지 라우트는 #875에서 쟁점 2를 해결할 때까지 `executeServerAction`(`docker compose stop`)을 썼다.
 
 ## 스크립트 제거 S7: `delete-server.sh`(#735)
 
