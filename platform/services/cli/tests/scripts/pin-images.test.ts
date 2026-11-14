@@ -95,6 +95,14 @@ describe('pin-images.mjs', () => {
     expect(r.stdout).toContain('eclipse-temurin:25-jre');
   });
 
+  it('exits 1 when the Dockerfile FROM is not pinned by digest', () => {
+    writePins(['eclipse-temurin:25-jre']);
+    writeFileSync(join(root, 'platform', 'docker', 'bluemap', 'Dockerfile'), 'FROM eclipse-temurin:25-jre\n');
+    const r = run();
+    expect(r.status).toBe(1);
+    expect(r.stderr).toContain('FROM is not pinned by digest');
+  });
+
   it('exits 0 when the Dockerfile base digest matches the registry', () => {
     writePins(['eclipse-temurin:25-jre']);
     expect(run().status).toBe(0);
