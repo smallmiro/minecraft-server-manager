@@ -120,7 +120,7 @@ MAJOR를 올리면 MINOR와 PATCH를 0으로, MINOR를 올리면 PATCH를 0으�
 1. **브랜치**: `develop`에서 `release/<version>`을 만듭니다.
 2. **준비**: `chore(release): bump version to v<version>` 커밋 하나에서 루트와 패키지 다섯 개의 `package.json` 버전을 올리고, `CHANGELOG.md`에 새 버전을 추가해 `platform/services/cli/CHANGELOG.md`로 복사하고, `platform/services/cli/README.md`의 Changelog 섹션(npm 페이지에 표시됨)을 갱신하고, 필요하면 `README.md`와 `docs/documentforllmagent.md`도 갱신합니다.
 
-    bump 커밋 전에 열려 있는 Dependabot docker PR을 머지하고 `node scripts/pin-images.mjs <version>`을 실행합니다. 레지스트리만 조회하여 `image-pins.json`에 있는 모든 이미지의 digest와 플랫폼을 갱신하고, 릴리즈 노트용 표를 출력합니다. 이미지에 `linux/arm64`나 `linux/amd64`가 없거나, `platform/docker/bluemap/Dockerfile`의 `FROM` 줄 digest가 레지스트리보다 뒤처지면 종료 코드 1로 끝나며, 이때는 릴리즈를 보류합니다. 갱신된 `image-pins.json`은 bump 커밋에 포함하고 표는 릴리즈 노트에 붙입니다.
+    bump 커밋 전에 열려 있는 Dependabot docker PR을 머지하고 `node scripts/pin-images.mjs <version>`을 실행합니다. 레지스트리만 조회하여 `image-pins.json`에 있는 모든 이미지의 digest와 플랫폼을 갱신하고, 릴리즈 노트용 표를 출력합니다. 이미지에 `linux/arm64`나 `linux/amd64`가 없거나, `platform/docker/bluemap/Dockerfile`의 `FROM` 줄에 digest가 없거나 레지스트리보다 뒤처지면 종료 코드 1로 끝나며, 이때는 릴리즈를 보류합니다. 갱신된 `image-pins.json`은 bump 커밋에 포함하고 표는 릴리즈 노트에 붙입니다.
 3. **머지와 태그**: 릴리즈 브랜치를 `develop`에 머지한 뒤 annotated 태그를 만들어 푸시합니다.
 
     ```bash
