@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { IPlayerSessionUseCase } from '@minecraft-docker/shared';
-import { PlayerSessionCollectorService, buildDockerLogsArgs } from '../src/services/player-session-collector.js';
+import { FakeContainerRuntime } from '@minecraft-docker/shared/testing';
+import { PlayerSessionCollectorService, runtimeLogFetcher } from '../src/services/player-session-collector.js';
 
 function createMockLogger() {
   return {
@@ -160,16 +161,16 @@ describe('PlayerSessionCollectorService', () => {
   });
 });
 
-describe('buildDockerLogsArgs', () => {
-  it('bounds the fetch with --tail so a large --since window cannot exceed maxBuffer', () => {
-    expect(buildDockerLogsArgs('mc-alpha', '24h')).toEqual([
-      'logs',
-      '--timestamps',
-      '--since',
-      '24h',
-      '--tail',
-      '10000',
-      'mc-alpha',
+describe('runtimeLogFetcher (#875)', () => {
+  it('reads the logs through the runtime port, bounded with tail so a large since window cannot exceed maxBuffer', async () => {
+    const runtime = new FakeContainerRuntime([
+      { name: 'mc-alpha', status: 'running', role: 'server', logs: ['line 1', 'line 2'] },
     ]);
+    const readLogs = vi.spyOn(runtime, 'readLogs');
+
+    const lines = await runtimeLogFetcher(runtime)('mc-alpha', '24h');
+
+    expect(readLogs).toHaveBeenCalledWith('mc-alpha', { since: '24h', tail: 10_000 });
+    expect(lines).toEqual(['line 1', 'line 2']);
   });
 });

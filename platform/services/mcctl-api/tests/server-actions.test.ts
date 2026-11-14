@@ -8,22 +8,17 @@ vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock child_process so no real docker compose runs
-vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('child_process')>();
-  return {
-    ...actual,
-    exec: vi.fn(),
-    execFile: vi.fn(),
-  };
-});
-
 // BACKUP_AUTO_ON_STOP (#734, #732 B-Q9): a fake backup port
 const backupPort = {
   status: vi.fn(),
   push: vi.fn(),
 };
-const withBackupPort = { logger: false, container: { worldBackupPort: () => backupPort as never } };
+// The actions go through the container runtime port (#875): a fake one, so no docker runs
+const runtime = { start: vi.fn(), stop: vi.fn(), restart: vi.fn() };
+const withBackupPort = {
+  logger: false,
+  container: { worldBackupPort: () => backupPort as never, containerRuntime: () => runtime as never },
+};
 
 function autoOnStop(enabled: boolean) {
   backupPort.status.mockResolvedValue({
@@ -32,20 +27,10 @@ function autoOnStop(enabled: boolean) {
   });
 }
 
-import { exec, execFile } from 'child_process';
-
-const mockedExec = vi.mocked(exec);
-const mockedExecFile = vi.mocked(execFile);
-
-/** Answer docker compose calls through the execFile callback. */
-function mockCompose(error: Error | null, stdout: string, stderr = '') {
-  mockedExecFile.mockImplementation(((...args: unknown[]) => {
-    const callback = args[args.length - 1];
-    if (typeof callback === 'function') {
-      callback(error, stdout, stderr);
-    }
-    return {} as ReturnType<typeof execFile>;
-  }) as never);
+/** Answer every runtime action with this result; an error makes it a failed one. */
+function mockAction(error: Error | null, stdout: string, stderr = '') {
+  const result = error ? { success: false, stdout, stderr, error: error.message } : { success: true, stdout, stderr };
+  for (const action of Object.values(runtime)) action.mockResolvedValue(result);
 }
 
 describe('Server Action Routes', () => {
@@ -71,7 +56,7 @@ describe('Server Action Routes', () => {
   describe('POST /api/servers/:name/start', () => {
     it('should start a server successfully', async () => {
       // Mock successful docker compose up
-      mockCompose(null, 'Starting mc-myserver...\nmc-myserver Started', '');
+      mockAction(null, 'Starting mc-myserver...\nmc-myserver Started', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -98,7 +83,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should return 500 when docker compose fails', async () => {
-      mockCompose(new Error('Container not found'), '', 'Error: No such container');
+      mockAction(new Error('Container not found'), '', 'Error: No such container');
 
       const response = await app.inject({
         method: 'POST',
@@ -114,7 +99,7 @@ describe('Server Action Routes', () => {
 
   describe('POST /api/servers/:name/stop', () => {
     it('should stop a server successfully', async () => {
-      mockCompose(null, 'Stopping mc-myserver...', '');
+      mockAction(null, 'Stopping mc-myserver...', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -129,7 +114,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should return 500 when stop fails', async () => {
-      mockCompose(new Error('Permission denied'), '', 'Error: Permission denied');
+      mockAction(new Error('Permission denied'), '', 'Error: Permission denied');
 
       const response = await app.inject({
         method: 'POST',
@@ -142,7 +127,7 @@ describe('Server Action Routes', () => {
     });
 
     it('runs the auto-backup after a stop when BACKUP_AUTO_ON_STOP=true (#734)', async () => {
-      mockCompose(null, 'Stopping mc-myserver...', '');
+      mockAction(null, 'Stopping mc-myserver...', '');
       autoOnStop(true);
 
       const response = await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
@@ -154,7 +139,7 @@ describe('Server Action Routes', () => {
     });
 
     it('does not back up when BACKUP_AUTO_ON_STOP is off', async () => {
-      mockCompose(null, 'Stopping mc-myserver...', '');
+      mockAction(null, 'Stopping mc-myserver...', '');
 
       const response = await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
 
@@ -164,7 +149,7 @@ describe('Server Action Routes', () => {
     });
 
     it('a failed auto-backup does not fail the stop', async () => {
-      mockCompose(null, 'Stopping mc-myserver...', '');
+      mockAction(null, 'Stopping mc-myserver...', '');
       autoOnStop(true);
       backupPort.push.mockResolvedValue({ ok: false, error: { code: 'auth_failed', message: 'bad token' } });
 
@@ -177,7 +162,7 @@ describe('Server Action Routes', () => {
 
     it('close waits for a running auto-backup so its save-on recovery finishes (#734 review)', async () => {
       const local = await buildApp(withBackupPort);
-      mockCompose(null, 'Stopping mc-myserver...', '');
+      mockAction(null, 'Stopping mc-myserver...', '');
       autoOnStop(true);
       let finishPush!: () => void;
       backupPort.push.mockImplementation(
@@ -208,7 +193,7 @@ describe('Server Action Routes', () => {
       Object.assign(autoBackupCloseLimits, { abortAfterMs: 30, waitMs: 5_000 });
       try {
         const local = await buildApp(withBackupPort);
-        mockCompose(null, 'Stopping mc-myserver...', '');
+        mockAction(null, 'Stopping mc-myserver...', '');
         autoOnStop(true);
         let signal: AbortSignal | undefined;
         // A backup that only ends when aborted (a long copy), like GitWorldBackupAdapter
@@ -234,7 +219,7 @@ describe('Server Action Routes', () => {
     });
 
     it('does not back up when the stop failed', async () => {
-      mockCompose(new Error('Permission denied'), '', 'Error: Permission denied');
+      mockAction(new Error('Permission denied'), '', 'Error: Permission denied');
       autoOnStop(true);
 
       await app.inject({ method: 'POST', url: '/api/servers/myserver/stop' });
@@ -246,7 +231,7 @@ describe('Server Action Routes', () => {
 
   describe('POST /api/servers/:name/restart', () => {
     it('should restart a server successfully', async () => {
-      mockCompose(null, 'Restarting mc-myserver...', '');
+      mockAction(null, 'Restarting mc-myserver...', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -261,7 +246,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should return 500 when restart fails', async () => {
-      mockCompose(new Error('Docker daemon not running'), '', 'Cannot connect to Docker daemon');
+      mockAction(new Error('Docker daemon not running'), '', 'Cannot connect to Docker daemon');
 
       const response = await app.inject({
         method: 'POST',
@@ -274,13 +259,9 @@ describe('Server Action Routes', () => {
     });
   });
 
-  describe('docker compose runs without a shell (#720)', () => {
-    it.each([
-      ['start', ['compose', 'up', '-d', 'mc-My_Server']],
-      ['stop', ['compose', 'stop', 'mc-My_Server']],
-      ['restart', ['compose', 'restart', 'mc-My_Server']],
-    ])('%s passes the service name as one argument', async (action, args) => {
-      mockCompose(null, 'ok', '');
+  describe('actions run through the container runtime port (#875)', () => {
+    it.each(['start', 'stop', 'restart'] as const)('%s passes the server name to the runtime', async (action) => {
+      mockAction(null, 'ok', '');
 
       const response = await app.inject({
         method: 'POST',
@@ -288,16 +269,22 @@ describe('Server Action Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(mockedExec).not.toHaveBeenCalled();
-      expect(mockedExecFile).toHaveBeenCalledWith(
-        'docker',
-        args,
-        expect.objectContaining({
-          timeout: 120000,
-          env: expect.objectContaining({ COMPOSE_FILE: 'docker-compose.yml' }),
-        }),
-        expect.any(Function)
-      );
+      expect(response.json().message).toBe('ok');
+      expect(runtime[action]).toHaveBeenCalledTimes(1);
+      expect(runtime[action].mock.calls[0][0].value).toBe('My_Server');
+    });
+
+    it('returns the runtime error and stderr on a failed action', async () => {
+      mockAction(new Error('Command failed: docker compose up'), '', 'no such service');
+
+      const response = await app.inject({ method: 'POST', url: '/api/servers/myserver/start' });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toMatchObject({
+        success: false,
+        error: 'Command failed: docker compose up',
+        message: 'no such service',
+      });
     });
   });
 
@@ -316,7 +303,7 @@ describe('Server Action Routes', () => {
     });
 
     it('should accept valid server names', async () => {
-      mockCompose(null, 'Started', '');
+      mockAction(null, 'Started', '');
 
       const validNames = ['myserver', 'my-server', 'server123', 'My_Server'];
 
@@ -345,7 +332,7 @@ describe('Server Action Routes - Response Format', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCompose(null, 'Success', '');
+    mockAction(null, 'Success', '');
   });
 
   it('should return JSON content type', async () => {

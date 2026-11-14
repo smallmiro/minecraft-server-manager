@@ -16,13 +16,13 @@
     "no-unused-vars": "off",
     "no-undef": "off",
     "no-control-regex": "off",
-    "no-restricted-imports": ["warn", {
+    "no-restricted-imports": ["error", {
       "paths": [
         { "name": "child_process", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." },
         { "name": "node:child_process", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." }
       ]
     }],
-    "no-restricted-syntax": ["warn",
+    "no-restricted-syntax": ["error",
       { "selector": "ImportExpression[source.value=/^(node:)?child_process$/]", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." },
       { "selector": "CallExpression[callee.name='require'][arguments.0.value=/^(node:)?child_process$/]", "message": "child_process is allowed only under src/infrastructure/ (ADR-0001). Use a runtime port." }
     ]

@@ -7,27 +7,19 @@ vi.mock('../src/services/audit-log-service.js', () => ({
   writeAuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('child_process')>();
-  return { ...actual, execFile: vi.fn() };
-});
+// Server actions go through the container runtime port (#875): a fake one, so no docker runs
+const runtime = { start: vi.fn() };
 
-import { execFile } from 'child_process';
-
-/** Answer docker compose calls with success. */
+/** Answer the runtime's start with success. */
 function mockComposeSuccess() {
-  vi.mocked(execFile).mockImplementation(((...args: unknown[]) => {
-    const callback = args[args.length - 1];
-    if (typeof callback === 'function') callback(null, 'Started', '');
-    return {} as ReturnType<typeof execFile>;
-  }) as never);
+  runtime.start.mockResolvedValue({ success: true, stdout: 'Started', stderr: '' });
 }
 
 describe('Unified naming rules in the API (#649)', () => {
   let app: FastifyInstance;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: { containerRuntime: () => runtime as never } });
   });
 
   afterAll(async () => {

@@ -1,53 +1,28 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.js';
-
-// Mock node:child_process module for rcon.ts
-vi.mock('node:child_process', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:child_process')>();
-  return {
-    ...actual,
-    spawn: vi.fn(),
-  };
-});
-
-import { spawn } from 'node:child_process';
+import { FakeServerConsole } from './fake-console.js';
 
 describe('Console Routes', () => {
   let app: FastifyInstance;
+  // The route runs RCON through fastify.container.serverConsole() (#875)
+  let serverConsole: FakeServerConsole;
 
   beforeAll(async () => {
-    app = await buildApp({ logger: false });
+    app = await buildApp({ logger: false, container: { serverConsole: () => serverConsole } });
   });
 
   afterAll(async () => {
     await app.close();
   });
 
+  beforeEach(() => {
+    serverConsole = new FakeServerConsole();
+  });
+
   describe('POST /servers/:id/console/exec', () => {
     it('should execute RCON command and return output', async () => {
-      // Mock successful RCON execution
-      const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
-      mockSpawn.mockImplementation(() => {
-        const mockProcess = {
-          stdout: {
-            on: vi.fn((event, callback) => {
-              if (event === 'data') {
-                callback(Buffer.from('Hello, World!'));
-              }
-            }),
-          },
-          stderr: {
-            on: vi.fn(),
-          },
-          on: vi.fn((event, callback) => {
-            if (event === 'close') {
-              setTimeout(() => callback(0), 10);
-            }
-          }),
-        };
-        return mockProcess;
-      });
+      serverConsole.reply = async () => ({ exitCode: 0, stdout: 'Hello, World!', stderr: '' });
 
       const response = await app.inject({
         method: 'POST',
@@ -58,10 +33,7 @@ describe('Console Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body).toHaveProperty('output');
-      expect(body).toHaveProperty('exitCode');
-      expect(body.exitCode).toBe(0);
+      expect(response.json()).toEqual({ output: 'Hello, World!', exitCode: 0 });
     });
 
     it('should return 400 if command is missing', async () => {
@@ -91,27 +63,7 @@ describe('Console Routes', () => {
     });
 
     it('should handle RCON execution errors', async () => {
-      const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
-      mockSpawn.mockImplementation(() => {
-        const mockProcess = {
-          stdout: {
-            on: vi.fn(),
-          },
-          stderr: {
-            on: vi.fn((event, callback) => {
-              if (event === 'data') {
-                callback(Buffer.from('Connection refused'));
-              }
-            }),
-          },
-          on: vi.fn((event, callback) => {
-            if (event === 'close') {
-              setTimeout(() => callback(1), 10);
-            }
-          }),
-        };
-        return mockProcess;
-      });
+      serverConsole.reply = async () => ({ exitCode: 1, stdout: '', stderr: 'Connection refused' });
 
       const response = await app.inject({
         method: 'POST',
@@ -122,36 +74,10 @@ describe('Console Routes', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const body = JSON.parse(response.body);
-      expect(body.exitCode).toBe(1);
+      expect(response.json()).toEqual({ output: 'Connection refused', exitCode: 1 });
     });
 
     it('should normalize server name with mc- prefix', async () => {
-      const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
-      mockSpawn.mockImplementation((cmd: string, args: string[]) => {
-        // Verify container name has mc- prefix
-        expect(args).toContain('mc-testserver');
-
-        const mockProcess = {
-          stdout: {
-            on: vi.fn((event, callback) => {
-              if (event === 'data') {
-                callback(Buffer.from('OK'));
-              }
-            }),
-          },
-          stderr: {
-            on: vi.fn(),
-          },
-          on: vi.fn((event, callback) => {
-            if (event === 'close') {
-              setTimeout(() => callback(0), 10);
-            }
-          }),
-        };
-        return mockProcess;
-      });
-
       await app.inject({
         method: 'POST',
         url: '/servers/testserver/console/exec',
@@ -159,60 +85,23 @@ describe('Console Routes', () => {
           command: 'list',
         },
       });
+
+      expect(serverConsole.calls[0].name).toBe('mc-testserver');
     });
 
-    // rcon-cli parses flags anywhere in its argv: '--host=x' would redirect the RCON connection (#728)
-    it('passes a command starting with - after --, so rcon-cli never reads it as a flag', async () => {
-      const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
-      mockSpawn.mockClear();
-      mockSpawn.mockImplementation(() => ({
-        stdout: { on: vi.fn() },
-        stderr: { on: vi.fn() },
-        on: vi.fn((event, callback) => {
-          if (event === 'close') setTimeout(() => callback(0), 10);
-        }),
-      }));
-
+    // rcon-cli parses flags anywhere in its argv: '--host=x' would redirect the RCON
+    // connection (#728). The adapter puts it after rcon-cli's '--'; the route passes it as one argument.
+    it('passes a command starting with - as one argument', async () => {
       await app.inject({
         method: 'POST',
         url: '/servers/testserver/console/exec',
         payload: { command: '--host=evil.example' },
       });
 
-      expect(mockSpawn).toHaveBeenCalledWith(
-        'docker',
-        ['exec', 'mc-testserver', 'rcon-cli', '--', '--host=evil.example'],
-        expect.anything()
-      );
+      expect(serverConsole.calls[0].args).toEqual(['--host=evil.example']);
     });
 
     it('should not double-prefix server name that already has mc-', async () => {
-      const mockSpawn = spawn as unknown as ReturnType<typeof vi.fn>;
-      mockSpawn.mockImplementation((cmd: string, args: string[]) => {
-        // Verify container name is NOT mc-mc-testserver
-        expect(args).toContain('mc-testserver');
-        expect(args).not.toContain('mc-mc-testserver');
-
-        const mockProcess = {
-          stdout: {
-            on: vi.fn((event, callback) => {
-              if (event === 'data') {
-                callback(Buffer.from('OK'));
-              }
-            }),
-          },
-          stderr: {
-            on: vi.fn(),
-          },
-          on: vi.fn((event, callback) => {
-            if (event === 'close') {
-              setTimeout(() => callback(0), 10);
-            }
-          }),
-        };
-        return mockProcess;
-      });
-
       await app.inject({
         method: 'POST',
         url: '/servers/mc-testserver/console/exec',
@@ -220,6 +109,8 @@ describe('Console Routes', () => {
           command: 'list',
         },
       });
+
+      expect(serverConsole.calls[0].name).toBe('mc-testserver');
     });
   });
 });

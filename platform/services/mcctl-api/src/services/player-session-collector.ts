@@ -1,10 +1,6 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ContainerStatus, IPlayerSessionUseCase } from '@minecraft-docker/shared';
+import type { ContainerStatus, IContainerRuntimePort, IPlayerSessionUseCase } from '@minecraft-docker/shared';
 import { getContainerName } from '../lib/rcon.js';
-
-const execFileAsync = promisify(execFile);
 
 /** Collection interval (#528, Phase 4). */
 export const COLLECTOR_TICK_INTERVAL_MS = 30_000;
@@ -21,18 +17,10 @@ export type LogFetcher = (container: string, since: string) => Promise<string[]>
 // than maxBuffer and stall its collection tick forever.
 const MAX_TAIL_LINES = 10_000;
 
-/** Builds the `docker logs` argv for a bounded fetch. Exported for testing. */
-export function buildDockerLogsArgs(container: string, since: string): string[] {
-  return ['logs', '--timestamps', '--since', since, '--tail', String(MAX_TAIL_LINES), container];
+/** A LogFetcher over the runtime port's readLogs (#875), capped at MAX_TAIL_LINES per fetch. */
+export function runtimeLogFetcher(runtime: IContainerRuntimePort): LogFetcher {
+  return (container, since) => runtime.readLogs(container, { since, tail: MAX_TAIL_LINES });
 }
-
-const defaultLogFetcher: LogFetcher = async (container, since) => {
-  const { stdout } = await execFileAsync('docker', buildDockerLogsArgs(container, since), {
-    timeout: 10_000,
-    maxBuffer: 10 * 1024 * 1024,
-  });
-  return stdout.split('\n').filter(Boolean);
-};
 
 /**
  * Background collector that feeds each defined server's log lines into
@@ -49,7 +37,7 @@ export class PlayerSessionCollectorService {
     private readonly sessions: IPlayerSessionUseCase,
     private readonly listServerNames: () => string[] | Promise<string[]>,
     private readonly getStatus: (container: string) => ContainerStatus | Promise<ContainerStatus>,
-    private readonly fetchLogs: LogFetcher = defaultLogFetcher,
+    private readonly fetchLogs: LogFetcher,
     private readonly logger?: Pick<FastifyBaseLogger, 'warn'>
   ) {}
 
@@ -105,5 +93,3 @@ export class PlayerSessionCollectorService {
     await this.sessions.ingestLogLines(serverName, lines);
   }
 }
-
-export { defaultLogFetcher };

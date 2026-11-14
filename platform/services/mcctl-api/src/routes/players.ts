@@ -54,7 +54,7 @@ import { config } from '../config/index.js';
 import { PlayerFileService } from '../services/PlayerFileService.js';
 import { OpsJsonService } from '../services/OpsJsonService.js';
 import { writeAuditLog } from '../services/audit-log-service.js';
-import { PlayerSessionCollectorService } from '../services/player-session-collector.js';
+import { PlayerSessionCollectorService, runtimeLogFetcher } from '../services/player-session-collector.js';
 import { AuditActionEnum } from '@minecraft-docker/shared';
 
 // Route interfaces
@@ -153,7 +153,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     playerSessionUseCase,
     () => getAllServersAsync(join(config.mcctlRoot, 'servers')),
     getContainerStatusAsync,
-    undefined,
+    runtimeLogFetcher(fastify.container.containerRuntime()),
     fastify.log
   );
   if (config.nodeEnv !== 'test') {
@@ -210,7 +210,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (!running) return { running, online: 0, max: 0, names: [] };
 
     try {
-      const result = await execRconCommand(name, 'list');
+      const result = await execRconCommand(fastify.container.serverConsole(), name, 'list');
       const parsed = parsePlayerList(result);
       return { running, online: parsed.online, max: parsed.max, names: parsed.players };
     } catch (error) {
@@ -416,7 +416,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     if (running) {
       try {
-        const result = await execRconCommand(name, 'whitelist list');
+        const result = await execRconCommand(fastify.container.serverConsole(), name, 'whitelist list');
         const match = result.match(/:\s*(.*)$/);
         const playerNames = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
 
@@ -503,7 +503,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // If server is running, also send RCON command
       if (await isServerRunning(name)) {
         try {
-          await execRconCommand(name, `whitelist ${enabled ? 'on' : 'off'}`);
+          await execRconCommand(fastify.container.serverConsole(), name, `whitelist ${enabled ? 'on' : 'off'}`);
         } catch (error) {
           fastify.log.warn(error, 'RCON failed for whitelist status, updating config only');
         }
@@ -560,7 +560,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     if (running) {
       try {
-        const result = await execRconCommand(name, `whitelist add ${player}`);
+        const result = await execRconCommand(fastify.container.serverConsole(), name, `whitelist add ${player}`);
 
         // Detect RCON error responses (e.g., "Player already whitelisted" or other errors)
         const isRconError = /already\s+whitelisted|could\s+not\s+/i.test(result);
@@ -589,7 +589,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // If server is running, also reload the whitelist via RCON
       if (running) {
         try {
-          await execRconCommand(name, 'whitelist reload');
+          await execRconCommand(fastify.container.serverConsole(), name, 'whitelist reload');
         } catch {
           // Non-critical: file is already updated
         }
@@ -643,7 +643,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     if (running) {
       try {
-        const result = await execRconCommand(name, `whitelist remove ${player}`);
+        const result = await execRconCommand(fastify.container.serverConsole(), name, `whitelist remove ${player}`);
 
         // Detect RCON error responses (e.g., "Player is not whitelisted" due to case mismatch)
         const isRconError = /not\s+whitelisted/i.test(result);
@@ -672,7 +672,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       // If server is running, also reload the whitelist via RCON
       if (running) {
         try {
-          await execRconCommand(name, 'whitelist reload');
+          await execRconCommand(fastify.container.serverConsole(), name, 'whitelist reload');
         } catch {
           // Non-critical: file is already updated
         }
@@ -728,7 +728,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     if (running) {
       try {
-        const result = await execRconCommand(name, 'banlist players');
+        const result = await execRconCommand(fastify.container.serverConsole(), name, 'banlist players');
         const match = result.match(/:\s*(.*)$/);
         const playerNames = match && match[1] ? match[1].split(',').map(p => p.trim()).filter(Boolean) : [];
 
@@ -777,7 +777,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
     if (running) {
       try {
         const cmd = reason ? `ban ${player} ${reason}` : `ban ${player}`;
-        const result = await execRconCommand(name, cmd);
+        const result = await execRconCommand(fastify.container.serverConsole(), name, cmd);
         await writeAuditLog({
           action: AuditActionEnum.PLAYER_BAN,
           actor: 'api:console',
@@ -841,7 +841,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     if (running) {
       try {
-        const result = await execRconCommand(name, `pardon ${player}`);
+        const result = await execRconCommand(fastify.container.serverConsole(), name, `pardon ${player}`);
         await writeAuditLog({
           action: AuditActionEnum.PLAYER_UNBAN,
           actor: 'api:console',
@@ -907,7 +907,7 @@ const playersPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
 
     try {
       const cmd = reason ? `kick ${player} ${reason}` : `kick ${player}`;
-      const result = await execRconCommand(name, cmd);
+      const result = await execRconCommand(fastify.container.serverConsole(), name, cmd);
       await writeAuditLog({
         action: AuditActionEnum.PLAYER_KICK,
         actor: 'api:console',

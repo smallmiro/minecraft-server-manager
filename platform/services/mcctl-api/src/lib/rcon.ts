@@ -1,5 +1,4 @@
-import { spawn } from 'node:child_process';
-import { parseRconPlayerList } from '@minecraft-docker/shared';
+import { parseRconPlayerList, type ConsoleCommandResult, type IServerConsolePort } from '@minecraft-docker/shared';
 
 /**
  * Result of an RCON command execution
@@ -17,66 +16,46 @@ export function getContainerName(serverName: string): string {
   return serverName.startsWith('mc-') ? serverName : `mc-${serverName}`;
 }
 
-/** How long a `docker exec ... rcon-cli` may run before it is killed (#672). */
+/** How long an RCON command may run before it is aborted (#672). */
 export const RCON_TIMEOUT_MS = 30_000;
 
 /**
- * Execute RCON command and capture output
- * Uses docker exec to run rcon-cli inside the container
+ * Run one RCON command through the console port (#875), aborting it after
+ * `timeoutMs`. null when it timed out. rcon-cli gets the command as one
+ * argument after its '--', so a command starting with '-' is never a flag (#728).
  */
+export async function runRcon(
+  serverConsole: IServerConsolePort,
+  containerName: string,
+  command: string,
+  timeoutMs: number = RCON_TIMEOUT_MS
+): Promise<ConsoleCommandResult | null> {
+  const signal = AbortSignal.timeout(timeoutMs);
+  const result = await serverConsole.command(getContainerName(containerName), [command], { signal });
+  return signal.aborted ? null : result;
+}
+
+/** Execute an RCON command: stdout, or stderr when stdout is empty. A timeout is exit code 1. */
 export async function execRcon(
+  serverConsole: IServerConsolePort,
   containerName: string,
   command: string,
   timeoutMs: number = RCON_TIMEOUT_MS
 ): Promise<RconResult> {
-  // Note: rcon-cli accepts the full command as a single argument; '--' keeps
-  // a command starting with '-' (e.g. --host=x) from being read as a flag (#728)
-  const normalizedContainer = getContainerName(containerName);
-
-  return new Promise((resolve) => {
-    const child = spawn('docker', ['exec', normalizedContainer, 'rcon-cli', '--', command], {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      timeout: timeoutMs,
-      killSignal: 'SIGKILL',
-    });
-
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code: number | null) => {
-      // `killed` is set only when spawn's timeout killed the child
-      if (child.killed) {
-        resolve({ exitCode: 1, output: `RCON command timed out after ${timeoutMs} ms` });
-        return;
-      }
-      resolve({
-        exitCode: code ?? 1,
-        output: stdout || stderr,
-      });
-    });
-
-    child.on('error', (err: Error) => {
-      resolve({
-        exitCode: 1,
-        output: err.message,
-      });
-    });
-  });
+  const result = await runRcon(serverConsole, containerName, command, timeoutMs);
+  if (!result) return { exitCode: 1, output: `RCON command timed out after ${timeoutMs} ms` };
+  return { exitCode: result.exitCode, output: result.stdout || result.stderr };
 }
 
 /**
  * Execute RCON command by server name (convenience wrapper)
  */
-export async function execRconCommand(serverName: string, command: string): Promise<string> {
-  const result = await execRcon(serverName, command);
+export async function execRconCommand(
+  serverConsole: IServerConsolePort,
+  serverName: string,
+  command: string
+): Promise<string> {
+  const result = await execRcon(serverConsole, serverName, command);
   return result.output.trim();
 }
 

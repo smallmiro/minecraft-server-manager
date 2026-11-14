@@ -101,7 +101,7 @@ const consoleRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       fastify.log.info({ serverId, command }, 'Executing RCON command');
 
       try {
-        const result = await execRcon(serverId, command);
+        const result = await execRcon(fastify.container.serverConsole(), serverId, command);
 
         return reply.send({
           output: result.output.trim(),
