@@ -16,6 +16,9 @@ import { atomicWriteFileSync } from '@minecraft-docker/shared/utils';
 import { writeServerConfig } from '../lib/server-config.js';
 import { addComposeService } from '../lib/compose-router-patch.js';
 
+/** The playit agent image of the compose service ensurePlayitService adds (pinned in image-pins.json, #663). */
+export const PLAYIT_IMAGE = 'ghcr.io/playit-cloud/playit-agent:0.16';
+
 export interface PlayitCommandOptions {
   root?: string;
   subCommand?: 'start' | 'stop' | 'status' | 'setup' | 'domain';
@@ -59,7 +62,7 @@ export function ensurePlayitService(paths: Paths): void {
   # External Access - playit.gg Tunnel Agent
   # ===========================================================================
   playit:
-    image: ghcr.io/playit-cloud/playit-agent:0.16
+    image: ${PLAYIT_IMAGE}
     container_name: playit-agent
     network_mode: host
     labels:
