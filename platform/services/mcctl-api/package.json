@@ -74,6 +74,6 @@
     "prismarine-nbt": "^2.8.0",
     "tsx": "^4.19.2",
     "typescript": "^5.3.0",
-    "vitest": "^2.1.8"
+    "vitest": "^5.1.0"
   }
 }
