@@ -40,13 +40,16 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "templates"
   ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "build": "tsc",
+    "sync-templates": "rm -rf templates && cp -r ../cli/templates templates",
+    "prepack": "npm run sync-templates",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
     "lint": "eslint src --ext .ts",
