@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-11-23
+
+### Fixed
+- **Console: creating a server failed on npm installs** (#882) - Creating a server from the web console failed with `Bundled server template missing under <MCCTL_ROOT>/node_modules/@minecraft-docker/shared/templates`. The `@minecraft-docker/shared` package did not ship the bundled server templates, which `mcctl-api` falls back to when the CLI package is not installed beside it. The package now includes them. Affects npm installs of v3.0.0 through v3.1.0. Update the packages to fix it; on older installs, setting `MCCTL_TEMPLATES` in the mcctl-api environment to the CLI package's `templates` directory works around it.
+
 ## [3.1.0] - 2026-10-25
 
 > **Upgrade notes (v3.1.0).**
